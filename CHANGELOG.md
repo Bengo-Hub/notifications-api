@@ -7,6 +7,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 ## [Unreleased]
 
 ### Added
+- **API Key Authentication:** Added support for API key authentication as fallback when JWT tokens are not provided
+  - Configure via `NOTIFICATIONS_ENABLE_API_KEY_AUTH=true` (default: true)
+  - API keys are sent in `X-API-Key` header
+  - API keys are validated against auth-service and cached for 5 minutes
+- **Swagger UI Bearer Prefix:** Swagger UI now automatically adds "Bearer " prefix when users paste JWT tokens
+
+### Added
 - Initial Go service scaffolding with Gin API, middleware, health endpoints, and documentation
 - HTTPS support for local development using mkcert certificates
 - Custom Swagger UI handler with protocol-aware URL detection for HTTPS compatibility

@@ -94,10 +94,12 @@ type SecurityConfig struct {
 	// Optional shared API key for protecting /v1 endpoints. If empty, endpoints are open.
 	APIKey string `envconfig:"API_KEY"`
 	// Auth Service SSO (JWT) integration
-	RequireJWT bool   `envconfig:"REQUIRE_JWT" default:"true"`
-	JWKSURL    string `envconfig:"JWKS_URL" default:"https://auth.codevertex.local:4101/api/v1/.well-known/jwks.json"`
-	Issuer     string `envconfig:"JWT_ISSUER" default:"https://auth.codevertex.local:4101"`
-	Audience   string `envconfig:"JWT_AUDIENCE" default:"notifications"`
+	RequireJWT       bool   `envconfig:"REQUIRE_JWT" default:"true"`
+	JWKSURL          string `envconfig:"JWKS_URL" default:"https://auth.codevertex.local:4101/api/v1/.well-known/jwks.json"`
+	Issuer           string `envconfig:"JWT_ISSUER" default:"https://auth.codevertex.local:4101"`
+	Audience         string `envconfig:"JWT_AUDIENCE" default:"notifications"`
+	AuthServiceURL   string `envconfig:"AUTH_SERVICE_URL" default:"https://auth.codevertex.local:4101"`
+	EnableAPIKeyAuth bool   `envconfig:"ENABLE_API_KEY_AUTH" default:"true"`
 }
 
 func Load() (*Config, error) {

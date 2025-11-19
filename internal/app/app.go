@@ -75,21 +75,30 @@ func New(ctx context.Context) (*App, error) {
 		)
 		// For local Docker development, skip TLS verification when connecting to auth-service
 		// This allows mkcert certificates to work from inside containers
+		var httpClient *http.Client
 		if strings.Contains(cfg.Security.JWKSURL, "auth.codevertex.local") ||
 			strings.Contains(cfg.Security.JWKSURL, "host.docker.internal") {
 			tr := &http.Transport{
 				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 			}
-			authConfig.HTTPClient = &http.Client{
+			httpClient = &http.Client{
 				Timeout:   10 * time.Second,
 				Transport: tr,
 			}
+			authConfig.HTTPClient = httpClient
 		}
 		validator, err := authclient.NewValidator(authConfig)
 		if err != nil {
 			return nil, fmt.Errorf("auth validator init: %w", err)
 		}
-		authMiddleware = authclient.NewAuthMiddleware(validator)
+
+		// Initialize API key validator if enabled
+		if cfg.Security.EnableAPIKeyAuth {
+			apiKeyValidator := authclient.NewAPIKeyValidator(cfg.Security.AuthServiceURL, httpClient)
+			authMiddleware = authclient.NewAuthMiddlewareWithAPIKey(validator, apiKeyValidator)
+		} else {
+			authMiddleware = authclient.NewAuthMiddleware(validator)
+		}
 	}
 
 	ginRouter := router.New(log, healthHandler, notificationHandler, templateHandler, cfg.Security.APIKey, authMiddleware)

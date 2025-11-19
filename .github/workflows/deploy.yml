@@ -2,7 +2,7 @@ name: Build and Deploy Notifications Service
 
 on:
   push:
-    branches: [ main ]
+    branches: [ staging ]
 
 jobs:
   deploy:
@@ -122,8 +122,8 @@ jobs:
             HOSTS=$(kubectl get ingress -n ${NS} -o jsonpath='{.items[*].spec.rules[*].host}' | tr ' ' '\n' | grep -E 'notifications' || true)
             if [ -n "$HOSTS" ]; then
               for H in $HOSTS; do
-                echo "Checking https://$H/healthz ..."
-                if curl -sk --max-time 10 "https://$H/healthz" | grep -qi "ok"; then
+                echo "Checking https://$H/api/v1/healthz ..."
+                if curl -sk --max-time 10 "https://$H/api/v1/healthz" | grep -qi "ok"; then
                   echo "✅ Health OK for $H"
                   break
                 fi

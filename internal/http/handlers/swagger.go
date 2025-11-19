@@ -224,6 +224,14 @@ func SwaggerUI(c *gin.Context) {
               // If relative URL, make it absolute using current origin
               request.url = window.location.origin + request.url;
             }
+            // Automatically add "Bearer " prefix to Authorization header if missing
+            if (request.headers && request.headers.Authorization) {
+              const authHeader = request.headers.Authorization;
+              // Check if it doesn't already start with "Bearer " (case-insensitive)
+              if (!/^bearer\s+/i.test(authHeader)) {
+                request.headers.Authorization = 'Bearer ' + authHeader.trim();
+              }
+            }
             return request;
           },
           responseInterceptor: (response) => {
