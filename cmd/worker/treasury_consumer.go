@@ -59,6 +59,20 @@ var treasuryMappings = map[string]treasuryNotificationMapping{
 			}
 		},
 	},
+	"payout.completed": {
+		TemplateID:   "finance/payout_completed",
+		EmailSubject: "Your payout has been processed",
+		DataBuilder: func(payload map[string]any, tenantWebsite string) map[string]any {
+			return map[string]any{
+				"name":             "Admin",
+				"amount":           fmt.Sprintf("%s %s", payload["net_amount"], payload["currency"]),
+				"payout_id":        payload["reference"],
+				"payout_method":    "Bank Transfer",
+				"reference_number": payload["transfer_code"],
+				"payout_link":      fmt.Sprintf("%s/dashboard/settlements", tenantWebsite),
+			}
+		},
+	},
 }
 
 // startTreasuryConsumer subscribes to treasury.> events from the treasury-api

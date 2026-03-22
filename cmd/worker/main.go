@@ -190,6 +190,9 @@ func main() {
 	// Start treasury event consumer (treasury-service → payment/invoice notifications)
 	startTreasuryConsumer(ctx, nc, js, cfg, tr, logg)
 
+	// Start delivery task event consumer (logistics-service → delivery status notifications)
+	startDeliveryConsumer(ctx, nc, js, cfg, tr, logg)
+
 	<-ctx.Done()
 	_ = nc.Drain()
 }
