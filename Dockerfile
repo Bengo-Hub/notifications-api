@@ -24,9 +24,12 @@ COPY --from=builder /bin/notifications-worker /usr/local/bin/notifications-worke
 COPY --from=builder /bin/notifications-migrate /usr/local/bin/notifications-migrate
 COPY --from=builder /bin/notifications-seed /usr/local/bin/notifications-seed
 COPY --from=builder /bin/notifications-seed /usr/local/bin/notifications-seed
+# Entrypoint script: wait for DB, run migrations, seed, then start server
+COPY scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
 # TLS certificates directory (optional, can be mounted as volume)
 RUN mkdir -p ./config/certs
 USER app
 EXPOSE 4000
 ENV PORT=4000
-ENTRYPOINT ["/usr/local/bin/notifications-api"]
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
