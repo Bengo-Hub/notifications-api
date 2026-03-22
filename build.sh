@@ -153,6 +153,7 @@ if [[ -d "$DEVOPS_DIR" && -f "$CREATE_SECRETS_SCRIPT" ]]; then
   info "Configuring service secrets using centralized script..."
   chmod +x "$CREATE_SECRETS_SCRIPT"
   SERVICE_NAME="$APP_NAME" NAMESPACE="$NAMESPACE" SECRET_NAME="$ENV_SECRET_NAME" \
+  DB_NAME="$SERVICE_DB_NAME" DB_USER="${SERVICE_DB_NAME}_user" \
   POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-}" \
   bash "$CREATE_SECRETS_SCRIPT" || { error "Secret setup failed"; exit 1; }
   success "Service secrets configured"
