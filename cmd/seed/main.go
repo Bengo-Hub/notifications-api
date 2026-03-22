@@ -32,6 +32,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("config: %v", err)
 	}
+
+	log.Printf("connecting to database for seed...")
+
 	ctx := context.Background()
 	client, err := database.NewClient(ctx, cfg.Postgres)
 	if err != nil {

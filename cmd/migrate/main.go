@@ -3,20 +3,36 @@ package main
 import (
 	"context"
 	"log"
+	"regexp"
+	"time"
 
 	"github.com/bengobox/notifications-api/internal/config"
 	"github.com/bengobox/notifications-api/internal/database"
 	"github.com/joho/godotenv"
 )
 
+// maskPassword masks the password in a database URL for logging.
+func maskPassword(url string) string {
+	re := regexp.MustCompile(`://([^:]+):([^@]+)@`)
+	return re.ReplaceAllString(url, "://$1:****@")
+}
+
 func main() {
 	_ = godotenv.Load()
-	cfg, err := config.Load()
+
+	// Use LoadDatabaseOnly to avoid validation failures from missing
+	// provider secrets or OAuth config during migration.
+	dbCfg, err := config.LoadDatabaseOnly()
 	if err != nil {
-		log.Fatalf("config: %v", err)
+		log.Fatalf("load database config: %v", err)
 	}
-	ctx := context.Background()
-	client, err := database.NewClient(ctx, cfg.Postgres)
+
+	log.Printf("connecting to database: %s", maskPassword(dbCfg.URL))
+
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+
+	client, err := database.NewClient(ctx, *dbCfg)
 	if err != nil {
 		log.Fatalf("db: %v", err)
 	}
