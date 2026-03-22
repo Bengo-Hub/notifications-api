@@ -181,6 +181,15 @@ func main() {
 	// Start order status event consumer (ordering-service → customer notifications)
 	startOrderConsumer(ctx, nc, js, cfg, tr, logg)
 
+	// Start subscription lifecycle event consumer (subscriptions-service → tenant admin notifications)
+	startSubscriptionConsumer(ctx, nc, js, cfg, tr, logg)
+
+	// Start auth notification consumer (auth-service → welcome emails, plain NATS)
+	startAuthNotificationConsumer(ctx, nc, cfg, tr, logg)
+
+	// Start treasury event consumer (treasury-service → payment/invoice notifications)
+	startTreasuryConsumer(ctx, nc, js, cfg, tr, logg)
+
 	<-ctx.Done()
 	_ = nc.Drain()
 }

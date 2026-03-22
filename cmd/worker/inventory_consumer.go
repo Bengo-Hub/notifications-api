@@ -46,6 +46,19 @@ var inventoryMappings = map[string]inventoryNotificationMapping{
 			}
 		},
 	},
+	"inventory.stock.out": {
+		TemplateID:   "email/inventory/stock_out",
+		EmailSubject: "URGENT: Stock Out Alert",
+		DataBuilder: func(data map[string]interface{}, tenantWebsite string) map[string]interface{} {
+			return map[string]interface{}{
+				"name":      "Store Manager",
+				"item_name": data["name"],
+				"item_sku":  data["sku"],
+				"location":  data["warehouse_id"],
+				"item_link": fmt.Sprintf("%s/dashboard/inventory?sku=%s", tenantWebsite, data["sku"]),
+			}
+		},
+	},
 }
 
 // startInventoryConsumer subscribes to inventory.> events from the inventory-service

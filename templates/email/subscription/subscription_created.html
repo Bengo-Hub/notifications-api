@@ -1,0 +1,18 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <h2 style="color: #059669;">Welcome to {{ or .brand_name "our platform" }}!</h2>
+  <p>Your subscription for <strong>{{ .plan_name }}</strong> has been activated.</p>
+
+  <div style="background:#f3f4f6; padding:16px; border-radius:6px; margin:16px 0;">
+    <strong>Plan:</strong> {{ .plan_name }}<br/>
+    <strong>Status:</strong> {{ .status }}<br/>
+    {{ if .trial_days }}<strong>Trial Period:</strong> {{ .trial_days }} days<br/>{{ end }}
+    <strong>Bundle:</strong> {{ .bundle_code }}
+  </div>
+
+  <p>You're all set to start using the platform. Explore your dashboard to get started.</p>
+
+  <p>
+    <a class="button" href="{{ .action_link }}">Go to Dashboard</a>
+  </p>
+{{ end }}

@@ -1,0 +1,17 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <h2 style="color: #dc2626;">Subscription Cancelled</h2>
+  <p>Your subscription for <strong>{{ .plan_name }}</strong> has been cancelled.</p>
+
+  <div style="background:#f3f4f6; padding:16px; border-radius:6px; margin:16px 0;">
+    <strong>Plan:</strong> {{ .plan_name }}<br/>
+    {{ if .reason }}<strong>Reason:</strong> {{ .reason }}<br/>{{ end }}
+    <strong>Access Until:</strong> {{ .access_until }}
+  </div>
+
+  <p>You can resubscribe at any time to regain access to all features.</p>
+
+  <p>
+    <a class="button" href="{{ .action_link }}">Resubscribe</a>
+  </p>
+{{ end }}

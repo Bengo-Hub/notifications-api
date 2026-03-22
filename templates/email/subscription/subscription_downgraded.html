@@ -1,0 +1,16 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <h2 style="color: #d97706;">Subscription Downgraded</h2>
+  <p>Your subscription has been changed to <strong>{{ .new_plan_name }}</strong>.</p>
+
+  <div style="background:#f3f4f6; padding:16px; border-radius:6px; margin:16px 0;">
+    <strong>Previous Plan:</strong> {{ .old_plan_name }}<br/>
+    <strong>New Plan:</strong> {{ .new_plan_name }}
+  </div>
+
+  <p>Some features from your previous plan may no longer be available. You can upgrade anytime.</p>
+
+  <p>
+    <a class="button" href="{{ .action_link }}">Manage Subscription</a>
+  </p>
+{{ end }}

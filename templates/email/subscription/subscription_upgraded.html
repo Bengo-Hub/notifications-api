@@ -1,0 +1,16 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <h2 style="color: #059669;">Subscription Upgraded</h2>
+  <p>Your subscription has been upgraded to <strong>{{ .new_plan_name }}</strong>.</p>
+
+  <div style="background:#f3f4f6; padding:16px; border-radius:6px; margin:16px 0;">
+    <strong>Previous Plan:</strong> {{ .old_plan_name }}<br/>
+    <strong>New Plan:</strong> {{ .new_plan_name }}
+  </div>
+
+  <p>Your new features are now available. Enjoy the upgrade!</p>
+
+  <p>
+    <a class="button" href="{{ .action_link }}">Manage Subscription</a>
+  </p>
+{{ end }}

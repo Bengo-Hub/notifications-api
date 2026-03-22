@@ -3,7 +3,7 @@ bin/
 dist/
 coverage/
 *.exe
-worker
+/worker
 
 # Go
 *.test
