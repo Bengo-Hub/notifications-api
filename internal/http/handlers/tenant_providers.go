@@ -56,19 +56,15 @@ type brandingResponse struct {
 	SecondaryColor string `json:"secondary_color,omitempty"`
 }
 
-// ListAvailable lists active platform providers available for tenant selection.
+// ListAvailable lists platform providers available for tenant selection.
 func (h *TenantProviders) ListAvailable(w http.ResponseWriter, r *http.Request) {
-	env := r.URL.Query().Get("environment")
-	if env == "" {
-		env = "production"
-	}
-
 	settings, err := h.client.ProviderSetting.Query().
 		Where(
-			providersetting.TenantID(h.PlatformID),
+			providersetting.Or(
+				providersetting.TenantID(h.PlatformID),
+				providersetting.TenantID("platform"),
+			),
 			providersetting.IsPlatform(true),
-			providersetting.IsActive(true),
-			providersetting.EnvironmentEQ(env),
 			providersetting.KeyEQ("_config"),
 		).
 		All(r.Context())
@@ -96,10 +92,12 @@ func (h *TenantProviders) SelectProvider(w http.ResponseWriter, r *http.Request)
 	ctx := r.Context()
 	tenantID := httpware.GetTenantID(ctx)
 
-	// Platform owners can override via query param
+	// Platform owners can override via query param, or fall back to their own tenant
 	if httpware.IsPlatformOwner(ctx) {
 		if q := r.URL.Query().Get("tenantId"); q != "" {
 			tenantID = q
+		} else if tenantID == "" {
+			tenantID = h.PlatformID
 		}
 	}
 
@@ -125,15 +123,16 @@ func (h *TenantProviders) SelectProvider(w http.ResponseWriter, r *http.Request)
 
 	ctx = r.Context()
 
-	// Verify platform provider is active
+	// Verify platform provider exists
 	count, _ := h.client.ProviderSetting.Query().
 		Where(
-			providersetting.TenantID(h.PlatformID),
+			providersetting.Or(
+				providersetting.TenantID(h.PlatformID),
+				providersetting.TenantID("platform"),
+			),
 			providersetting.IsPlatform(true),
 			providersetting.ProviderType(req.ProviderType),
 			providersetting.ProviderName(req.ProviderName),
-			providersetting.EnvironmentEQ(req.Environment),
-			providersetting.IsActive(true),
 			providersetting.KeyEQ("_config"),
 		).
 		Count(ctx)
@@ -338,6 +337,136 @@ func (h *TenantProviders) UpdateBranding(w http.ResponseWriter, r *http.Request)
 	jsonResponse(w, http.StatusOK, map[string]string{"message": "branding updated"})
 }
 
+// GetProviderSettings returns the tenant's settings for a specific provider (non-secret values only).
+func (h *TenantProviders) GetProviderSettings(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	tenantID := httpware.GetTenantID(ctx)
+	if httpware.IsPlatformOwner(ctx) {
+		if q := r.URL.Query().Get("tenantId"); q != "" {
+			tenantID = q
+		} else if tenantID == "" {
+			tenantID = h.PlatformID
+		}
+	}
+	if tenantID == "" {
+		jsonError(w, http.StatusBadRequest, "tenant ID required")
+		return
+	}
+
+	providerType := r.URL.Query().Get("provider_type")
+	providerName := r.URL.Query().Get("provider_name")
+	if providerType == "" || providerName == "" {
+		jsonError(w, http.StatusBadRequest, "provider_type and provider_name are required")
+		return
+	}
+
+	settings, err := h.client.ProviderSetting.Query().
+		Where(
+			providersetting.TenantID(tenantID),
+			providersetting.ProviderType(providerType),
+			providersetting.ProviderName(providerName),
+			providersetting.IsActive(true),
+			providersetting.KeyNEQ("_config"),
+			providersetting.KeyNEQ("_preferred"),
+		).
+		All(ctx)
+	if err != nil {
+		jsonError(w, http.StatusInternalServerError, "failed to load settings")
+		return
+	}
+
+	result := make(map[string]string)
+	for _, s := range settings {
+		if s.IsSecret || s.IsEncrypted {
+			if s.Value != "" {
+				result[s.Key] = "••••••••"
+			} else {
+				result[s.Key] = ""
+			}
+		} else {
+			result[s.Key] = s.Value
+		}
+	}
+
+	jsonResponse(w, http.StatusOK, map[string]any{
+		"provider_type": providerType,
+		"provider_name": providerName,
+		"settings":      result,
+	})
+}
+
+type saveTenantSettingsRequest struct {
+	ProviderType string            `json:"provider_type"`
+	ProviderName string            `json:"provider_name"`
+	Settings     map[string]string `json:"settings"`
+}
+
+// SaveProviderSettings saves tenant-level provider settings.
+func (h *TenantProviders) SaveProviderSettings(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	tenantID := httpware.GetTenantID(ctx)
+	if httpware.IsPlatformOwner(ctx) {
+		if q := r.URL.Query().Get("tenantId"); q != "" {
+			tenantID = q
+		} else if tenantID == "" {
+			tenantID = h.PlatformID
+		}
+	}
+	if tenantID == "" {
+		jsonError(w, http.StatusBadRequest, "tenant ID required")
+		return
+	}
+
+	var req saveTenantSettingsRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		jsonError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if req.ProviderType == "" || req.ProviderName == "" {
+		jsonError(w, http.StatusBadRequest, "provider_type and provider_name are required")
+		return
+	}
+
+	_, _ = h.client.ProviderSetting.Delete().
+		Where(
+			providersetting.TenantID(tenantID),
+			providersetting.ProviderType(req.ProviderType),
+			providersetting.ProviderName(req.ProviderName),
+			providersetting.KeyNEQ("_config"),
+			providersetting.KeyNEQ("_preferred"),
+		).
+		Exec(ctx)
+
+	secretKeys := map[string]bool{"password": true, "api_key": true, "auth_token": true, "api_secret": true}
+
+	for k, v := range req.Settings {
+		if v == "" || v == "••••••••" {
+			continue
+		}
+		_, err := h.client.ProviderSetting.Create().
+			SetTenantID(tenantID).
+			SetChannel(req.ProviderType).
+			SetProvider(req.ProviderName).
+			SetProviderType(req.ProviderType).
+			SetProviderName(req.ProviderName).
+			SetEnvironment("production").
+			SetKey(k).
+			SetValue(v).
+			SetIsSecret(secretKeys[k]).
+			SetIsPlatform(false).
+			SetIsActive(true).
+			SetStatus("active").
+			Save(ctx)
+		if err != nil {
+			h.logger.Error("failed to save provider setting", zap.String("key", k), zap.Error(err))
+			jsonError(w, http.StatusInternalServerError, "failed to save settings")
+			return
+		}
+	}
+
+	jsonResponse(w, http.StatusOK, map[string]string{"message": "settings saved"})
+}
+
 func parseUUID(s string) uuid.UUID {
 	u, _ := uuid.Parse(s)
 	return u
@@ -349,6 +478,8 @@ func (h *TenantProviders) RegisterTenantProviderRoutes(r chi.Router) {
 		prov.Get("/available", h.ListAvailable)
 		prov.Post("/select", h.SelectProvider)
 		prov.Get("/selected", h.GetSelected)
+		prov.Get("/settings", h.GetProviderSettings)
+		prov.Post("/settings", h.SaveProviderSettings)
 	})
 	r.Get("/branding", h.GetBranding)
 	r.Put("/branding", h.UpdateBranding)

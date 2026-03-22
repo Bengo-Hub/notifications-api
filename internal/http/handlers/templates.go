@@ -21,8 +21,9 @@ func NewTemplateHandler(loader *templates.Loader, notifier *NotificationHandler)
 }
 
 type templateSummary struct {
-	ID      string `json:"id" example:"payment_success"`
-	Channel string `json:"channel" example:"email"`
+	ID      string   `json:"id" example:"payment_success"`
+	Channel string   `json:"channel" example:"email"`
+	Tags    []string `json:"tags" example:"finance"`
 }
 
 type templateListResponse struct {
@@ -34,6 +35,14 @@ type templateGetResponse struct {
 	Channel  string `json:"channel"`
 	Content  string `json:"content"`
 	MimeType string `json:"mimeType"`
+}
+
+// extractTemplateID gets the template ID from chi's wildcard catch-all.
+func extractTemplateID(r *http.Request) string {
+	id := chi.URLParam(r, "*")
+	id = strings.TrimPrefix(id, "/")
+	id = strings.TrimSuffix(id, "/test")
+	return id
 }
 
 // List returns available notification templates for a tenant.
@@ -50,7 +59,11 @@ func (h *TemplateHandler) List(w http.ResponseWriter, r *http.Request) {
 	summaries, _ := h.loader.List(r.Context())
 	resp := templateListResponse{Templates: make([]templateSummary, 0, len(summaries))}
 	for _, s := range summaries {
-		resp.Templates = append(resp.Templates, templateSummary{ID: s.ID, Channel: s.Channel})
+		tags := s.Tags
+		if tags == nil {
+			tags = []string{}
+		}
+		resp.Templates = append(resp.Templates, templateSummary{ID: s.ID, Channel: s.Channel, Tags: tags})
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
@@ -70,7 +83,7 @@ func (h *TemplateHandler) List(w http.ResponseWriter, r *http.Request) {
 // @Security ApiKeyAuth
 // @Router /{tenantId}/templates/{id} [get]
 func (h *TemplateHandler) Get(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
+	id := extractTemplateID(r)
 	channel := r.URL.Query().Get("channel")
 	if id == "" || channel == "" {
 		w.Header().Set("Content-Type", "application/json")
@@ -139,7 +152,7 @@ func (h *TemplateHandler) TestSend(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(errorResponse{Error: "tenantId required"})
 		return
 	}
-	id := chi.URLParam(r, "id")
+	id := extractTemplateID(r)
 	if id == "" {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
@@ -220,7 +233,7 @@ type templateUpdateRequest struct {
 // @Security ApiKeyAuth
 // @Router /{tenantId}/templates/{id} [put]
 func (h *TemplateHandler) Update(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
+	id := extractTemplateID(r)
 	channel := r.URL.Query().Get("channel")
 	if id == "" || channel == "" {
 		w.Header().Set("Content-Type", "application/json")

@@ -39,7 +39,10 @@ func LoadTenantProviderSettings(ctx context.Context, dbCfg config.PostgresConfig
 		Query().
 		Where(
 			providersetting.TenantIDIn(tenantID, "platform"),
-			providersetting.EnvironmentEQ(environment),
+			providersetting.Or(
+				providersetting.EnvironmentEQ(environment),
+				providersetting.EnvironmentEQ("production"),
+			),
 			providersetting.ChannelEQ(channel),
 			providersetting.ProviderEQ(provider),
 			providersetting.IsActive(true),

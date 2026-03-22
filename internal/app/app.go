@@ -203,6 +203,7 @@ func New(ctx context.Context) (*App, error) {
 	rbacRepo := rbac.NewEntRepository(entClient)
 	rbacService := rbac.NewService(rbacRepo, log.Named("rbac"))
 	rbacHandler := handlers.NewRBACHandler(log.Named("rbac.handler"), rbacService, rbacRepo)
+	authMeHandler := handlers.NewAuthMeHandler(rbacService, log.Named("auth.me"), platformIDStr)
 
 	// Initialize Redis-backed rate limiter for email sending by subscription plan
 	var rateLimiter *ratelimitmw.RateLimiter
@@ -211,7 +212,7 @@ func New(ctx context.Context) (*App, error) {
 		log.Info("email rate limiter initialized (subscription plan limits via JWT claims)")
 	}
 
-	httpRouter := router.New(log, healthHandler, notificationHandler, templateHandler, platformProviders, tenantProviders, analyticsHandler, billingHandler, platformBilling, settingsHandler, rbacHandler, cfg.Security.APIKey, authMiddleware, authenticator, cfg.HTTP.AllowedOrigins, tenantSyncer, rateLimiter)
+	httpRouter := router.New(log, healthHandler, notificationHandler, templateHandler, platformProviders, tenantProviders, analyticsHandler, billingHandler, platformBilling, settingsHandler, rbacHandler, authMeHandler, cfg.Security.APIKey, authMiddleware, authenticator, cfg.HTTP.AllowedOrigins, tenantSyncer, rateLimiter)
 
 	httpServer := &http.Server{
 		Addr:              fmt.Sprintf("%s:%d", cfg.HTTP.Host, cfg.HTTP.Port),

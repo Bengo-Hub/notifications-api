@@ -70,6 +70,7 @@ type EventsConfig struct {
 
 type ProviderConfig struct {
 	SendGridAPIKey         string `envconfig:"SENDGRID_API_KEY"`
+	BrevoAPIKey            string `envconfig:"BREVO_API_KEY"`
 	MailgunDomain          string `envconfig:"MAILGUN_DOMAIN"`
 	MailgunAPIKey          string `envconfig:"MAILGUN_API_KEY"`
 	TwilioAccountSID       string `envconfig:"TWILIO_ACCOUNT_SID"`

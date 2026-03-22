@@ -77,8 +77,9 @@ cacheAndReturn:
 
 // Summary describes a template available for rendering.
 type Summary struct {
-	ID      string `json:"id"`
-	Channel string `json:"channel"`
+	ID      string   `json:"id"`
+	Channel string   `json:"channel"`
+	Tags    []string `json:"tags"`
 }
 
 // Write saves template content to the filesystem under the configured directory.
@@ -156,7 +157,14 @@ func (l *Loader) List(_ context.Context) ([]Summary, error) {
 			id := strings.TrimSuffix(rel, filepath.Ext(rel))
 			id = filepath.ToSlash(id)
 
-			out = append(out, Summary{ID: id, Channel: ch})
+			// Extract tags from subdirectory path segments
+			var tags []string
+			parts := strings.Split(id, "/")
+			if len(parts) > 1 {
+				tags = parts[:len(parts)-1]
+			}
+
+			out = append(out, Summary{ID: id, Channel: ch, Tags: tags})
 			return nil
 		})
 	}

@@ -15,20 +15,19 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/jackc/pgx/v5/pgxpool"
+	entdb "github.com/bengobox/notifications-api/internal/database"
 	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
 
 	"github.com/bengobox/notifications-api/internal/config"
 	"github.com/bengobox/notifications-api/internal/encryption"
 	"github.com/bengobox/notifications-api/internal/messaging"
-	"github.com/bengobox/notifications-api/internal/platform/branding"
 	"github.com/bengobox/notifications-api/internal/platform/database"
 	"github.com/bengobox/notifications-api/internal/platform/events"
 	"github.com/bengobox/notifications-api/internal/platform/templates"
 	"github.com/bengobox/notifications-api/internal/providers"
 	"github.com/bengobox/notifications-api/internal/shared/logger"
-	"github.com/bengobox/notifications-api/internal/ent"
+
 	"github.com/bengobox/notifications-api/internal/modules/billing"
 	"github.com/bengobox/notifications-api/internal/modules/tenant"
 	"github.com/Bengo-Hub/shared-service-client"
@@ -77,7 +76,7 @@ func main() {
 	tpl := templates.New(cfg.Templates)
 
 	// DB for provider overrides and billing
-	client, err := ent.Open("postgres", cfg.Postgres.URL)
+	client, err := entdb.NewClient(ctx, cfg.Postgres)
 	if err != nil {
 		logg.Fatal("failed to connect to ent", zap.Error(err))
 	}
@@ -108,6 +107,9 @@ func main() {
 	pm := providers.NewManager(dbPool, cfg.Postgres, cfg.Providers, encryption.KeyFromEnv(cfg.Security.EncryptionKey), cfg.App.Env, platformIDStr)
 
 	durable := "notifications-worker"
+	// Tenant resolver for event consumers and template branding
+	tr := newTenantResolver(client)
+
 	_, err = js.Subscribe(subject, func(m *nats.Msg) {
 		var msg messaging.Message
 		if err := json.Unmarshal(m.Data, &msg); err != nil {
@@ -124,7 +126,7 @@ func main() {
 		}
 
 		// Render template
-		rendered, renderErr := renderMessage(ctx, cfg, tpl, dbPool, &msg, logg)
+		rendered, renderErr := renderMessage(ctx, cfg, tpl, tr, &msg, logg)
 		if renderErr != nil {
 			logg.Error("template render failed, dropping", zap.String("template", msg.TemplateID), zap.Error(renderErr))
 			_ = m.Ack() // template errors are not transient
@@ -170,9 +172,6 @@ func main() {
 		logg.Fatal("subscription failed", zap.Error(err))
 	}
 
-	// Tenant resolver for event consumers to look up contact_email/website
-	tr := newTenantResolver(client)
-
 	// Start fleet lifecycle event consumer (logistics-service → email notifications)
 	startFleetConsumer(ctx, nc, js, cfg, tr, logg)
 
@@ -186,12 +185,10 @@ func main() {
 	_ = nc.Drain()
 }
 
-// renderMessage loads the template, renders it with branding data, and returns the rendered content.
-func renderMessage(ctx context.Context, cfg *config.Config, tpl *templates.Loader, dbPool *pgxpool.Pool, msg *messaging.Message, logg *zap.Logger) (string, error) {
-	tplID := msg.TemplateID
-	if !strings.Contains(tplID, "/") {
-		tplID = msg.Channel + "/" + tplID
-	}
+// renderMessage loads the template, renders it with tenant branding from DB, and returns the rendered content.
+func renderMessage(ctx context.Context, cfg *config.Config, tpl *templates.Loader, tr *tenantResolver, msg *messaging.Message, logg *zap.Logger) (string, error) {
+	// Always prepend channel to template ID for the loader (e.g. "email/auth/test_email")
+	tplID := msg.Channel + "/" + msg.TemplateID
 	content, err := tpl.Get(ctx, tplID)
 	if err != nil {
 		return "", err
@@ -199,8 +196,8 @@ func renderMessage(ctx context.Context, cfg *config.Config, tpl *templates.Loade
 
 	var rendered strings.Builder
 
-	if strings.HasPrefix(tplID, "email/") {
-		basePath := filepath.Join(cfg.Templates.Directory, "email", "base.html")
+	if msg.Channel == "email" {
+		basePath := filepath.Join(cfg.Templates.Directory, "email", "shared", "base.html")
 		baseBytes, readErr := os.ReadFile(basePath)
 		if readErr != nil {
 			logg.Warn("base template not found", zap.String("base", basePath), zap.Error(readErr))
@@ -210,28 +207,34 @@ func renderMessage(ctx context.Context, cfg *config.Config, tpl *templates.Loade
 		for k, v := range msg.Data {
 			data[k] = v
 		}
-		if _, ok := data["brand_name"]; !ok || data["brand_name"] == "" {
-			data["brand_name"] = msg.TenantID
+
+		// Load tenant branding from DB
+		if t, err := tr.resolveWithBranding(ctx, msg.TenantID); err == nil {
+			if t.Name != "" {
+				data["brand_name"] = t.Name
+				data["brand"] = t.Name
+			}
+			if t.ContactEmail != "" {
+				data["brand_email"] = t.ContactEmail
+			}
+			if t.ContactPhone != "" {
+				data["brand_phone"] = t.ContactPhone
+			}
+			if t.LogoURL != "" {
+				data["brand_logo_url"] = t.LogoURL
+			}
+			if t.PrimaryColor != "" {
+				data["brand_primary_color"] = t.PrimaryColor
+			}
+			if t.SecondaryColor != "" {
+				data["brand_secondary_color"] = t.SecondaryColor
+			}
+		} else {
+			logg.Warn("failed to load tenant branding", zap.String("tenant_id", msg.TenantID), zap.Error(err))
 		}
-		if b, err := branding.LoadBranding(ctx, dbPool, cfg.Postgres, msg.TenantID); err == nil {
-			if b.Name != "" {
-				data["brand_name"] = b.Name
-			}
-			if b.Email != "" {
-				data["brand_email"] = b.Email
-			}
-			if b.Phone != "" {
-				data["brand_phone"] = b.Phone
-			}
-			if b.LogoURL != "" {
-				data["brand_logo_url"] = b.LogoURL
-			}
-			if b.PrimaryColor != "" {
-				data["brand_primary_color"] = b.PrimaryColor
-			}
-			if b.SecondaryColor != "" {
-				data["brand_secondary_color"] = b.SecondaryColor
-			}
+
+		if _, ok := data["brand_name"]; !ok || data["brand_name"] == "" {
+			data["brand_name"] = "Notifications"
 		}
 
 		tplSet := template.New("base")
@@ -243,7 +246,7 @@ func renderMessage(ctx context.Context, cfg *config.Config, tpl *templates.Loade
 		if _, err := tplSet.Parse(content); err != nil {
 			return "", err
 		}
-		if err := tplSet.ExecuteTemplate(&rendered, "base.html", data); err != nil {
+		if err := tplSet.Execute(&rendered, data); err != nil {
 			_ = tplSet.ExecuteTemplate(&rendered, "content", data)
 		}
 	} else {
@@ -275,7 +278,8 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, bil
 			subject = s
 		}
 		emailProv, _ := pm.GetEmailProvider(ctx, msg.TenantID, preferred)
-		if err := emailProv.SendEmail(ctx, cfg.Providers.DefaultEmailSender, msg.To, subject, rendered, ""); err != nil {
+		// Pass empty from — let the provider use its configured from address (tenant or platform fallback)
+		if err := emailProv.SendEmail(ctx, "", msg.To, subject, rendered, ""); err != nil {
 			return err
 		}
 		logg.Info("email sent", zap.String("provider", emailProv.Name()), zap.String("template", msg.TemplateID), zap.Strings("to", msg.To))

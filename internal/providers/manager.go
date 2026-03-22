@@ -65,7 +65,7 @@ func (m *Manager) GetWhatsAppProvider(ctx context.Context, tenantID string, pref
 
 func (m *Manager) GetEmailProvider(ctx context.Context, tenantID string, preferred string) (EmailProvider, error) {
 	// Default to SMTP per user preference
-	order := []string{"smtp", "sendgrid"}
+	order := []string{"smtp", "sendgrid", "brevo"}
 	if preferred != "" {
 		order = append([]string{strings.ToLower(preferred)}, order...)
 	}
@@ -73,7 +73,11 @@ func (m *Manager) GetEmailProvider(ctx context.Context, tenantID string, preferr
 		switch name {
 		case "smtp":
 			// Load settings with hierarchy: Platform Managed > Tenant > Platform Fallback
-			s, _ := pcfg.LoadTenantProviderSettings(ctx, m.dbCfg, tenantID, m.env, "email", "smtp", m.decryptionKey)
+			s, loadErr := pcfg.LoadTenantProviderSettings(ctx, m.dbCfg, tenantID, m.env, "email", "smtp", m.decryptionKey)
+			if loadErr != nil {
+				fmt.Printf("[DEBUG] LoadTenantProviderSettings error for tenant %s: %v\n", tenantID, loadErr)
+			}
+			fmt.Printf("[DEBUG] SMTP settings for tenant %s: %+v (env=%s, cfgHost=%s)\n", tenantID, s, m.env, m.cfg.SMTPHost)
 			host := firstNonEmpty(s["host"], m.cfg.SMTPHost)
 			port := parseInt(firstNonEmpty(s["port"], strconv.Itoa(m.cfg.SMTPPort)))
 			user := firstNonEmpty(s["username"], m.cfg.SMTPUsername)
@@ -94,6 +98,19 @@ func (m *Manager) GetEmailProvider(ctx context.Context, tenantID string, preferr
 			apiKey := firstNonEmpty(s["api_key"], m.cfg.SendGridAPIKey)
 			from := firstNonEmpty(s["from"], m.cfg.DefaultEmailSender)
 			return &sendGridAdapter{apiKey: apiKey, from: from}, nil
+		case "brevo":
+			s, _ := pcfg.LoadTenantProviderSettings(ctx, m.dbCfg, tenantID, m.env, "email", "brevo", m.decryptionKey)
+			apiKey := firstNonEmpty(s["api_key"], m.cfg.BrevoAPIKey)
+			senderEmail := firstNonEmpty(s["sender_email"], s["from"], m.cfg.DefaultEmailSender)
+			senderName := firstNonEmpty(s["sender_name"], "Notifications")
+			if apiKey == "" {
+				continue
+			}
+			return email.NewBrevoProvider(email.BrevoConfig{
+				APIKey:      apiKey,
+				SenderName:  senderName,
+				SenderEmail: senderEmail,
+			}), nil
 		}
 	}
 	// fallback to smtp with defaults

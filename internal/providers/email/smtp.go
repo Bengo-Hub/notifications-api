@@ -28,6 +28,16 @@ func NewSMTPProvider(cfg SMTPConfig) *SMTPProvider {
 
 func (p *SMTPProvider) Name() string { return "smtp" }
 
+// extractEmail returns the bare email from "Name <email>" or just "email".
+func extractEmail(s string) string {
+	if i := strings.Index(s, "<"); i >= 0 {
+		if j := strings.Index(s[i:], ">"); j >= 0 {
+			return s[i+1 : i+j]
+		}
+	}
+	return strings.TrimSpace(s)
+}
+
 func (p *SMTPProvider) SendEmail(ctx context.Context, from string, to []string, subject string, htmlBody string, textBody string) error {
 	if from == "" {
 		from = p.cfg.From
@@ -37,6 +47,18 @@ func (p *SMTPProvider) SendEmail(ctx context.Context, from string, to []string, 
 	}
 	addr := fmt.Sprintf("%s:%d", p.cfg.Host, p.cfg.Port)
 	auth := smtp.PlainAuth("", p.cfg.Username, p.cfg.Password, p.cfg.Host)
+
+	// SMTP envelope requires bare email; headers can have display name
+	envelopeFrom := extractEmail(from)
+
+	// Normalize bare \n to \r\n for RFC 5321 compliance (Gmail rejects bare LF)
+	normalizeCRLF := func(s string) string {
+		s = strings.ReplaceAll(s, "\r\n", "\n")
+		s = strings.ReplaceAll(s, "\n", "\r\n")
+		return s
+	}
+	htmlBody = normalizeCRLF(htmlBody)
+	textBody = normalizeCRLF(textBody)
 
 	// Build RFC 5322 message
 	var b strings.Builder
@@ -54,54 +76,55 @@ func (p *SMTPProvider) SendEmail(ctx context.Context, from string, to []string, 
 		b.WriteString("Content-Type: text/plain; charset=utf-8\r\n\r\n" + textBody)
 	}
 
-	var conn net.Conn
-	var err error
-	domain := p.cfg.Host
-
-	if p.cfg.StartTLS {
-		// Connect and then upgrade
-		conn, err = net.Dial("tcp", addr)
-		if err != nil {
-			return err
-		}
-		c, err := smtp.NewClient(conn, domain)
-		if err != nil {
-			return err
-		}
-		defer c.Quit()
-		if ok, _ := c.Extension("STARTTLS"); ok {
-			if err = c.StartTLS(&tls.Config{ServerName: domain}); err != nil {
-				return err
-			}
-		}
-		if p.cfg.Username != "" {
-			if err := c.Auth(auth); err != nil {
-				return err
-			}
-		}
-		if err := c.Mail(from); err != nil {
-			return err
-		}
-		for _, rcpt := range to {
-			if err := c.Rcpt(rcpt); err != nil {
-				return err
-			}
-		}
-		w, err := c.Data()
-		if err != nil {
-			return err
-		}
-		if _, err := w.Write([]byte(b.String())); err != nil {
-			return err
-		}
-		return w.Close()
-	}
-
-	// Direct send (plain or implicit TLS handled by relay)
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
 	}
-	return smtp.SendMail(addr, auth, from, to, []byte(b.String()))
+
+	domain := p.cfg.Host
+
+	// Always use manual SMTP client to control EHLO hostname (smtp.SendMail uses "localhost" which Gmail rejects)
+	conn, err := net.Dial("tcp", addr)
+	if err != nil {
+		return fmt.Errorf("smtp dial: %w", err)
+	}
+	c, err := smtp.NewClient(conn, domain)
+	if err != nil {
+		return fmt.Errorf("smtp client: %w", err)
+	}
+	defer c.Quit()
+
+	if err := c.Hello(domain); err != nil {
+		return fmt.Errorf("smtp hello: %w", err)
+	}
+
+	if ok, _ := c.Extension("STARTTLS"); ok {
+		if err = c.StartTLS(&tls.Config{ServerName: domain}); err != nil {
+			return fmt.Errorf("smtp starttls: %w", err)
+		}
+	}
+
+	if p.cfg.Username != "" {
+		if err := c.Auth(auth); err != nil {
+			return fmt.Errorf("smtp auth: %w", err)
+		}
+	}
+
+	if err := c.Mail(envelopeFrom); err != nil {
+		return fmt.Errorf("smtp mail from: %w", err)
+	}
+	for _, rcpt := range to {
+		if err := c.Rcpt(rcpt); err != nil {
+			return fmt.Errorf("smtp rcpt to: %w", err)
+		}
+	}
+	w, err := c.Data()
+	if err != nil {
+		return fmt.Errorf("smtp data: %w", err)
+	}
+	if _, err := w.Write([]byte(b.String())); err != nil {
+		return fmt.Errorf("smtp write: %w", err)
+	}
+	return w.Close()
 }

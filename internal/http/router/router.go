@@ -19,7 +19,7 @@ import (
 	ratelimitmw "github.com/bengobox/notifications-api/internal/shared/middleware"
 )
 
-func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handlers.NotificationHandler, templates *handlers.TemplateHandler, platformProviders *handlers.PlatformProviders, tenantProviders *handlers.TenantProviders, analytics *handlers.AnalyticsHandler, billing *handlers.BillingHandler, platformBilling *handlers.PlatformBilling, settings *handlers.SettingsHandler, rbacHandler *handlers.RBACHandler, apiKey string, authMiddleware *authclient.AuthMiddleware, authenticator *identityhandler.Authenticator, allowedOrigins []string, tenantSyncer *tenant.Syncer, rateLimiter *ratelimitmw.RateLimiter) http.Handler {
+func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handlers.NotificationHandler, templates *handlers.TemplateHandler, platformProviders *handlers.PlatformProviders, tenantProviders *handlers.TenantProviders, analytics *handlers.AnalyticsHandler, billing *handlers.BillingHandler, platformBilling *handlers.PlatformBilling, settings *handlers.SettingsHandler, rbacHandler *handlers.RBACHandler, authMeHandler *handlers.AuthMeHandler, apiKey string, authMiddleware *authclient.AuthMiddleware, authenticator *identityhandler.Authenticator, allowedOrigins []string, tenantSyncer *tenant.Syncer, rateLimiter *ratelimitmw.RateLimiter) http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RealIP)
@@ -135,6 +135,9 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 					})
 				}
 
+				// Service-level auth/me — returns user profile with local RBAC roles & permissions
+				tenantRouter.Get("/auth/me", authMeHandler.GetMe)
+
 				tenantRouter.Route("/notifications", func(notif chi.Router) {
 					if authenticator != nil {
 						notif.Use(authenticator.RequirePermissions(identity.PermNotificationsSend))
@@ -152,19 +155,19 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 							read.Use(authenticator.RequirePermissions(identity.PermTemplatesRead))
 						}
 						read.Get("/", templates.List)
-						read.Get("/{id}", templates.Get)
+						read.Get("/*", templates.Get)
 					})
 					tmpl.Group(func(write chi.Router) {
 						if authenticator != nil {
 							write.Use(authenticator.RequirePermissions(identity.PermTemplatesManage))
 						}
-						write.Put("/{id}", templates.Update)
+						write.Put("/*", templates.Update)
 					})
 					tmpl.Group(func(test chi.Router) {
 						if authenticator != nil {
 							test.Use(authenticator.RequirePermissions(identity.PermTemplatesTest))
 						}
-						test.Post("/{id}/test", templates.TestSend)
+						test.Post("/*", templates.TestSend)
 					})
 				})
 

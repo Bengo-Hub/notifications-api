@@ -102,7 +102,7 @@ func (s *Syncer) SyncTenant(ctx context.Context, slug string) (uuid.UUID, error)
 		SetSubscriptionStatus(remote.SubscriptionStatus).
 		SetTierLimits(remote.TierLimits).
 		SetMetadata(remote.Metadata).
-		OnConflict().
+		OnConflictColumns("id").
 		UpdateNewValues().
 		Exec(ctx)
 

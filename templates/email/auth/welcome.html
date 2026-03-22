@@ -2,9 +2,7 @@
   <p>Welcome {{ .name }},</p>
   <p>We're excited to have you at {{ or .brand_name "our platform" }}.</p>
   <p>
-    <a class="button" href="{{ .getting_started_link }}">Get Started</a>
+    <a href="{{ .getting_started_link }}" style="background:{{ or .brand_primary_color "#0F766E" }};color:#ffffff !important;text-decoration:none;padding:10px 16px;border-radius:6px;display:inline-block;">Get Started</a>
   </p>
-  <p class="muted">Cheers,<br/>{{ or .brand_name .brand }}</p>
+  <p style="color:#6b7280;">Cheers,<br/>{{ or .brand_name .brand }}</p>
 {{ end }}
-
-

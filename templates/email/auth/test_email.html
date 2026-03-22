@@ -1,0 +1,13 @@
+{{ define "content" }}
+  <p>Hi {{ or .name "there" }},</p>
+  <p>This is a test email from <strong>{{ or .brand_name "the platform" }}</strong>.</p>
+  <p>If you received this, your email provider is configured correctly.</p>
+  <table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0;">
+    <tr>
+      <td style="background:{{ or .brand_primary_color "#0F766E" }};border-radius:6px;padding:10px 20px;">
+        <span style="color:#ffffff;font-weight:600;font-size:13px;">Email Delivery Verified</span>
+      </td>
+    </tr>
+  </table>
+  <p style="color:#6b7280;">Sent at {{ or .sent_at "just now" }} &mdash; {{ or .brand_name "Platform" }}</p>
+{{ end }}

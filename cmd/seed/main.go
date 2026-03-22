@@ -110,6 +110,7 @@ func seedPlatformProviders(ctx context.Context, client *ent.Client) {
 	}{
 		{"email", "smtp", ""},
 		{"email", "sendgrid", "SENDGRID_API_KEY"},
+		{"email", "brevo", "BREVO_API_KEY"},
 		{"sms", "twilio", "TWILIO_ACCOUNT_SID"},
 		{"sms", "africastalking", "AFRICAS_TALKING_KEY"},
 		{"sms", "vonage", "VONAGE_API_KEY"},
