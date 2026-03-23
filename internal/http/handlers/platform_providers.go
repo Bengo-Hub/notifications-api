@@ -354,6 +354,53 @@ func (h *PlatformProviders) RegisterPlatformProviderRoutes(r chi.Router) {
 	r.Patch("/providers/{id}", h.UpdateProvider)
 	r.Post("/providers/{id}/test", h.TestProvider)
 	r.Delete("/providers/{id}", h.DeactivateProvider)
+	r.Get("/providers/settings", h.GetPlatformProviderSettings)
+}
+
+// GetPlatformProviderSettings returns the settings for a specific platform provider.
+// Unlike the tenant endpoint, this always queries under tenant_id='platform'.
+func (h *PlatformProviders) GetPlatformProviderSettings(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	providerType := r.URL.Query().Get("provider_type")
+	providerName := r.URL.Query().Get("provider_name")
+	if providerType == "" || providerName == "" {
+		jsonError(w, http.StatusBadRequest, "provider_type and provider_name are required")
+		return
+	}
+
+	settings, err := h.client.ProviderSetting.Query().
+		Where(
+			providersetting.TenantID(platformTenantID),
+			providersetting.ProviderType(providerType),
+			providersetting.ProviderName(providerName),
+			providersetting.IsPlatform(true),
+			providersetting.IsActive(true),
+			providersetting.KeyNEQ("_config"),
+			providersetting.KeyNEQ("_preferred"),
+		).
+		All(ctx)
+	if err != nil {
+		jsonError(w, http.StatusInternalServerError, "failed to load settings")
+		return
+	}
+
+	secretKeys := map[string]bool{"password": true, "api_key": true, "auth_token": true, "api_secret": true, "service_account": true}
+	result := make(map[string]string)
+	for _, s := range settings {
+		if secretKeys[s.Key] || s.IsSecret || s.IsEncrypted {
+			if s.Value != "" {
+				result[s.Key] = "••••••••"
+			}
+		} else {
+			result[s.Key] = s.Value
+		}
+	}
+
+	jsonResponse(w, http.StatusOK, map[string]any{
+		"provider_type": providerType,
+		"provider_name": providerName,
+		"settings":      result,
+	})
 }
 
 func jsonResponse(w http.ResponseWriter, status int, payload any) {

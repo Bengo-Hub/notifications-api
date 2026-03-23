@@ -57,6 +57,8 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 		api.Route("/templates", func(tmpl chi.Router) {
 			tmpl.Get("/", templates.List)
 			tmpl.Get("/*", templates.Get)
+			tmpl.Post("/*", templates.TestSend) // handles /*/test
+			tmpl.Put("/*", templates.Update)
 		})
 
 		// Protected routes - require authentication
