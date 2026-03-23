@@ -193,6 +193,15 @@ func main() {
 	// Start delivery task event consumer (logistics-service → delivery status notifications)
 	startDeliveryConsumer(ctx, nc, js, cfg, tr, logg)
 
+	// Start POS event consumer (pos-service → order/payment notifications)
+	startPosConsumer(ctx, nc, js, cfg, tr, logg)
+
+	// Start ticketing event consumer (ticketing-service → ticket notifications)
+	startTicketingConsumer(ctx, nc, js, cfg, tr, logg)
+
+	// Start projects event consumer (projects-service → milestone notifications)
+	startProjectsConsumer(ctx, nc, js, cfg, tr, logg)
+
 	<-ctx.Done()
 	_ = nc.Drain()
 }

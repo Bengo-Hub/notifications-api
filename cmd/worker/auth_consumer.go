@@ -101,4 +101,68 @@ func startAuthNotificationConsumer(ctx context.Context, nc *nats.Conn, cfg *conf
 	}
 
 	logg.Info("auth notification consumer started", zap.String("subject", "auth.user.created"))
+
+	// Password reset email on reset request
+	// Auth-api publishes auth.user.password_reset.requested via plain NATS (outbox → conn.Publish)
+	_, err = nc.Subscribe("auth.user.password_reset.requested", func(m *nats.Msg) {
+		// Auth outbox publishes shared-events.Event envelope
+		var envelope struct {
+			Payload map[string]any `json:"payload"`
+		}
+		if err := json.Unmarshal(m.Data, &envelope); err != nil {
+			logg.Error("auth password reset: unmarshal failed", zap.Error(err))
+			return
+		}
+
+		payload := envelope.Payload
+		if payload == nil {
+			logg.Warn("auth password reset: no payload")
+			return
+		}
+
+		email, _ := payload["email"].(string)
+		if email == "" {
+			logg.Warn("auth password reset: no email in payload")
+			return
+		}
+
+		name, _ := payload["full_name"].(string)
+		if name == "" {
+			name = email
+		}
+
+		resetLink, _ := payload["reset_link"].(string)
+		if resetLink == "" {
+			resetLink = "https://accounts.codevertexitsolutions.com/reset-password"
+		}
+
+		tenantID, _ := payload["tenant_id"].(string)
+
+		msg := messaging.Message{
+			TenantID:   tenantID,
+			Channel:    "email",
+			TemplateID: "auth/password_reset",
+			To:         []string{email},
+			Data: map[string]any{
+				"name":       name,
+				"reset_link": resetLink,
+			},
+			Metadata: map[string]any{
+				"subject": "Reset your password",
+			},
+			RequestID:      uuid.New().String(),
+			IdempotencyKey: fmt.Sprintf("auth-password-reset-%s", payload["user_id"]),
+			QueuedAt:       time.Now(),
+		}
+
+		if _, err := messaging.Publish(ctx, nc, cfg.Events, msg); err != nil {
+			logg.Error("auth password reset: failed to dispatch email", zap.String("email", email), zap.Error(err))
+			return
+		}
+
+		logg.Info("password reset email dispatched", zap.String("to", email))
+	})
+	if err != nil {
+		logg.Warn("auth password reset consumer subscription failed", zap.Error(err))
+	}
 }

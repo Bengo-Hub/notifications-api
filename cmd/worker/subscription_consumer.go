@@ -96,6 +96,20 @@ var subscriptionMappings = map[string]subscriptionNotificationMapping{
 			}
 		},
 	},
+	"expiring": {
+		TemplateID:   "subscription/subscription_expiring",
+		EmailSubject: "Your subscription is expiring soon",
+		DataBuilder: func(payload map[string]any, tenantWebsite string) map[string]any {
+			return map[string]any{
+				"name":           "Admin",
+				"plan_name":      payload["plan_code"],
+				"expiry_date":    payload["expiry_date"],
+				"renewal_amount": payload["renewal_amount"],
+				"currency":       payload["currency"],
+				"action_link":    fmt.Sprintf("%s/settings/subscription", tenantWebsite),
+			}
+		},
+	},
 }
 
 // startSubscriptionConsumer subscribes to subscription.> events from the

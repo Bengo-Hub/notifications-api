@@ -59,6 +59,19 @@ var treasuryMappings = map[string]treasuryNotificationMapping{
 			}
 		},
 	},
+	"payment.created": {
+		TemplateID:   "finance/payment_receipt",
+		EmailSubject: "Payment receipt",
+		DataBuilder: func(payload map[string]any, tenantWebsite string) map[string]any {
+			return map[string]any{
+				"name":           "Customer",
+				"amount":         fmt.Sprintf("%s %s", payload["amount"], payload["currency"]),
+				"transaction_id": payload["intent_id"],
+				"payment_method": payload["payment_method"],
+				"receipt_link":   fmt.Sprintf("%s/payments", tenantWebsite),
+			}
+		},
+	},
 	"payout.completed": {
 		TemplateID:   "finance/payout_completed",
 		EmailSubject: "Your payout has been processed",
