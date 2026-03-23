@@ -10,6 +10,7 @@ import (
 
 	"github.com/bengobox/notifications-api/internal/ent"
 	"github.com/bengobox/notifications-api/internal/ent/providersetting"
+	enttenant "github.com/bengobox/notifications-api/internal/ent/tenant"
 	"github.com/bengobox/notifications-api/internal/encryption"
 	"github.com/bengobox/notifications-api/internal/providers"
 )
@@ -355,6 +356,46 @@ func (h *PlatformProviders) RegisterPlatformProviderRoutes(r chi.Router) {
 	r.Post("/providers/{id}/test", h.TestProvider)
 	r.Delete("/providers/{id}", h.DeactivateProvider)
 	r.Get("/providers/settings", h.GetPlatformProviderSettings)
+	r.Get("/tenants", h.ListTenants)
+}
+
+type tenantListItem struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	Slug string `json:"slug"`
+}
+
+// ListTenants returns all active tenants (id, name, slug) for platform owners.
+// @Summary List all tenants
+// @Description Returns a lightweight list of active tenants for use in selectors (e.g. test-send tenant picker).
+// @Tags Platform
+// @Produce json
+// @Success 200 {array} tenantListItem
+// @Failure 500 {object} errorResponse
+// @Security bearerAuth
+// @Router /platform/tenants [get]
+func (h *PlatformProviders) ListTenants(w http.ResponseWriter, r *http.Request) {
+	tenants, err := h.client.Tenant.Query().
+		Where(enttenant.StatusEQ("active")).
+		Order(enttenant.ByName()).
+		All(r.Context())
+	if err != nil {
+		h.logger.Error("failed to list tenants", zap.Error(err))
+		jsonError(w, http.StatusInternalServerError, "failed to list tenants")
+		return
+	}
+
+	items := make([]tenantListItem, len(tenants))
+	for i, t := range tenants {
+		items[i] = tenantListItem{
+			ID:   t.ID.String(),
+			Name: t.Name,
+			Slug: t.Slug,
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(items)
 }
 
 // GetPlatformProviderSettings returns the settings for a specific platform provider.

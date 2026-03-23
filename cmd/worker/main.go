@@ -241,6 +241,9 @@ func renderMessage(ctx context.Context, cfg *config.Config, tpl *templates.Loade
 			if t.ContactPhone != "" {
 				data["brand_phone"] = t.ContactPhone
 			}
+			if t.Website != "" {
+				data["brand_website"] = t.Website
+			}
 			if t.LogoURL != "" {
 				data["brand_logo_url"] = t.LogoURL
 			}
@@ -256,6 +259,11 @@ func renderMessage(ctx context.Context, cfg *config.Config, tpl *templates.Loade
 
 		if _, ok := data["brand_name"]; !ok || data["brand_name"] == "" {
 			data["brand_name"] = "Notifications"
+		}
+
+		// Auto-set sent_at if not provided by the caller
+		if _, ok := data["sent_at"]; !ok {
+			data["sent_at"] = time.Now().Format(time.RFC1123)
 		}
 
 		tplSet := template.New("base")
