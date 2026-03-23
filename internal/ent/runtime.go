@@ -17,6 +17,7 @@ import (
 	"github.com/bengobox/notifications-api/internal/ent/role"
 	"github.com/bengobox/notifications-api/internal/ent/schema"
 	"github.com/bengobox/notifications-api/internal/ent/serviceconfig"
+	"github.com/bengobox/notifications-api/internal/ent/template"
 	"github.com/bengobox/notifications-api/internal/ent/tenant"
 	"github.com/bengobox/notifications-api/internal/ent/tenantcredit"
 	"github.com/bengobox/notifications-api/internal/ent/user"
@@ -338,6 +339,52 @@ func init() {
 	serviceconfigDescID := serviceconfigFields[0].Descriptor()
 	// serviceconfig.DefaultID holds the default value on creation for the id field.
 	serviceconfig.DefaultID = serviceconfigDescID.Default.(func() uuid.UUID)
+	templateFields := schema.Template{}.Fields()
+	_ = templateFields
+	// templateDescName is the schema descriptor for name field.
+	templateDescName := templateFields[1].Descriptor()
+	// template.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	template.NameValidator = templateDescName.Validators[0].(func(string) error)
+	// templateDescChannel is the schema descriptor for channel field.
+	templateDescChannel := templateFields[2].Descriptor()
+	// template.ChannelValidator is a validator for the "channel" field. It is called by the builders before save.
+	template.ChannelValidator = templateDescChannel.Validators[0].(func(string) error)
+	// templateDescCategory is the schema descriptor for category field.
+	templateDescCategory := templateFields[3].Descriptor()
+	// template.DefaultCategory holds the default value on creation for the category field.
+	template.DefaultCategory = templateDescCategory.Default.(string)
+	// template.CategoryValidator is a validator for the "category" field. It is called by the builders before save.
+	template.CategoryValidator = templateDescCategory.Validators[0].(func(string) error)
+	// templateDescFilePath is the schema descriptor for file_path field.
+	templateDescFilePath := templateFields[5].Descriptor()
+	// template.FilePathValidator is a validator for the "file_path" field. It is called by the builders before save.
+	template.FilePathValidator = templateDescFilePath.Validators[0].(func(string) error)
+	// templateDescDescription is the schema descriptor for description field.
+	templateDescDescription := templateFields[6].Descriptor()
+	// template.DefaultDescription holds the default value on creation for the description field.
+	template.DefaultDescription = templateDescDescription.Default.(string)
+	// templateDescMimeType is the schema descriptor for mime_type field.
+	templateDescMimeType := templateFields[8].Descriptor()
+	// template.DefaultMimeType holds the default value on creation for the mime_type field.
+	template.DefaultMimeType = templateDescMimeType.Default.(string)
+	// templateDescIsActive is the schema descriptor for is_active field.
+	templateDescIsActive := templateFields[9].Descriptor()
+	// template.DefaultIsActive holds the default value on creation for the is_active field.
+	template.DefaultIsActive = templateDescIsActive.Default.(bool)
+	// templateDescCreatedAt is the schema descriptor for created_at field.
+	templateDescCreatedAt := templateFields[10].Descriptor()
+	// template.DefaultCreatedAt holds the default value on creation for the created_at field.
+	template.DefaultCreatedAt = templateDescCreatedAt.Default.(func() time.Time)
+	// templateDescUpdatedAt is the schema descriptor for updated_at field.
+	templateDescUpdatedAt := templateFields[11].Descriptor()
+	// template.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	template.DefaultUpdatedAt = templateDescUpdatedAt.Default.(func() time.Time)
+	// template.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	template.UpdateDefaultUpdatedAt = templateDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// templateDescID is the schema descriptor for id field.
+	templateDescID := templateFields[0].Descriptor()
+	// template.DefaultID holds the default value on creation for the id field.
+	template.DefaultID = templateDescID.Default.(func() uuid.UUID)
 	tenantFields := schema.Tenant{}.Fields()
 	_ = tenantFields
 	// tenantDescName is the schema descriptor for name field.

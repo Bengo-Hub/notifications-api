@@ -1,5 +1,6 @@
-h1:6fKjPqaSxkm8z13Cx0qlqL++dzyTQ59glk/s8TDZM8c=
+h1:SXQ0UzHklGFpRTysA+wO5AiCiBEfJvgy/cjs50PUokk=
 20260311180156_billing_sprint_init.sql h1:gkMT+MDZoIyzvPtcnje3ig6c5LOL3+IXsC0TQ0BHbvE=
 20260311185040_consolidate_tenant_branding.sql h1:q+wkVvf0N0lQ9JPeFATkqtUX34+zeE1MkhYFOUBpXfs=
 20260322072519_add_identity_rbac.sql h1:FABNFn9pQa3FfKmO1INir0u96sdb13nAIuyMOq5uWF4=
 20260322093443_add_rbac_rate_limit_service_config.sql h1:8PXTAIN7kcuKLOmPfyQ2vco5dNRB5VJh3pSdmcFU/jQ=
+20260323164403_add_templates_table.sql h1:ZHPd0AKF7Dshg3VFDLJBk5sduA9OUgakpIqdSJHkH4I=

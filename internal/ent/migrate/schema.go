@@ -3,6 +3,7 @@
 package migrate
 
 import (
+	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/dialect/sql/schema"
 	"entgo.io/ent/schema/field"
 )
@@ -391,6 +392,42 @@ var (
 			},
 		},
 	}
+	// TemplatesColumns holds the columns for the "templates" table.
+	TemplatesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "name", Type: field.TypeString},
+		{Name: "channel", Type: field.TypeString},
+		{Name: "category", Type: field.TypeString, Default: "general"},
+		{Name: "tags", Type: field.TypeJSON, Nullable: true},
+		{Name: "file_path", Type: field.TypeString},
+		{Name: "description", Type: field.TypeString, Nullable: true, Default: ""},
+		{Name: "variables", Type: field.TypeJSON, Nullable: true},
+		{Name: "mime_type", Type: field.TypeString, Default: "text/plain"},
+		{Name: "is_active", Type: field.TypeBool, Default: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// TemplatesTable holds the schema information for the "templates" table.
+	TemplatesTable = &schema.Table{
+		Name:       "templates",
+		Columns:    TemplatesColumns,
+		PrimaryKey: []*schema.Column{TemplatesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "template_channel_name",
+				Unique:  true,
+				Columns: []*schema.Column{TemplatesColumns[2], TemplatesColumns[1]},
+				Annotation: &entsql.IndexAnnotation{
+					Where: "is_active = true",
+				},
+			},
+			{
+				Name:    "template_channel_category",
+				Unique:  false,
+				Columns: []*schema.Column{TemplatesColumns[2], TemplatesColumns[3]},
+			},
+		},
+	}
 	// TenantsColumns holds the columns for the "tenants" table.
 	TenantsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -653,6 +690,7 @@ var (
 		RateLimitConfigsTable,
 		RolesTable,
 		ServiceConfigsTable,
+		TemplatesTable,
 		TenantsTable,
 		TenantCreditsTable,
 		UsersTable,

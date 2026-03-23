@@ -27,11 +27,13 @@ import (
 	handlers "github.com/bengobox/notifications-api/internal/http/handlers"
 	identityhandler "github.com/bengobox/notifications-api/internal/http/handlers/identity"
 	router "github.com/bengobox/notifications-api/internal/http/router"
+	sharedcache "github.com/Bengo-Hub/cache"
 	"github.com/bengobox/notifications-api/internal/modules/billing"
 	"github.com/bengobox/notifications-api/internal/modules/identity"
 	"github.com/bengobox/notifications-api/internal/modules/outbox"
 	"github.com/bengobox/notifications-api/internal/modules/rbac"
 	"github.com/bengobox/notifications-api/internal/modules/tenant"
+	templatesmod "github.com/bengobox/notifications-api/internal/modules/templates"
 	"github.com/bengobox/notifications-api/internal/platform/cache"
 	"github.com/bengobox/notifications-api/internal/platform/database"
 	"github.com/bengobox/notifications-api/internal/platform/events"
@@ -104,7 +106,13 @@ func New(ctx context.Context) (*App, error) {
 
 	healthHandler := handlers.NewHealthHandler(log, dbPool, redisClient, natsConn)
 	notificationHandler := handlers.NewNotificationHandler(log, natsConn, redisClient, cfg.Events, entClient, cfg.Services.SubscriptionsURL)
-	templateHandler := handlers.NewTemplateHandler(templateLoader, notificationHandler)
+	// Template repository backed by DB + Redis cache (2h TTL)
+	var templateCache *sharedcache.Aside
+	if redisClient != nil {
+		templateCache = sharedcache.New(redisClient, log)
+	}
+	templateRepo := templatesmod.NewRepository(entClient, templateCache)
+	templateHandler := handlers.NewTemplateHandler(templateLoader, templateRepo, notificationHandler)
 	providerManager := providers.NewManager(dbPool, cfg.Postgres, cfg.Providers, encryption.KeyFromEnv(cfg.Security.EncryptionKey), cfg.App.Env, platformIDStr)
 	platformProviders := handlers.NewPlatformProviders(entClient, log, encryption.KeyFromEnv(cfg.Security.EncryptionKey), providerManager)
 	tenantProviders := handlers.NewTenantProviders(entClient, log, platformIDStr)

@@ -1,0 +1,1 @@
+Your {{ or .brand_name "verification" }} code is {{ .otp }}. It expires in {{ .ttl_minutes }} minutes. Do not share this code with anyone.

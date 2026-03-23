@@ -1,0 +1,1 @@
+{{ or .brand_name "BengoBox" }}: Your delivery is arriving! Order {{ .order_id }}. ETA: {{ .estimated_arrival }}. Track here: {{ .tracking_link }}

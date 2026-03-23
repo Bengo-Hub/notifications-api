@@ -153,6 +153,18 @@ func (f ServiceConfigFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Valu
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ServiceConfigMutation", m)
 }
 
+// The TemplateFunc type is an adapter to allow the use of ordinary
+// function as Template mutator.
+type TemplateFunc func(context.Context, *ent.TemplateMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f TemplateFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.TemplateMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TemplateMutation", m)
+}
+
 // The TenantFunc type is an adapter to allow the use of ordinary
 // function as Tenant mutator.
 type TenantFunc func(context.Context, *ent.TenantMutation) (ent.Value, error)

@@ -28,6 +28,7 @@ import (
 	"github.com/bengobox/notifications-api/internal/ent/ratelimitconfig"
 	"github.com/bengobox/notifications-api/internal/ent/role"
 	"github.com/bengobox/notifications-api/internal/ent/serviceconfig"
+	"github.com/bengobox/notifications-api/internal/ent/template"
 	"github.com/bengobox/notifications-api/internal/ent/tenant"
 	"github.com/bengobox/notifications-api/internal/ent/tenantcredit"
 	"github.com/bengobox/notifications-api/internal/ent/user"
@@ -63,6 +64,8 @@ type Client struct {
 	Role *RoleClient
 	// ServiceConfig is the client for interacting with the ServiceConfig builders.
 	ServiceConfig *ServiceConfigClient
+	// Template is the client for interacting with the Template builders.
+	Template *TemplateClient
 	// Tenant is the client for interacting with the Tenant builders.
 	Tenant *TenantClient
 	// TenantCredit is the client for interacting with the TenantCredit builders.
@@ -94,6 +97,7 @@ func (c *Client) init() {
 	c.RateLimitConfig = NewRateLimitConfigClient(c.config)
 	c.Role = NewRoleClient(c.config)
 	c.ServiceConfig = NewServiceConfigClient(c.config)
+	c.Template = NewTemplateClient(c.config)
 	c.Tenant = NewTenantClient(c.config)
 	c.TenantCredit = NewTenantCreditClient(c.config)
 	c.User = NewUserClient(c.config)
@@ -202,6 +206,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		RateLimitConfig:            NewRateLimitConfigClient(cfg),
 		Role:                       NewRoleClient(cfg),
 		ServiceConfig:              NewServiceConfigClient(cfg),
+		Template:                   NewTemplateClient(cfg),
 		Tenant:                     NewTenantClient(cfg),
 		TenantCredit:               NewTenantCreditClient(cfg),
 		User:                       NewUserClient(cfg),
@@ -237,6 +242,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		RateLimitConfig:            NewRateLimitConfigClient(cfg),
 		Role:                       NewRoleClient(cfg),
 		ServiceConfig:              NewServiceConfigClient(cfg),
+		Template:                   NewTemplateClient(cfg),
 		Tenant:                     NewTenantClient(cfg),
 		TenantCredit:               NewTenantCreditClient(cfg),
 		User:                       NewUserClient(cfg),
@@ -273,7 +279,8 @@ func (c *Client) Use(hooks ...Hook) {
 		c.CreditTransaction, c.DeliveryLog, c.NotificationPermission,
 		c.NotificationRole, c.NotificationRolePermission, c.OutboxEvent, c.Permission,
 		c.PlatformBilling, c.ProviderSetting, c.RateLimitConfig, c.Role,
-		c.ServiceConfig, c.Tenant, c.TenantCredit, c.User, c.UserRoleAssignment,
+		c.ServiceConfig, c.Template, c.Tenant, c.TenantCredit, c.User,
+		c.UserRoleAssignment,
 	} {
 		n.Use(hooks...)
 	}
@@ -286,7 +293,8 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 		c.CreditTransaction, c.DeliveryLog, c.NotificationPermission,
 		c.NotificationRole, c.NotificationRolePermission, c.OutboxEvent, c.Permission,
 		c.PlatformBilling, c.ProviderSetting, c.RateLimitConfig, c.Role,
-		c.ServiceConfig, c.Tenant, c.TenantCredit, c.User, c.UserRoleAssignment,
+		c.ServiceConfig, c.Template, c.Tenant, c.TenantCredit, c.User,
+		c.UserRoleAssignment,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -319,6 +327,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Role.mutate(ctx, m)
 	case *ServiceConfigMutation:
 		return c.ServiceConfig.mutate(ctx, m)
+	case *TemplateMutation:
+		return c.Template.mutate(ctx, m)
 	case *TenantMutation:
 		return c.Tenant.mutate(ctx, m)
 	case *TenantCreditMutation:
@@ -2088,6 +2098,139 @@ func (c *ServiceConfigClient) mutate(ctx context.Context, m *ServiceConfigMutati
 	}
 }
 
+// TemplateClient is a client for the Template schema.
+type TemplateClient struct {
+	config
+}
+
+// NewTemplateClient returns a client for the Template from the given config.
+func NewTemplateClient(c config) *TemplateClient {
+	return &TemplateClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `template.Hooks(f(g(h())))`.
+func (c *TemplateClient) Use(hooks ...Hook) {
+	c.hooks.Template = append(c.hooks.Template, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `template.Intercept(f(g(h())))`.
+func (c *TemplateClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Template = append(c.inters.Template, interceptors...)
+}
+
+// Create returns a builder for creating a Template entity.
+func (c *TemplateClient) Create() *TemplateCreate {
+	mutation := newTemplateMutation(c.config, OpCreate)
+	return &TemplateCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Template entities.
+func (c *TemplateClient) CreateBulk(builders ...*TemplateCreate) *TemplateCreateBulk {
+	return &TemplateCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *TemplateClient) MapCreateBulk(slice any, setFunc func(*TemplateCreate, int)) *TemplateCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &TemplateCreateBulk{err: fmt.Errorf("calling to TemplateClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*TemplateCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &TemplateCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Template.
+func (c *TemplateClient) Update() *TemplateUpdate {
+	mutation := newTemplateMutation(c.config, OpUpdate)
+	return &TemplateUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *TemplateClient) UpdateOne(t *Template) *TemplateUpdateOne {
+	mutation := newTemplateMutation(c.config, OpUpdateOne, withTemplate(t))
+	return &TemplateUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *TemplateClient) UpdateOneID(id uuid.UUID) *TemplateUpdateOne {
+	mutation := newTemplateMutation(c.config, OpUpdateOne, withTemplateID(id))
+	return &TemplateUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Template.
+func (c *TemplateClient) Delete() *TemplateDelete {
+	mutation := newTemplateMutation(c.config, OpDelete)
+	return &TemplateDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *TemplateClient) DeleteOne(t *Template) *TemplateDeleteOne {
+	return c.DeleteOneID(t.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *TemplateClient) DeleteOneID(id uuid.UUID) *TemplateDeleteOne {
+	builder := c.Delete().Where(template.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &TemplateDeleteOne{builder}
+}
+
+// Query returns a query builder for Template.
+func (c *TemplateClient) Query() *TemplateQuery {
+	return &TemplateQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeTemplate},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Template entity by its id.
+func (c *TemplateClient) Get(ctx context.Context, id uuid.UUID) (*Template, error) {
+	return c.Query().Where(template.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *TemplateClient) GetX(ctx context.Context, id uuid.UUID) *Template {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *TemplateClient) Hooks() []Hook {
+	return c.hooks.Template
+}
+
+// Interceptors returns the client interceptors.
+func (c *TemplateClient) Interceptors() []Interceptor {
+	return c.inters.Template
+}
+
+func (c *TemplateClient) mutate(ctx context.Context, m *TemplateMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&TemplateCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&TemplateUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&TemplateUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&TemplateDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Template mutation op: %q", m.Op())
+	}
+}
+
 // TenantClient is a client for the Tenant schema.
 type TenantClient struct {
 	config
@@ -2705,13 +2848,13 @@ type (
 	hooks struct {
 		CreditTransaction, DeliveryLog, NotificationPermission, NotificationRole,
 		NotificationRolePermission, OutboxEvent, Permission, PlatformBilling,
-		ProviderSetting, RateLimitConfig, Role, ServiceConfig, Tenant, TenantCredit,
-		User, UserRoleAssignment []ent.Hook
+		ProviderSetting, RateLimitConfig, Role, ServiceConfig, Template, Tenant,
+		TenantCredit, User, UserRoleAssignment []ent.Hook
 	}
 	inters struct {
 		CreditTransaction, DeliveryLog, NotificationPermission, NotificationRole,
 		NotificationRolePermission, OutboxEvent, Permission, PlatformBilling,
-		ProviderSetting, RateLimitConfig, Role, ServiceConfig, Tenant, TenantCredit,
-		User, UserRoleAssignment []ent.Interceptor
+		ProviderSetting, RateLimitConfig, Role, ServiceConfig, Template, Tenant,
+		TenantCredit, User, UserRoleAssignment []ent.Interceptor
 	}
 )

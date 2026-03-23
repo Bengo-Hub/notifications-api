@@ -53,6 +53,12 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 		api.Get("/readyz", health.Readiness)
 		api.Get("/metrics", health.Metrics)
 
+		// Templates — public platform-wide resource (no authentication required)
+		api.Route("/templates", func(tmpl chi.Router) {
+			tmpl.Get("/", templates.List)
+			tmpl.Get("/*", templates.Get)
+		})
+
 		// Protected routes - require authentication
 		// NOTE: Notifications is a core service included in all subscription plans for free.
 		// No RequireActiveSubscription — subscription enforcement is NOT applied.
@@ -147,28 +153,6 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 						notif.Use(ratelimitmw.RequireRateLimit(rateLimiter, "max_emails_per_day"))
 					}
 					notif.Post("/messages", notifications.Enqueue)
-				})
-
-				tenantRouter.Route("/templates", func(tmpl chi.Router) {
-					tmpl.Group(func(read chi.Router) {
-						if authenticator != nil {
-							read.Use(authenticator.RequirePermissions(identity.PermTemplatesRead))
-						}
-						read.Get("/", templates.List)
-						read.Get("/*", templates.Get)
-					})
-					tmpl.Group(func(write chi.Router) {
-						if authenticator != nil {
-							write.Use(authenticator.RequirePermissions(identity.PermTemplatesManage))
-						}
-						write.Put("/*", templates.Update)
-					})
-					tmpl.Group(func(test chi.Router) {
-						if authenticator != nil {
-							test.Use(authenticator.RequirePermissions(identity.PermTemplatesTest))
-						}
-						test.Post("/*", templates.TestSend)
-					})
 				})
 
 				// Tenant provider selection + branding

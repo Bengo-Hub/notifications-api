@@ -16,15 +16,15 @@ const namespace = ""
 // Without empty tags, envconfig adds field names to prefix, e.g., Postgres.URL becomes POSTGRES_POSTGRES_URL.
 // With empty tags, it becomes POSTGRES_URL as expected.
 type Config struct {
-	App       AppConfig       `envconfig:""`
-	HTTP      HTTPConfig      `envconfig:""`
-	Postgres  PostgresConfig  `envconfig:""`
-	Redis     RedisConfig     `envconfig:""`
-	Events    EventsConfig    `envconfig:""`
-	Providers ProviderConfig  `envconfig:""`
-	Templates TemplateConfig  `envconfig:""`
-	Security  SecurityConfig  `envconfig:""`
-	Services  ServicesConfig  `envconfig:""`
+	App       AppConfig      `envconfig:""`
+	HTTP      HTTPConfig     `envconfig:""`
+	Postgres  PostgresConfig `envconfig:""`
+	Redis     RedisConfig    `envconfig:""`
+	Events    EventsConfig   `envconfig:""`
+	Providers ProviderConfig `envconfig:""`
+	Templates TemplateConfig `envconfig:""`
+	Security  SecurityConfig `envconfig:""`
+	Services  ServicesConfig `envconfig:""`
 }
 
 type ServicesConfig struct {

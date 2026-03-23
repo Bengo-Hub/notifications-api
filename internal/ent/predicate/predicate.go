@@ -42,6 +42,9 @@ type Role func(*sql.Selector)
 // ServiceConfig is the predicate function for serviceconfig builders.
 type ServiceConfig func(*sql.Selector)
 
+// Template is the predicate function for template builders.
+type Template func(*sql.Selector)
+
 // Tenant is the predicate function for tenant builders.
 type Tenant func(*sql.Selector)
 

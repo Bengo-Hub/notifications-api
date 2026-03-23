@@ -24,6 +24,7 @@ import (
 	"github.com/bengobox/notifications-api/internal/ent/ratelimitconfig"
 	"github.com/bengobox/notifications-api/internal/ent/role"
 	"github.com/bengobox/notifications-api/internal/ent/serviceconfig"
+	"github.com/bengobox/notifications-api/internal/ent/template"
 	"github.com/bengobox/notifications-api/internal/ent/tenant"
 	"github.com/bengobox/notifications-api/internal/ent/tenantcredit"
 	"github.com/bengobox/notifications-api/internal/ent/user"
@@ -100,6 +101,7 @@ func checkColumn(table, column string) error {
 			ratelimitconfig.Table:            ratelimitconfig.ValidColumn,
 			role.Table:                       role.ValidColumn,
 			serviceconfig.Table:              serviceconfig.ValidColumn,
+			template.Table:                   template.ValidColumn,
 			tenant.Table:                     tenant.ValidColumn,
 			tenantcredit.Table:               tenantcredit.ValidColumn,
 			user.Table:                       user.ValidColumn,

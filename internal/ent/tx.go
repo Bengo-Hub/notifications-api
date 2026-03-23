@@ -36,6 +36,8 @@ type Tx struct {
 	Role *RoleClient
 	// ServiceConfig is the client for interacting with the ServiceConfig builders.
 	ServiceConfig *ServiceConfigClient
+	// Template is the client for interacting with the Template builders.
+	Template *TemplateClient
 	// Tenant is the client for interacting with the Tenant builders.
 	Tenant *TenantClient
 	// TenantCredit is the client for interacting with the TenantCredit builders.
@@ -187,6 +189,7 @@ func (tx *Tx) init() {
 	tx.RateLimitConfig = NewRateLimitConfigClient(tx.config)
 	tx.Role = NewRoleClient(tx.config)
 	tx.ServiceConfig = NewServiceConfigClient(tx.config)
+	tx.Template = NewTemplateClient(tx.config)
 	tx.Tenant = NewTenantClient(tx.config)
 	tx.TenantCredit = NewTenantCreditClient(tx.config)
 	tx.User = NewUserClient(tx.config)

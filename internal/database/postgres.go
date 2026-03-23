@@ -35,12 +35,20 @@ func NewClient(ctx context.Context, cfg config.PostgresConfig) (*ent.Client, err
 	return client, nil
 }
 
-// RunMigrations executes Ent schema migrations.
+// RunMigrations executes Ent schema migrations idempotently.
+// Tries Atlas versioned migrations first; falls back to Ent auto-migrate if Dir is unavailable.
 func RunMigrations(ctx context.Context, client *ent.Client) error {
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer cancel()
-	if err := client.Schema.Create(ctx, schema.WithDir(migrate.Dir)); err != nil {
-		return fmt.Errorf("run migrations: %w", err)
+	if migrate.Dir != nil {
+		if err := client.Schema.Create(ctx, schema.WithDir(migrate.Dir)); err != nil {
+			return fmt.Errorf("run versioned migrations: %w", err)
+		}
+		return nil
+	}
+	// Fallback: Ent auto-migrate (creates/alters tables to match schemas)
+	if err := client.Schema.Create(ctx); err != nil {
+		return fmt.Errorf("run auto migrations: %w", err)
 	}
 	return nil
 }

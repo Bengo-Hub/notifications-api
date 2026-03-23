@@ -1,0 +1,1 @@
+{{ or .brand_name "BengoBox" }}: Your order {{ .order_id }} has been delivered! We hope you enjoy it. {{ if .feedback_link }}Share your feedback: {{ .feedback_link }}{{ end }}

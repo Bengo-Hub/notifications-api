@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/bengobox/notifications-api/internal/config"
 )
+
+var varRegex = regexp.MustCompile(`\{\{\s*(?:or\s+)?\.(\w+)`)
 
 // Loader caches compiled templates in-memory with TTL invalidation.
 type Loader struct {
@@ -98,7 +101,7 @@ func (l *Loader) Write(_ context.Context, channel, id, content string) error {
 	}
 	channel = strings.ToLower(channel)
 	switch channel {
-	case "email", "sms", "push":
+	case "email", "sms", "push", "whatsapp":
 	default:
 		return fmt.Errorf("invalid channel: %s", channel)
 	}
@@ -127,11 +130,39 @@ func (l *Loader) Write(_ context.Context, channel, id, content string) error {
 	return nil
 }
 
+// Directory returns the configured template base directory.
+func (l *Loader) Directory() string { return l.cfg.Directory }
+
+// ExtractVariables parses Go template content and returns unique variable names.
+func ExtractVariables(content string) []string {
+	seen := make(map[string]bool)
+	var vars []string
+	for _, m := range varRegex.FindAllStringSubmatch(content, -1) {
+		if len(m) > 1 && !seen[m[1]] {
+			seen[m[1]] = true
+			vars = append(vars, m[1])
+		}
+	}
+	return vars
+}
+
+// MimeTypeForExt returns the MIME type for a template file extension.
+func MimeTypeForExt(ext string) string {
+	switch strings.ToLower(ext) {
+	case ".html", ".mjml":
+		return "text/html"
+	case ".json":
+		return "application/json"
+	default:
+		return "text/plain"
+	}
+}
+
 // List scans the templates directory and returns available templates.
 func (l *Loader) List(_ context.Context) ([]Summary, error) {
 	var out []Summary
 	base := l.cfg.Directory
-	channels := []string{"email", "sms", "push"}
+	channels := []string{"email", "sms", "push", "whatsapp"}
 	exts := map[string]bool{".html": true, ".txt": true, ".mjml": true, ".json": true}
 
 	for _, ch := range channels {

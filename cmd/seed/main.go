@@ -8,9 +8,13 @@ import (
 	"os"
 	"strings"
 
+	"path/filepath"
+	"regexp"
+
 	"github.com/bengobox/notifications-api/internal/config"
 	"github.com/bengobox/notifications-api/internal/database"
 	"github.com/bengobox/notifications-api/internal/ent"
+	enttemplate "github.com/bengobox/notifications-api/internal/ent/template"
 	"github.com/bengobox/notifications-api/internal/ent/notificationpermission"
 	"github.com/bengobox/notifications-api/internal/ent/notificationrole"
 	"github.com/bengobox/notifications-api/internal/ent/providersetting"
@@ -94,6 +98,9 @@ func main() {
 
 	// ── Phase 6: Service configs ────────────────────────────────────────
 	seedServiceConfigs(ctx, client)
+
+	// ── Phase 7: Templates — scan filesystem and seed into DB ───────────
+	seedTemplates(ctx, client, cfg.Templates.Directory)
 
 	// Optionally seed platform admin user
 	if adminUserID := os.Getenv("SEED_PLATFORM_ADMIN_USER_ID"); adminUserID != "" {
@@ -788,4 +795,132 @@ func seedPlatformAdmin(ctx context.Context, client *ent.Client, syncer *tenantmo
 			Exec(ctx)
 		fmt.Printf("  platform admin assigned notifications_admin role\n")
 	}
+}
+
+// templateVarRegex extracts Go template variable names from content.
+var templateVarRegex = regexp.MustCompile(`\{\{\s*(?:or\s+)?\.(\w+)`)
+
+// extractTemplateVars parses Go template content and returns unique variable names.
+func extractTemplateVars(content string) []string {
+	seen := make(map[string]bool)
+	var vars []string
+	for _, m := range templateVarRegex.FindAllStringSubmatch(content, -1) {
+		if len(m) > 1 && !seen[m[1]] {
+			seen[m[1]] = true
+			vars = append(vars, m[1])
+		}
+	}
+	if vars == nil {
+		return []string{}
+	}
+	return vars
+}
+
+// mimeForExt returns the MIME type for a template file extension.
+func mimeForExt(ext string) string {
+	switch strings.ToLower(ext) {
+	case ".html", ".mjml":
+		return "text/html"
+	case ".json":
+		return "application/json"
+	default:
+		return "text/plain"
+	}
+}
+
+// seedTemplates scans the templates directory and upserts metadata into the DB.
+func seedTemplates(ctx context.Context, client *ent.Client, templatesDir string) {
+	fmt.Println("  seeding templates...")
+
+	if templatesDir == "" {
+		templatesDir = "./templates"
+	}
+
+	channels := []string{"email", "sms", "push", "whatsapp"}
+	validExts := map[string]bool{".html": true, ".txt": true, ".mjml": true, ".json": true}
+	seeded := 0
+
+	for _, ch := range channels {
+		dir := filepath.Join(templatesDir, ch)
+		_ = filepath.WalkDir(dir, func(path string, d os.DirEntry, err error) error {
+			if err != nil || d.IsDir() {
+				return nil
+			}
+			ext := strings.ToLower(filepath.Ext(d.Name()))
+			if !validExts[ext] {
+				return nil
+			}
+
+			// Relative path from channel dir: e.g. "auth/welcome.html"
+			rel, err := filepath.Rel(dir, path)
+			if err != nil {
+				return nil
+			}
+			rel = filepath.ToSlash(rel)
+
+			// name = file stem without extension (e.g. "welcome")
+			name := strings.TrimSuffix(filepath.Base(rel), ext)
+
+			// category = first subdirectory, or "general" if at channel root
+			parts := strings.Split(rel, "/")
+			category := "general"
+			var tags []string
+			if len(parts) > 1 {
+				category = parts[0]
+				tags = parts[:len(parts)-1]
+			}
+			if tags == nil {
+				tags = []string{}
+			}
+
+			// file_path relative to templates root: e.g. "email/auth/welcome.html"
+			filePath := ch + "/" + rel
+
+			// Read content to extract variables
+			content, readErr := os.ReadFile(path)
+			var variables []string
+			if readErr == nil {
+				variables = extractTemplateVars(string(content))
+			} else {
+				variables = []string{}
+			}
+
+			mimeType := mimeForExt(ext)
+
+			// Upsert: create or update on (channel, name) conflict
+			existing, _ := client.Template.Query().
+				Where(
+					enttemplate.Channel(ch),
+					enttemplate.Name(name),
+				).Only(ctx)
+
+			if existing != nil {
+				_, _ = existing.Update().
+					SetCategory(category).
+					SetTags(tags).
+					SetFilePath(filePath).
+					SetVariables(variables).
+					SetMimeType(mimeType).
+					Save(ctx)
+			} else {
+				err := client.Template.Create().
+					SetName(name).
+					SetChannel(ch).
+					SetCategory(category).
+					SetTags(tags).
+					SetFilePath(filePath).
+					SetVariables(variables).
+					SetMimeType(mimeType).
+					SetIsActive(true).
+					Exec(ctx)
+				if err != nil {
+					fmt.Printf("    ! template %s/%s: %v\n", ch, name, err)
+					return nil
+				}
+			}
+			seeded++
+			return nil
+		})
+	}
+	fmt.Printf("    templates seeded: %d\n", seeded)
 }

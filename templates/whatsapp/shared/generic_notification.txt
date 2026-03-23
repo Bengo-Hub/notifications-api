@@ -1,0 +1,1 @@
+{{ or .brand_name "Codevertex" }}: {{ if .title }}*{{ .title }}*. {{ end }}{{ .message }}{{ if .action_link }} View: {{ .action_link }}{{ end }}
