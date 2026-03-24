@@ -2,20 +2,19 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/redis/go-redis/v9"
 
+	cache "github.com/Bengo-Hub/cache"
 	"github.com/bengobox/notifications-api/internal/ent"
 	enttenant "github.com/bengobox/notifications-api/internal/ent/tenant"
 )
 
 // tenantInfo holds the subset of tenant data needed by event consumers.
 // Branding fields (ContactEmail, Phone, Website, Logo, Colors) come from
-// Redis-cached auth-api data, not from the local DB.
+// Redis-cached auth-api data via the shared cache library, not from the local DB.
 type tenantInfo struct {
 	ID             uuid.UUID
 	Name           string
@@ -30,12 +29,13 @@ type tenantInfo struct {
 
 // tenantResolver resolves tenant details from local DB + Redis-cached auth-api data.
 type tenantResolver struct {
-	client *ent.Client
-	rdb    *redis.Client
+	client  *ent.Client
+	cache   *cache.Aside
+	authURL string
 }
 
-func newTenantResolver(client *ent.Client, rdb *redis.Client) *tenantResolver {
-	return &tenantResolver{client: client, rdb: rdb}
+func newTenantResolver(client *ent.Client, c *cache.Aside, authURL string) *tenantResolver {
+	return &tenantResolver{client: client, cache: c, authURL: authURL}
 }
 
 // resolve looks up tenant by ID string and returns basic info + cached branding.
@@ -58,7 +58,7 @@ func (r *tenantResolver) resolve(ctx context.Context, tenantID string) (*tenantI
 		Slug: t.Slug,
 	}
 
-	// Enrich with branding from Redis-cached auth-api data
+	// Enrich with branding from Redis-cached auth-api data (cache-aside pattern)
 	r.enrichFromCache(ctx, info)
 
 	return info, nil
@@ -71,41 +71,25 @@ func (r *tenantResolver) resolveWithBranding(ctx context.Context, tenantID strin
 }
 
 // enrichFromCache populates branding fields from Redis-cached auth-api tenant data.
-// Cache key: "tenant:{slug}" — set by auth-api with JWT TTL.
+// Uses the shared cache library's cache-aside pattern: on cache miss, it automatically
+// fetches from auth-api and populates Redis with TTL aligned to JWT lifetime.
 func (r *tenantResolver) enrichFromCache(ctx context.Context, info *tenantInfo) {
-	if r.rdb == nil || info.Slug == "" {
+	if r.cache == nil || info.Slug == "" || r.authURL == "" {
 		return
 	}
 
-	key := "tenant:" + info.Slug
-	data, err := r.rdb.Get(ctx, key).Bytes()
+	details, err := cache.GetTenantDetails(ctx, r.cache, r.authURL, info.Slug, cache.DefaultTenantTTL)
 	if err != nil {
-		return // cache miss is not an error
+		return // cache miss + fetch failure is not fatal
 	}
 
-	var cached struct {
-		ContactEmail string         `json:"contact_email"`
-		ContactPhone string         `json:"contact_phone"`
-		Website      string         `json:"website"`
-		LogoURL      string         `json:"logo_url"`
-		BrandColors  map[string]any `json:"brand_colors"`
-	}
-	if err := json.Unmarshal(data, &cached); err != nil {
-		return
-	}
-
-	info.ContactEmail = cached.ContactEmail
-	info.ContactPhone = cached.ContactPhone
-	info.Website = normalizeWebsite(cached.Website)
-	info.LogoURL = cached.LogoURL
-	if cached.BrandColors != nil {
-		if v, ok := cached.BrandColors["primary"].(string); ok {
-			info.PrimaryColor = v
-		}
-		if v, ok := cached.BrandColors["secondary"].(string); ok {
-			info.SecondaryColor = v
-		}
-	}
+	branding := cache.GetTenantBranding(details)
+	info.ContactEmail = details.ContactEmail
+	info.ContactPhone = details.ContactPhone
+	info.Website = normalizeWebsite(details.Website)
+	info.LogoURL = branding.LogoURL
+	info.PrimaryColor = branding.PrimaryColor
+	info.SecondaryColor = branding.SecondaryColor
 }
 
 // normalizeWebsite ensures the website has a scheme and no trailing slash.

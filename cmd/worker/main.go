@@ -15,6 +15,9 @@ import (
 
 	"github.com/google/uuid"
 
+	sharedcache "github.com/Bengo-Hub/cache"
+	serviceclient "github.com/Bengo-Hub/shared-service-client"
+
 	entdb "github.com/bengobox/notifications-api/internal/database"
 	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
@@ -31,7 +34,6 @@ import (
 
 	"github.com/bengobox/notifications-api/internal/modules/billing"
 	"github.com/bengobox/notifications-api/internal/modules/tenant"
-	"github.com/Bengo-Hub/shared-service-client"
 )
 
 const maxRetries = 3
@@ -111,8 +113,11 @@ func main() {
 	// Redis for cached auth-api tenant data (branding, contact info)
 	redisClient := cache.NewClient(cfg.Redis)
 
+	// Shared cache-aside helper for tenant branding (auto-fetches from auth-api on miss)
+	tenantCache := sharedcache.New(redisClient, logg)
+
 	// Tenant resolver for event consumers and template branding
-	tr := newTenantResolver(client, redisClient)
+	tr := newTenantResolver(client, tenantCache, cfg.Services.AuthAPI)
 
 	_, err = js.Subscribe(subject, func(m *nats.Msg) {
 		var msg messaging.Message
