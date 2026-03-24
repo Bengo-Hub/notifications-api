@@ -90,6 +90,47 @@ var orderMappings = map[string]orderNotificationMapping{
 			}
 		},
 	},
+	"ordering.order.refunded": {
+		TemplateID:   "email/ordering/order_refunded",
+		EmailSubject: "Your refund has been processed",
+		DataBuilder: func(data map[string]interface{}, tenantWebsite string) map[string]interface{} {
+			return map[string]interface{}{
+				"name":         data["customer_name"],
+				"order_number": data["order_number"],
+				"amount":       data["total_amount"],
+				"currency":     data["currency"],
+				"reason":       data["reason"],
+				"order_link":   fmt.Sprintf("%s/orders/%s", tenantWebsite, data["order_id"]),
+			}
+		},
+	},
+	"ordering.order.scheduled": {
+		TemplateID:   "email/ordering/order_scheduled",
+		EmailSubject: "Your order has been scheduled",
+		DataBuilder: func(data map[string]interface{}, tenantWebsite string) map[string]interface{} {
+			return map[string]interface{}{
+				"name":          data["customer_name"],
+				"order_number":  data["order_number"],
+				"scheduled_for": data["scheduled_for"],
+				"total_amount":  data["total_amount"],
+				"currency":      data["currency"],
+				"order_link":    fmt.Sprintf("%s/orders/%s", tenantWebsite, data["order_id"]),
+			}
+		},
+	},
+	"ordering.order.for_pickup": {
+		TemplateID:   "email/ordering/order_for_pickup",
+		EmailSubject: "Your order is ready for pickup",
+		DataBuilder: func(data map[string]interface{}, tenantWebsite string) map[string]interface{} {
+			return map[string]interface{}{
+				"name":         data["customer_name"],
+				"order_number": data["order_number"],
+				"outlet_name":  data["outlet_name"],
+				"pickup_time":  data["pickup_time"],
+				"order_link":   fmt.Sprintf("%s/orders/%s", tenantWebsite, data["order_id"]),
+			}
+		},
+	},
 }
 
 // startOrderConsumer subscribes to ordering.order.> events and dispatches

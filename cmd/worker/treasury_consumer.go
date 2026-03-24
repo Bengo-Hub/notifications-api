@@ -86,6 +86,21 @@ var treasuryMappings = map[string]treasuryNotificationMapping{
 			}
 		},
 	},
+	"treasury.refund.completed": {
+		TemplateID:   "finance/refund_completed",
+		EmailSubject: "Your refund has been processed",
+		DataBuilder: func(payload map[string]any, tenantWebsite string) map[string]any {
+			return map[string]any{
+				"name":           payload["customer_name"],
+				"amount":         payload["amount"],
+				"currency":       payload["currency"],
+				"reference_type": payload["reference_type"],
+				"reference_id":   payload["reference_id"],
+				"reason":         payload["reason"],
+				"action_link":    fmt.Sprintf("%s/payments", tenantWebsite),
+			}
+		},
+	},
 }
 
 // startTreasuryConsumer subscribes to treasury.> events from the treasury-api
