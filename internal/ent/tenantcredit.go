@@ -55,7 +55,7 @@ func (*TenantCredit) scanValues(columns []string) ([]any, error) {
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the TenantCredit fields.
-func (tc *TenantCredit) assignValues(columns []string, values []any) error {
+func (_m *TenantCredit) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
@@ -65,46 +65,46 @@ func (tc *TenantCredit) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value != nil {
-				tc.ID = *value
+				_m.ID = *value
 			}
 		case tenantcredit.FieldTenantID:
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field tenant_id", values[i])
 			} else if value != nil {
-				tc.TenantID = *value
+				_m.TenantID = *value
 			}
 		case tenantcredit.FieldType:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field type", values[i])
 			} else if value.Valid {
-				tc.Type = tenantcredit.Type(value.String)
+				_m.Type = tenantcredit.Type(value.String)
 			}
 		case tenantcredit.FieldBalance:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
 				return fmt.Errorf("unexpected type %T for field balance", values[i])
 			} else if value.Valid {
-				tc.Balance = value.Float64
+				_m.Balance = value.Float64
 			}
 		case tenantcredit.FieldRate:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
 				return fmt.Errorf("unexpected type %T for field rate", values[i])
 			} else if value.Valid {
-				tc.Rate = value.Float64
+				_m.Rate = value.Float64
 			}
 		case tenantcredit.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
 			} else if value.Valid {
-				tc.CreatedAt = value.Time
+				_m.CreatedAt = value.Time
 			}
 		case tenantcredit.FieldUpdatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
-				tc.UpdatedAt = value.Time
+				_m.UpdatedAt = value.Time
 			}
 		default:
-			tc.selectValues.Set(columns[i], values[i])
+			_m.selectValues.Set(columns[i], values[i])
 		}
 	}
 	return nil
@@ -112,50 +112,50 @@ func (tc *TenantCredit) assignValues(columns []string, values []any) error {
 
 // Value returns the ent.Value that was dynamically selected and assigned to the TenantCredit.
 // This includes values selected through modifiers, order, etc.
-func (tc *TenantCredit) Value(name string) (ent.Value, error) {
-	return tc.selectValues.Get(name)
+func (_m *TenantCredit) Value(name string) (ent.Value, error) {
+	return _m.selectValues.Get(name)
 }
 
 // Update returns a builder for updating this TenantCredit.
 // Note that you need to call TenantCredit.Unwrap() before calling this method if this TenantCredit
 // was returned from a transaction, and the transaction was committed or rolled back.
-func (tc *TenantCredit) Update() *TenantCreditUpdateOne {
-	return NewTenantCreditClient(tc.config).UpdateOne(tc)
+func (_m *TenantCredit) Update() *TenantCreditUpdateOne {
+	return NewTenantCreditClient(_m.config).UpdateOne(_m)
 }
 
 // Unwrap unwraps the TenantCredit entity that was returned from a transaction after it was closed,
 // so that all future queries will be executed through the driver which created the transaction.
-func (tc *TenantCredit) Unwrap() *TenantCredit {
-	_tx, ok := tc.config.driver.(*txDriver)
+func (_m *TenantCredit) Unwrap() *TenantCredit {
+	_tx, ok := _m.config.driver.(*txDriver)
 	if !ok {
 		panic("ent: TenantCredit is not a transactional entity")
 	}
-	tc.config.driver = _tx.drv
-	return tc
+	_m.config.driver = _tx.drv
+	return _m
 }
 
 // String implements the fmt.Stringer.
-func (tc *TenantCredit) String() string {
+func (_m *TenantCredit) String() string {
 	var builder strings.Builder
 	builder.WriteString("TenantCredit(")
-	builder.WriteString(fmt.Sprintf("id=%v, ", tc.ID))
+	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("tenant_id=")
-	builder.WriteString(fmt.Sprintf("%v", tc.TenantID))
+	builder.WriteString(fmt.Sprintf("%v", _m.TenantID))
 	builder.WriteString(", ")
 	builder.WriteString("type=")
-	builder.WriteString(fmt.Sprintf("%v", tc.Type))
+	builder.WriteString(fmt.Sprintf("%v", _m.Type))
 	builder.WriteString(", ")
 	builder.WriteString("balance=")
-	builder.WriteString(fmt.Sprintf("%v", tc.Balance))
+	builder.WriteString(fmt.Sprintf("%v", _m.Balance))
 	builder.WriteString(", ")
 	builder.WriteString("rate=")
-	builder.WriteString(fmt.Sprintf("%v", tc.Rate))
+	builder.WriteString(fmt.Sprintf("%v", _m.Rate))
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
-	builder.WriteString(tc.CreatedAt.Format(time.ANSIC))
+	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
 	builder.WriteString("updated_at=")
-	builder.WriteString(tc.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString(_m.UpdatedAt.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()
 }

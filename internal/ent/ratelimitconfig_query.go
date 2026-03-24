@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math"
 
+	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -29,40 +30,40 @@ type RateLimitConfigQuery struct {
 }
 
 // Where adds a new predicate for the RateLimitConfigQuery builder.
-func (rlcq *RateLimitConfigQuery) Where(ps ...predicate.RateLimitConfig) *RateLimitConfigQuery {
-	rlcq.predicates = append(rlcq.predicates, ps...)
-	return rlcq
+func (_q *RateLimitConfigQuery) Where(ps ...predicate.RateLimitConfig) *RateLimitConfigQuery {
+	_q.predicates = append(_q.predicates, ps...)
+	return _q
 }
 
 // Limit the number of records to be returned by this query.
-func (rlcq *RateLimitConfigQuery) Limit(limit int) *RateLimitConfigQuery {
-	rlcq.ctx.Limit = &limit
-	return rlcq
+func (_q *RateLimitConfigQuery) Limit(limit int) *RateLimitConfigQuery {
+	_q.ctx.Limit = &limit
+	return _q
 }
 
 // Offset to start from.
-func (rlcq *RateLimitConfigQuery) Offset(offset int) *RateLimitConfigQuery {
-	rlcq.ctx.Offset = &offset
-	return rlcq
+func (_q *RateLimitConfigQuery) Offset(offset int) *RateLimitConfigQuery {
+	_q.ctx.Offset = &offset
+	return _q
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
-func (rlcq *RateLimitConfigQuery) Unique(unique bool) *RateLimitConfigQuery {
-	rlcq.ctx.Unique = &unique
-	return rlcq
+func (_q *RateLimitConfigQuery) Unique(unique bool) *RateLimitConfigQuery {
+	_q.ctx.Unique = &unique
+	return _q
 }
 
 // Order specifies how the records should be ordered.
-func (rlcq *RateLimitConfigQuery) Order(o ...ratelimitconfig.OrderOption) *RateLimitConfigQuery {
-	rlcq.order = append(rlcq.order, o...)
-	return rlcq
+func (_q *RateLimitConfigQuery) Order(o ...ratelimitconfig.OrderOption) *RateLimitConfigQuery {
+	_q.order = append(_q.order, o...)
+	return _q
 }
 
 // First returns the first RateLimitConfig entity from the query.
 // Returns a *NotFoundError when no RateLimitConfig was found.
-func (rlcq *RateLimitConfigQuery) First(ctx context.Context) (*RateLimitConfig, error) {
-	nodes, err := rlcq.Limit(1).All(setContextOp(ctx, rlcq.ctx, "First"))
+func (_q *RateLimitConfigQuery) First(ctx context.Context) (*RateLimitConfig, error) {
+	nodes, err := _q.Limit(1).All(setContextOp(ctx, _q.ctx, ent.OpQueryFirst))
 	if err != nil {
 		return nil, err
 	}
@@ -73,8 +74,8 @@ func (rlcq *RateLimitConfigQuery) First(ctx context.Context) (*RateLimitConfig, 
 }
 
 // FirstX is like First, but panics if an error occurs.
-func (rlcq *RateLimitConfigQuery) FirstX(ctx context.Context) *RateLimitConfig {
-	node, err := rlcq.First(ctx)
+func (_q *RateLimitConfigQuery) FirstX(ctx context.Context) *RateLimitConfig {
+	node, err := _q.First(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
 	}
@@ -83,9 +84,9 @@ func (rlcq *RateLimitConfigQuery) FirstX(ctx context.Context) *RateLimitConfig {
 
 // FirstID returns the first RateLimitConfig ID from the query.
 // Returns a *NotFoundError when no RateLimitConfig ID was found.
-func (rlcq *RateLimitConfigQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
+func (_q *RateLimitConfigQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
-	if ids, err = rlcq.Limit(1).IDs(setContextOp(ctx, rlcq.ctx, "FirstID")); err != nil {
+	if ids, err = _q.Limit(1).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
 	if len(ids) == 0 {
@@ -96,8 +97,8 @@ func (rlcq *RateLimitConfigQuery) FirstID(ctx context.Context) (id uuid.UUID, er
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (rlcq *RateLimitConfigQuery) FirstIDX(ctx context.Context) uuid.UUID {
-	id, err := rlcq.FirstID(ctx)
+func (_q *RateLimitConfigQuery) FirstIDX(ctx context.Context) uuid.UUID {
+	id, err := _q.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
 	}
@@ -107,8 +108,8 @@ func (rlcq *RateLimitConfigQuery) FirstIDX(ctx context.Context) uuid.UUID {
 // Only returns a single RateLimitConfig entity found by the query, ensuring it only returns one.
 // Returns a *NotSingularError when more than one RateLimitConfig entity is found.
 // Returns a *NotFoundError when no RateLimitConfig entities are found.
-func (rlcq *RateLimitConfigQuery) Only(ctx context.Context) (*RateLimitConfig, error) {
-	nodes, err := rlcq.Limit(2).All(setContextOp(ctx, rlcq.ctx, "Only"))
+func (_q *RateLimitConfigQuery) Only(ctx context.Context) (*RateLimitConfig, error) {
+	nodes, err := _q.Limit(2).All(setContextOp(ctx, _q.ctx, ent.OpQueryOnly))
 	if err != nil {
 		return nil, err
 	}
@@ -123,8 +124,8 @@ func (rlcq *RateLimitConfigQuery) Only(ctx context.Context) (*RateLimitConfig, e
 }
 
 // OnlyX is like Only, but panics if an error occurs.
-func (rlcq *RateLimitConfigQuery) OnlyX(ctx context.Context) *RateLimitConfig {
-	node, err := rlcq.Only(ctx)
+func (_q *RateLimitConfigQuery) OnlyX(ctx context.Context) *RateLimitConfig {
+	node, err := _q.Only(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -134,9 +135,9 @@ func (rlcq *RateLimitConfigQuery) OnlyX(ctx context.Context) *RateLimitConfig {
 // OnlyID is like Only, but returns the only RateLimitConfig ID in the query.
 // Returns a *NotSingularError when more than one RateLimitConfig ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (rlcq *RateLimitConfigQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
+func (_q *RateLimitConfigQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
-	if ids, err = rlcq.Limit(2).IDs(setContextOp(ctx, rlcq.ctx, "OnlyID")); err != nil {
+	if ids, err = _q.Limit(2).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
 	}
 	switch len(ids) {
@@ -151,8 +152,8 @@ func (rlcq *RateLimitConfigQuery) OnlyID(ctx context.Context) (id uuid.UUID, err
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (rlcq *RateLimitConfigQuery) OnlyIDX(ctx context.Context) uuid.UUID {
-	id, err := rlcq.OnlyID(ctx)
+func (_q *RateLimitConfigQuery) OnlyIDX(ctx context.Context) uuid.UUID {
+	id, err := _q.OnlyID(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -160,18 +161,18 @@ func (rlcq *RateLimitConfigQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 }
 
 // All executes the query and returns a list of RateLimitConfigs.
-func (rlcq *RateLimitConfigQuery) All(ctx context.Context) ([]*RateLimitConfig, error) {
-	ctx = setContextOp(ctx, rlcq.ctx, "All")
-	if err := rlcq.prepareQuery(ctx); err != nil {
+func (_q *RateLimitConfigQuery) All(ctx context.Context) ([]*RateLimitConfig, error) {
+	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryAll)
+	if err := _q.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
 	qr := querierAll[[]*RateLimitConfig, *RateLimitConfigQuery]()
-	return withInterceptors[[]*RateLimitConfig](ctx, rlcq, qr, rlcq.inters)
+	return withInterceptors[[]*RateLimitConfig](ctx, _q, qr, _q.inters)
 }
 
 // AllX is like All, but panics if an error occurs.
-func (rlcq *RateLimitConfigQuery) AllX(ctx context.Context) []*RateLimitConfig {
-	nodes, err := rlcq.All(ctx)
+func (_q *RateLimitConfigQuery) AllX(ctx context.Context) []*RateLimitConfig {
+	nodes, err := _q.All(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -179,20 +180,20 @@ func (rlcq *RateLimitConfigQuery) AllX(ctx context.Context) []*RateLimitConfig {
 }
 
 // IDs executes the query and returns a list of RateLimitConfig IDs.
-func (rlcq *RateLimitConfigQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
-	if rlcq.ctx.Unique == nil && rlcq.path != nil {
-		rlcq.Unique(true)
+func (_q *RateLimitConfigQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
+	if _q.ctx.Unique == nil && _q.path != nil {
+		_q.Unique(true)
 	}
-	ctx = setContextOp(ctx, rlcq.ctx, "IDs")
-	if err = rlcq.Select(ratelimitconfig.FieldID).Scan(ctx, &ids); err != nil {
+	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryIDs)
+	if err = _q.Select(ratelimitconfig.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (rlcq *RateLimitConfigQuery) IDsX(ctx context.Context) []uuid.UUID {
-	ids, err := rlcq.IDs(ctx)
+func (_q *RateLimitConfigQuery) IDsX(ctx context.Context) []uuid.UUID {
+	ids, err := _q.IDs(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -200,17 +201,17 @@ func (rlcq *RateLimitConfigQuery) IDsX(ctx context.Context) []uuid.UUID {
 }
 
 // Count returns the count of the given query.
-func (rlcq *RateLimitConfigQuery) Count(ctx context.Context) (int, error) {
-	ctx = setContextOp(ctx, rlcq.ctx, "Count")
-	if err := rlcq.prepareQuery(ctx); err != nil {
+func (_q *RateLimitConfigQuery) Count(ctx context.Context) (int, error) {
+	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryCount)
+	if err := _q.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
-	return withInterceptors[int](ctx, rlcq, querierCount[*RateLimitConfigQuery](), rlcq.inters)
+	return withInterceptors[int](ctx, _q, querierCount[*RateLimitConfigQuery](), _q.inters)
 }
 
 // CountX is like Count, but panics if an error occurs.
-func (rlcq *RateLimitConfigQuery) CountX(ctx context.Context) int {
-	count, err := rlcq.Count(ctx)
+func (_q *RateLimitConfigQuery) CountX(ctx context.Context) int {
+	count, err := _q.Count(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -218,9 +219,9 @@ func (rlcq *RateLimitConfigQuery) CountX(ctx context.Context) int {
 }
 
 // Exist returns true if the query has elements in the graph.
-func (rlcq *RateLimitConfigQuery) Exist(ctx context.Context) (bool, error) {
-	ctx = setContextOp(ctx, rlcq.ctx, "Exist")
-	switch _, err := rlcq.FirstID(ctx); {
+func (_q *RateLimitConfigQuery) Exist(ctx context.Context) (bool, error) {
+	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryExist)
+	switch _, err := _q.FirstID(ctx); {
 	case IsNotFound(err):
 		return false, nil
 	case err != nil:
@@ -231,8 +232,8 @@ func (rlcq *RateLimitConfigQuery) Exist(ctx context.Context) (bool, error) {
 }
 
 // ExistX is like Exist, but panics if an error occurs.
-func (rlcq *RateLimitConfigQuery) ExistX(ctx context.Context) bool {
-	exist, err := rlcq.Exist(ctx)
+func (_q *RateLimitConfigQuery) ExistX(ctx context.Context) bool {
+	exist, err := _q.Exist(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -241,19 +242,20 @@ func (rlcq *RateLimitConfigQuery) ExistX(ctx context.Context) bool {
 
 // Clone returns a duplicate of the RateLimitConfigQuery builder, including all associated steps. It can be
 // used to prepare common query builders and use them differently after the clone is made.
-func (rlcq *RateLimitConfigQuery) Clone() *RateLimitConfigQuery {
-	if rlcq == nil {
+func (_q *RateLimitConfigQuery) Clone() *RateLimitConfigQuery {
+	if _q == nil {
 		return nil
 	}
 	return &RateLimitConfigQuery{
-		config:     rlcq.config,
-		ctx:        rlcq.ctx.Clone(),
-		order:      append([]ratelimitconfig.OrderOption{}, rlcq.order...),
-		inters:     append([]Interceptor{}, rlcq.inters...),
-		predicates: append([]predicate.RateLimitConfig{}, rlcq.predicates...),
+		config:     _q.config,
+		ctx:        _q.ctx.Clone(),
+		order:      append([]ratelimitconfig.OrderOption{}, _q.order...),
+		inters:     append([]Interceptor{}, _q.inters...),
+		predicates: append([]predicate.RateLimitConfig{}, _q.predicates...),
 		// clone intermediate query.
-		sql:  rlcq.sql.Clone(),
-		path: rlcq.path,
+		sql:       _q.sql.Clone(),
+		path:      _q.path,
+		modifiers: append([]func(*sql.Selector){}, _q.modifiers...),
 	}
 }
 
@@ -271,10 +273,10 @@ func (rlcq *RateLimitConfigQuery) Clone() *RateLimitConfigQuery {
 //		GroupBy(ratelimitconfig.FieldServiceName).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-func (rlcq *RateLimitConfigQuery) GroupBy(field string, fields ...string) *RateLimitConfigGroupBy {
-	rlcq.ctx.Fields = append([]string{field}, fields...)
-	grbuild := &RateLimitConfigGroupBy{build: rlcq}
-	grbuild.flds = &rlcq.ctx.Fields
+func (_q *RateLimitConfigQuery) GroupBy(field string, fields ...string) *RateLimitConfigGroupBy {
+	_q.ctx.Fields = append([]string{field}, fields...)
+	grbuild := &RateLimitConfigGroupBy{build: _q}
+	grbuild.flds = &_q.ctx.Fields
 	grbuild.label = ratelimitconfig.Label
 	grbuild.scan = grbuild.Scan
 	return grbuild
@@ -292,65 +294,65 @@ func (rlcq *RateLimitConfigQuery) GroupBy(field string, fields ...string) *RateL
 //	client.RateLimitConfig.Query().
 //		Select(ratelimitconfig.FieldServiceName).
 //		Scan(ctx, &v)
-func (rlcq *RateLimitConfigQuery) Select(fields ...string) *RateLimitConfigSelect {
-	rlcq.ctx.Fields = append(rlcq.ctx.Fields, fields...)
-	sbuild := &RateLimitConfigSelect{RateLimitConfigQuery: rlcq}
+func (_q *RateLimitConfigQuery) Select(fields ...string) *RateLimitConfigSelect {
+	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
+	sbuild := &RateLimitConfigSelect{RateLimitConfigQuery: _q}
 	sbuild.label = ratelimitconfig.Label
-	sbuild.flds, sbuild.scan = &rlcq.ctx.Fields, sbuild.Scan
+	sbuild.flds, sbuild.scan = &_q.ctx.Fields, sbuild.Scan
 	return sbuild
 }
 
 // Aggregate returns a RateLimitConfigSelect configured with the given aggregations.
-func (rlcq *RateLimitConfigQuery) Aggregate(fns ...AggregateFunc) *RateLimitConfigSelect {
-	return rlcq.Select().Aggregate(fns...)
+func (_q *RateLimitConfigQuery) Aggregate(fns ...AggregateFunc) *RateLimitConfigSelect {
+	return _q.Select().Aggregate(fns...)
 }
 
-func (rlcq *RateLimitConfigQuery) prepareQuery(ctx context.Context) error {
-	for _, inter := range rlcq.inters {
+func (_q *RateLimitConfigQuery) prepareQuery(ctx context.Context) error {
+	for _, inter := range _q.inters {
 		if inter == nil {
 			return fmt.Errorf("ent: uninitialized interceptor (forgotten import ent/runtime?)")
 		}
 		if trv, ok := inter.(Traverser); ok {
-			if err := trv.Traverse(ctx, rlcq); err != nil {
+			if err := trv.Traverse(ctx, _q); err != nil {
 				return err
 			}
 		}
 	}
-	for _, f := range rlcq.ctx.Fields {
+	for _, f := range _q.ctx.Fields {
 		if !ratelimitconfig.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
 	}
-	if rlcq.path != nil {
-		prev, err := rlcq.path(ctx)
+	if _q.path != nil {
+		prev, err := _q.path(ctx)
 		if err != nil {
 			return err
 		}
-		rlcq.sql = prev
+		_q.sql = prev
 	}
 	return nil
 }
 
-func (rlcq *RateLimitConfigQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*RateLimitConfig, error) {
+func (_q *RateLimitConfigQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*RateLimitConfig, error) {
 	var (
 		nodes = []*RateLimitConfig{}
-		_spec = rlcq.querySpec()
+		_spec = _q.querySpec()
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*RateLimitConfig).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []any) error {
-		node := &RateLimitConfig{config: rlcq.config}
+		node := &RateLimitConfig{config: _q.config}
 		nodes = append(nodes, node)
 		return node.assignValues(columns, values)
 	}
-	if len(rlcq.modifiers) > 0 {
-		_spec.Modifiers = rlcq.modifiers
+	if len(_q.modifiers) > 0 {
+		_spec.Modifiers = _q.modifiers
 	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
-	if err := sqlgraph.QueryNodes(ctx, rlcq.driver, _spec); err != nil {
+	if err := sqlgraph.QueryNodes(ctx, _q.driver, _spec); err != nil {
 		return nil, err
 	}
 	if len(nodes) == 0 {
@@ -359,27 +361,27 @@ func (rlcq *RateLimitConfigQuery) sqlAll(ctx context.Context, hooks ...queryHook
 	return nodes, nil
 }
 
-func (rlcq *RateLimitConfigQuery) sqlCount(ctx context.Context) (int, error) {
-	_spec := rlcq.querySpec()
-	if len(rlcq.modifiers) > 0 {
-		_spec.Modifiers = rlcq.modifiers
+func (_q *RateLimitConfigQuery) sqlCount(ctx context.Context) (int, error) {
+	_spec := _q.querySpec()
+	if len(_q.modifiers) > 0 {
+		_spec.Modifiers = _q.modifiers
 	}
-	_spec.Node.Columns = rlcq.ctx.Fields
-	if len(rlcq.ctx.Fields) > 0 {
-		_spec.Unique = rlcq.ctx.Unique != nil && *rlcq.ctx.Unique
+	_spec.Node.Columns = _q.ctx.Fields
+	if len(_q.ctx.Fields) > 0 {
+		_spec.Unique = _q.ctx.Unique != nil && *_q.ctx.Unique
 	}
-	return sqlgraph.CountNodes(ctx, rlcq.driver, _spec)
+	return sqlgraph.CountNodes(ctx, _q.driver, _spec)
 }
 
-func (rlcq *RateLimitConfigQuery) querySpec() *sqlgraph.QuerySpec {
+func (_q *RateLimitConfigQuery) querySpec() *sqlgraph.QuerySpec {
 	_spec := sqlgraph.NewQuerySpec(ratelimitconfig.Table, ratelimitconfig.Columns, sqlgraph.NewFieldSpec(ratelimitconfig.FieldID, field.TypeUUID))
-	_spec.From = rlcq.sql
-	if unique := rlcq.ctx.Unique; unique != nil {
+	_spec.From = _q.sql
+	if unique := _q.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
-	} else if rlcq.path != nil {
+	} else if _q.path != nil {
 		_spec.Unique = true
 	}
-	if fields := rlcq.ctx.Fields; len(fields) > 0 {
+	if fields := _q.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		_spec.Node.Columns = append(_spec.Node.Columns, ratelimitconfig.FieldID)
 		for i := range fields {
@@ -388,20 +390,20 @@ func (rlcq *RateLimitConfigQuery) querySpec() *sqlgraph.QuerySpec {
 			}
 		}
 	}
-	if ps := rlcq.predicates; len(ps) > 0 {
+	if ps := _q.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if limit := rlcq.ctx.Limit; limit != nil {
+	if limit := _q.ctx.Limit; limit != nil {
 		_spec.Limit = *limit
 	}
-	if offset := rlcq.ctx.Offset; offset != nil {
+	if offset := _q.ctx.Offset; offset != nil {
 		_spec.Offset = *offset
 	}
-	if ps := rlcq.order; len(ps) > 0 {
+	if ps := _q.order; len(ps) > 0 {
 		_spec.Order = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
@@ -411,45 +413,45 @@ func (rlcq *RateLimitConfigQuery) querySpec() *sqlgraph.QuerySpec {
 	return _spec
 }
 
-func (rlcq *RateLimitConfigQuery) sqlQuery(ctx context.Context) *sql.Selector {
-	builder := sql.Dialect(rlcq.driver.Dialect())
+func (_q *RateLimitConfigQuery) sqlQuery(ctx context.Context) *sql.Selector {
+	builder := sql.Dialect(_q.driver.Dialect())
 	t1 := builder.Table(ratelimitconfig.Table)
-	columns := rlcq.ctx.Fields
+	columns := _q.ctx.Fields
 	if len(columns) == 0 {
 		columns = ratelimitconfig.Columns
 	}
 	selector := builder.Select(t1.Columns(columns...)...).From(t1)
-	if rlcq.sql != nil {
-		selector = rlcq.sql
+	if _q.sql != nil {
+		selector = _q.sql
 		selector.Select(selector.Columns(columns...)...)
 	}
-	if rlcq.ctx.Unique != nil && *rlcq.ctx.Unique {
+	if _q.ctx.Unique != nil && *_q.ctx.Unique {
 		selector.Distinct()
 	}
-	for _, m := range rlcq.modifiers {
+	for _, m := range _q.modifiers {
 		m(selector)
 	}
-	for _, p := range rlcq.predicates {
+	for _, p := range _q.predicates {
 		p(selector)
 	}
-	for _, p := range rlcq.order {
+	for _, p := range _q.order {
 		p(selector)
 	}
-	if offset := rlcq.ctx.Offset; offset != nil {
+	if offset := _q.ctx.Offset; offset != nil {
 		// limit is mandatory for offset clause. We start
 		// with default value, and override it below if needed.
 		selector.Offset(*offset).Limit(math.MaxInt32)
 	}
-	if limit := rlcq.ctx.Limit; limit != nil {
+	if limit := _q.ctx.Limit; limit != nil {
 		selector.Limit(*limit)
 	}
 	return selector
 }
 
 // Modify adds a query modifier for attaching custom logic to queries.
-func (rlcq *RateLimitConfigQuery) Modify(modifiers ...func(s *sql.Selector)) *RateLimitConfigSelect {
-	rlcq.modifiers = append(rlcq.modifiers, modifiers...)
-	return rlcq.Select()
+func (_q *RateLimitConfigQuery) Modify(modifiers ...func(s *sql.Selector)) *RateLimitConfigSelect {
+	_q.modifiers = append(_q.modifiers, modifiers...)
+	return _q.Select()
 }
 
 // RateLimitConfigGroupBy is the group-by builder for RateLimitConfig entities.
@@ -459,41 +461,41 @@ type RateLimitConfigGroupBy struct {
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
-func (rlcgb *RateLimitConfigGroupBy) Aggregate(fns ...AggregateFunc) *RateLimitConfigGroupBy {
-	rlcgb.fns = append(rlcgb.fns, fns...)
-	return rlcgb
+func (_g *RateLimitConfigGroupBy) Aggregate(fns ...AggregateFunc) *RateLimitConfigGroupBy {
+	_g.fns = append(_g.fns, fns...)
+	return _g
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (rlcgb *RateLimitConfigGroupBy) Scan(ctx context.Context, v any) error {
-	ctx = setContextOp(ctx, rlcgb.build.ctx, "GroupBy")
-	if err := rlcgb.build.prepareQuery(ctx); err != nil {
+func (_g *RateLimitConfigGroupBy) Scan(ctx context.Context, v any) error {
+	ctx = setContextOp(ctx, _g.build.ctx, ent.OpQueryGroupBy)
+	if err := _g.build.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*RateLimitConfigQuery, *RateLimitConfigGroupBy](ctx, rlcgb.build, rlcgb, rlcgb.build.inters, v)
+	return scanWithInterceptors[*RateLimitConfigQuery, *RateLimitConfigGroupBy](ctx, _g.build, _g, _g.build.inters, v)
 }
 
-func (rlcgb *RateLimitConfigGroupBy) sqlScan(ctx context.Context, root *RateLimitConfigQuery, v any) error {
+func (_g *RateLimitConfigGroupBy) sqlScan(ctx context.Context, root *RateLimitConfigQuery, v any) error {
 	selector := root.sqlQuery(ctx).Select()
-	aggregation := make([]string, 0, len(rlcgb.fns))
-	for _, fn := range rlcgb.fns {
+	aggregation := make([]string, 0, len(_g.fns))
+	for _, fn := range _g.fns {
 		aggregation = append(aggregation, fn(selector))
 	}
 	if len(selector.SelectedColumns()) == 0 {
-		columns := make([]string, 0, len(*rlcgb.flds)+len(rlcgb.fns))
-		for _, f := range *rlcgb.flds {
+		columns := make([]string, 0, len(*_g.flds)+len(_g.fns))
+		for _, f := range *_g.flds {
 			columns = append(columns, selector.C(f))
 		}
 		columns = append(columns, aggregation...)
 		selector.Select(columns...)
 	}
-	selector.GroupBy(selector.Columns(*rlcgb.flds...)...)
+	selector.GroupBy(selector.Columns(*_g.flds...)...)
 	if err := selector.Err(); err != nil {
 		return err
 	}
 	rows := &sql.Rows{}
 	query, args := selector.Query()
-	if err := rlcgb.build.driver.Query(ctx, query, args, rows); err != nil {
+	if err := _g.build.driver.Query(ctx, query, args, rows); err != nil {
 		return err
 	}
 	defer rows.Close()
@@ -507,27 +509,27 @@ type RateLimitConfigSelect struct {
 }
 
 // Aggregate adds the given aggregation functions to the selector query.
-func (rlcs *RateLimitConfigSelect) Aggregate(fns ...AggregateFunc) *RateLimitConfigSelect {
-	rlcs.fns = append(rlcs.fns, fns...)
-	return rlcs
+func (_s *RateLimitConfigSelect) Aggregate(fns ...AggregateFunc) *RateLimitConfigSelect {
+	_s.fns = append(_s.fns, fns...)
+	return _s
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (rlcs *RateLimitConfigSelect) Scan(ctx context.Context, v any) error {
-	ctx = setContextOp(ctx, rlcs.ctx, "Select")
-	if err := rlcs.prepareQuery(ctx); err != nil {
+func (_s *RateLimitConfigSelect) Scan(ctx context.Context, v any) error {
+	ctx = setContextOp(ctx, _s.ctx, ent.OpQuerySelect)
+	if err := _s.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*RateLimitConfigQuery, *RateLimitConfigSelect](ctx, rlcs.RateLimitConfigQuery, rlcs, rlcs.inters, v)
+	return scanWithInterceptors[*RateLimitConfigQuery, *RateLimitConfigSelect](ctx, _s.RateLimitConfigQuery, _s, _s.inters, v)
 }
 
-func (rlcs *RateLimitConfigSelect) sqlScan(ctx context.Context, root *RateLimitConfigQuery, v any) error {
+func (_s *RateLimitConfigSelect) sqlScan(ctx context.Context, root *RateLimitConfigQuery, v any) error {
 	selector := root.sqlQuery(ctx)
-	aggregation := make([]string, 0, len(rlcs.fns))
-	for _, fn := range rlcs.fns {
+	aggregation := make([]string, 0, len(_s.fns))
+	for _, fn := range _s.fns {
 		aggregation = append(aggregation, fn(selector))
 	}
-	switch n := len(*rlcs.selector.flds); {
+	switch n := len(*_s.selector.flds); {
 	case n == 0 && len(aggregation) > 0:
 		selector.Select(aggregation...)
 	case n != 0 && len(aggregation) > 0:
@@ -535,7 +537,7 @@ func (rlcs *RateLimitConfigSelect) sqlScan(ctx context.Context, root *RateLimitC
 	}
 	rows := &sql.Rows{}
 	query, args := selector.Query()
-	if err := rlcs.driver.Query(ctx, query, args, rows); err != nil {
+	if err := _s.driver.Query(ctx, query, args, rows); err != nil {
 		return err
 	}
 	defer rows.Close()
@@ -543,7 +545,7 @@ func (rlcs *RateLimitConfigSelect) sqlScan(ctx context.Context, root *RateLimitC
 }
 
 // Modify adds a query modifier for attaching custom logic to queries.
-func (rlcs *RateLimitConfigSelect) Modify(modifiers ...func(s *sql.Selector)) *RateLimitConfigSelect {
-	rlcs.modifiers = append(rlcs.modifiers, modifiers...)
-	return rlcs
+func (_s *RateLimitConfigSelect) Modify(modifiers ...func(s *sql.Selector)) *RateLimitConfigSelect {
+	_s.modifiers = append(_s.modifiers, modifiers...)
+	return _s
 }

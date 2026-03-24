@@ -26,192 +26,192 @@ type NotificationPermissionUpdate struct {
 }
 
 // Where appends a list predicates to the NotificationPermissionUpdate builder.
-func (npu *NotificationPermissionUpdate) Where(ps ...predicate.NotificationPermission) *NotificationPermissionUpdate {
-	npu.mutation.Where(ps...)
-	return npu
+func (_u *NotificationPermissionUpdate) Where(ps ...predicate.NotificationPermission) *NotificationPermissionUpdate {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // SetPermissionCode sets the "permission_code" field.
-func (npu *NotificationPermissionUpdate) SetPermissionCode(s string) *NotificationPermissionUpdate {
-	npu.mutation.SetPermissionCode(s)
-	return npu
+func (_u *NotificationPermissionUpdate) SetPermissionCode(v string) *NotificationPermissionUpdate {
+	_u.mutation.SetPermissionCode(v)
+	return _u
 }
 
 // SetNillablePermissionCode sets the "permission_code" field if the given value is not nil.
-func (npu *NotificationPermissionUpdate) SetNillablePermissionCode(s *string) *NotificationPermissionUpdate {
-	if s != nil {
-		npu.SetPermissionCode(*s)
+func (_u *NotificationPermissionUpdate) SetNillablePermissionCode(v *string) *NotificationPermissionUpdate {
+	if v != nil {
+		_u.SetPermissionCode(*v)
 	}
-	return npu
+	return _u
 }
 
 // SetName sets the "name" field.
-func (npu *NotificationPermissionUpdate) SetName(s string) *NotificationPermissionUpdate {
-	npu.mutation.SetName(s)
-	return npu
+func (_u *NotificationPermissionUpdate) SetName(v string) *NotificationPermissionUpdate {
+	_u.mutation.SetName(v)
+	return _u
 }
 
 // SetNillableName sets the "name" field if the given value is not nil.
-func (npu *NotificationPermissionUpdate) SetNillableName(s *string) *NotificationPermissionUpdate {
-	if s != nil {
-		npu.SetName(*s)
+func (_u *NotificationPermissionUpdate) SetNillableName(v *string) *NotificationPermissionUpdate {
+	if v != nil {
+		_u.SetName(*v)
 	}
-	return npu
+	return _u
 }
 
 // SetModule sets the "module" field.
-func (npu *NotificationPermissionUpdate) SetModule(s string) *NotificationPermissionUpdate {
-	npu.mutation.SetModule(s)
-	return npu
+func (_u *NotificationPermissionUpdate) SetModule(v string) *NotificationPermissionUpdate {
+	_u.mutation.SetModule(v)
+	return _u
 }
 
 // SetNillableModule sets the "module" field if the given value is not nil.
-func (npu *NotificationPermissionUpdate) SetNillableModule(s *string) *NotificationPermissionUpdate {
-	if s != nil {
-		npu.SetModule(*s)
+func (_u *NotificationPermissionUpdate) SetNillableModule(v *string) *NotificationPermissionUpdate {
+	if v != nil {
+		_u.SetModule(*v)
 	}
-	return npu
+	return _u
 }
 
 // SetAction sets the "action" field.
-func (npu *NotificationPermissionUpdate) SetAction(s string) *NotificationPermissionUpdate {
-	npu.mutation.SetAction(s)
-	return npu
+func (_u *NotificationPermissionUpdate) SetAction(v string) *NotificationPermissionUpdate {
+	_u.mutation.SetAction(v)
+	return _u
 }
 
 // SetNillableAction sets the "action" field if the given value is not nil.
-func (npu *NotificationPermissionUpdate) SetNillableAction(s *string) *NotificationPermissionUpdate {
-	if s != nil {
-		npu.SetAction(*s)
+func (_u *NotificationPermissionUpdate) SetNillableAction(v *string) *NotificationPermissionUpdate {
+	if v != nil {
+		_u.SetAction(*v)
 	}
-	return npu
+	return _u
 }
 
 // SetResource sets the "resource" field.
-func (npu *NotificationPermissionUpdate) SetResource(s string) *NotificationPermissionUpdate {
-	npu.mutation.SetResource(s)
-	return npu
+func (_u *NotificationPermissionUpdate) SetResource(v string) *NotificationPermissionUpdate {
+	_u.mutation.SetResource(v)
+	return _u
 }
 
 // SetNillableResource sets the "resource" field if the given value is not nil.
-func (npu *NotificationPermissionUpdate) SetNillableResource(s *string) *NotificationPermissionUpdate {
-	if s != nil {
-		npu.SetResource(*s)
+func (_u *NotificationPermissionUpdate) SetNillableResource(v *string) *NotificationPermissionUpdate {
+	if v != nil {
+		_u.SetResource(*v)
 	}
-	return npu
+	return _u
 }
 
 // ClearResource clears the value of the "resource" field.
-func (npu *NotificationPermissionUpdate) ClearResource() *NotificationPermissionUpdate {
-	npu.mutation.ClearResource()
-	return npu
+func (_u *NotificationPermissionUpdate) ClearResource() *NotificationPermissionUpdate {
+	_u.mutation.ClearResource()
+	return _u
 }
 
 // SetDescription sets the "description" field.
-func (npu *NotificationPermissionUpdate) SetDescription(s string) *NotificationPermissionUpdate {
-	npu.mutation.SetDescription(s)
-	return npu
+func (_u *NotificationPermissionUpdate) SetDescription(v string) *NotificationPermissionUpdate {
+	_u.mutation.SetDescription(v)
+	return _u
 }
 
 // SetNillableDescription sets the "description" field if the given value is not nil.
-func (npu *NotificationPermissionUpdate) SetNillableDescription(s *string) *NotificationPermissionUpdate {
-	if s != nil {
-		npu.SetDescription(*s)
+func (_u *NotificationPermissionUpdate) SetNillableDescription(v *string) *NotificationPermissionUpdate {
+	if v != nil {
+		_u.SetDescription(*v)
 	}
-	return npu
+	return _u
 }
 
 // ClearDescription clears the value of the "description" field.
-func (npu *NotificationPermissionUpdate) ClearDescription() *NotificationPermissionUpdate {
-	npu.mutation.ClearDescription()
-	return npu
+func (_u *NotificationPermissionUpdate) ClearDescription() *NotificationPermissionUpdate {
+	_u.mutation.ClearDescription()
+	return _u
 }
 
 // AddRoleIDs adds the "roles" edge to the NotificationRole entity by IDs.
-func (npu *NotificationPermissionUpdate) AddRoleIDs(ids ...uuid.UUID) *NotificationPermissionUpdate {
-	npu.mutation.AddRoleIDs(ids...)
-	return npu
+func (_u *NotificationPermissionUpdate) AddRoleIDs(ids ...uuid.UUID) *NotificationPermissionUpdate {
+	_u.mutation.AddRoleIDs(ids...)
+	return _u
 }
 
 // AddRoles adds the "roles" edges to the NotificationRole entity.
-func (npu *NotificationPermissionUpdate) AddRoles(n ...*NotificationRole) *NotificationPermissionUpdate {
-	ids := make([]uuid.UUID, len(n))
-	for i := range n {
-		ids[i] = n[i].ID
+func (_u *NotificationPermissionUpdate) AddRoles(v ...*NotificationRole) *NotificationPermissionUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return npu.AddRoleIDs(ids...)
+	return _u.AddRoleIDs(ids...)
 }
 
 // AddNotificationRolePermissionIDs adds the "notification_role_permissions" edge to the NotificationRolePermission entity by IDs.
-func (npu *NotificationPermissionUpdate) AddNotificationRolePermissionIDs(ids ...int) *NotificationPermissionUpdate {
-	npu.mutation.AddNotificationRolePermissionIDs(ids...)
-	return npu
+func (_u *NotificationPermissionUpdate) AddNotificationRolePermissionIDs(ids ...int) *NotificationPermissionUpdate {
+	_u.mutation.AddNotificationRolePermissionIDs(ids...)
+	return _u
 }
 
 // AddNotificationRolePermissions adds the "notification_role_permissions" edges to the NotificationRolePermission entity.
-func (npu *NotificationPermissionUpdate) AddNotificationRolePermissions(n ...*NotificationRolePermission) *NotificationPermissionUpdate {
-	ids := make([]int, len(n))
-	for i := range n {
-		ids[i] = n[i].ID
+func (_u *NotificationPermissionUpdate) AddNotificationRolePermissions(v ...*NotificationRolePermission) *NotificationPermissionUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return npu.AddNotificationRolePermissionIDs(ids...)
+	return _u.AddNotificationRolePermissionIDs(ids...)
 }
 
 // Mutation returns the NotificationPermissionMutation object of the builder.
-func (npu *NotificationPermissionUpdate) Mutation() *NotificationPermissionMutation {
-	return npu.mutation
+func (_u *NotificationPermissionUpdate) Mutation() *NotificationPermissionMutation {
+	return _u.mutation
 }
 
 // ClearRoles clears all "roles" edges to the NotificationRole entity.
-func (npu *NotificationPermissionUpdate) ClearRoles() *NotificationPermissionUpdate {
-	npu.mutation.ClearRoles()
-	return npu
+func (_u *NotificationPermissionUpdate) ClearRoles() *NotificationPermissionUpdate {
+	_u.mutation.ClearRoles()
+	return _u
 }
 
 // RemoveRoleIDs removes the "roles" edge to NotificationRole entities by IDs.
-func (npu *NotificationPermissionUpdate) RemoveRoleIDs(ids ...uuid.UUID) *NotificationPermissionUpdate {
-	npu.mutation.RemoveRoleIDs(ids...)
-	return npu
+func (_u *NotificationPermissionUpdate) RemoveRoleIDs(ids ...uuid.UUID) *NotificationPermissionUpdate {
+	_u.mutation.RemoveRoleIDs(ids...)
+	return _u
 }
 
 // RemoveRoles removes "roles" edges to NotificationRole entities.
-func (npu *NotificationPermissionUpdate) RemoveRoles(n ...*NotificationRole) *NotificationPermissionUpdate {
-	ids := make([]uuid.UUID, len(n))
-	for i := range n {
-		ids[i] = n[i].ID
+func (_u *NotificationPermissionUpdate) RemoveRoles(v ...*NotificationRole) *NotificationPermissionUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return npu.RemoveRoleIDs(ids...)
+	return _u.RemoveRoleIDs(ids...)
 }
 
 // ClearNotificationRolePermissions clears all "notification_role_permissions" edges to the NotificationRolePermission entity.
-func (npu *NotificationPermissionUpdate) ClearNotificationRolePermissions() *NotificationPermissionUpdate {
-	npu.mutation.ClearNotificationRolePermissions()
-	return npu
+func (_u *NotificationPermissionUpdate) ClearNotificationRolePermissions() *NotificationPermissionUpdate {
+	_u.mutation.ClearNotificationRolePermissions()
+	return _u
 }
 
 // RemoveNotificationRolePermissionIDs removes the "notification_role_permissions" edge to NotificationRolePermission entities by IDs.
-func (npu *NotificationPermissionUpdate) RemoveNotificationRolePermissionIDs(ids ...int) *NotificationPermissionUpdate {
-	npu.mutation.RemoveNotificationRolePermissionIDs(ids...)
-	return npu
+func (_u *NotificationPermissionUpdate) RemoveNotificationRolePermissionIDs(ids ...int) *NotificationPermissionUpdate {
+	_u.mutation.RemoveNotificationRolePermissionIDs(ids...)
+	return _u
 }
 
 // RemoveNotificationRolePermissions removes "notification_role_permissions" edges to NotificationRolePermission entities.
-func (npu *NotificationPermissionUpdate) RemoveNotificationRolePermissions(n ...*NotificationRolePermission) *NotificationPermissionUpdate {
-	ids := make([]int, len(n))
-	for i := range n {
-		ids[i] = n[i].ID
+func (_u *NotificationPermissionUpdate) RemoveNotificationRolePermissions(v ...*NotificationRolePermission) *NotificationPermissionUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return npu.RemoveNotificationRolePermissionIDs(ids...)
+	return _u.RemoveNotificationRolePermissionIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
-func (npu *NotificationPermissionUpdate) Save(ctx context.Context) (int, error) {
-	return withHooks(ctx, npu.sqlSave, npu.mutation, npu.hooks)
+func (_u *NotificationPermissionUpdate) Save(ctx context.Context) (int, error) {
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (npu *NotificationPermissionUpdate) SaveX(ctx context.Context) int {
-	affected, err := npu.Save(ctx)
+func (_u *NotificationPermissionUpdate) SaveX(ctx context.Context) int {
+	affected, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -219,36 +219,36 @@ func (npu *NotificationPermissionUpdate) SaveX(ctx context.Context) int {
 }
 
 // Exec executes the query.
-func (npu *NotificationPermissionUpdate) Exec(ctx context.Context) error {
-	_, err := npu.Save(ctx)
+func (_u *NotificationPermissionUpdate) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (npu *NotificationPermissionUpdate) ExecX(ctx context.Context) {
-	if err := npu.Exec(ctx); err != nil {
+func (_u *NotificationPermissionUpdate) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (npu *NotificationPermissionUpdate) check() error {
-	if v, ok := npu.mutation.PermissionCode(); ok {
+func (_u *NotificationPermissionUpdate) check() error {
+	if v, ok := _u.mutation.PermissionCode(); ok {
 		if err := notificationpermission.PermissionCodeValidator(v); err != nil {
 			return &ValidationError{Name: "permission_code", err: fmt.Errorf(`ent: validator failed for field "NotificationPermission.permission_code": %w`, err)}
 		}
 	}
-	if v, ok := npu.mutation.Name(); ok {
+	if v, ok := _u.mutation.Name(); ok {
 		if err := notificationpermission.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "NotificationPermission.name": %w`, err)}
 		}
 	}
-	if v, ok := npu.mutation.Module(); ok {
+	if v, ok := _u.mutation.Module(); ok {
 		if err := notificationpermission.ModuleValidator(v); err != nil {
 			return &ValidationError{Name: "module", err: fmt.Errorf(`ent: validator failed for field "NotificationPermission.module": %w`, err)}
 		}
 	}
-	if v, ok := npu.mutation.Action(); ok {
+	if v, ok := _u.mutation.Action(); ok {
 		if err := notificationpermission.ActionValidator(v); err != nil {
 			return &ValidationError{Name: "action", err: fmt.Errorf(`ent: validator failed for field "NotificationPermission.action": %w`, err)}
 		}
@@ -257,48 +257,48 @@ func (npu *NotificationPermissionUpdate) check() error {
 }
 
 // Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
-func (npu *NotificationPermissionUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *NotificationPermissionUpdate {
-	npu.modifiers = append(npu.modifiers, modifiers...)
-	return npu
+func (_u *NotificationPermissionUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *NotificationPermissionUpdate {
+	_u.modifiers = append(_u.modifiers, modifiers...)
+	return _u
 }
 
-func (npu *NotificationPermissionUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	if err := npu.check(); err != nil {
-		return n, err
+func (_u *NotificationPermissionUpdate) sqlSave(ctx context.Context) (_node int, err error) {
+	if err := _u.check(); err != nil {
+		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(notificationpermission.Table, notificationpermission.Columns, sqlgraph.NewFieldSpec(notificationpermission.FieldID, field.TypeUUID))
-	if ps := npu.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := npu.mutation.PermissionCode(); ok {
+	if value, ok := _u.mutation.PermissionCode(); ok {
 		_spec.SetField(notificationpermission.FieldPermissionCode, field.TypeString, value)
 	}
-	if value, ok := npu.mutation.Name(); ok {
+	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(notificationpermission.FieldName, field.TypeString, value)
 	}
-	if value, ok := npu.mutation.Module(); ok {
+	if value, ok := _u.mutation.Module(); ok {
 		_spec.SetField(notificationpermission.FieldModule, field.TypeString, value)
 	}
-	if value, ok := npu.mutation.Action(); ok {
+	if value, ok := _u.mutation.Action(); ok {
 		_spec.SetField(notificationpermission.FieldAction, field.TypeString, value)
 	}
-	if value, ok := npu.mutation.Resource(); ok {
+	if value, ok := _u.mutation.Resource(); ok {
 		_spec.SetField(notificationpermission.FieldResource, field.TypeString, value)
 	}
-	if npu.mutation.ResourceCleared() {
+	if _u.mutation.ResourceCleared() {
 		_spec.ClearField(notificationpermission.FieldResource, field.TypeString)
 	}
-	if value, ok := npu.mutation.Description(); ok {
+	if value, ok := _u.mutation.Description(); ok {
 		_spec.SetField(notificationpermission.FieldDescription, field.TypeString, value)
 	}
-	if npu.mutation.DescriptionCleared() {
+	if _u.mutation.DescriptionCleared() {
 		_spec.ClearField(notificationpermission.FieldDescription, field.TypeString)
 	}
-	if npu.mutation.RolesCleared() {
+	if _u.mutation.RolesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: true,
@@ -311,7 +311,7 @@ func (npu *NotificationPermissionUpdate) sqlSave(ctx context.Context) (n int, er
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := npu.mutation.RemovedRolesIDs(); len(nodes) > 0 && !npu.mutation.RolesCleared() {
+	if nodes := _u.mutation.RemovedRolesIDs(); len(nodes) > 0 && !_u.mutation.RolesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: true,
@@ -327,7 +327,7 @@ func (npu *NotificationPermissionUpdate) sqlSave(ctx context.Context) (n int, er
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := npu.mutation.RolesIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.RolesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: true,
@@ -343,7 +343,7 @@ func (npu *NotificationPermissionUpdate) sqlSave(ctx context.Context) (n int, er
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if npu.mutation.NotificationRolePermissionsCleared() {
+	if _u.mutation.NotificationRolePermissionsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: true,
@@ -356,7 +356,7 @@ func (npu *NotificationPermissionUpdate) sqlSave(ctx context.Context) (n int, er
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := npu.mutation.RemovedNotificationRolePermissionsIDs(); len(nodes) > 0 && !npu.mutation.NotificationRolePermissionsCleared() {
+	if nodes := _u.mutation.RemovedNotificationRolePermissionsIDs(); len(nodes) > 0 && !_u.mutation.NotificationRolePermissionsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: true,
@@ -372,7 +372,7 @@ func (npu *NotificationPermissionUpdate) sqlSave(ctx context.Context) (n int, er
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := npu.mutation.NotificationRolePermissionsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.NotificationRolePermissionsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: true,
@@ -388,8 +388,8 @@ func (npu *NotificationPermissionUpdate) sqlSave(ctx context.Context) (n int, er
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	_spec.AddModifiers(npu.modifiers...)
-	if n, err = sqlgraph.UpdateNodes(ctx, npu.driver, _spec); err != nil {
+	_spec.AddModifiers(_u.modifiers...)
+	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{notificationpermission.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -397,8 +397,8 @@ func (npu *NotificationPermissionUpdate) sqlSave(ctx context.Context) (n int, er
 		}
 		return 0, err
 	}
-	npu.mutation.done = true
-	return n, nil
+	_u.mutation.done = true
+	return _node, nil
 }
 
 // NotificationPermissionUpdateOne is the builder for updating a single NotificationPermission entity.
@@ -411,199 +411,199 @@ type NotificationPermissionUpdateOne struct {
 }
 
 // SetPermissionCode sets the "permission_code" field.
-func (npuo *NotificationPermissionUpdateOne) SetPermissionCode(s string) *NotificationPermissionUpdateOne {
-	npuo.mutation.SetPermissionCode(s)
-	return npuo
+func (_u *NotificationPermissionUpdateOne) SetPermissionCode(v string) *NotificationPermissionUpdateOne {
+	_u.mutation.SetPermissionCode(v)
+	return _u
 }
 
 // SetNillablePermissionCode sets the "permission_code" field if the given value is not nil.
-func (npuo *NotificationPermissionUpdateOne) SetNillablePermissionCode(s *string) *NotificationPermissionUpdateOne {
-	if s != nil {
-		npuo.SetPermissionCode(*s)
+func (_u *NotificationPermissionUpdateOne) SetNillablePermissionCode(v *string) *NotificationPermissionUpdateOne {
+	if v != nil {
+		_u.SetPermissionCode(*v)
 	}
-	return npuo
+	return _u
 }
 
 // SetName sets the "name" field.
-func (npuo *NotificationPermissionUpdateOne) SetName(s string) *NotificationPermissionUpdateOne {
-	npuo.mutation.SetName(s)
-	return npuo
+func (_u *NotificationPermissionUpdateOne) SetName(v string) *NotificationPermissionUpdateOne {
+	_u.mutation.SetName(v)
+	return _u
 }
 
 // SetNillableName sets the "name" field if the given value is not nil.
-func (npuo *NotificationPermissionUpdateOne) SetNillableName(s *string) *NotificationPermissionUpdateOne {
-	if s != nil {
-		npuo.SetName(*s)
+func (_u *NotificationPermissionUpdateOne) SetNillableName(v *string) *NotificationPermissionUpdateOne {
+	if v != nil {
+		_u.SetName(*v)
 	}
-	return npuo
+	return _u
 }
 
 // SetModule sets the "module" field.
-func (npuo *NotificationPermissionUpdateOne) SetModule(s string) *NotificationPermissionUpdateOne {
-	npuo.mutation.SetModule(s)
-	return npuo
+func (_u *NotificationPermissionUpdateOne) SetModule(v string) *NotificationPermissionUpdateOne {
+	_u.mutation.SetModule(v)
+	return _u
 }
 
 // SetNillableModule sets the "module" field if the given value is not nil.
-func (npuo *NotificationPermissionUpdateOne) SetNillableModule(s *string) *NotificationPermissionUpdateOne {
-	if s != nil {
-		npuo.SetModule(*s)
+func (_u *NotificationPermissionUpdateOne) SetNillableModule(v *string) *NotificationPermissionUpdateOne {
+	if v != nil {
+		_u.SetModule(*v)
 	}
-	return npuo
+	return _u
 }
 
 // SetAction sets the "action" field.
-func (npuo *NotificationPermissionUpdateOne) SetAction(s string) *NotificationPermissionUpdateOne {
-	npuo.mutation.SetAction(s)
-	return npuo
+func (_u *NotificationPermissionUpdateOne) SetAction(v string) *NotificationPermissionUpdateOne {
+	_u.mutation.SetAction(v)
+	return _u
 }
 
 // SetNillableAction sets the "action" field if the given value is not nil.
-func (npuo *NotificationPermissionUpdateOne) SetNillableAction(s *string) *NotificationPermissionUpdateOne {
-	if s != nil {
-		npuo.SetAction(*s)
+func (_u *NotificationPermissionUpdateOne) SetNillableAction(v *string) *NotificationPermissionUpdateOne {
+	if v != nil {
+		_u.SetAction(*v)
 	}
-	return npuo
+	return _u
 }
 
 // SetResource sets the "resource" field.
-func (npuo *NotificationPermissionUpdateOne) SetResource(s string) *NotificationPermissionUpdateOne {
-	npuo.mutation.SetResource(s)
-	return npuo
+func (_u *NotificationPermissionUpdateOne) SetResource(v string) *NotificationPermissionUpdateOne {
+	_u.mutation.SetResource(v)
+	return _u
 }
 
 // SetNillableResource sets the "resource" field if the given value is not nil.
-func (npuo *NotificationPermissionUpdateOne) SetNillableResource(s *string) *NotificationPermissionUpdateOne {
-	if s != nil {
-		npuo.SetResource(*s)
+func (_u *NotificationPermissionUpdateOne) SetNillableResource(v *string) *NotificationPermissionUpdateOne {
+	if v != nil {
+		_u.SetResource(*v)
 	}
-	return npuo
+	return _u
 }
 
 // ClearResource clears the value of the "resource" field.
-func (npuo *NotificationPermissionUpdateOne) ClearResource() *NotificationPermissionUpdateOne {
-	npuo.mutation.ClearResource()
-	return npuo
+func (_u *NotificationPermissionUpdateOne) ClearResource() *NotificationPermissionUpdateOne {
+	_u.mutation.ClearResource()
+	return _u
 }
 
 // SetDescription sets the "description" field.
-func (npuo *NotificationPermissionUpdateOne) SetDescription(s string) *NotificationPermissionUpdateOne {
-	npuo.mutation.SetDescription(s)
-	return npuo
+func (_u *NotificationPermissionUpdateOne) SetDescription(v string) *NotificationPermissionUpdateOne {
+	_u.mutation.SetDescription(v)
+	return _u
 }
 
 // SetNillableDescription sets the "description" field if the given value is not nil.
-func (npuo *NotificationPermissionUpdateOne) SetNillableDescription(s *string) *NotificationPermissionUpdateOne {
-	if s != nil {
-		npuo.SetDescription(*s)
+func (_u *NotificationPermissionUpdateOne) SetNillableDescription(v *string) *NotificationPermissionUpdateOne {
+	if v != nil {
+		_u.SetDescription(*v)
 	}
-	return npuo
+	return _u
 }
 
 // ClearDescription clears the value of the "description" field.
-func (npuo *NotificationPermissionUpdateOne) ClearDescription() *NotificationPermissionUpdateOne {
-	npuo.mutation.ClearDescription()
-	return npuo
+func (_u *NotificationPermissionUpdateOne) ClearDescription() *NotificationPermissionUpdateOne {
+	_u.mutation.ClearDescription()
+	return _u
 }
 
 // AddRoleIDs adds the "roles" edge to the NotificationRole entity by IDs.
-func (npuo *NotificationPermissionUpdateOne) AddRoleIDs(ids ...uuid.UUID) *NotificationPermissionUpdateOne {
-	npuo.mutation.AddRoleIDs(ids...)
-	return npuo
+func (_u *NotificationPermissionUpdateOne) AddRoleIDs(ids ...uuid.UUID) *NotificationPermissionUpdateOne {
+	_u.mutation.AddRoleIDs(ids...)
+	return _u
 }
 
 // AddRoles adds the "roles" edges to the NotificationRole entity.
-func (npuo *NotificationPermissionUpdateOne) AddRoles(n ...*NotificationRole) *NotificationPermissionUpdateOne {
-	ids := make([]uuid.UUID, len(n))
-	for i := range n {
-		ids[i] = n[i].ID
+func (_u *NotificationPermissionUpdateOne) AddRoles(v ...*NotificationRole) *NotificationPermissionUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return npuo.AddRoleIDs(ids...)
+	return _u.AddRoleIDs(ids...)
 }
 
 // AddNotificationRolePermissionIDs adds the "notification_role_permissions" edge to the NotificationRolePermission entity by IDs.
-func (npuo *NotificationPermissionUpdateOne) AddNotificationRolePermissionIDs(ids ...int) *NotificationPermissionUpdateOne {
-	npuo.mutation.AddNotificationRolePermissionIDs(ids...)
-	return npuo
+func (_u *NotificationPermissionUpdateOne) AddNotificationRolePermissionIDs(ids ...int) *NotificationPermissionUpdateOne {
+	_u.mutation.AddNotificationRolePermissionIDs(ids...)
+	return _u
 }
 
 // AddNotificationRolePermissions adds the "notification_role_permissions" edges to the NotificationRolePermission entity.
-func (npuo *NotificationPermissionUpdateOne) AddNotificationRolePermissions(n ...*NotificationRolePermission) *NotificationPermissionUpdateOne {
-	ids := make([]int, len(n))
-	for i := range n {
-		ids[i] = n[i].ID
+func (_u *NotificationPermissionUpdateOne) AddNotificationRolePermissions(v ...*NotificationRolePermission) *NotificationPermissionUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return npuo.AddNotificationRolePermissionIDs(ids...)
+	return _u.AddNotificationRolePermissionIDs(ids...)
 }
 
 // Mutation returns the NotificationPermissionMutation object of the builder.
-func (npuo *NotificationPermissionUpdateOne) Mutation() *NotificationPermissionMutation {
-	return npuo.mutation
+func (_u *NotificationPermissionUpdateOne) Mutation() *NotificationPermissionMutation {
+	return _u.mutation
 }
 
 // ClearRoles clears all "roles" edges to the NotificationRole entity.
-func (npuo *NotificationPermissionUpdateOne) ClearRoles() *NotificationPermissionUpdateOne {
-	npuo.mutation.ClearRoles()
-	return npuo
+func (_u *NotificationPermissionUpdateOne) ClearRoles() *NotificationPermissionUpdateOne {
+	_u.mutation.ClearRoles()
+	return _u
 }
 
 // RemoveRoleIDs removes the "roles" edge to NotificationRole entities by IDs.
-func (npuo *NotificationPermissionUpdateOne) RemoveRoleIDs(ids ...uuid.UUID) *NotificationPermissionUpdateOne {
-	npuo.mutation.RemoveRoleIDs(ids...)
-	return npuo
+func (_u *NotificationPermissionUpdateOne) RemoveRoleIDs(ids ...uuid.UUID) *NotificationPermissionUpdateOne {
+	_u.mutation.RemoveRoleIDs(ids...)
+	return _u
 }
 
 // RemoveRoles removes "roles" edges to NotificationRole entities.
-func (npuo *NotificationPermissionUpdateOne) RemoveRoles(n ...*NotificationRole) *NotificationPermissionUpdateOne {
-	ids := make([]uuid.UUID, len(n))
-	for i := range n {
-		ids[i] = n[i].ID
+func (_u *NotificationPermissionUpdateOne) RemoveRoles(v ...*NotificationRole) *NotificationPermissionUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return npuo.RemoveRoleIDs(ids...)
+	return _u.RemoveRoleIDs(ids...)
 }
 
 // ClearNotificationRolePermissions clears all "notification_role_permissions" edges to the NotificationRolePermission entity.
-func (npuo *NotificationPermissionUpdateOne) ClearNotificationRolePermissions() *NotificationPermissionUpdateOne {
-	npuo.mutation.ClearNotificationRolePermissions()
-	return npuo
+func (_u *NotificationPermissionUpdateOne) ClearNotificationRolePermissions() *NotificationPermissionUpdateOne {
+	_u.mutation.ClearNotificationRolePermissions()
+	return _u
 }
 
 // RemoveNotificationRolePermissionIDs removes the "notification_role_permissions" edge to NotificationRolePermission entities by IDs.
-func (npuo *NotificationPermissionUpdateOne) RemoveNotificationRolePermissionIDs(ids ...int) *NotificationPermissionUpdateOne {
-	npuo.mutation.RemoveNotificationRolePermissionIDs(ids...)
-	return npuo
+func (_u *NotificationPermissionUpdateOne) RemoveNotificationRolePermissionIDs(ids ...int) *NotificationPermissionUpdateOne {
+	_u.mutation.RemoveNotificationRolePermissionIDs(ids...)
+	return _u
 }
 
 // RemoveNotificationRolePermissions removes "notification_role_permissions" edges to NotificationRolePermission entities.
-func (npuo *NotificationPermissionUpdateOne) RemoveNotificationRolePermissions(n ...*NotificationRolePermission) *NotificationPermissionUpdateOne {
-	ids := make([]int, len(n))
-	for i := range n {
-		ids[i] = n[i].ID
+func (_u *NotificationPermissionUpdateOne) RemoveNotificationRolePermissions(v ...*NotificationRolePermission) *NotificationPermissionUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return npuo.RemoveNotificationRolePermissionIDs(ids...)
+	return _u.RemoveNotificationRolePermissionIDs(ids...)
 }
 
 // Where appends a list predicates to the NotificationPermissionUpdate builder.
-func (npuo *NotificationPermissionUpdateOne) Where(ps ...predicate.NotificationPermission) *NotificationPermissionUpdateOne {
-	npuo.mutation.Where(ps...)
-	return npuo
+func (_u *NotificationPermissionUpdateOne) Where(ps ...predicate.NotificationPermission) *NotificationPermissionUpdateOne {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
-func (npuo *NotificationPermissionUpdateOne) Select(field string, fields ...string) *NotificationPermissionUpdateOne {
-	npuo.fields = append([]string{field}, fields...)
-	return npuo
+func (_u *NotificationPermissionUpdateOne) Select(field string, fields ...string) *NotificationPermissionUpdateOne {
+	_u.fields = append([]string{field}, fields...)
+	return _u
 }
 
 // Save executes the query and returns the updated NotificationPermission entity.
-func (npuo *NotificationPermissionUpdateOne) Save(ctx context.Context) (*NotificationPermission, error) {
-	return withHooks(ctx, npuo.sqlSave, npuo.mutation, npuo.hooks)
+func (_u *NotificationPermissionUpdateOne) Save(ctx context.Context) (*NotificationPermission, error) {
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (npuo *NotificationPermissionUpdateOne) SaveX(ctx context.Context) *NotificationPermission {
-	node, err := npuo.Save(ctx)
+func (_u *NotificationPermissionUpdateOne) SaveX(ctx context.Context) *NotificationPermission {
+	node, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -611,36 +611,36 @@ func (npuo *NotificationPermissionUpdateOne) SaveX(ctx context.Context) *Notific
 }
 
 // Exec executes the query on the entity.
-func (npuo *NotificationPermissionUpdateOne) Exec(ctx context.Context) error {
-	_, err := npuo.Save(ctx)
+func (_u *NotificationPermissionUpdateOne) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (npuo *NotificationPermissionUpdateOne) ExecX(ctx context.Context) {
-	if err := npuo.Exec(ctx); err != nil {
+func (_u *NotificationPermissionUpdateOne) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (npuo *NotificationPermissionUpdateOne) check() error {
-	if v, ok := npuo.mutation.PermissionCode(); ok {
+func (_u *NotificationPermissionUpdateOne) check() error {
+	if v, ok := _u.mutation.PermissionCode(); ok {
 		if err := notificationpermission.PermissionCodeValidator(v); err != nil {
 			return &ValidationError{Name: "permission_code", err: fmt.Errorf(`ent: validator failed for field "NotificationPermission.permission_code": %w`, err)}
 		}
 	}
-	if v, ok := npuo.mutation.Name(); ok {
+	if v, ok := _u.mutation.Name(); ok {
 		if err := notificationpermission.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "NotificationPermission.name": %w`, err)}
 		}
 	}
-	if v, ok := npuo.mutation.Module(); ok {
+	if v, ok := _u.mutation.Module(); ok {
 		if err := notificationpermission.ModuleValidator(v); err != nil {
 			return &ValidationError{Name: "module", err: fmt.Errorf(`ent: validator failed for field "NotificationPermission.module": %w`, err)}
 		}
 	}
-	if v, ok := npuo.mutation.Action(); ok {
+	if v, ok := _u.mutation.Action(); ok {
 		if err := notificationpermission.ActionValidator(v); err != nil {
 			return &ValidationError{Name: "action", err: fmt.Errorf(`ent: validator failed for field "NotificationPermission.action": %w`, err)}
 		}
@@ -649,22 +649,22 @@ func (npuo *NotificationPermissionUpdateOne) check() error {
 }
 
 // Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
-func (npuo *NotificationPermissionUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *NotificationPermissionUpdateOne {
-	npuo.modifiers = append(npuo.modifiers, modifiers...)
-	return npuo
+func (_u *NotificationPermissionUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *NotificationPermissionUpdateOne {
+	_u.modifiers = append(_u.modifiers, modifiers...)
+	return _u
 }
 
-func (npuo *NotificationPermissionUpdateOne) sqlSave(ctx context.Context) (_node *NotificationPermission, err error) {
-	if err := npuo.check(); err != nil {
+func (_u *NotificationPermissionUpdateOne) sqlSave(ctx context.Context) (_node *NotificationPermission, err error) {
+	if err := _u.check(); err != nil {
 		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(notificationpermission.Table, notificationpermission.Columns, sqlgraph.NewFieldSpec(notificationpermission.FieldID, field.TypeUUID))
-	id, ok := npuo.mutation.ID()
+	id, ok := _u.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "NotificationPermission.id" for update`)}
 	}
 	_spec.Node.ID.Value = id
-	if fields := npuo.fields; len(fields) > 0 {
+	if fields := _u.fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		_spec.Node.Columns = append(_spec.Node.Columns, notificationpermission.FieldID)
 		for _, f := range fields {
@@ -676,38 +676,38 @@ func (npuo *NotificationPermissionUpdateOne) sqlSave(ctx context.Context) (_node
 			}
 		}
 	}
-	if ps := npuo.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := npuo.mutation.PermissionCode(); ok {
+	if value, ok := _u.mutation.PermissionCode(); ok {
 		_spec.SetField(notificationpermission.FieldPermissionCode, field.TypeString, value)
 	}
-	if value, ok := npuo.mutation.Name(); ok {
+	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(notificationpermission.FieldName, field.TypeString, value)
 	}
-	if value, ok := npuo.mutation.Module(); ok {
+	if value, ok := _u.mutation.Module(); ok {
 		_spec.SetField(notificationpermission.FieldModule, field.TypeString, value)
 	}
-	if value, ok := npuo.mutation.Action(); ok {
+	if value, ok := _u.mutation.Action(); ok {
 		_spec.SetField(notificationpermission.FieldAction, field.TypeString, value)
 	}
-	if value, ok := npuo.mutation.Resource(); ok {
+	if value, ok := _u.mutation.Resource(); ok {
 		_spec.SetField(notificationpermission.FieldResource, field.TypeString, value)
 	}
-	if npuo.mutation.ResourceCleared() {
+	if _u.mutation.ResourceCleared() {
 		_spec.ClearField(notificationpermission.FieldResource, field.TypeString)
 	}
-	if value, ok := npuo.mutation.Description(); ok {
+	if value, ok := _u.mutation.Description(); ok {
 		_spec.SetField(notificationpermission.FieldDescription, field.TypeString, value)
 	}
-	if npuo.mutation.DescriptionCleared() {
+	if _u.mutation.DescriptionCleared() {
 		_spec.ClearField(notificationpermission.FieldDescription, field.TypeString)
 	}
-	if npuo.mutation.RolesCleared() {
+	if _u.mutation.RolesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: true,
@@ -720,7 +720,7 @@ func (npuo *NotificationPermissionUpdateOne) sqlSave(ctx context.Context) (_node
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := npuo.mutation.RemovedRolesIDs(); len(nodes) > 0 && !npuo.mutation.RolesCleared() {
+	if nodes := _u.mutation.RemovedRolesIDs(); len(nodes) > 0 && !_u.mutation.RolesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: true,
@@ -736,7 +736,7 @@ func (npuo *NotificationPermissionUpdateOne) sqlSave(ctx context.Context) (_node
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := npuo.mutation.RolesIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.RolesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: true,
@@ -752,7 +752,7 @@ func (npuo *NotificationPermissionUpdateOne) sqlSave(ctx context.Context) (_node
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if npuo.mutation.NotificationRolePermissionsCleared() {
+	if _u.mutation.NotificationRolePermissionsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: true,
@@ -765,7 +765,7 @@ func (npuo *NotificationPermissionUpdateOne) sqlSave(ctx context.Context) (_node
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := npuo.mutation.RemovedNotificationRolePermissionsIDs(); len(nodes) > 0 && !npuo.mutation.NotificationRolePermissionsCleared() {
+	if nodes := _u.mutation.RemovedNotificationRolePermissionsIDs(); len(nodes) > 0 && !_u.mutation.NotificationRolePermissionsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: true,
@@ -781,7 +781,7 @@ func (npuo *NotificationPermissionUpdateOne) sqlSave(ctx context.Context) (_node
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := npuo.mutation.NotificationRolePermissionsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.NotificationRolePermissionsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: true,
@@ -797,11 +797,11 @@ func (npuo *NotificationPermissionUpdateOne) sqlSave(ctx context.Context) (_node
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	_spec.AddModifiers(npuo.modifiers...)
-	_node = &NotificationPermission{config: npuo.config}
+	_spec.AddModifiers(_u.modifiers...)
+	_node = &NotificationPermission{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues
-	if err = sqlgraph.UpdateNode(ctx, npuo.driver, _spec); err != nil {
+	if err = sqlgraph.UpdateNode(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{notificationpermission.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -809,6 +809,6 @@ func (npuo *NotificationPermissionUpdateOne) sqlSave(ctx context.Context) (_node
 		}
 		return nil, err
 	}
-	npuo.mutation.done = true
+	_u.mutation.done = true
 	return _node, nil
 }

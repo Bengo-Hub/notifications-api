@@ -20,56 +20,56 @@ type PlatformBillingDelete struct {
 }
 
 // Where appends a list predicates to the PlatformBillingDelete builder.
-func (pbd *PlatformBillingDelete) Where(ps ...predicate.PlatformBilling) *PlatformBillingDelete {
-	pbd.mutation.Where(ps...)
-	return pbd
+func (_d *PlatformBillingDelete) Where(ps ...predicate.PlatformBilling) *PlatformBillingDelete {
+	_d.mutation.Where(ps...)
+	return _d
 }
 
 // Exec executes the deletion query and returns how many vertices were deleted.
-func (pbd *PlatformBillingDelete) Exec(ctx context.Context) (int, error) {
-	return withHooks(ctx, pbd.sqlExec, pbd.mutation, pbd.hooks)
+func (_d *PlatformBillingDelete) Exec(ctx context.Context) (int, error) {
+	return withHooks(ctx, _d.sqlExec, _d.mutation, _d.hooks)
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (pbd *PlatformBillingDelete) ExecX(ctx context.Context) int {
-	n, err := pbd.Exec(ctx)
+func (_d *PlatformBillingDelete) ExecX(ctx context.Context) int {
+	n, err := _d.Exec(ctx)
 	if err != nil {
 		panic(err)
 	}
 	return n
 }
 
-func (pbd *PlatformBillingDelete) sqlExec(ctx context.Context) (int, error) {
+func (_d *PlatformBillingDelete) sqlExec(ctx context.Context) (int, error) {
 	_spec := sqlgraph.NewDeleteSpec(platformbilling.Table, sqlgraph.NewFieldSpec(platformbilling.FieldID, field.TypeUUID))
-	if ps := pbd.mutation.predicates; len(ps) > 0 {
+	if ps := _d.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	affected, err := sqlgraph.DeleteNodes(ctx, pbd.driver, _spec)
+	affected, err := sqlgraph.DeleteNodes(ctx, _d.driver, _spec)
 	if err != nil && sqlgraph.IsConstraintError(err) {
 		err = &ConstraintError{msg: err.Error(), wrap: err}
 	}
-	pbd.mutation.done = true
+	_d.mutation.done = true
 	return affected, err
 }
 
 // PlatformBillingDeleteOne is the builder for deleting a single PlatformBilling entity.
 type PlatformBillingDeleteOne struct {
-	pbd *PlatformBillingDelete
+	_d *PlatformBillingDelete
 }
 
 // Where appends a list predicates to the PlatformBillingDelete builder.
-func (pbdo *PlatformBillingDeleteOne) Where(ps ...predicate.PlatformBilling) *PlatformBillingDeleteOne {
-	pbdo.pbd.mutation.Where(ps...)
-	return pbdo
+func (_d *PlatformBillingDeleteOne) Where(ps ...predicate.PlatformBilling) *PlatformBillingDeleteOne {
+	_d._d.mutation.Where(ps...)
+	return _d
 }
 
 // Exec executes the deletion query.
-func (pbdo *PlatformBillingDeleteOne) Exec(ctx context.Context) error {
-	n, err := pbdo.pbd.Exec(ctx)
+func (_d *PlatformBillingDeleteOne) Exec(ctx context.Context) error {
+	n, err := _d._d.Exec(ctx)
 	switch {
 	case err != nil:
 		return err
@@ -81,8 +81,8 @@ func (pbdo *PlatformBillingDeleteOne) Exec(ctx context.Context) error {
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (pbdo *PlatformBillingDeleteOne) ExecX(ctx context.Context) {
-	if err := pbdo.Exec(ctx); err != nil {
+func (_d *PlatformBillingDeleteOne) ExecX(ctx context.Context) {
+	if err := _d.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

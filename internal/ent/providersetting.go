@@ -69,7 +69,7 @@ func (*ProviderSetting) scanValues(columns []string) ([]any, error) {
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the ProviderSetting fields.
-func (ps *ProviderSetting) assignValues(columns []string, values []any) error {
+func (_m *ProviderSetting) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
@@ -80,99 +80,99 @@ func (ps *ProviderSetting) assignValues(columns []string, values []any) error {
 			if !ok {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
-			ps.ID = int(value.Int64)
+			_m.ID = int(value.Int64)
 		case providersetting.FieldTenantID:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field tenant_id", values[i])
 			} else if value.Valid {
-				ps.TenantID = value.String
+				_m.TenantID = value.String
 			}
 		case providersetting.FieldChannel:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field channel", values[i])
 			} else if value.Valid {
-				ps.Channel = value.String
+				_m.Channel = value.String
 			}
 		case providersetting.FieldProvider:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field provider", values[i])
 			} else if value.Valid {
-				ps.Provider = value.String
+				_m.Provider = value.String
 			}
 		case providersetting.FieldProviderType:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field provider_type", values[i])
 			} else if value.Valid {
-				ps.ProviderType = value.String
+				_m.ProviderType = value.String
 			}
 		case providersetting.FieldProviderName:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field provider_name", values[i])
 			} else if value.Valid {
-				ps.ProviderName = value.String
+				_m.ProviderName = value.String
 			}
 		case providersetting.FieldKey:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field key", values[i])
 			} else if value.Valid {
-				ps.Key = value.String
+				_m.Key = value.String
 			}
 		case providersetting.FieldValue:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field value", values[i])
 			} else if value.Valid {
-				ps.Value = value.String
+				_m.Value = value.String
 			}
 		case providersetting.FieldDescription:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field description", values[i])
 			} else if value.Valid {
-				ps.Description = value.String
+				_m.Description = value.String
 			}
 		case providersetting.FieldIsEncrypted:
 			if value, ok := values[i].(*sql.NullBool); !ok {
 				return fmt.Errorf("unexpected type %T for field is_encrypted", values[i])
 			} else if value.Valid {
-				ps.IsEncrypted = value.Bool
+				_m.IsEncrypted = value.Bool
 			}
 		case providersetting.FieldIsPlatform:
 			if value, ok := values[i].(*sql.NullBool); !ok {
 				return fmt.Errorf("unexpected type %T for field is_platform", values[i])
 			} else if value.Valid {
-				ps.IsPlatform = value.Bool
+				_m.IsPlatform = value.Bool
 			}
 		case providersetting.FieldIsPlatformManaged:
 			if value, ok := values[i].(*sql.NullBool); !ok {
 				return fmt.Errorf("unexpected type %T for field is_platform_managed", values[i])
 			} else if value.Valid {
-				ps.IsPlatformManaged = value.Bool
+				_m.IsPlatformManaged = value.Bool
 			}
 		case providersetting.FieldEnvironment:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field environment", values[i])
 			} else if value.Valid {
-				ps.Environment = value.String
+				_m.Environment = value.String
 			}
 		case providersetting.FieldIsSecret:
 			if value, ok := values[i].(*sql.NullBool); !ok {
 				return fmt.Errorf("unexpected type %T for field is_secret", values[i])
 			} else if value.Valid {
-				ps.IsSecret = value.Bool
+				_m.IsSecret = value.Bool
 			}
 		case providersetting.FieldIsActive:
 			if value, ok := values[i].(*sql.NullBool); !ok {
 				return fmt.Errorf("unexpected type %T for field is_active", values[i])
 			} else if value.Valid {
-				ps.IsActive = value.Bool
+				_m.IsActive = value.Bool
 			}
 		case providersetting.FieldStatus:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field status", values[i])
 			} else if value.Valid {
-				ps.Status = value.String
+				_m.Status = value.String
 			}
 		default:
-			ps.selectValues.Set(columns[i], values[i])
+			_m.selectValues.Set(columns[i], values[i])
 		}
 	}
 	return nil
@@ -180,77 +180,77 @@ func (ps *ProviderSetting) assignValues(columns []string, values []any) error {
 
 // GetValue returns the ent.Value that was dynamically selected and assigned to the ProviderSetting.
 // This includes values selected through modifiers, order, etc.
-func (ps *ProviderSetting) GetValue(name string) (ent.Value, error) {
-	return ps.selectValues.Get(name)
+func (_m *ProviderSetting) GetValue(name string) (ent.Value, error) {
+	return _m.selectValues.Get(name)
 }
 
 // Update returns a builder for updating this ProviderSetting.
 // Note that you need to call ProviderSetting.Unwrap() before calling this method if this ProviderSetting
 // was returned from a transaction, and the transaction was committed or rolled back.
-func (ps *ProviderSetting) Update() *ProviderSettingUpdateOne {
-	return NewProviderSettingClient(ps.config).UpdateOne(ps)
+func (_m *ProviderSetting) Update() *ProviderSettingUpdateOne {
+	return NewProviderSettingClient(_m.config).UpdateOne(_m)
 }
 
 // Unwrap unwraps the ProviderSetting entity that was returned from a transaction after it was closed,
 // so that all future queries will be executed through the driver which created the transaction.
-func (ps *ProviderSetting) Unwrap() *ProviderSetting {
-	_tx, ok := ps.config.driver.(*txDriver)
+func (_m *ProviderSetting) Unwrap() *ProviderSetting {
+	_tx, ok := _m.config.driver.(*txDriver)
 	if !ok {
 		panic("ent: ProviderSetting is not a transactional entity")
 	}
-	ps.config.driver = _tx.drv
-	return ps
+	_m.config.driver = _tx.drv
+	return _m
 }
 
 // String implements the fmt.Stringer.
-func (ps *ProviderSetting) String() string {
+func (_m *ProviderSetting) String() string {
 	var builder strings.Builder
 	builder.WriteString("ProviderSetting(")
-	builder.WriteString(fmt.Sprintf("id=%v, ", ps.ID))
+	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("tenant_id=")
-	builder.WriteString(ps.TenantID)
+	builder.WriteString(_m.TenantID)
 	builder.WriteString(", ")
 	builder.WriteString("channel=")
-	builder.WriteString(ps.Channel)
+	builder.WriteString(_m.Channel)
 	builder.WriteString(", ")
 	builder.WriteString("provider=")
-	builder.WriteString(ps.Provider)
+	builder.WriteString(_m.Provider)
 	builder.WriteString(", ")
 	builder.WriteString("provider_type=")
-	builder.WriteString(ps.ProviderType)
+	builder.WriteString(_m.ProviderType)
 	builder.WriteString(", ")
 	builder.WriteString("provider_name=")
-	builder.WriteString(ps.ProviderName)
+	builder.WriteString(_m.ProviderName)
 	builder.WriteString(", ")
 	builder.WriteString("key=")
-	builder.WriteString(ps.Key)
+	builder.WriteString(_m.Key)
 	builder.WriteString(", ")
 	builder.WriteString("value=")
-	builder.WriteString(ps.Value)
+	builder.WriteString(_m.Value)
 	builder.WriteString(", ")
 	builder.WriteString("description=")
-	builder.WriteString(ps.Description)
+	builder.WriteString(_m.Description)
 	builder.WriteString(", ")
 	builder.WriteString("is_encrypted=")
-	builder.WriteString(fmt.Sprintf("%v", ps.IsEncrypted))
+	builder.WriteString(fmt.Sprintf("%v", _m.IsEncrypted))
 	builder.WriteString(", ")
 	builder.WriteString("is_platform=")
-	builder.WriteString(fmt.Sprintf("%v", ps.IsPlatform))
+	builder.WriteString(fmt.Sprintf("%v", _m.IsPlatform))
 	builder.WriteString(", ")
 	builder.WriteString("is_platform_managed=")
-	builder.WriteString(fmt.Sprintf("%v", ps.IsPlatformManaged))
+	builder.WriteString(fmt.Sprintf("%v", _m.IsPlatformManaged))
 	builder.WriteString(", ")
 	builder.WriteString("environment=")
-	builder.WriteString(ps.Environment)
+	builder.WriteString(_m.Environment)
 	builder.WriteString(", ")
 	builder.WriteString("is_secret=")
-	builder.WriteString(fmt.Sprintf("%v", ps.IsSecret))
+	builder.WriteString(fmt.Sprintf("%v", _m.IsSecret))
 	builder.WriteString(", ")
 	builder.WriteString("is_active=")
-	builder.WriteString(fmt.Sprintf("%v", ps.IsActive))
+	builder.WriteString(fmt.Sprintf("%v", _m.IsActive))
 	builder.WriteString(", ")
 	builder.WriteString("status=")
-	builder.WriteString(ps.Status)
+	builder.WriteString(_m.Status)
 	builder.WriteByte(')')
 	return builder.String()
 }

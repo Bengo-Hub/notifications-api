@@ -28,215 +28,215 @@ type NotificationRoleUpdate struct {
 }
 
 // Where appends a list predicates to the NotificationRoleUpdate builder.
-func (nru *NotificationRoleUpdate) Where(ps ...predicate.NotificationRole) *NotificationRoleUpdate {
-	nru.mutation.Where(ps...)
-	return nru
+func (_u *NotificationRoleUpdate) Where(ps ...predicate.NotificationRole) *NotificationRoleUpdate {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // SetTenantID sets the "tenant_id" field.
-func (nru *NotificationRoleUpdate) SetTenantID(u uuid.UUID) *NotificationRoleUpdate {
-	nru.mutation.SetTenantID(u)
-	return nru
+func (_u *NotificationRoleUpdate) SetTenantID(v uuid.UUID) *NotificationRoleUpdate {
+	_u.mutation.SetTenantID(v)
+	return _u
 }
 
 // SetNillableTenantID sets the "tenant_id" field if the given value is not nil.
-func (nru *NotificationRoleUpdate) SetNillableTenantID(u *uuid.UUID) *NotificationRoleUpdate {
-	if u != nil {
-		nru.SetTenantID(*u)
+func (_u *NotificationRoleUpdate) SetNillableTenantID(v *uuid.UUID) *NotificationRoleUpdate {
+	if v != nil {
+		_u.SetTenantID(*v)
 	}
-	return nru
+	return _u
 }
 
 // SetRoleCode sets the "role_code" field.
-func (nru *NotificationRoleUpdate) SetRoleCode(s string) *NotificationRoleUpdate {
-	nru.mutation.SetRoleCode(s)
-	return nru
+func (_u *NotificationRoleUpdate) SetRoleCode(v string) *NotificationRoleUpdate {
+	_u.mutation.SetRoleCode(v)
+	return _u
 }
 
 // SetNillableRoleCode sets the "role_code" field if the given value is not nil.
-func (nru *NotificationRoleUpdate) SetNillableRoleCode(s *string) *NotificationRoleUpdate {
-	if s != nil {
-		nru.SetRoleCode(*s)
+func (_u *NotificationRoleUpdate) SetNillableRoleCode(v *string) *NotificationRoleUpdate {
+	if v != nil {
+		_u.SetRoleCode(*v)
 	}
-	return nru
+	return _u
 }
 
 // SetName sets the "name" field.
-func (nru *NotificationRoleUpdate) SetName(s string) *NotificationRoleUpdate {
-	nru.mutation.SetName(s)
-	return nru
+func (_u *NotificationRoleUpdate) SetName(v string) *NotificationRoleUpdate {
+	_u.mutation.SetName(v)
+	return _u
 }
 
 // SetNillableName sets the "name" field if the given value is not nil.
-func (nru *NotificationRoleUpdate) SetNillableName(s *string) *NotificationRoleUpdate {
-	if s != nil {
-		nru.SetName(*s)
+func (_u *NotificationRoleUpdate) SetNillableName(v *string) *NotificationRoleUpdate {
+	if v != nil {
+		_u.SetName(*v)
 	}
-	return nru
+	return _u
 }
 
 // SetDescription sets the "description" field.
-func (nru *NotificationRoleUpdate) SetDescription(s string) *NotificationRoleUpdate {
-	nru.mutation.SetDescription(s)
-	return nru
+func (_u *NotificationRoleUpdate) SetDescription(v string) *NotificationRoleUpdate {
+	_u.mutation.SetDescription(v)
+	return _u
 }
 
 // SetNillableDescription sets the "description" field if the given value is not nil.
-func (nru *NotificationRoleUpdate) SetNillableDescription(s *string) *NotificationRoleUpdate {
-	if s != nil {
-		nru.SetDescription(*s)
+func (_u *NotificationRoleUpdate) SetNillableDescription(v *string) *NotificationRoleUpdate {
+	if v != nil {
+		_u.SetDescription(*v)
 	}
-	return nru
+	return _u
 }
 
 // ClearDescription clears the value of the "description" field.
-func (nru *NotificationRoleUpdate) ClearDescription() *NotificationRoleUpdate {
-	nru.mutation.ClearDescription()
-	return nru
+func (_u *NotificationRoleUpdate) ClearDescription() *NotificationRoleUpdate {
+	_u.mutation.ClearDescription()
+	return _u
 }
 
 // SetIsSystemRole sets the "is_system_role" field.
-func (nru *NotificationRoleUpdate) SetIsSystemRole(b bool) *NotificationRoleUpdate {
-	nru.mutation.SetIsSystemRole(b)
-	return nru
+func (_u *NotificationRoleUpdate) SetIsSystemRole(v bool) *NotificationRoleUpdate {
+	_u.mutation.SetIsSystemRole(v)
+	return _u
 }
 
 // SetNillableIsSystemRole sets the "is_system_role" field if the given value is not nil.
-func (nru *NotificationRoleUpdate) SetNillableIsSystemRole(b *bool) *NotificationRoleUpdate {
-	if b != nil {
-		nru.SetIsSystemRole(*b)
+func (_u *NotificationRoleUpdate) SetNillableIsSystemRole(v *bool) *NotificationRoleUpdate {
+	if v != nil {
+		_u.SetIsSystemRole(*v)
 	}
-	return nru
+	return _u
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (nru *NotificationRoleUpdate) SetUpdatedAt(t time.Time) *NotificationRoleUpdate {
-	nru.mutation.SetUpdatedAt(t)
-	return nru
+func (_u *NotificationRoleUpdate) SetUpdatedAt(v time.Time) *NotificationRoleUpdate {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
 }
 
 // AddPermissionIDs adds the "permissions" edge to the NotificationPermission entity by IDs.
-func (nru *NotificationRoleUpdate) AddPermissionIDs(ids ...uuid.UUID) *NotificationRoleUpdate {
-	nru.mutation.AddPermissionIDs(ids...)
-	return nru
+func (_u *NotificationRoleUpdate) AddPermissionIDs(ids ...uuid.UUID) *NotificationRoleUpdate {
+	_u.mutation.AddPermissionIDs(ids...)
+	return _u
 }
 
 // AddPermissions adds the "permissions" edges to the NotificationPermission entity.
-func (nru *NotificationRoleUpdate) AddPermissions(n ...*NotificationPermission) *NotificationRoleUpdate {
-	ids := make([]uuid.UUID, len(n))
-	for i := range n {
-		ids[i] = n[i].ID
+func (_u *NotificationRoleUpdate) AddPermissions(v ...*NotificationPermission) *NotificationRoleUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return nru.AddPermissionIDs(ids...)
+	return _u.AddPermissionIDs(ids...)
 }
 
 // AddUserAssignmentIDs adds the "user_assignments" edge to the UserRoleAssignment entity by IDs.
-func (nru *NotificationRoleUpdate) AddUserAssignmentIDs(ids ...uuid.UUID) *NotificationRoleUpdate {
-	nru.mutation.AddUserAssignmentIDs(ids...)
-	return nru
+func (_u *NotificationRoleUpdate) AddUserAssignmentIDs(ids ...uuid.UUID) *NotificationRoleUpdate {
+	_u.mutation.AddUserAssignmentIDs(ids...)
+	return _u
 }
 
 // AddUserAssignments adds the "user_assignments" edges to the UserRoleAssignment entity.
-func (nru *NotificationRoleUpdate) AddUserAssignments(u ...*UserRoleAssignment) *NotificationRoleUpdate {
-	ids := make([]uuid.UUID, len(u))
-	for i := range u {
-		ids[i] = u[i].ID
+func (_u *NotificationRoleUpdate) AddUserAssignments(v ...*UserRoleAssignment) *NotificationRoleUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return nru.AddUserAssignmentIDs(ids...)
+	return _u.AddUserAssignmentIDs(ids...)
 }
 
 // AddNotificationRolePermissionIDs adds the "notification_role_permissions" edge to the NotificationRolePermission entity by IDs.
-func (nru *NotificationRoleUpdate) AddNotificationRolePermissionIDs(ids ...int) *NotificationRoleUpdate {
-	nru.mutation.AddNotificationRolePermissionIDs(ids...)
-	return nru
+func (_u *NotificationRoleUpdate) AddNotificationRolePermissionIDs(ids ...int) *NotificationRoleUpdate {
+	_u.mutation.AddNotificationRolePermissionIDs(ids...)
+	return _u
 }
 
 // AddNotificationRolePermissions adds the "notification_role_permissions" edges to the NotificationRolePermission entity.
-func (nru *NotificationRoleUpdate) AddNotificationRolePermissions(n ...*NotificationRolePermission) *NotificationRoleUpdate {
-	ids := make([]int, len(n))
-	for i := range n {
-		ids[i] = n[i].ID
+func (_u *NotificationRoleUpdate) AddNotificationRolePermissions(v ...*NotificationRolePermission) *NotificationRoleUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return nru.AddNotificationRolePermissionIDs(ids...)
+	return _u.AddNotificationRolePermissionIDs(ids...)
 }
 
 // Mutation returns the NotificationRoleMutation object of the builder.
-func (nru *NotificationRoleUpdate) Mutation() *NotificationRoleMutation {
-	return nru.mutation
+func (_u *NotificationRoleUpdate) Mutation() *NotificationRoleMutation {
+	return _u.mutation
 }
 
 // ClearPermissions clears all "permissions" edges to the NotificationPermission entity.
-func (nru *NotificationRoleUpdate) ClearPermissions() *NotificationRoleUpdate {
-	nru.mutation.ClearPermissions()
-	return nru
+func (_u *NotificationRoleUpdate) ClearPermissions() *NotificationRoleUpdate {
+	_u.mutation.ClearPermissions()
+	return _u
 }
 
 // RemovePermissionIDs removes the "permissions" edge to NotificationPermission entities by IDs.
-func (nru *NotificationRoleUpdate) RemovePermissionIDs(ids ...uuid.UUID) *NotificationRoleUpdate {
-	nru.mutation.RemovePermissionIDs(ids...)
-	return nru
+func (_u *NotificationRoleUpdate) RemovePermissionIDs(ids ...uuid.UUID) *NotificationRoleUpdate {
+	_u.mutation.RemovePermissionIDs(ids...)
+	return _u
 }
 
 // RemovePermissions removes "permissions" edges to NotificationPermission entities.
-func (nru *NotificationRoleUpdate) RemovePermissions(n ...*NotificationPermission) *NotificationRoleUpdate {
-	ids := make([]uuid.UUID, len(n))
-	for i := range n {
-		ids[i] = n[i].ID
+func (_u *NotificationRoleUpdate) RemovePermissions(v ...*NotificationPermission) *NotificationRoleUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return nru.RemovePermissionIDs(ids...)
+	return _u.RemovePermissionIDs(ids...)
 }
 
 // ClearUserAssignments clears all "user_assignments" edges to the UserRoleAssignment entity.
-func (nru *NotificationRoleUpdate) ClearUserAssignments() *NotificationRoleUpdate {
-	nru.mutation.ClearUserAssignments()
-	return nru
+func (_u *NotificationRoleUpdate) ClearUserAssignments() *NotificationRoleUpdate {
+	_u.mutation.ClearUserAssignments()
+	return _u
 }
 
 // RemoveUserAssignmentIDs removes the "user_assignments" edge to UserRoleAssignment entities by IDs.
-func (nru *NotificationRoleUpdate) RemoveUserAssignmentIDs(ids ...uuid.UUID) *NotificationRoleUpdate {
-	nru.mutation.RemoveUserAssignmentIDs(ids...)
-	return nru
+func (_u *NotificationRoleUpdate) RemoveUserAssignmentIDs(ids ...uuid.UUID) *NotificationRoleUpdate {
+	_u.mutation.RemoveUserAssignmentIDs(ids...)
+	return _u
 }
 
 // RemoveUserAssignments removes "user_assignments" edges to UserRoleAssignment entities.
-func (nru *NotificationRoleUpdate) RemoveUserAssignments(u ...*UserRoleAssignment) *NotificationRoleUpdate {
-	ids := make([]uuid.UUID, len(u))
-	for i := range u {
-		ids[i] = u[i].ID
+func (_u *NotificationRoleUpdate) RemoveUserAssignments(v ...*UserRoleAssignment) *NotificationRoleUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return nru.RemoveUserAssignmentIDs(ids...)
+	return _u.RemoveUserAssignmentIDs(ids...)
 }
 
 // ClearNotificationRolePermissions clears all "notification_role_permissions" edges to the NotificationRolePermission entity.
-func (nru *NotificationRoleUpdate) ClearNotificationRolePermissions() *NotificationRoleUpdate {
-	nru.mutation.ClearNotificationRolePermissions()
-	return nru
+func (_u *NotificationRoleUpdate) ClearNotificationRolePermissions() *NotificationRoleUpdate {
+	_u.mutation.ClearNotificationRolePermissions()
+	return _u
 }
 
 // RemoveNotificationRolePermissionIDs removes the "notification_role_permissions" edge to NotificationRolePermission entities by IDs.
-func (nru *NotificationRoleUpdate) RemoveNotificationRolePermissionIDs(ids ...int) *NotificationRoleUpdate {
-	nru.mutation.RemoveNotificationRolePermissionIDs(ids...)
-	return nru
+func (_u *NotificationRoleUpdate) RemoveNotificationRolePermissionIDs(ids ...int) *NotificationRoleUpdate {
+	_u.mutation.RemoveNotificationRolePermissionIDs(ids...)
+	return _u
 }
 
 // RemoveNotificationRolePermissions removes "notification_role_permissions" edges to NotificationRolePermission entities.
-func (nru *NotificationRoleUpdate) RemoveNotificationRolePermissions(n ...*NotificationRolePermission) *NotificationRoleUpdate {
-	ids := make([]int, len(n))
-	for i := range n {
-		ids[i] = n[i].ID
+func (_u *NotificationRoleUpdate) RemoveNotificationRolePermissions(v ...*NotificationRolePermission) *NotificationRoleUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return nru.RemoveNotificationRolePermissionIDs(ids...)
+	return _u.RemoveNotificationRolePermissionIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
-func (nru *NotificationRoleUpdate) Save(ctx context.Context) (int, error) {
-	nru.defaults()
-	return withHooks(ctx, nru.sqlSave, nru.mutation, nru.hooks)
+func (_u *NotificationRoleUpdate) Save(ctx context.Context) (int, error) {
+	_u.defaults()
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (nru *NotificationRoleUpdate) SaveX(ctx context.Context) int {
-	affected, err := nru.Save(ctx)
+func (_u *NotificationRoleUpdate) SaveX(ctx context.Context) int {
+	affected, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -244,34 +244,34 @@ func (nru *NotificationRoleUpdate) SaveX(ctx context.Context) int {
 }
 
 // Exec executes the query.
-func (nru *NotificationRoleUpdate) Exec(ctx context.Context) error {
-	_, err := nru.Save(ctx)
+func (_u *NotificationRoleUpdate) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (nru *NotificationRoleUpdate) ExecX(ctx context.Context) {
-	if err := nru.Exec(ctx); err != nil {
+func (_u *NotificationRoleUpdate) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (nru *NotificationRoleUpdate) defaults() {
-	if _, ok := nru.mutation.UpdatedAt(); !ok {
+func (_u *NotificationRoleUpdate) defaults() {
+	if _, ok := _u.mutation.UpdatedAt(); !ok {
 		v := notificationrole.UpdateDefaultUpdatedAt()
-		nru.mutation.SetUpdatedAt(v)
+		_u.mutation.SetUpdatedAt(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (nru *NotificationRoleUpdate) check() error {
-	if v, ok := nru.mutation.RoleCode(); ok {
+func (_u *NotificationRoleUpdate) check() error {
+	if v, ok := _u.mutation.RoleCode(); ok {
 		if err := notificationrole.RoleCodeValidator(v); err != nil {
 			return &ValidationError{Name: "role_code", err: fmt.Errorf(`ent: validator failed for field "NotificationRole.role_code": %w`, err)}
 		}
 	}
-	if v, ok := nru.mutation.Name(); ok {
+	if v, ok := _u.mutation.Name(); ok {
 		if err := notificationrole.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "NotificationRole.name": %w`, err)}
 		}
@@ -280,45 +280,45 @@ func (nru *NotificationRoleUpdate) check() error {
 }
 
 // Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
-func (nru *NotificationRoleUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *NotificationRoleUpdate {
-	nru.modifiers = append(nru.modifiers, modifiers...)
-	return nru
+func (_u *NotificationRoleUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *NotificationRoleUpdate {
+	_u.modifiers = append(_u.modifiers, modifiers...)
+	return _u
 }
 
-func (nru *NotificationRoleUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	if err := nru.check(); err != nil {
-		return n, err
+func (_u *NotificationRoleUpdate) sqlSave(ctx context.Context) (_node int, err error) {
+	if err := _u.check(); err != nil {
+		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(notificationrole.Table, notificationrole.Columns, sqlgraph.NewFieldSpec(notificationrole.FieldID, field.TypeUUID))
-	if ps := nru.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := nru.mutation.TenantID(); ok {
+	if value, ok := _u.mutation.TenantID(); ok {
 		_spec.SetField(notificationrole.FieldTenantID, field.TypeUUID, value)
 	}
-	if value, ok := nru.mutation.RoleCode(); ok {
+	if value, ok := _u.mutation.RoleCode(); ok {
 		_spec.SetField(notificationrole.FieldRoleCode, field.TypeString, value)
 	}
-	if value, ok := nru.mutation.Name(); ok {
+	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(notificationrole.FieldName, field.TypeString, value)
 	}
-	if value, ok := nru.mutation.Description(); ok {
+	if value, ok := _u.mutation.Description(); ok {
 		_spec.SetField(notificationrole.FieldDescription, field.TypeString, value)
 	}
-	if nru.mutation.DescriptionCleared() {
+	if _u.mutation.DescriptionCleared() {
 		_spec.ClearField(notificationrole.FieldDescription, field.TypeString)
 	}
-	if value, ok := nru.mutation.IsSystemRole(); ok {
+	if value, ok := _u.mutation.IsSystemRole(); ok {
 		_spec.SetField(notificationrole.FieldIsSystemRole, field.TypeBool, value)
 	}
-	if value, ok := nru.mutation.UpdatedAt(); ok {
+	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(notificationrole.FieldUpdatedAt, field.TypeTime, value)
 	}
-	if nru.mutation.PermissionsCleared() {
+	if _u.mutation.PermissionsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: false,
@@ -331,7 +331,7 @@ func (nru *NotificationRoleUpdate) sqlSave(ctx context.Context) (n int, err erro
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := nru.mutation.RemovedPermissionsIDs(); len(nodes) > 0 && !nru.mutation.PermissionsCleared() {
+	if nodes := _u.mutation.RemovedPermissionsIDs(); len(nodes) > 0 && !_u.mutation.PermissionsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: false,
@@ -347,7 +347,7 @@ func (nru *NotificationRoleUpdate) sqlSave(ctx context.Context) (n int, err erro
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := nru.mutation.PermissionsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.PermissionsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: false,
@@ -363,7 +363,7 @@ func (nru *NotificationRoleUpdate) sqlSave(ctx context.Context) (n int, err erro
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if nru.mutation.UserAssignmentsCleared() {
+	if _u.mutation.UserAssignmentsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -376,7 +376,7 @@ func (nru *NotificationRoleUpdate) sqlSave(ctx context.Context) (n int, err erro
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := nru.mutation.RemovedUserAssignmentsIDs(); len(nodes) > 0 && !nru.mutation.UserAssignmentsCleared() {
+	if nodes := _u.mutation.RemovedUserAssignmentsIDs(); len(nodes) > 0 && !_u.mutation.UserAssignmentsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -392,7 +392,7 @@ func (nru *NotificationRoleUpdate) sqlSave(ctx context.Context) (n int, err erro
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := nru.mutation.UserAssignmentsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.UserAssignmentsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -408,7 +408,7 @@ func (nru *NotificationRoleUpdate) sqlSave(ctx context.Context) (n int, err erro
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if nru.mutation.NotificationRolePermissionsCleared() {
+	if _u.mutation.NotificationRolePermissionsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: true,
@@ -421,7 +421,7 @@ func (nru *NotificationRoleUpdate) sqlSave(ctx context.Context) (n int, err erro
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := nru.mutation.RemovedNotificationRolePermissionsIDs(); len(nodes) > 0 && !nru.mutation.NotificationRolePermissionsCleared() {
+	if nodes := _u.mutation.RemovedNotificationRolePermissionsIDs(); len(nodes) > 0 && !_u.mutation.NotificationRolePermissionsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: true,
@@ -437,7 +437,7 @@ func (nru *NotificationRoleUpdate) sqlSave(ctx context.Context) (n int, err erro
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := nru.mutation.NotificationRolePermissionsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.NotificationRolePermissionsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: true,
@@ -453,8 +453,8 @@ func (nru *NotificationRoleUpdate) sqlSave(ctx context.Context) (n int, err erro
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	_spec.AddModifiers(nru.modifiers...)
-	if n, err = sqlgraph.UpdateNodes(ctx, nru.driver, _spec); err != nil {
+	_spec.AddModifiers(_u.modifiers...)
+	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{notificationrole.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -462,8 +462,8 @@ func (nru *NotificationRoleUpdate) sqlSave(ctx context.Context) (n int, err erro
 		}
 		return 0, err
 	}
-	nru.mutation.done = true
-	return n, nil
+	_u.mutation.done = true
+	return _node, nil
 }
 
 // NotificationRoleUpdateOne is the builder for updating a single NotificationRole entity.
@@ -476,222 +476,222 @@ type NotificationRoleUpdateOne struct {
 }
 
 // SetTenantID sets the "tenant_id" field.
-func (nruo *NotificationRoleUpdateOne) SetTenantID(u uuid.UUID) *NotificationRoleUpdateOne {
-	nruo.mutation.SetTenantID(u)
-	return nruo
+func (_u *NotificationRoleUpdateOne) SetTenantID(v uuid.UUID) *NotificationRoleUpdateOne {
+	_u.mutation.SetTenantID(v)
+	return _u
 }
 
 // SetNillableTenantID sets the "tenant_id" field if the given value is not nil.
-func (nruo *NotificationRoleUpdateOne) SetNillableTenantID(u *uuid.UUID) *NotificationRoleUpdateOne {
-	if u != nil {
-		nruo.SetTenantID(*u)
+func (_u *NotificationRoleUpdateOne) SetNillableTenantID(v *uuid.UUID) *NotificationRoleUpdateOne {
+	if v != nil {
+		_u.SetTenantID(*v)
 	}
-	return nruo
+	return _u
 }
 
 // SetRoleCode sets the "role_code" field.
-func (nruo *NotificationRoleUpdateOne) SetRoleCode(s string) *NotificationRoleUpdateOne {
-	nruo.mutation.SetRoleCode(s)
-	return nruo
+func (_u *NotificationRoleUpdateOne) SetRoleCode(v string) *NotificationRoleUpdateOne {
+	_u.mutation.SetRoleCode(v)
+	return _u
 }
 
 // SetNillableRoleCode sets the "role_code" field if the given value is not nil.
-func (nruo *NotificationRoleUpdateOne) SetNillableRoleCode(s *string) *NotificationRoleUpdateOne {
-	if s != nil {
-		nruo.SetRoleCode(*s)
+func (_u *NotificationRoleUpdateOne) SetNillableRoleCode(v *string) *NotificationRoleUpdateOne {
+	if v != nil {
+		_u.SetRoleCode(*v)
 	}
-	return nruo
+	return _u
 }
 
 // SetName sets the "name" field.
-func (nruo *NotificationRoleUpdateOne) SetName(s string) *NotificationRoleUpdateOne {
-	nruo.mutation.SetName(s)
-	return nruo
+func (_u *NotificationRoleUpdateOne) SetName(v string) *NotificationRoleUpdateOne {
+	_u.mutation.SetName(v)
+	return _u
 }
 
 // SetNillableName sets the "name" field if the given value is not nil.
-func (nruo *NotificationRoleUpdateOne) SetNillableName(s *string) *NotificationRoleUpdateOne {
-	if s != nil {
-		nruo.SetName(*s)
+func (_u *NotificationRoleUpdateOne) SetNillableName(v *string) *NotificationRoleUpdateOne {
+	if v != nil {
+		_u.SetName(*v)
 	}
-	return nruo
+	return _u
 }
 
 // SetDescription sets the "description" field.
-func (nruo *NotificationRoleUpdateOne) SetDescription(s string) *NotificationRoleUpdateOne {
-	nruo.mutation.SetDescription(s)
-	return nruo
+func (_u *NotificationRoleUpdateOne) SetDescription(v string) *NotificationRoleUpdateOne {
+	_u.mutation.SetDescription(v)
+	return _u
 }
 
 // SetNillableDescription sets the "description" field if the given value is not nil.
-func (nruo *NotificationRoleUpdateOne) SetNillableDescription(s *string) *NotificationRoleUpdateOne {
-	if s != nil {
-		nruo.SetDescription(*s)
+func (_u *NotificationRoleUpdateOne) SetNillableDescription(v *string) *NotificationRoleUpdateOne {
+	if v != nil {
+		_u.SetDescription(*v)
 	}
-	return nruo
+	return _u
 }
 
 // ClearDescription clears the value of the "description" field.
-func (nruo *NotificationRoleUpdateOne) ClearDescription() *NotificationRoleUpdateOne {
-	nruo.mutation.ClearDescription()
-	return nruo
+func (_u *NotificationRoleUpdateOne) ClearDescription() *NotificationRoleUpdateOne {
+	_u.mutation.ClearDescription()
+	return _u
 }
 
 // SetIsSystemRole sets the "is_system_role" field.
-func (nruo *NotificationRoleUpdateOne) SetIsSystemRole(b bool) *NotificationRoleUpdateOne {
-	nruo.mutation.SetIsSystemRole(b)
-	return nruo
+func (_u *NotificationRoleUpdateOne) SetIsSystemRole(v bool) *NotificationRoleUpdateOne {
+	_u.mutation.SetIsSystemRole(v)
+	return _u
 }
 
 // SetNillableIsSystemRole sets the "is_system_role" field if the given value is not nil.
-func (nruo *NotificationRoleUpdateOne) SetNillableIsSystemRole(b *bool) *NotificationRoleUpdateOne {
-	if b != nil {
-		nruo.SetIsSystemRole(*b)
+func (_u *NotificationRoleUpdateOne) SetNillableIsSystemRole(v *bool) *NotificationRoleUpdateOne {
+	if v != nil {
+		_u.SetIsSystemRole(*v)
 	}
-	return nruo
+	return _u
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (nruo *NotificationRoleUpdateOne) SetUpdatedAt(t time.Time) *NotificationRoleUpdateOne {
-	nruo.mutation.SetUpdatedAt(t)
-	return nruo
+func (_u *NotificationRoleUpdateOne) SetUpdatedAt(v time.Time) *NotificationRoleUpdateOne {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
 }
 
 // AddPermissionIDs adds the "permissions" edge to the NotificationPermission entity by IDs.
-func (nruo *NotificationRoleUpdateOne) AddPermissionIDs(ids ...uuid.UUID) *NotificationRoleUpdateOne {
-	nruo.mutation.AddPermissionIDs(ids...)
-	return nruo
+func (_u *NotificationRoleUpdateOne) AddPermissionIDs(ids ...uuid.UUID) *NotificationRoleUpdateOne {
+	_u.mutation.AddPermissionIDs(ids...)
+	return _u
 }
 
 // AddPermissions adds the "permissions" edges to the NotificationPermission entity.
-func (nruo *NotificationRoleUpdateOne) AddPermissions(n ...*NotificationPermission) *NotificationRoleUpdateOne {
-	ids := make([]uuid.UUID, len(n))
-	for i := range n {
-		ids[i] = n[i].ID
+func (_u *NotificationRoleUpdateOne) AddPermissions(v ...*NotificationPermission) *NotificationRoleUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return nruo.AddPermissionIDs(ids...)
+	return _u.AddPermissionIDs(ids...)
 }
 
 // AddUserAssignmentIDs adds the "user_assignments" edge to the UserRoleAssignment entity by IDs.
-func (nruo *NotificationRoleUpdateOne) AddUserAssignmentIDs(ids ...uuid.UUID) *NotificationRoleUpdateOne {
-	nruo.mutation.AddUserAssignmentIDs(ids...)
-	return nruo
+func (_u *NotificationRoleUpdateOne) AddUserAssignmentIDs(ids ...uuid.UUID) *NotificationRoleUpdateOne {
+	_u.mutation.AddUserAssignmentIDs(ids...)
+	return _u
 }
 
 // AddUserAssignments adds the "user_assignments" edges to the UserRoleAssignment entity.
-func (nruo *NotificationRoleUpdateOne) AddUserAssignments(u ...*UserRoleAssignment) *NotificationRoleUpdateOne {
-	ids := make([]uuid.UUID, len(u))
-	for i := range u {
-		ids[i] = u[i].ID
+func (_u *NotificationRoleUpdateOne) AddUserAssignments(v ...*UserRoleAssignment) *NotificationRoleUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return nruo.AddUserAssignmentIDs(ids...)
+	return _u.AddUserAssignmentIDs(ids...)
 }
 
 // AddNotificationRolePermissionIDs adds the "notification_role_permissions" edge to the NotificationRolePermission entity by IDs.
-func (nruo *NotificationRoleUpdateOne) AddNotificationRolePermissionIDs(ids ...int) *NotificationRoleUpdateOne {
-	nruo.mutation.AddNotificationRolePermissionIDs(ids...)
-	return nruo
+func (_u *NotificationRoleUpdateOne) AddNotificationRolePermissionIDs(ids ...int) *NotificationRoleUpdateOne {
+	_u.mutation.AddNotificationRolePermissionIDs(ids...)
+	return _u
 }
 
 // AddNotificationRolePermissions adds the "notification_role_permissions" edges to the NotificationRolePermission entity.
-func (nruo *NotificationRoleUpdateOne) AddNotificationRolePermissions(n ...*NotificationRolePermission) *NotificationRoleUpdateOne {
-	ids := make([]int, len(n))
-	for i := range n {
-		ids[i] = n[i].ID
+func (_u *NotificationRoleUpdateOne) AddNotificationRolePermissions(v ...*NotificationRolePermission) *NotificationRoleUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return nruo.AddNotificationRolePermissionIDs(ids...)
+	return _u.AddNotificationRolePermissionIDs(ids...)
 }
 
 // Mutation returns the NotificationRoleMutation object of the builder.
-func (nruo *NotificationRoleUpdateOne) Mutation() *NotificationRoleMutation {
-	return nruo.mutation
+func (_u *NotificationRoleUpdateOne) Mutation() *NotificationRoleMutation {
+	return _u.mutation
 }
 
 // ClearPermissions clears all "permissions" edges to the NotificationPermission entity.
-func (nruo *NotificationRoleUpdateOne) ClearPermissions() *NotificationRoleUpdateOne {
-	nruo.mutation.ClearPermissions()
-	return nruo
+func (_u *NotificationRoleUpdateOne) ClearPermissions() *NotificationRoleUpdateOne {
+	_u.mutation.ClearPermissions()
+	return _u
 }
 
 // RemovePermissionIDs removes the "permissions" edge to NotificationPermission entities by IDs.
-func (nruo *NotificationRoleUpdateOne) RemovePermissionIDs(ids ...uuid.UUID) *NotificationRoleUpdateOne {
-	nruo.mutation.RemovePermissionIDs(ids...)
-	return nruo
+func (_u *NotificationRoleUpdateOne) RemovePermissionIDs(ids ...uuid.UUID) *NotificationRoleUpdateOne {
+	_u.mutation.RemovePermissionIDs(ids...)
+	return _u
 }
 
 // RemovePermissions removes "permissions" edges to NotificationPermission entities.
-func (nruo *NotificationRoleUpdateOne) RemovePermissions(n ...*NotificationPermission) *NotificationRoleUpdateOne {
-	ids := make([]uuid.UUID, len(n))
-	for i := range n {
-		ids[i] = n[i].ID
+func (_u *NotificationRoleUpdateOne) RemovePermissions(v ...*NotificationPermission) *NotificationRoleUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return nruo.RemovePermissionIDs(ids...)
+	return _u.RemovePermissionIDs(ids...)
 }
 
 // ClearUserAssignments clears all "user_assignments" edges to the UserRoleAssignment entity.
-func (nruo *NotificationRoleUpdateOne) ClearUserAssignments() *NotificationRoleUpdateOne {
-	nruo.mutation.ClearUserAssignments()
-	return nruo
+func (_u *NotificationRoleUpdateOne) ClearUserAssignments() *NotificationRoleUpdateOne {
+	_u.mutation.ClearUserAssignments()
+	return _u
 }
 
 // RemoveUserAssignmentIDs removes the "user_assignments" edge to UserRoleAssignment entities by IDs.
-func (nruo *NotificationRoleUpdateOne) RemoveUserAssignmentIDs(ids ...uuid.UUID) *NotificationRoleUpdateOne {
-	nruo.mutation.RemoveUserAssignmentIDs(ids...)
-	return nruo
+func (_u *NotificationRoleUpdateOne) RemoveUserAssignmentIDs(ids ...uuid.UUID) *NotificationRoleUpdateOne {
+	_u.mutation.RemoveUserAssignmentIDs(ids...)
+	return _u
 }
 
 // RemoveUserAssignments removes "user_assignments" edges to UserRoleAssignment entities.
-func (nruo *NotificationRoleUpdateOne) RemoveUserAssignments(u ...*UserRoleAssignment) *NotificationRoleUpdateOne {
-	ids := make([]uuid.UUID, len(u))
-	for i := range u {
-		ids[i] = u[i].ID
+func (_u *NotificationRoleUpdateOne) RemoveUserAssignments(v ...*UserRoleAssignment) *NotificationRoleUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return nruo.RemoveUserAssignmentIDs(ids...)
+	return _u.RemoveUserAssignmentIDs(ids...)
 }
 
 // ClearNotificationRolePermissions clears all "notification_role_permissions" edges to the NotificationRolePermission entity.
-func (nruo *NotificationRoleUpdateOne) ClearNotificationRolePermissions() *NotificationRoleUpdateOne {
-	nruo.mutation.ClearNotificationRolePermissions()
-	return nruo
+func (_u *NotificationRoleUpdateOne) ClearNotificationRolePermissions() *NotificationRoleUpdateOne {
+	_u.mutation.ClearNotificationRolePermissions()
+	return _u
 }
 
 // RemoveNotificationRolePermissionIDs removes the "notification_role_permissions" edge to NotificationRolePermission entities by IDs.
-func (nruo *NotificationRoleUpdateOne) RemoveNotificationRolePermissionIDs(ids ...int) *NotificationRoleUpdateOne {
-	nruo.mutation.RemoveNotificationRolePermissionIDs(ids...)
-	return nruo
+func (_u *NotificationRoleUpdateOne) RemoveNotificationRolePermissionIDs(ids ...int) *NotificationRoleUpdateOne {
+	_u.mutation.RemoveNotificationRolePermissionIDs(ids...)
+	return _u
 }
 
 // RemoveNotificationRolePermissions removes "notification_role_permissions" edges to NotificationRolePermission entities.
-func (nruo *NotificationRoleUpdateOne) RemoveNotificationRolePermissions(n ...*NotificationRolePermission) *NotificationRoleUpdateOne {
-	ids := make([]int, len(n))
-	for i := range n {
-		ids[i] = n[i].ID
+func (_u *NotificationRoleUpdateOne) RemoveNotificationRolePermissions(v ...*NotificationRolePermission) *NotificationRoleUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return nruo.RemoveNotificationRolePermissionIDs(ids...)
+	return _u.RemoveNotificationRolePermissionIDs(ids...)
 }
 
 // Where appends a list predicates to the NotificationRoleUpdate builder.
-func (nruo *NotificationRoleUpdateOne) Where(ps ...predicate.NotificationRole) *NotificationRoleUpdateOne {
-	nruo.mutation.Where(ps...)
-	return nruo
+func (_u *NotificationRoleUpdateOne) Where(ps ...predicate.NotificationRole) *NotificationRoleUpdateOne {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
-func (nruo *NotificationRoleUpdateOne) Select(field string, fields ...string) *NotificationRoleUpdateOne {
-	nruo.fields = append([]string{field}, fields...)
-	return nruo
+func (_u *NotificationRoleUpdateOne) Select(field string, fields ...string) *NotificationRoleUpdateOne {
+	_u.fields = append([]string{field}, fields...)
+	return _u
 }
 
 // Save executes the query and returns the updated NotificationRole entity.
-func (nruo *NotificationRoleUpdateOne) Save(ctx context.Context) (*NotificationRole, error) {
-	nruo.defaults()
-	return withHooks(ctx, nruo.sqlSave, nruo.mutation, nruo.hooks)
+func (_u *NotificationRoleUpdateOne) Save(ctx context.Context) (*NotificationRole, error) {
+	_u.defaults()
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (nruo *NotificationRoleUpdateOne) SaveX(ctx context.Context) *NotificationRole {
-	node, err := nruo.Save(ctx)
+func (_u *NotificationRoleUpdateOne) SaveX(ctx context.Context) *NotificationRole {
+	node, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -699,34 +699,34 @@ func (nruo *NotificationRoleUpdateOne) SaveX(ctx context.Context) *NotificationR
 }
 
 // Exec executes the query on the entity.
-func (nruo *NotificationRoleUpdateOne) Exec(ctx context.Context) error {
-	_, err := nruo.Save(ctx)
+func (_u *NotificationRoleUpdateOne) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (nruo *NotificationRoleUpdateOne) ExecX(ctx context.Context) {
-	if err := nruo.Exec(ctx); err != nil {
+func (_u *NotificationRoleUpdateOne) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (nruo *NotificationRoleUpdateOne) defaults() {
-	if _, ok := nruo.mutation.UpdatedAt(); !ok {
+func (_u *NotificationRoleUpdateOne) defaults() {
+	if _, ok := _u.mutation.UpdatedAt(); !ok {
 		v := notificationrole.UpdateDefaultUpdatedAt()
-		nruo.mutation.SetUpdatedAt(v)
+		_u.mutation.SetUpdatedAt(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (nruo *NotificationRoleUpdateOne) check() error {
-	if v, ok := nruo.mutation.RoleCode(); ok {
+func (_u *NotificationRoleUpdateOne) check() error {
+	if v, ok := _u.mutation.RoleCode(); ok {
 		if err := notificationrole.RoleCodeValidator(v); err != nil {
 			return &ValidationError{Name: "role_code", err: fmt.Errorf(`ent: validator failed for field "NotificationRole.role_code": %w`, err)}
 		}
 	}
-	if v, ok := nruo.mutation.Name(); ok {
+	if v, ok := _u.mutation.Name(); ok {
 		if err := notificationrole.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "NotificationRole.name": %w`, err)}
 		}
@@ -735,22 +735,22 @@ func (nruo *NotificationRoleUpdateOne) check() error {
 }
 
 // Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
-func (nruo *NotificationRoleUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *NotificationRoleUpdateOne {
-	nruo.modifiers = append(nruo.modifiers, modifiers...)
-	return nruo
+func (_u *NotificationRoleUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *NotificationRoleUpdateOne {
+	_u.modifiers = append(_u.modifiers, modifiers...)
+	return _u
 }
 
-func (nruo *NotificationRoleUpdateOne) sqlSave(ctx context.Context) (_node *NotificationRole, err error) {
-	if err := nruo.check(); err != nil {
+func (_u *NotificationRoleUpdateOne) sqlSave(ctx context.Context) (_node *NotificationRole, err error) {
+	if err := _u.check(); err != nil {
 		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(notificationrole.Table, notificationrole.Columns, sqlgraph.NewFieldSpec(notificationrole.FieldID, field.TypeUUID))
-	id, ok := nruo.mutation.ID()
+	id, ok := _u.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "NotificationRole.id" for update`)}
 	}
 	_spec.Node.ID.Value = id
-	if fields := nruo.fields; len(fields) > 0 {
+	if fields := _u.fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		_spec.Node.Columns = append(_spec.Node.Columns, notificationrole.FieldID)
 		for _, f := range fields {
@@ -762,35 +762,35 @@ func (nruo *NotificationRoleUpdateOne) sqlSave(ctx context.Context) (_node *Noti
 			}
 		}
 	}
-	if ps := nruo.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := nruo.mutation.TenantID(); ok {
+	if value, ok := _u.mutation.TenantID(); ok {
 		_spec.SetField(notificationrole.FieldTenantID, field.TypeUUID, value)
 	}
-	if value, ok := nruo.mutation.RoleCode(); ok {
+	if value, ok := _u.mutation.RoleCode(); ok {
 		_spec.SetField(notificationrole.FieldRoleCode, field.TypeString, value)
 	}
-	if value, ok := nruo.mutation.Name(); ok {
+	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(notificationrole.FieldName, field.TypeString, value)
 	}
-	if value, ok := nruo.mutation.Description(); ok {
+	if value, ok := _u.mutation.Description(); ok {
 		_spec.SetField(notificationrole.FieldDescription, field.TypeString, value)
 	}
-	if nruo.mutation.DescriptionCleared() {
+	if _u.mutation.DescriptionCleared() {
 		_spec.ClearField(notificationrole.FieldDescription, field.TypeString)
 	}
-	if value, ok := nruo.mutation.IsSystemRole(); ok {
+	if value, ok := _u.mutation.IsSystemRole(); ok {
 		_spec.SetField(notificationrole.FieldIsSystemRole, field.TypeBool, value)
 	}
-	if value, ok := nruo.mutation.UpdatedAt(); ok {
+	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(notificationrole.FieldUpdatedAt, field.TypeTime, value)
 	}
-	if nruo.mutation.PermissionsCleared() {
+	if _u.mutation.PermissionsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: false,
@@ -803,7 +803,7 @@ func (nruo *NotificationRoleUpdateOne) sqlSave(ctx context.Context) (_node *Noti
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := nruo.mutation.RemovedPermissionsIDs(); len(nodes) > 0 && !nruo.mutation.PermissionsCleared() {
+	if nodes := _u.mutation.RemovedPermissionsIDs(); len(nodes) > 0 && !_u.mutation.PermissionsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: false,
@@ -819,7 +819,7 @@ func (nruo *NotificationRoleUpdateOne) sqlSave(ctx context.Context) (_node *Noti
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := nruo.mutation.PermissionsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.PermissionsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: false,
@@ -835,7 +835,7 @@ func (nruo *NotificationRoleUpdateOne) sqlSave(ctx context.Context) (_node *Noti
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if nruo.mutation.UserAssignmentsCleared() {
+	if _u.mutation.UserAssignmentsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -848,7 +848,7 @@ func (nruo *NotificationRoleUpdateOne) sqlSave(ctx context.Context) (_node *Noti
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := nruo.mutation.RemovedUserAssignmentsIDs(); len(nodes) > 0 && !nruo.mutation.UserAssignmentsCleared() {
+	if nodes := _u.mutation.RemovedUserAssignmentsIDs(); len(nodes) > 0 && !_u.mutation.UserAssignmentsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -864,7 +864,7 @@ func (nruo *NotificationRoleUpdateOne) sqlSave(ctx context.Context) (_node *Noti
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := nruo.mutation.UserAssignmentsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.UserAssignmentsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -880,7 +880,7 @@ func (nruo *NotificationRoleUpdateOne) sqlSave(ctx context.Context) (_node *Noti
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if nruo.mutation.NotificationRolePermissionsCleared() {
+	if _u.mutation.NotificationRolePermissionsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: true,
@@ -893,7 +893,7 @@ func (nruo *NotificationRoleUpdateOne) sqlSave(ctx context.Context) (_node *Noti
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := nruo.mutation.RemovedNotificationRolePermissionsIDs(); len(nodes) > 0 && !nruo.mutation.NotificationRolePermissionsCleared() {
+	if nodes := _u.mutation.RemovedNotificationRolePermissionsIDs(); len(nodes) > 0 && !_u.mutation.NotificationRolePermissionsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: true,
@@ -909,7 +909,7 @@ func (nruo *NotificationRoleUpdateOne) sqlSave(ctx context.Context) (_node *Noti
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := nruo.mutation.NotificationRolePermissionsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.NotificationRolePermissionsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: true,
@@ -925,11 +925,11 @@ func (nruo *NotificationRoleUpdateOne) sqlSave(ctx context.Context) (_node *Noti
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	_spec.AddModifiers(nruo.modifiers...)
-	_node = &NotificationRole{config: nruo.config}
+	_spec.AddModifiers(_u.modifiers...)
+	_node = &NotificationRole{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues
-	if err = sqlgraph.UpdateNode(ctx, nruo.driver, _spec); err != nil {
+	if err = sqlgraph.UpdateNode(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{notificationrole.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -937,6 +937,6 @@ func (nruo *NotificationRoleUpdateOne) sqlSave(ctx context.Context) (_node *Noti
 		}
 		return nil, err
 	}
-	nruo.mutation.done = true
+	_u.mutation.done = true
 	return _node, nil
 }

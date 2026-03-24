@@ -25,171 +25,171 @@ type TemplateUpdate struct {
 }
 
 // Where appends a list predicates to the TemplateUpdate builder.
-func (tu *TemplateUpdate) Where(ps ...predicate.Template) *TemplateUpdate {
-	tu.mutation.Where(ps...)
-	return tu
+func (_u *TemplateUpdate) Where(ps ...predicate.Template) *TemplateUpdate {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // SetName sets the "name" field.
-func (tu *TemplateUpdate) SetName(s string) *TemplateUpdate {
-	tu.mutation.SetName(s)
-	return tu
+func (_u *TemplateUpdate) SetName(v string) *TemplateUpdate {
+	_u.mutation.SetName(v)
+	return _u
 }
 
 // SetNillableName sets the "name" field if the given value is not nil.
-func (tu *TemplateUpdate) SetNillableName(s *string) *TemplateUpdate {
-	if s != nil {
-		tu.SetName(*s)
+func (_u *TemplateUpdate) SetNillableName(v *string) *TemplateUpdate {
+	if v != nil {
+		_u.SetName(*v)
 	}
-	return tu
+	return _u
 }
 
 // SetChannel sets the "channel" field.
-func (tu *TemplateUpdate) SetChannel(s string) *TemplateUpdate {
-	tu.mutation.SetChannel(s)
-	return tu
+func (_u *TemplateUpdate) SetChannel(v string) *TemplateUpdate {
+	_u.mutation.SetChannel(v)
+	return _u
 }
 
 // SetNillableChannel sets the "channel" field if the given value is not nil.
-func (tu *TemplateUpdate) SetNillableChannel(s *string) *TemplateUpdate {
-	if s != nil {
-		tu.SetChannel(*s)
+func (_u *TemplateUpdate) SetNillableChannel(v *string) *TemplateUpdate {
+	if v != nil {
+		_u.SetChannel(*v)
 	}
-	return tu
+	return _u
 }
 
 // SetCategory sets the "category" field.
-func (tu *TemplateUpdate) SetCategory(s string) *TemplateUpdate {
-	tu.mutation.SetCategory(s)
-	return tu
+func (_u *TemplateUpdate) SetCategory(v string) *TemplateUpdate {
+	_u.mutation.SetCategory(v)
+	return _u
 }
 
 // SetNillableCategory sets the "category" field if the given value is not nil.
-func (tu *TemplateUpdate) SetNillableCategory(s *string) *TemplateUpdate {
-	if s != nil {
-		tu.SetCategory(*s)
+func (_u *TemplateUpdate) SetNillableCategory(v *string) *TemplateUpdate {
+	if v != nil {
+		_u.SetCategory(*v)
 	}
-	return tu
+	return _u
 }
 
 // SetTags sets the "tags" field.
-func (tu *TemplateUpdate) SetTags(s []string) *TemplateUpdate {
-	tu.mutation.SetTags(s)
-	return tu
+func (_u *TemplateUpdate) SetTags(v []string) *TemplateUpdate {
+	_u.mutation.SetTags(v)
+	return _u
 }
 
-// AppendTags appends s to the "tags" field.
-func (tu *TemplateUpdate) AppendTags(s []string) *TemplateUpdate {
-	tu.mutation.AppendTags(s)
-	return tu
+// AppendTags appends value to the "tags" field.
+func (_u *TemplateUpdate) AppendTags(v []string) *TemplateUpdate {
+	_u.mutation.AppendTags(v)
+	return _u
 }
 
 // ClearTags clears the value of the "tags" field.
-func (tu *TemplateUpdate) ClearTags() *TemplateUpdate {
-	tu.mutation.ClearTags()
-	return tu
+func (_u *TemplateUpdate) ClearTags() *TemplateUpdate {
+	_u.mutation.ClearTags()
+	return _u
 }
 
 // SetFilePath sets the "file_path" field.
-func (tu *TemplateUpdate) SetFilePath(s string) *TemplateUpdate {
-	tu.mutation.SetFilePath(s)
-	return tu
+func (_u *TemplateUpdate) SetFilePath(v string) *TemplateUpdate {
+	_u.mutation.SetFilePath(v)
+	return _u
 }
 
 // SetNillableFilePath sets the "file_path" field if the given value is not nil.
-func (tu *TemplateUpdate) SetNillableFilePath(s *string) *TemplateUpdate {
-	if s != nil {
-		tu.SetFilePath(*s)
+func (_u *TemplateUpdate) SetNillableFilePath(v *string) *TemplateUpdate {
+	if v != nil {
+		_u.SetFilePath(*v)
 	}
-	return tu
+	return _u
 }
 
 // SetDescription sets the "description" field.
-func (tu *TemplateUpdate) SetDescription(s string) *TemplateUpdate {
-	tu.mutation.SetDescription(s)
-	return tu
+func (_u *TemplateUpdate) SetDescription(v string) *TemplateUpdate {
+	_u.mutation.SetDescription(v)
+	return _u
 }
 
 // SetNillableDescription sets the "description" field if the given value is not nil.
-func (tu *TemplateUpdate) SetNillableDescription(s *string) *TemplateUpdate {
-	if s != nil {
-		tu.SetDescription(*s)
+func (_u *TemplateUpdate) SetNillableDescription(v *string) *TemplateUpdate {
+	if v != nil {
+		_u.SetDescription(*v)
 	}
-	return tu
+	return _u
 }
 
 // ClearDescription clears the value of the "description" field.
-func (tu *TemplateUpdate) ClearDescription() *TemplateUpdate {
-	tu.mutation.ClearDescription()
-	return tu
+func (_u *TemplateUpdate) ClearDescription() *TemplateUpdate {
+	_u.mutation.ClearDescription()
+	return _u
 }
 
 // SetVariables sets the "variables" field.
-func (tu *TemplateUpdate) SetVariables(s []string) *TemplateUpdate {
-	tu.mutation.SetVariables(s)
-	return tu
+func (_u *TemplateUpdate) SetVariables(v []string) *TemplateUpdate {
+	_u.mutation.SetVariables(v)
+	return _u
 }
 
-// AppendVariables appends s to the "variables" field.
-func (tu *TemplateUpdate) AppendVariables(s []string) *TemplateUpdate {
-	tu.mutation.AppendVariables(s)
-	return tu
+// AppendVariables appends value to the "variables" field.
+func (_u *TemplateUpdate) AppendVariables(v []string) *TemplateUpdate {
+	_u.mutation.AppendVariables(v)
+	return _u
 }
 
 // ClearVariables clears the value of the "variables" field.
-func (tu *TemplateUpdate) ClearVariables() *TemplateUpdate {
-	tu.mutation.ClearVariables()
-	return tu
+func (_u *TemplateUpdate) ClearVariables() *TemplateUpdate {
+	_u.mutation.ClearVariables()
+	return _u
 }
 
 // SetMimeType sets the "mime_type" field.
-func (tu *TemplateUpdate) SetMimeType(s string) *TemplateUpdate {
-	tu.mutation.SetMimeType(s)
-	return tu
+func (_u *TemplateUpdate) SetMimeType(v string) *TemplateUpdate {
+	_u.mutation.SetMimeType(v)
+	return _u
 }
 
 // SetNillableMimeType sets the "mime_type" field if the given value is not nil.
-func (tu *TemplateUpdate) SetNillableMimeType(s *string) *TemplateUpdate {
-	if s != nil {
-		tu.SetMimeType(*s)
+func (_u *TemplateUpdate) SetNillableMimeType(v *string) *TemplateUpdate {
+	if v != nil {
+		_u.SetMimeType(*v)
 	}
-	return tu
+	return _u
 }
 
 // SetIsActive sets the "is_active" field.
-func (tu *TemplateUpdate) SetIsActive(b bool) *TemplateUpdate {
-	tu.mutation.SetIsActive(b)
-	return tu
+func (_u *TemplateUpdate) SetIsActive(v bool) *TemplateUpdate {
+	_u.mutation.SetIsActive(v)
+	return _u
 }
 
 // SetNillableIsActive sets the "is_active" field if the given value is not nil.
-func (tu *TemplateUpdate) SetNillableIsActive(b *bool) *TemplateUpdate {
-	if b != nil {
-		tu.SetIsActive(*b)
+func (_u *TemplateUpdate) SetNillableIsActive(v *bool) *TemplateUpdate {
+	if v != nil {
+		_u.SetIsActive(*v)
 	}
-	return tu
+	return _u
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (tu *TemplateUpdate) SetUpdatedAt(t time.Time) *TemplateUpdate {
-	tu.mutation.SetUpdatedAt(t)
-	return tu
+func (_u *TemplateUpdate) SetUpdatedAt(v time.Time) *TemplateUpdate {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
 }
 
 // Mutation returns the TemplateMutation object of the builder.
-func (tu *TemplateUpdate) Mutation() *TemplateMutation {
-	return tu.mutation
+func (_u *TemplateUpdate) Mutation() *TemplateMutation {
+	return _u.mutation
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
-func (tu *TemplateUpdate) Save(ctx context.Context) (int, error) {
-	tu.defaults()
-	return withHooks(ctx, tu.sqlSave, tu.mutation, tu.hooks)
+func (_u *TemplateUpdate) Save(ctx context.Context) (int, error) {
+	_u.defaults()
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (tu *TemplateUpdate) SaveX(ctx context.Context) int {
-	affected, err := tu.Save(ctx)
+func (_u *TemplateUpdate) SaveX(ctx context.Context) int {
+	affected, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -197,44 +197,44 @@ func (tu *TemplateUpdate) SaveX(ctx context.Context) int {
 }
 
 // Exec executes the query.
-func (tu *TemplateUpdate) Exec(ctx context.Context) error {
-	_, err := tu.Save(ctx)
+func (_u *TemplateUpdate) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (tu *TemplateUpdate) ExecX(ctx context.Context) {
-	if err := tu.Exec(ctx); err != nil {
+func (_u *TemplateUpdate) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (tu *TemplateUpdate) defaults() {
-	if _, ok := tu.mutation.UpdatedAt(); !ok {
+func (_u *TemplateUpdate) defaults() {
+	if _, ok := _u.mutation.UpdatedAt(); !ok {
 		v := template.UpdateDefaultUpdatedAt()
-		tu.mutation.SetUpdatedAt(v)
+		_u.mutation.SetUpdatedAt(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (tu *TemplateUpdate) check() error {
-	if v, ok := tu.mutation.Name(); ok {
+func (_u *TemplateUpdate) check() error {
+	if v, ok := _u.mutation.Name(); ok {
 		if err := template.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Template.name": %w`, err)}
 		}
 	}
-	if v, ok := tu.mutation.Channel(); ok {
+	if v, ok := _u.mutation.Channel(); ok {
 		if err := template.ChannelValidator(v); err != nil {
 			return &ValidationError{Name: "channel", err: fmt.Errorf(`ent: validator failed for field "Template.channel": %w`, err)}
 		}
 	}
-	if v, ok := tu.mutation.Category(); ok {
+	if v, ok := _u.mutation.Category(); ok {
 		if err := template.CategoryValidator(v); err != nil {
 			return &ValidationError{Name: "category", err: fmt.Errorf(`ent: validator failed for field "Template.category": %w`, err)}
 		}
 	}
-	if v, ok := tu.mutation.FilePath(); ok {
+	if v, ok := _u.mutation.FilePath(); ok {
 		if err := template.FilePathValidator(v); err != nil {
 			return &ValidationError{Name: "file_path", err: fmt.Errorf(`ent: validator failed for field "Template.file_path": %w`, err)}
 		}
@@ -243,74 +243,74 @@ func (tu *TemplateUpdate) check() error {
 }
 
 // Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
-func (tu *TemplateUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *TemplateUpdate {
-	tu.modifiers = append(tu.modifiers, modifiers...)
-	return tu
+func (_u *TemplateUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *TemplateUpdate {
+	_u.modifiers = append(_u.modifiers, modifiers...)
+	return _u
 }
 
-func (tu *TemplateUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	if err := tu.check(); err != nil {
-		return n, err
+func (_u *TemplateUpdate) sqlSave(ctx context.Context) (_node int, err error) {
+	if err := _u.check(); err != nil {
+		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(template.Table, template.Columns, sqlgraph.NewFieldSpec(template.FieldID, field.TypeUUID))
-	if ps := tu.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := tu.mutation.Name(); ok {
+	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(template.FieldName, field.TypeString, value)
 	}
-	if value, ok := tu.mutation.Channel(); ok {
+	if value, ok := _u.mutation.Channel(); ok {
 		_spec.SetField(template.FieldChannel, field.TypeString, value)
 	}
-	if value, ok := tu.mutation.Category(); ok {
+	if value, ok := _u.mutation.Category(); ok {
 		_spec.SetField(template.FieldCategory, field.TypeString, value)
 	}
-	if value, ok := tu.mutation.Tags(); ok {
+	if value, ok := _u.mutation.Tags(); ok {
 		_spec.SetField(template.FieldTags, field.TypeJSON, value)
 	}
-	if value, ok := tu.mutation.AppendedTags(); ok {
+	if value, ok := _u.mutation.AppendedTags(); ok {
 		_spec.AddModifier(func(u *sql.UpdateBuilder) {
 			sqljson.Append(u, template.FieldTags, value)
 		})
 	}
-	if tu.mutation.TagsCleared() {
+	if _u.mutation.TagsCleared() {
 		_spec.ClearField(template.FieldTags, field.TypeJSON)
 	}
-	if value, ok := tu.mutation.FilePath(); ok {
+	if value, ok := _u.mutation.FilePath(); ok {
 		_spec.SetField(template.FieldFilePath, field.TypeString, value)
 	}
-	if value, ok := tu.mutation.Description(); ok {
+	if value, ok := _u.mutation.Description(); ok {
 		_spec.SetField(template.FieldDescription, field.TypeString, value)
 	}
-	if tu.mutation.DescriptionCleared() {
+	if _u.mutation.DescriptionCleared() {
 		_spec.ClearField(template.FieldDescription, field.TypeString)
 	}
-	if value, ok := tu.mutation.Variables(); ok {
+	if value, ok := _u.mutation.Variables(); ok {
 		_spec.SetField(template.FieldVariables, field.TypeJSON, value)
 	}
-	if value, ok := tu.mutation.AppendedVariables(); ok {
+	if value, ok := _u.mutation.AppendedVariables(); ok {
 		_spec.AddModifier(func(u *sql.UpdateBuilder) {
 			sqljson.Append(u, template.FieldVariables, value)
 		})
 	}
-	if tu.mutation.VariablesCleared() {
+	if _u.mutation.VariablesCleared() {
 		_spec.ClearField(template.FieldVariables, field.TypeJSON)
 	}
-	if value, ok := tu.mutation.MimeType(); ok {
+	if value, ok := _u.mutation.MimeType(); ok {
 		_spec.SetField(template.FieldMimeType, field.TypeString, value)
 	}
-	if value, ok := tu.mutation.IsActive(); ok {
+	if value, ok := _u.mutation.IsActive(); ok {
 		_spec.SetField(template.FieldIsActive, field.TypeBool, value)
 	}
-	if value, ok := tu.mutation.UpdatedAt(); ok {
+	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(template.FieldUpdatedAt, field.TypeTime, value)
 	}
-	_spec.AddModifiers(tu.modifiers...)
-	if n, err = sqlgraph.UpdateNodes(ctx, tu.driver, _spec); err != nil {
+	_spec.AddModifiers(_u.modifiers...)
+	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{template.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -318,8 +318,8 @@ func (tu *TemplateUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		return 0, err
 	}
-	tu.mutation.done = true
-	return n, nil
+	_u.mutation.done = true
+	return _node, nil
 }
 
 // TemplateUpdateOne is the builder for updating a single Template entity.
@@ -332,178 +332,178 @@ type TemplateUpdateOne struct {
 }
 
 // SetName sets the "name" field.
-func (tuo *TemplateUpdateOne) SetName(s string) *TemplateUpdateOne {
-	tuo.mutation.SetName(s)
-	return tuo
+func (_u *TemplateUpdateOne) SetName(v string) *TemplateUpdateOne {
+	_u.mutation.SetName(v)
+	return _u
 }
 
 // SetNillableName sets the "name" field if the given value is not nil.
-func (tuo *TemplateUpdateOne) SetNillableName(s *string) *TemplateUpdateOne {
-	if s != nil {
-		tuo.SetName(*s)
+func (_u *TemplateUpdateOne) SetNillableName(v *string) *TemplateUpdateOne {
+	if v != nil {
+		_u.SetName(*v)
 	}
-	return tuo
+	return _u
 }
 
 // SetChannel sets the "channel" field.
-func (tuo *TemplateUpdateOne) SetChannel(s string) *TemplateUpdateOne {
-	tuo.mutation.SetChannel(s)
-	return tuo
+func (_u *TemplateUpdateOne) SetChannel(v string) *TemplateUpdateOne {
+	_u.mutation.SetChannel(v)
+	return _u
 }
 
 // SetNillableChannel sets the "channel" field if the given value is not nil.
-func (tuo *TemplateUpdateOne) SetNillableChannel(s *string) *TemplateUpdateOne {
-	if s != nil {
-		tuo.SetChannel(*s)
+func (_u *TemplateUpdateOne) SetNillableChannel(v *string) *TemplateUpdateOne {
+	if v != nil {
+		_u.SetChannel(*v)
 	}
-	return tuo
+	return _u
 }
 
 // SetCategory sets the "category" field.
-func (tuo *TemplateUpdateOne) SetCategory(s string) *TemplateUpdateOne {
-	tuo.mutation.SetCategory(s)
-	return tuo
+func (_u *TemplateUpdateOne) SetCategory(v string) *TemplateUpdateOne {
+	_u.mutation.SetCategory(v)
+	return _u
 }
 
 // SetNillableCategory sets the "category" field if the given value is not nil.
-func (tuo *TemplateUpdateOne) SetNillableCategory(s *string) *TemplateUpdateOne {
-	if s != nil {
-		tuo.SetCategory(*s)
+func (_u *TemplateUpdateOne) SetNillableCategory(v *string) *TemplateUpdateOne {
+	if v != nil {
+		_u.SetCategory(*v)
 	}
-	return tuo
+	return _u
 }
 
 // SetTags sets the "tags" field.
-func (tuo *TemplateUpdateOne) SetTags(s []string) *TemplateUpdateOne {
-	tuo.mutation.SetTags(s)
-	return tuo
+func (_u *TemplateUpdateOne) SetTags(v []string) *TemplateUpdateOne {
+	_u.mutation.SetTags(v)
+	return _u
 }
 
-// AppendTags appends s to the "tags" field.
-func (tuo *TemplateUpdateOne) AppendTags(s []string) *TemplateUpdateOne {
-	tuo.mutation.AppendTags(s)
-	return tuo
+// AppendTags appends value to the "tags" field.
+func (_u *TemplateUpdateOne) AppendTags(v []string) *TemplateUpdateOne {
+	_u.mutation.AppendTags(v)
+	return _u
 }
 
 // ClearTags clears the value of the "tags" field.
-func (tuo *TemplateUpdateOne) ClearTags() *TemplateUpdateOne {
-	tuo.mutation.ClearTags()
-	return tuo
+func (_u *TemplateUpdateOne) ClearTags() *TemplateUpdateOne {
+	_u.mutation.ClearTags()
+	return _u
 }
 
 // SetFilePath sets the "file_path" field.
-func (tuo *TemplateUpdateOne) SetFilePath(s string) *TemplateUpdateOne {
-	tuo.mutation.SetFilePath(s)
-	return tuo
+func (_u *TemplateUpdateOne) SetFilePath(v string) *TemplateUpdateOne {
+	_u.mutation.SetFilePath(v)
+	return _u
 }
 
 // SetNillableFilePath sets the "file_path" field if the given value is not nil.
-func (tuo *TemplateUpdateOne) SetNillableFilePath(s *string) *TemplateUpdateOne {
-	if s != nil {
-		tuo.SetFilePath(*s)
+func (_u *TemplateUpdateOne) SetNillableFilePath(v *string) *TemplateUpdateOne {
+	if v != nil {
+		_u.SetFilePath(*v)
 	}
-	return tuo
+	return _u
 }
 
 // SetDescription sets the "description" field.
-func (tuo *TemplateUpdateOne) SetDescription(s string) *TemplateUpdateOne {
-	tuo.mutation.SetDescription(s)
-	return tuo
+func (_u *TemplateUpdateOne) SetDescription(v string) *TemplateUpdateOne {
+	_u.mutation.SetDescription(v)
+	return _u
 }
 
 // SetNillableDescription sets the "description" field if the given value is not nil.
-func (tuo *TemplateUpdateOne) SetNillableDescription(s *string) *TemplateUpdateOne {
-	if s != nil {
-		tuo.SetDescription(*s)
+func (_u *TemplateUpdateOne) SetNillableDescription(v *string) *TemplateUpdateOne {
+	if v != nil {
+		_u.SetDescription(*v)
 	}
-	return tuo
+	return _u
 }
 
 // ClearDescription clears the value of the "description" field.
-func (tuo *TemplateUpdateOne) ClearDescription() *TemplateUpdateOne {
-	tuo.mutation.ClearDescription()
-	return tuo
+func (_u *TemplateUpdateOne) ClearDescription() *TemplateUpdateOne {
+	_u.mutation.ClearDescription()
+	return _u
 }
 
 // SetVariables sets the "variables" field.
-func (tuo *TemplateUpdateOne) SetVariables(s []string) *TemplateUpdateOne {
-	tuo.mutation.SetVariables(s)
-	return tuo
+func (_u *TemplateUpdateOne) SetVariables(v []string) *TemplateUpdateOne {
+	_u.mutation.SetVariables(v)
+	return _u
 }
 
-// AppendVariables appends s to the "variables" field.
-func (tuo *TemplateUpdateOne) AppendVariables(s []string) *TemplateUpdateOne {
-	tuo.mutation.AppendVariables(s)
-	return tuo
+// AppendVariables appends value to the "variables" field.
+func (_u *TemplateUpdateOne) AppendVariables(v []string) *TemplateUpdateOne {
+	_u.mutation.AppendVariables(v)
+	return _u
 }
 
 // ClearVariables clears the value of the "variables" field.
-func (tuo *TemplateUpdateOne) ClearVariables() *TemplateUpdateOne {
-	tuo.mutation.ClearVariables()
-	return tuo
+func (_u *TemplateUpdateOne) ClearVariables() *TemplateUpdateOne {
+	_u.mutation.ClearVariables()
+	return _u
 }
 
 // SetMimeType sets the "mime_type" field.
-func (tuo *TemplateUpdateOne) SetMimeType(s string) *TemplateUpdateOne {
-	tuo.mutation.SetMimeType(s)
-	return tuo
+func (_u *TemplateUpdateOne) SetMimeType(v string) *TemplateUpdateOne {
+	_u.mutation.SetMimeType(v)
+	return _u
 }
 
 // SetNillableMimeType sets the "mime_type" field if the given value is not nil.
-func (tuo *TemplateUpdateOne) SetNillableMimeType(s *string) *TemplateUpdateOne {
-	if s != nil {
-		tuo.SetMimeType(*s)
+func (_u *TemplateUpdateOne) SetNillableMimeType(v *string) *TemplateUpdateOne {
+	if v != nil {
+		_u.SetMimeType(*v)
 	}
-	return tuo
+	return _u
 }
 
 // SetIsActive sets the "is_active" field.
-func (tuo *TemplateUpdateOne) SetIsActive(b bool) *TemplateUpdateOne {
-	tuo.mutation.SetIsActive(b)
-	return tuo
+func (_u *TemplateUpdateOne) SetIsActive(v bool) *TemplateUpdateOne {
+	_u.mutation.SetIsActive(v)
+	return _u
 }
 
 // SetNillableIsActive sets the "is_active" field if the given value is not nil.
-func (tuo *TemplateUpdateOne) SetNillableIsActive(b *bool) *TemplateUpdateOne {
-	if b != nil {
-		tuo.SetIsActive(*b)
+func (_u *TemplateUpdateOne) SetNillableIsActive(v *bool) *TemplateUpdateOne {
+	if v != nil {
+		_u.SetIsActive(*v)
 	}
-	return tuo
+	return _u
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (tuo *TemplateUpdateOne) SetUpdatedAt(t time.Time) *TemplateUpdateOne {
-	tuo.mutation.SetUpdatedAt(t)
-	return tuo
+func (_u *TemplateUpdateOne) SetUpdatedAt(v time.Time) *TemplateUpdateOne {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
 }
 
 // Mutation returns the TemplateMutation object of the builder.
-func (tuo *TemplateUpdateOne) Mutation() *TemplateMutation {
-	return tuo.mutation
+func (_u *TemplateUpdateOne) Mutation() *TemplateMutation {
+	return _u.mutation
 }
 
 // Where appends a list predicates to the TemplateUpdate builder.
-func (tuo *TemplateUpdateOne) Where(ps ...predicate.Template) *TemplateUpdateOne {
-	tuo.mutation.Where(ps...)
-	return tuo
+func (_u *TemplateUpdateOne) Where(ps ...predicate.Template) *TemplateUpdateOne {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
-func (tuo *TemplateUpdateOne) Select(field string, fields ...string) *TemplateUpdateOne {
-	tuo.fields = append([]string{field}, fields...)
-	return tuo
+func (_u *TemplateUpdateOne) Select(field string, fields ...string) *TemplateUpdateOne {
+	_u.fields = append([]string{field}, fields...)
+	return _u
 }
 
 // Save executes the query and returns the updated Template entity.
-func (tuo *TemplateUpdateOne) Save(ctx context.Context) (*Template, error) {
-	tuo.defaults()
-	return withHooks(ctx, tuo.sqlSave, tuo.mutation, tuo.hooks)
+func (_u *TemplateUpdateOne) Save(ctx context.Context) (*Template, error) {
+	_u.defaults()
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (tuo *TemplateUpdateOne) SaveX(ctx context.Context) *Template {
-	node, err := tuo.Save(ctx)
+func (_u *TemplateUpdateOne) SaveX(ctx context.Context) *Template {
+	node, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -511,44 +511,44 @@ func (tuo *TemplateUpdateOne) SaveX(ctx context.Context) *Template {
 }
 
 // Exec executes the query on the entity.
-func (tuo *TemplateUpdateOne) Exec(ctx context.Context) error {
-	_, err := tuo.Save(ctx)
+func (_u *TemplateUpdateOne) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (tuo *TemplateUpdateOne) ExecX(ctx context.Context) {
-	if err := tuo.Exec(ctx); err != nil {
+func (_u *TemplateUpdateOne) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (tuo *TemplateUpdateOne) defaults() {
-	if _, ok := tuo.mutation.UpdatedAt(); !ok {
+func (_u *TemplateUpdateOne) defaults() {
+	if _, ok := _u.mutation.UpdatedAt(); !ok {
 		v := template.UpdateDefaultUpdatedAt()
-		tuo.mutation.SetUpdatedAt(v)
+		_u.mutation.SetUpdatedAt(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (tuo *TemplateUpdateOne) check() error {
-	if v, ok := tuo.mutation.Name(); ok {
+func (_u *TemplateUpdateOne) check() error {
+	if v, ok := _u.mutation.Name(); ok {
 		if err := template.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Template.name": %w`, err)}
 		}
 	}
-	if v, ok := tuo.mutation.Channel(); ok {
+	if v, ok := _u.mutation.Channel(); ok {
 		if err := template.ChannelValidator(v); err != nil {
 			return &ValidationError{Name: "channel", err: fmt.Errorf(`ent: validator failed for field "Template.channel": %w`, err)}
 		}
 	}
-	if v, ok := tuo.mutation.Category(); ok {
+	if v, ok := _u.mutation.Category(); ok {
 		if err := template.CategoryValidator(v); err != nil {
 			return &ValidationError{Name: "category", err: fmt.Errorf(`ent: validator failed for field "Template.category": %w`, err)}
 		}
 	}
-	if v, ok := tuo.mutation.FilePath(); ok {
+	if v, ok := _u.mutation.FilePath(); ok {
 		if err := template.FilePathValidator(v); err != nil {
 			return &ValidationError{Name: "file_path", err: fmt.Errorf(`ent: validator failed for field "Template.file_path": %w`, err)}
 		}
@@ -557,22 +557,22 @@ func (tuo *TemplateUpdateOne) check() error {
 }
 
 // Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
-func (tuo *TemplateUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *TemplateUpdateOne {
-	tuo.modifiers = append(tuo.modifiers, modifiers...)
-	return tuo
+func (_u *TemplateUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *TemplateUpdateOne {
+	_u.modifiers = append(_u.modifiers, modifiers...)
+	return _u
 }
 
-func (tuo *TemplateUpdateOne) sqlSave(ctx context.Context) (_node *Template, err error) {
-	if err := tuo.check(); err != nil {
+func (_u *TemplateUpdateOne) sqlSave(ctx context.Context) (_node *Template, err error) {
+	if err := _u.check(); err != nil {
 		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(template.Table, template.Columns, sqlgraph.NewFieldSpec(template.FieldID, field.TypeUUID))
-	id, ok := tuo.mutation.ID()
+	id, ok := _u.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Template.id" for update`)}
 	}
 	_spec.Node.ID.Value = id
-	if fields := tuo.fields; len(fields) > 0 {
+	if fields := _u.fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		_spec.Node.Columns = append(_spec.Node.Columns, template.FieldID)
 		for _, f := range fields {
@@ -584,67 +584,67 @@ func (tuo *TemplateUpdateOne) sqlSave(ctx context.Context) (_node *Template, err
 			}
 		}
 	}
-	if ps := tuo.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := tuo.mutation.Name(); ok {
+	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(template.FieldName, field.TypeString, value)
 	}
-	if value, ok := tuo.mutation.Channel(); ok {
+	if value, ok := _u.mutation.Channel(); ok {
 		_spec.SetField(template.FieldChannel, field.TypeString, value)
 	}
-	if value, ok := tuo.mutation.Category(); ok {
+	if value, ok := _u.mutation.Category(); ok {
 		_spec.SetField(template.FieldCategory, field.TypeString, value)
 	}
-	if value, ok := tuo.mutation.Tags(); ok {
+	if value, ok := _u.mutation.Tags(); ok {
 		_spec.SetField(template.FieldTags, field.TypeJSON, value)
 	}
-	if value, ok := tuo.mutation.AppendedTags(); ok {
+	if value, ok := _u.mutation.AppendedTags(); ok {
 		_spec.AddModifier(func(u *sql.UpdateBuilder) {
 			sqljson.Append(u, template.FieldTags, value)
 		})
 	}
-	if tuo.mutation.TagsCleared() {
+	if _u.mutation.TagsCleared() {
 		_spec.ClearField(template.FieldTags, field.TypeJSON)
 	}
-	if value, ok := tuo.mutation.FilePath(); ok {
+	if value, ok := _u.mutation.FilePath(); ok {
 		_spec.SetField(template.FieldFilePath, field.TypeString, value)
 	}
-	if value, ok := tuo.mutation.Description(); ok {
+	if value, ok := _u.mutation.Description(); ok {
 		_spec.SetField(template.FieldDescription, field.TypeString, value)
 	}
-	if tuo.mutation.DescriptionCleared() {
+	if _u.mutation.DescriptionCleared() {
 		_spec.ClearField(template.FieldDescription, field.TypeString)
 	}
-	if value, ok := tuo.mutation.Variables(); ok {
+	if value, ok := _u.mutation.Variables(); ok {
 		_spec.SetField(template.FieldVariables, field.TypeJSON, value)
 	}
-	if value, ok := tuo.mutation.AppendedVariables(); ok {
+	if value, ok := _u.mutation.AppendedVariables(); ok {
 		_spec.AddModifier(func(u *sql.UpdateBuilder) {
 			sqljson.Append(u, template.FieldVariables, value)
 		})
 	}
-	if tuo.mutation.VariablesCleared() {
+	if _u.mutation.VariablesCleared() {
 		_spec.ClearField(template.FieldVariables, field.TypeJSON)
 	}
-	if value, ok := tuo.mutation.MimeType(); ok {
+	if value, ok := _u.mutation.MimeType(); ok {
 		_spec.SetField(template.FieldMimeType, field.TypeString, value)
 	}
-	if value, ok := tuo.mutation.IsActive(); ok {
+	if value, ok := _u.mutation.IsActive(); ok {
 		_spec.SetField(template.FieldIsActive, field.TypeBool, value)
 	}
-	if value, ok := tuo.mutation.UpdatedAt(); ok {
+	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(template.FieldUpdatedAt, field.TypeTime, value)
 	}
-	_spec.AddModifiers(tuo.modifiers...)
-	_node = &Template{config: tuo.config}
+	_spec.AddModifiers(_u.modifiers...)
+	_node = &Template{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues
-	if err = sqlgraph.UpdateNode(ctx, tuo.driver, _spec); err != nil {
+	if err = sqlgraph.UpdateNode(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{template.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -652,6 +652,6 @@ func (tuo *TemplateUpdateOne) sqlSave(ctx context.Context) (_node *Template, err
 		}
 		return nil, err
 	}
-	tuo.mutation.done = true
+	_u.mutation.done = true
 	return _node, nil
 }

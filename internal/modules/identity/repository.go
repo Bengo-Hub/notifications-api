@@ -8,13 +8,10 @@ import (
 
 // Tenant represents a tenant entity from the database.
 type Tenant struct {
-	ID           uuid.UUID
-	Slug         string
-	Name         string
-	Status       string
-	ContactEmail string
-	ContactPhone string
-	Metadata     map[string]interface{}
+	ID     uuid.UUID
+	Slug   string
+	Name   string
+	Status string
 }
 
 // Repository abstracts persistence for identity entities.

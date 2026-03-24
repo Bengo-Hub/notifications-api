@@ -64,7 +64,7 @@ func (*CreditTransaction) scanValues(columns []string) ([]any, error) {
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the CreditTransaction fields.
-func (ct *CreditTransaction) assignValues(columns []string, values []any) error {
+func (_m *CreditTransaction) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
@@ -74,55 +74,55 @@ func (ct *CreditTransaction) assignValues(columns []string, values []any) error 
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value != nil {
-				ct.ID = *value
+				_m.ID = *value
 			}
 		case credittransaction.FieldTenantID:
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field tenant_id", values[i])
 			} else if value != nil {
-				ct.TenantID = *value
+				_m.TenantID = *value
 			}
 		case credittransaction.FieldType:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field type", values[i])
 			} else if value.Valid {
-				ct.Type = credittransaction.Type(value.String)
+				_m.Type = credittransaction.Type(value.String)
 			}
 		case credittransaction.FieldAction:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field action", values[i])
 			} else if value.Valid {
-				ct.Action = credittransaction.Action(value.String)
+				_m.Action = credittransaction.Action(value.String)
 			}
 		case credittransaction.FieldAmount:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
 				return fmt.Errorf("unexpected type %T for field amount", values[i])
 			} else if value.Valid {
-				ct.Amount = value.Float64
+				_m.Amount = value.Float64
 			}
 		case credittransaction.FieldNewBalance:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
 				return fmt.Errorf("unexpected type %T for field new_balance", values[i])
 			} else if value.Valid {
-				ct.NewBalance = value.Float64
+				_m.NewBalance = value.Float64
 			}
 		case credittransaction.FieldReferenceID:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field reference_id", values[i])
 			} else if value.Valid {
-				ct.ReferenceID = value.String
+				_m.ReferenceID = value.String
 			}
 		case credittransaction.FieldDescription:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field description", values[i])
 			} else if value.Valid {
-				ct.Description = value.String
+				_m.Description = value.String
 			}
 		case credittransaction.FieldMetadata:
 			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field metadata", values[i])
 			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &ct.Metadata); err != nil {
+				if err := json.Unmarshal(*value, &_m.Metadata); err != nil {
 					return fmt.Errorf("unmarshal field metadata: %w", err)
 				}
 			}
@@ -130,10 +130,10 @@ func (ct *CreditTransaction) assignValues(columns []string, values []any) error 
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
 			} else if value.Valid {
-				ct.CreatedAt = value.Time
+				_m.CreatedAt = value.Time
 			}
 		default:
-			ct.selectValues.Set(columns[i], values[i])
+			_m.selectValues.Set(columns[i], values[i])
 		}
 	}
 	return nil
@@ -141,59 +141,59 @@ func (ct *CreditTransaction) assignValues(columns []string, values []any) error 
 
 // Value returns the ent.Value that was dynamically selected and assigned to the CreditTransaction.
 // This includes values selected through modifiers, order, etc.
-func (ct *CreditTransaction) Value(name string) (ent.Value, error) {
-	return ct.selectValues.Get(name)
+func (_m *CreditTransaction) Value(name string) (ent.Value, error) {
+	return _m.selectValues.Get(name)
 }
 
 // Update returns a builder for updating this CreditTransaction.
 // Note that you need to call CreditTransaction.Unwrap() before calling this method if this CreditTransaction
 // was returned from a transaction, and the transaction was committed or rolled back.
-func (ct *CreditTransaction) Update() *CreditTransactionUpdateOne {
-	return NewCreditTransactionClient(ct.config).UpdateOne(ct)
+func (_m *CreditTransaction) Update() *CreditTransactionUpdateOne {
+	return NewCreditTransactionClient(_m.config).UpdateOne(_m)
 }
 
 // Unwrap unwraps the CreditTransaction entity that was returned from a transaction after it was closed,
 // so that all future queries will be executed through the driver which created the transaction.
-func (ct *CreditTransaction) Unwrap() *CreditTransaction {
-	_tx, ok := ct.config.driver.(*txDriver)
+func (_m *CreditTransaction) Unwrap() *CreditTransaction {
+	_tx, ok := _m.config.driver.(*txDriver)
 	if !ok {
 		panic("ent: CreditTransaction is not a transactional entity")
 	}
-	ct.config.driver = _tx.drv
-	return ct
+	_m.config.driver = _tx.drv
+	return _m
 }
 
 // String implements the fmt.Stringer.
-func (ct *CreditTransaction) String() string {
+func (_m *CreditTransaction) String() string {
 	var builder strings.Builder
 	builder.WriteString("CreditTransaction(")
-	builder.WriteString(fmt.Sprintf("id=%v, ", ct.ID))
+	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("tenant_id=")
-	builder.WriteString(fmt.Sprintf("%v", ct.TenantID))
+	builder.WriteString(fmt.Sprintf("%v", _m.TenantID))
 	builder.WriteString(", ")
 	builder.WriteString("type=")
-	builder.WriteString(fmt.Sprintf("%v", ct.Type))
+	builder.WriteString(fmt.Sprintf("%v", _m.Type))
 	builder.WriteString(", ")
 	builder.WriteString("action=")
-	builder.WriteString(fmt.Sprintf("%v", ct.Action))
+	builder.WriteString(fmt.Sprintf("%v", _m.Action))
 	builder.WriteString(", ")
 	builder.WriteString("amount=")
-	builder.WriteString(fmt.Sprintf("%v", ct.Amount))
+	builder.WriteString(fmt.Sprintf("%v", _m.Amount))
 	builder.WriteString(", ")
 	builder.WriteString("new_balance=")
-	builder.WriteString(fmt.Sprintf("%v", ct.NewBalance))
+	builder.WriteString(fmt.Sprintf("%v", _m.NewBalance))
 	builder.WriteString(", ")
 	builder.WriteString("reference_id=")
-	builder.WriteString(ct.ReferenceID)
+	builder.WriteString(_m.ReferenceID)
 	builder.WriteString(", ")
 	builder.WriteString("description=")
-	builder.WriteString(ct.Description)
+	builder.WriteString(_m.Description)
 	builder.WriteString(", ")
 	builder.WriteString("metadata=")
-	builder.WriteString(fmt.Sprintf("%v", ct.Metadata))
+	builder.WriteString(fmt.Sprintf("%v", _m.Metadata))
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
-	builder.WriteString(ct.CreatedAt.Format(time.ANSIC))
+	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()
 }

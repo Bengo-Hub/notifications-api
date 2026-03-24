@@ -22,6 +22,7 @@ import (
 	"github.com/bengobox/notifications-api/internal/config"
 	"github.com/bengobox/notifications-api/internal/encryption"
 	"github.com/bengobox/notifications-api/internal/messaging"
+	"github.com/bengobox/notifications-api/internal/platform/cache"
 	"github.com/bengobox/notifications-api/internal/platform/database"
 	"github.com/bengobox/notifications-api/internal/platform/events"
 	"github.com/bengobox/notifications-api/internal/platform/templates"
@@ -107,8 +108,11 @@ func main() {
 	pm := providers.NewManager(dbPool, cfg.Postgres, cfg.Providers, encryption.KeyFromEnv(cfg.Security.EncryptionKey), cfg.App.Env, platformIDStr)
 
 	durable := "notifications-worker"
+	// Redis for cached auth-api tenant data (branding, contact info)
+	redisClient := cache.NewClient(cfg.Redis)
+
 	// Tenant resolver for event consumers and template branding
-	tr := newTenantResolver(client)
+	tr := newTenantResolver(client, redisClient)
 
 	_, err = js.Subscribe(subject, func(m *nats.Msg) {
 		var msg messaging.Message

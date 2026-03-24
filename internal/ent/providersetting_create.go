@@ -22,221 +22,221 @@ type ProviderSettingCreate struct {
 }
 
 // SetTenantID sets the "tenant_id" field.
-func (psc *ProviderSettingCreate) SetTenantID(s string) *ProviderSettingCreate {
-	psc.mutation.SetTenantID(s)
-	return psc
+func (_c *ProviderSettingCreate) SetTenantID(v string) *ProviderSettingCreate {
+	_c.mutation.SetTenantID(v)
+	return _c
 }
 
 // SetChannel sets the "channel" field.
-func (psc *ProviderSettingCreate) SetChannel(s string) *ProviderSettingCreate {
-	psc.mutation.SetChannel(s)
-	return psc
+func (_c *ProviderSettingCreate) SetChannel(v string) *ProviderSettingCreate {
+	_c.mutation.SetChannel(v)
+	return _c
 }
 
 // SetNillableChannel sets the "channel" field if the given value is not nil.
-func (psc *ProviderSettingCreate) SetNillableChannel(s *string) *ProviderSettingCreate {
-	if s != nil {
-		psc.SetChannel(*s)
+func (_c *ProviderSettingCreate) SetNillableChannel(v *string) *ProviderSettingCreate {
+	if v != nil {
+		_c.SetChannel(*v)
 	}
-	return psc
+	return _c
 }
 
 // SetProvider sets the "provider" field.
-func (psc *ProviderSettingCreate) SetProvider(s string) *ProviderSettingCreate {
-	psc.mutation.SetProvider(s)
-	return psc
+func (_c *ProviderSettingCreate) SetProvider(v string) *ProviderSettingCreate {
+	_c.mutation.SetProvider(v)
+	return _c
 }
 
 // SetNillableProvider sets the "provider" field if the given value is not nil.
-func (psc *ProviderSettingCreate) SetNillableProvider(s *string) *ProviderSettingCreate {
-	if s != nil {
-		psc.SetProvider(*s)
+func (_c *ProviderSettingCreate) SetNillableProvider(v *string) *ProviderSettingCreate {
+	if v != nil {
+		_c.SetProvider(*v)
 	}
-	return psc
+	return _c
 }
 
 // SetProviderType sets the "provider_type" field.
-func (psc *ProviderSettingCreate) SetProviderType(s string) *ProviderSettingCreate {
-	psc.mutation.SetProviderType(s)
-	return psc
+func (_c *ProviderSettingCreate) SetProviderType(v string) *ProviderSettingCreate {
+	_c.mutation.SetProviderType(v)
+	return _c
 }
 
 // SetNillableProviderType sets the "provider_type" field if the given value is not nil.
-func (psc *ProviderSettingCreate) SetNillableProviderType(s *string) *ProviderSettingCreate {
-	if s != nil {
-		psc.SetProviderType(*s)
+func (_c *ProviderSettingCreate) SetNillableProviderType(v *string) *ProviderSettingCreate {
+	if v != nil {
+		_c.SetProviderType(*v)
 	}
-	return psc
+	return _c
 }
 
 // SetProviderName sets the "provider_name" field.
-func (psc *ProviderSettingCreate) SetProviderName(s string) *ProviderSettingCreate {
-	psc.mutation.SetProviderName(s)
-	return psc
+func (_c *ProviderSettingCreate) SetProviderName(v string) *ProviderSettingCreate {
+	_c.mutation.SetProviderName(v)
+	return _c
 }
 
 // SetNillableProviderName sets the "provider_name" field if the given value is not nil.
-func (psc *ProviderSettingCreate) SetNillableProviderName(s *string) *ProviderSettingCreate {
-	if s != nil {
-		psc.SetProviderName(*s)
+func (_c *ProviderSettingCreate) SetNillableProviderName(v *string) *ProviderSettingCreate {
+	if v != nil {
+		_c.SetProviderName(*v)
 	}
-	return psc
+	return _c
 }
 
 // SetKey sets the "key" field.
-func (psc *ProviderSettingCreate) SetKey(s string) *ProviderSettingCreate {
-	psc.mutation.SetKey(s)
-	return psc
+func (_c *ProviderSettingCreate) SetKey(v string) *ProviderSettingCreate {
+	_c.mutation.SetKey(v)
+	return _c
 }
 
 // SetNillableKey sets the "key" field if the given value is not nil.
-func (psc *ProviderSettingCreate) SetNillableKey(s *string) *ProviderSettingCreate {
-	if s != nil {
-		psc.SetKey(*s)
+func (_c *ProviderSettingCreate) SetNillableKey(v *string) *ProviderSettingCreate {
+	if v != nil {
+		_c.SetKey(*v)
 	}
-	return psc
+	return _c
 }
 
 // SetValue sets the "value" field.
-func (psc *ProviderSettingCreate) SetValue(s string) *ProviderSettingCreate {
-	psc.mutation.SetValue(s)
-	return psc
+func (_c *ProviderSettingCreate) SetValue(v string) *ProviderSettingCreate {
+	_c.mutation.SetValue(v)
+	return _c
 }
 
 // SetNillableValue sets the "value" field if the given value is not nil.
-func (psc *ProviderSettingCreate) SetNillableValue(s *string) *ProviderSettingCreate {
-	if s != nil {
-		psc.SetValue(*s)
+func (_c *ProviderSettingCreate) SetNillableValue(v *string) *ProviderSettingCreate {
+	if v != nil {
+		_c.SetValue(*v)
 	}
-	return psc
+	return _c
 }
 
 // SetDescription sets the "description" field.
-func (psc *ProviderSettingCreate) SetDescription(s string) *ProviderSettingCreate {
-	psc.mutation.SetDescription(s)
-	return psc
+func (_c *ProviderSettingCreate) SetDescription(v string) *ProviderSettingCreate {
+	_c.mutation.SetDescription(v)
+	return _c
 }
 
 // SetNillableDescription sets the "description" field if the given value is not nil.
-func (psc *ProviderSettingCreate) SetNillableDescription(s *string) *ProviderSettingCreate {
-	if s != nil {
-		psc.SetDescription(*s)
+func (_c *ProviderSettingCreate) SetNillableDescription(v *string) *ProviderSettingCreate {
+	if v != nil {
+		_c.SetDescription(*v)
 	}
-	return psc
+	return _c
 }
 
 // SetIsEncrypted sets the "is_encrypted" field.
-func (psc *ProviderSettingCreate) SetIsEncrypted(b bool) *ProviderSettingCreate {
-	psc.mutation.SetIsEncrypted(b)
-	return psc
+func (_c *ProviderSettingCreate) SetIsEncrypted(v bool) *ProviderSettingCreate {
+	_c.mutation.SetIsEncrypted(v)
+	return _c
 }
 
 // SetNillableIsEncrypted sets the "is_encrypted" field if the given value is not nil.
-func (psc *ProviderSettingCreate) SetNillableIsEncrypted(b *bool) *ProviderSettingCreate {
-	if b != nil {
-		psc.SetIsEncrypted(*b)
+func (_c *ProviderSettingCreate) SetNillableIsEncrypted(v *bool) *ProviderSettingCreate {
+	if v != nil {
+		_c.SetIsEncrypted(*v)
 	}
-	return psc
+	return _c
 }
 
 // SetIsPlatform sets the "is_platform" field.
-func (psc *ProviderSettingCreate) SetIsPlatform(b bool) *ProviderSettingCreate {
-	psc.mutation.SetIsPlatform(b)
-	return psc
+func (_c *ProviderSettingCreate) SetIsPlatform(v bool) *ProviderSettingCreate {
+	_c.mutation.SetIsPlatform(v)
+	return _c
 }
 
 // SetNillableIsPlatform sets the "is_platform" field if the given value is not nil.
-func (psc *ProviderSettingCreate) SetNillableIsPlatform(b *bool) *ProviderSettingCreate {
-	if b != nil {
-		psc.SetIsPlatform(*b)
+func (_c *ProviderSettingCreate) SetNillableIsPlatform(v *bool) *ProviderSettingCreate {
+	if v != nil {
+		_c.SetIsPlatform(*v)
 	}
-	return psc
+	return _c
 }
 
 // SetIsPlatformManaged sets the "is_platform_managed" field.
-func (psc *ProviderSettingCreate) SetIsPlatformManaged(b bool) *ProviderSettingCreate {
-	psc.mutation.SetIsPlatformManaged(b)
-	return psc
+func (_c *ProviderSettingCreate) SetIsPlatformManaged(v bool) *ProviderSettingCreate {
+	_c.mutation.SetIsPlatformManaged(v)
+	return _c
 }
 
 // SetNillableIsPlatformManaged sets the "is_platform_managed" field if the given value is not nil.
-func (psc *ProviderSettingCreate) SetNillableIsPlatformManaged(b *bool) *ProviderSettingCreate {
-	if b != nil {
-		psc.SetIsPlatformManaged(*b)
+func (_c *ProviderSettingCreate) SetNillableIsPlatformManaged(v *bool) *ProviderSettingCreate {
+	if v != nil {
+		_c.SetIsPlatformManaged(*v)
 	}
-	return psc
+	return _c
 }
 
 // SetEnvironment sets the "environment" field.
-func (psc *ProviderSettingCreate) SetEnvironment(s string) *ProviderSettingCreate {
-	psc.mutation.SetEnvironment(s)
-	return psc
+func (_c *ProviderSettingCreate) SetEnvironment(v string) *ProviderSettingCreate {
+	_c.mutation.SetEnvironment(v)
+	return _c
 }
 
 // SetNillableEnvironment sets the "environment" field if the given value is not nil.
-func (psc *ProviderSettingCreate) SetNillableEnvironment(s *string) *ProviderSettingCreate {
-	if s != nil {
-		psc.SetEnvironment(*s)
+func (_c *ProviderSettingCreate) SetNillableEnvironment(v *string) *ProviderSettingCreate {
+	if v != nil {
+		_c.SetEnvironment(*v)
 	}
-	return psc
+	return _c
 }
 
 // SetIsSecret sets the "is_secret" field.
-func (psc *ProviderSettingCreate) SetIsSecret(b bool) *ProviderSettingCreate {
-	psc.mutation.SetIsSecret(b)
-	return psc
+func (_c *ProviderSettingCreate) SetIsSecret(v bool) *ProviderSettingCreate {
+	_c.mutation.SetIsSecret(v)
+	return _c
 }
 
 // SetNillableIsSecret sets the "is_secret" field if the given value is not nil.
-func (psc *ProviderSettingCreate) SetNillableIsSecret(b *bool) *ProviderSettingCreate {
-	if b != nil {
-		psc.SetIsSecret(*b)
+func (_c *ProviderSettingCreate) SetNillableIsSecret(v *bool) *ProviderSettingCreate {
+	if v != nil {
+		_c.SetIsSecret(*v)
 	}
-	return psc
+	return _c
 }
 
 // SetIsActive sets the "is_active" field.
-func (psc *ProviderSettingCreate) SetIsActive(b bool) *ProviderSettingCreate {
-	psc.mutation.SetIsActive(b)
-	return psc
+func (_c *ProviderSettingCreate) SetIsActive(v bool) *ProviderSettingCreate {
+	_c.mutation.SetIsActive(v)
+	return _c
 }
 
 // SetNillableIsActive sets the "is_active" field if the given value is not nil.
-func (psc *ProviderSettingCreate) SetNillableIsActive(b *bool) *ProviderSettingCreate {
-	if b != nil {
-		psc.SetIsActive(*b)
+func (_c *ProviderSettingCreate) SetNillableIsActive(v *bool) *ProviderSettingCreate {
+	if v != nil {
+		_c.SetIsActive(*v)
 	}
-	return psc
+	return _c
 }
 
 // SetStatus sets the "status" field.
-func (psc *ProviderSettingCreate) SetStatus(s string) *ProviderSettingCreate {
-	psc.mutation.SetStatus(s)
-	return psc
+func (_c *ProviderSettingCreate) SetStatus(v string) *ProviderSettingCreate {
+	_c.mutation.SetStatus(v)
+	return _c
 }
 
 // SetNillableStatus sets the "status" field if the given value is not nil.
-func (psc *ProviderSettingCreate) SetNillableStatus(s *string) *ProviderSettingCreate {
-	if s != nil {
-		psc.SetStatus(*s)
+func (_c *ProviderSettingCreate) SetNillableStatus(v *string) *ProviderSettingCreate {
+	if v != nil {
+		_c.SetStatus(*v)
 	}
-	return psc
+	return _c
 }
 
 // Mutation returns the ProviderSettingMutation object of the builder.
-func (psc *ProviderSettingCreate) Mutation() *ProviderSettingMutation {
-	return psc.mutation
+func (_c *ProviderSettingCreate) Mutation() *ProviderSettingMutation {
+	return _c.mutation
 }
 
 // Save creates the ProviderSetting in the database.
-func (psc *ProviderSettingCreate) Save(ctx context.Context) (*ProviderSetting, error) {
-	psc.defaults()
-	return withHooks(ctx, psc.sqlSave, psc.mutation, psc.hooks)
+func (_c *ProviderSettingCreate) Save(ctx context.Context) (*ProviderSetting, error) {
+	_c.defaults()
+	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.
-func (psc *ProviderSettingCreate) SaveX(ctx context.Context) *ProviderSetting {
-	v, err := psc.Save(ctx)
+func (_c *ProviderSettingCreate) SaveX(ctx context.Context) *ProviderSetting {
+	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -244,82 +244,82 @@ func (psc *ProviderSettingCreate) SaveX(ctx context.Context) *ProviderSetting {
 }
 
 // Exec executes the query.
-func (psc *ProviderSettingCreate) Exec(ctx context.Context) error {
-	_, err := psc.Save(ctx)
+func (_c *ProviderSettingCreate) Exec(ctx context.Context) error {
+	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (psc *ProviderSettingCreate) ExecX(ctx context.Context) {
-	if err := psc.Exec(ctx); err != nil {
+func (_c *ProviderSettingCreate) ExecX(ctx context.Context) {
+	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (psc *ProviderSettingCreate) defaults() {
-	if _, ok := psc.mutation.IsEncrypted(); !ok {
+func (_c *ProviderSettingCreate) defaults() {
+	if _, ok := _c.mutation.IsEncrypted(); !ok {
 		v := providersetting.DefaultIsEncrypted
-		psc.mutation.SetIsEncrypted(v)
+		_c.mutation.SetIsEncrypted(v)
 	}
-	if _, ok := psc.mutation.IsPlatform(); !ok {
+	if _, ok := _c.mutation.IsPlatform(); !ok {
 		v := providersetting.DefaultIsPlatform
-		psc.mutation.SetIsPlatform(v)
+		_c.mutation.SetIsPlatform(v)
 	}
-	if _, ok := psc.mutation.IsPlatformManaged(); !ok {
+	if _, ok := _c.mutation.IsPlatformManaged(); !ok {
 		v := providersetting.DefaultIsPlatformManaged
-		psc.mutation.SetIsPlatformManaged(v)
+		_c.mutation.SetIsPlatformManaged(v)
 	}
-	if _, ok := psc.mutation.Environment(); !ok {
+	if _, ok := _c.mutation.Environment(); !ok {
 		v := providersetting.DefaultEnvironment
-		psc.mutation.SetEnvironment(v)
+		_c.mutation.SetEnvironment(v)
 	}
-	if _, ok := psc.mutation.IsSecret(); !ok {
+	if _, ok := _c.mutation.IsSecret(); !ok {
 		v := providersetting.DefaultIsSecret
-		psc.mutation.SetIsSecret(v)
+		_c.mutation.SetIsSecret(v)
 	}
-	if _, ok := psc.mutation.IsActive(); !ok {
+	if _, ok := _c.mutation.IsActive(); !ok {
 		v := providersetting.DefaultIsActive
-		psc.mutation.SetIsActive(v)
+		_c.mutation.SetIsActive(v)
 	}
-	if _, ok := psc.mutation.Status(); !ok {
+	if _, ok := _c.mutation.Status(); !ok {
 		v := providersetting.DefaultStatus
-		psc.mutation.SetStatus(v)
+		_c.mutation.SetStatus(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (psc *ProviderSettingCreate) check() error {
-	if _, ok := psc.mutation.TenantID(); !ok {
+func (_c *ProviderSettingCreate) check() error {
+	if _, ok := _c.mutation.TenantID(); !ok {
 		return &ValidationError{Name: "tenant_id", err: errors.New(`ent: missing required field "ProviderSetting.tenant_id"`)}
 	}
-	if _, ok := psc.mutation.IsEncrypted(); !ok {
+	if _, ok := _c.mutation.IsEncrypted(); !ok {
 		return &ValidationError{Name: "is_encrypted", err: errors.New(`ent: missing required field "ProviderSetting.is_encrypted"`)}
 	}
-	if _, ok := psc.mutation.IsPlatform(); !ok {
+	if _, ok := _c.mutation.IsPlatform(); !ok {
 		return &ValidationError{Name: "is_platform", err: errors.New(`ent: missing required field "ProviderSetting.is_platform"`)}
 	}
-	if _, ok := psc.mutation.IsPlatformManaged(); !ok {
+	if _, ok := _c.mutation.IsPlatformManaged(); !ok {
 		return &ValidationError{Name: "is_platform_managed", err: errors.New(`ent: missing required field "ProviderSetting.is_platform_managed"`)}
 	}
-	if _, ok := psc.mutation.Environment(); !ok {
+	if _, ok := _c.mutation.Environment(); !ok {
 		return &ValidationError{Name: "environment", err: errors.New(`ent: missing required field "ProviderSetting.environment"`)}
 	}
-	if _, ok := psc.mutation.IsSecret(); !ok {
+	if _, ok := _c.mutation.IsSecret(); !ok {
 		return &ValidationError{Name: "is_secret", err: errors.New(`ent: missing required field "ProviderSetting.is_secret"`)}
 	}
-	if _, ok := psc.mutation.IsActive(); !ok {
+	if _, ok := _c.mutation.IsActive(); !ok {
 		return &ValidationError{Name: "is_active", err: errors.New(`ent: missing required field "ProviderSetting.is_active"`)}
 	}
 	return nil
 }
 
-func (psc *ProviderSettingCreate) sqlSave(ctx context.Context) (*ProviderSetting, error) {
-	if err := psc.check(); err != nil {
+func (_c *ProviderSettingCreate) sqlSave(ctx context.Context) (*ProviderSetting, error) {
+	if err := _c.check(); err != nil {
 		return nil, err
 	}
-	_node, _spec := psc.createSpec()
-	if err := sqlgraph.CreateNode(ctx, psc.driver, _spec); err != nil {
+	_node, _spec := _c.createSpec()
+	if err := sqlgraph.CreateNode(ctx, _c.driver, _spec); err != nil {
 		if sqlgraph.IsConstraintError(err) {
 			err = &ConstraintError{msg: err.Error(), wrap: err}
 		}
@@ -327,74 +327,74 @@ func (psc *ProviderSettingCreate) sqlSave(ctx context.Context) (*ProviderSetting
 	}
 	id := _spec.ID.Value.(int64)
 	_node.ID = int(id)
-	psc.mutation.id = &_node.ID
-	psc.mutation.done = true
+	_c.mutation.id = &_node.ID
+	_c.mutation.done = true
 	return _node, nil
 }
 
-func (psc *ProviderSettingCreate) createSpec() (*ProviderSetting, *sqlgraph.CreateSpec) {
+func (_c *ProviderSettingCreate) createSpec() (*ProviderSetting, *sqlgraph.CreateSpec) {
 	var (
-		_node = &ProviderSetting{config: psc.config}
+		_node = &ProviderSetting{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(providersetting.Table, sqlgraph.NewFieldSpec(providersetting.FieldID, field.TypeInt))
 	)
-	_spec.OnConflict = psc.conflict
-	if value, ok := psc.mutation.TenantID(); ok {
+	_spec.OnConflict = _c.conflict
+	if value, ok := _c.mutation.TenantID(); ok {
 		_spec.SetField(providersetting.FieldTenantID, field.TypeString, value)
 		_node.TenantID = value
 	}
-	if value, ok := psc.mutation.Channel(); ok {
+	if value, ok := _c.mutation.Channel(); ok {
 		_spec.SetField(providersetting.FieldChannel, field.TypeString, value)
 		_node.Channel = value
 	}
-	if value, ok := psc.mutation.Provider(); ok {
+	if value, ok := _c.mutation.Provider(); ok {
 		_spec.SetField(providersetting.FieldProvider, field.TypeString, value)
 		_node.Provider = value
 	}
-	if value, ok := psc.mutation.ProviderType(); ok {
+	if value, ok := _c.mutation.ProviderType(); ok {
 		_spec.SetField(providersetting.FieldProviderType, field.TypeString, value)
 		_node.ProviderType = value
 	}
-	if value, ok := psc.mutation.ProviderName(); ok {
+	if value, ok := _c.mutation.ProviderName(); ok {
 		_spec.SetField(providersetting.FieldProviderName, field.TypeString, value)
 		_node.ProviderName = value
 	}
-	if value, ok := psc.mutation.Key(); ok {
+	if value, ok := _c.mutation.Key(); ok {
 		_spec.SetField(providersetting.FieldKey, field.TypeString, value)
 		_node.Key = value
 	}
-	if value, ok := psc.mutation.Value(); ok {
+	if value, ok := _c.mutation.Value(); ok {
 		_spec.SetField(providersetting.FieldValue, field.TypeString, value)
 		_node.Value = value
 	}
-	if value, ok := psc.mutation.Description(); ok {
+	if value, ok := _c.mutation.Description(); ok {
 		_spec.SetField(providersetting.FieldDescription, field.TypeString, value)
 		_node.Description = value
 	}
-	if value, ok := psc.mutation.IsEncrypted(); ok {
+	if value, ok := _c.mutation.IsEncrypted(); ok {
 		_spec.SetField(providersetting.FieldIsEncrypted, field.TypeBool, value)
 		_node.IsEncrypted = value
 	}
-	if value, ok := psc.mutation.IsPlatform(); ok {
+	if value, ok := _c.mutation.IsPlatform(); ok {
 		_spec.SetField(providersetting.FieldIsPlatform, field.TypeBool, value)
 		_node.IsPlatform = value
 	}
-	if value, ok := psc.mutation.IsPlatformManaged(); ok {
+	if value, ok := _c.mutation.IsPlatformManaged(); ok {
 		_spec.SetField(providersetting.FieldIsPlatformManaged, field.TypeBool, value)
 		_node.IsPlatformManaged = value
 	}
-	if value, ok := psc.mutation.Environment(); ok {
+	if value, ok := _c.mutation.Environment(); ok {
 		_spec.SetField(providersetting.FieldEnvironment, field.TypeString, value)
 		_node.Environment = value
 	}
-	if value, ok := psc.mutation.IsSecret(); ok {
+	if value, ok := _c.mutation.IsSecret(); ok {
 		_spec.SetField(providersetting.FieldIsSecret, field.TypeBool, value)
 		_node.IsSecret = value
 	}
-	if value, ok := psc.mutation.IsActive(); ok {
+	if value, ok := _c.mutation.IsActive(); ok {
 		_spec.SetField(providersetting.FieldIsActive, field.TypeBool, value)
 		_node.IsActive = value
 	}
-	if value, ok := psc.mutation.Status(); ok {
+	if value, ok := _c.mutation.Status(); ok {
 		_spec.SetField(providersetting.FieldStatus, field.TypeString, value)
 		_node.Status = value
 	}
@@ -417,10 +417,10 @@ func (psc *ProviderSettingCreate) createSpec() (*ProviderSetting, *sqlgraph.Crea
 //			SetTenantID(v+v).
 //		}).
 //		Exec(ctx)
-func (psc *ProviderSettingCreate) OnConflict(opts ...sql.ConflictOption) *ProviderSettingUpsertOne {
-	psc.conflict = opts
+func (_c *ProviderSettingCreate) OnConflict(opts ...sql.ConflictOption) *ProviderSettingUpsertOne {
+	_c.conflict = opts
 	return &ProviderSettingUpsertOne{
-		create: psc,
+		create: _c,
 	}
 }
 
@@ -430,10 +430,10 @@ func (psc *ProviderSettingCreate) OnConflict(opts ...sql.ConflictOption) *Provid
 //	client.ProviderSetting.Create().
 //		OnConflict(sql.ConflictColumns(columns...)).
 //		Exec(ctx)
-func (psc *ProviderSettingCreate) OnConflictColumns(columns ...string) *ProviderSettingUpsertOne {
-	psc.conflict = append(psc.conflict, sql.ConflictColumns(columns...))
+func (_c *ProviderSettingCreate) OnConflictColumns(columns ...string) *ProviderSettingUpsertOne {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
 	return &ProviderSettingUpsertOne{
-		create: psc,
+		create: _c,
 	}
 }
 
@@ -1026,16 +1026,16 @@ type ProviderSettingCreateBulk struct {
 }
 
 // Save creates the ProviderSetting entities in the database.
-func (pscb *ProviderSettingCreateBulk) Save(ctx context.Context) ([]*ProviderSetting, error) {
-	if pscb.err != nil {
-		return nil, pscb.err
+func (_c *ProviderSettingCreateBulk) Save(ctx context.Context) ([]*ProviderSetting, error) {
+	if _c.err != nil {
+		return nil, _c.err
 	}
-	specs := make([]*sqlgraph.CreateSpec, len(pscb.builders))
-	nodes := make([]*ProviderSetting, len(pscb.builders))
-	mutators := make([]Mutator, len(pscb.builders))
-	for i := range pscb.builders {
+	specs := make([]*sqlgraph.CreateSpec, len(_c.builders))
+	nodes := make([]*ProviderSetting, len(_c.builders))
+	mutators := make([]Mutator, len(_c.builders))
+	for i := range _c.builders {
 		func(i int, root context.Context) {
-			builder := pscb.builders[i]
+			builder := _c.builders[i]
 			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*ProviderSettingMutation)
@@ -1049,12 +1049,12 @@ func (pscb *ProviderSettingCreateBulk) Save(ctx context.Context) ([]*ProviderSet
 				var err error
 				nodes[i], specs[i] = builder.createSpec()
 				if i < len(mutators)-1 {
-					_, err = mutators[i+1].Mutate(root, pscb.builders[i+1].mutation)
+					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
-					spec.OnConflict = pscb.conflict
+					spec.OnConflict = _c.conflict
 					// Invoke the actual operation on the latest mutation in the chain.
-					if err = sqlgraph.BatchCreate(ctx, pscb.driver, spec); err != nil {
+					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
 							err = &ConstraintError{msg: err.Error(), wrap: err}
 						}
@@ -1078,7 +1078,7 @@ func (pscb *ProviderSettingCreateBulk) Save(ctx context.Context) ([]*ProviderSet
 		}(i, ctx)
 	}
 	if len(mutators) > 0 {
-		if _, err := mutators[0].Mutate(ctx, pscb.builders[0].mutation); err != nil {
+		if _, err := mutators[0].Mutate(ctx, _c.builders[0].mutation); err != nil {
 			return nil, err
 		}
 	}
@@ -1086,8 +1086,8 @@ func (pscb *ProviderSettingCreateBulk) Save(ctx context.Context) ([]*ProviderSet
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (pscb *ProviderSettingCreateBulk) SaveX(ctx context.Context) []*ProviderSetting {
-	v, err := pscb.Save(ctx)
+func (_c *ProviderSettingCreateBulk) SaveX(ctx context.Context) []*ProviderSetting {
+	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -1095,14 +1095,14 @@ func (pscb *ProviderSettingCreateBulk) SaveX(ctx context.Context) []*ProviderSet
 }
 
 // Exec executes the query.
-func (pscb *ProviderSettingCreateBulk) Exec(ctx context.Context) error {
-	_, err := pscb.Save(ctx)
+func (_c *ProviderSettingCreateBulk) Exec(ctx context.Context) error {
+	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (pscb *ProviderSettingCreateBulk) ExecX(ctx context.Context) {
-	if err := pscb.Exec(ctx); err != nil {
+func (_c *ProviderSettingCreateBulk) ExecX(ctx context.Context) {
+	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
@@ -1122,10 +1122,10 @@ func (pscb *ProviderSettingCreateBulk) ExecX(ctx context.Context) {
 //			SetTenantID(v+v).
 //		}).
 //		Exec(ctx)
-func (pscb *ProviderSettingCreateBulk) OnConflict(opts ...sql.ConflictOption) *ProviderSettingUpsertBulk {
-	pscb.conflict = opts
+func (_c *ProviderSettingCreateBulk) OnConflict(opts ...sql.ConflictOption) *ProviderSettingUpsertBulk {
+	_c.conflict = opts
 	return &ProviderSettingUpsertBulk{
-		create: pscb,
+		create: _c,
 	}
 }
 
@@ -1135,10 +1135,10 @@ func (pscb *ProviderSettingCreateBulk) OnConflict(opts ...sql.ConflictOption) *P
 //	client.ProviderSetting.Create().
 //		OnConflict(sql.ConflictColumns(columns...)).
 //		Exec(ctx)
-func (pscb *ProviderSettingCreateBulk) OnConflictColumns(columns ...string) *ProviderSettingUpsertBulk {
-	pscb.conflict = append(pscb.conflict, sql.ConflictColumns(columns...))
+func (_c *ProviderSettingCreateBulk) OnConflictColumns(columns ...string) *ProviderSettingUpsertBulk {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
 	return &ProviderSettingUpsertBulk{
-		create: pscb,
+		create: _c,
 	}
 }
 

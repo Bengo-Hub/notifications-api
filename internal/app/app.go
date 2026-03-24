@@ -82,7 +82,7 @@ func New(ctx context.Context) (*App, error) {
 
 	templateLoader := templates.New(cfg.Templates)
 
-	// Initialize Ent client for provider/branding management
+	// Initialize Ent client for provider management
 	entClient, err := entdb.NewClient(ctx, cfg.Postgres)
 	if err != nil {
 		return nil, fmt.Errorf("ent client init: %w", err)

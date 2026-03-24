@@ -157,7 +157,7 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 					notif.Post("/messages", notifications.Enqueue)
 				})
 
-				// Tenant provider selection + branding
+				// Tenant provider selection
 				tenantProviders.RegisterTenantProviderRoutes(tenantRouter)
 
 				// Billing routes

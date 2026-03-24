@@ -23,282 +23,282 @@ type ProviderSettingUpdate struct {
 }
 
 // Where appends a list predicates to the ProviderSettingUpdate builder.
-func (psu *ProviderSettingUpdate) Where(ps ...predicate.ProviderSetting) *ProviderSettingUpdate {
-	psu.mutation.Where(ps...)
-	return psu
+func (_u *ProviderSettingUpdate) Where(ps ...predicate.ProviderSetting) *ProviderSettingUpdate {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // SetTenantID sets the "tenant_id" field.
-func (psu *ProviderSettingUpdate) SetTenantID(s string) *ProviderSettingUpdate {
-	psu.mutation.SetTenantID(s)
-	return psu
+func (_u *ProviderSettingUpdate) SetTenantID(v string) *ProviderSettingUpdate {
+	_u.mutation.SetTenantID(v)
+	return _u
 }
 
 // SetNillableTenantID sets the "tenant_id" field if the given value is not nil.
-func (psu *ProviderSettingUpdate) SetNillableTenantID(s *string) *ProviderSettingUpdate {
-	if s != nil {
-		psu.SetTenantID(*s)
+func (_u *ProviderSettingUpdate) SetNillableTenantID(v *string) *ProviderSettingUpdate {
+	if v != nil {
+		_u.SetTenantID(*v)
 	}
-	return psu
+	return _u
 }
 
 // SetChannel sets the "channel" field.
-func (psu *ProviderSettingUpdate) SetChannel(s string) *ProviderSettingUpdate {
-	psu.mutation.SetChannel(s)
-	return psu
+func (_u *ProviderSettingUpdate) SetChannel(v string) *ProviderSettingUpdate {
+	_u.mutation.SetChannel(v)
+	return _u
 }
 
 // SetNillableChannel sets the "channel" field if the given value is not nil.
-func (psu *ProviderSettingUpdate) SetNillableChannel(s *string) *ProviderSettingUpdate {
-	if s != nil {
-		psu.SetChannel(*s)
+func (_u *ProviderSettingUpdate) SetNillableChannel(v *string) *ProviderSettingUpdate {
+	if v != nil {
+		_u.SetChannel(*v)
 	}
-	return psu
+	return _u
 }
 
 // ClearChannel clears the value of the "channel" field.
-func (psu *ProviderSettingUpdate) ClearChannel() *ProviderSettingUpdate {
-	psu.mutation.ClearChannel()
-	return psu
+func (_u *ProviderSettingUpdate) ClearChannel() *ProviderSettingUpdate {
+	_u.mutation.ClearChannel()
+	return _u
 }
 
 // SetProvider sets the "provider" field.
-func (psu *ProviderSettingUpdate) SetProvider(s string) *ProviderSettingUpdate {
-	psu.mutation.SetProvider(s)
-	return psu
+func (_u *ProviderSettingUpdate) SetProvider(v string) *ProviderSettingUpdate {
+	_u.mutation.SetProvider(v)
+	return _u
 }
 
 // SetNillableProvider sets the "provider" field if the given value is not nil.
-func (psu *ProviderSettingUpdate) SetNillableProvider(s *string) *ProviderSettingUpdate {
-	if s != nil {
-		psu.SetProvider(*s)
+func (_u *ProviderSettingUpdate) SetNillableProvider(v *string) *ProviderSettingUpdate {
+	if v != nil {
+		_u.SetProvider(*v)
 	}
-	return psu
+	return _u
 }
 
 // ClearProvider clears the value of the "provider" field.
-func (psu *ProviderSettingUpdate) ClearProvider() *ProviderSettingUpdate {
-	psu.mutation.ClearProvider()
-	return psu
+func (_u *ProviderSettingUpdate) ClearProvider() *ProviderSettingUpdate {
+	_u.mutation.ClearProvider()
+	return _u
 }
 
 // SetProviderType sets the "provider_type" field.
-func (psu *ProviderSettingUpdate) SetProviderType(s string) *ProviderSettingUpdate {
-	psu.mutation.SetProviderType(s)
-	return psu
+func (_u *ProviderSettingUpdate) SetProviderType(v string) *ProviderSettingUpdate {
+	_u.mutation.SetProviderType(v)
+	return _u
 }
 
 // SetNillableProviderType sets the "provider_type" field if the given value is not nil.
-func (psu *ProviderSettingUpdate) SetNillableProviderType(s *string) *ProviderSettingUpdate {
-	if s != nil {
-		psu.SetProviderType(*s)
+func (_u *ProviderSettingUpdate) SetNillableProviderType(v *string) *ProviderSettingUpdate {
+	if v != nil {
+		_u.SetProviderType(*v)
 	}
-	return psu
+	return _u
 }
 
 // ClearProviderType clears the value of the "provider_type" field.
-func (psu *ProviderSettingUpdate) ClearProviderType() *ProviderSettingUpdate {
-	psu.mutation.ClearProviderType()
-	return psu
+func (_u *ProviderSettingUpdate) ClearProviderType() *ProviderSettingUpdate {
+	_u.mutation.ClearProviderType()
+	return _u
 }
 
 // SetProviderName sets the "provider_name" field.
-func (psu *ProviderSettingUpdate) SetProviderName(s string) *ProviderSettingUpdate {
-	psu.mutation.SetProviderName(s)
-	return psu
+func (_u *ProviderSettingUpdate) SetProviderName(v string) *ProviderSettingUpdate {
+	_u.mutation.SetProviderName(v)
+	return _u
 }
 
 // SetNillableProviderName sets the "provider_name" field if the given value is not nil.
-func (psu *ProviderSettingUpdate) SetNillableProviderName(s *string) *ProviderSettingUpdate {
-	if s != nil {
-		psu.SetProviderName(*s)
+func (_u *ProviderSettingUpdate) SetNillableProviderName(v *string) *ProviderSettingUpdate {
+	if v != nil {
+		_u.SetProviderName(*v)
 	}
-	return psu
+	return _u
 }
 
 // ClearProviderName clears the value of the "provider_name" field.
-func (psu *ProviderSettingUpdate) ClearProviderName() *ProviderSettingUpdate {
-	psu.mutation.ClearProviderName()
-	return psu
+func (_u *ProviderSettingUpdate) ClearProviderName() *ProviderSettingUpdate {
+	_u.mutation.ClearProviderName()
+	return _u
 }
 
 // SetKey sets the "key" field.
-func (psu *ProviderSettingUpdate) SetKey(s string) *ProviderSettingUpdate {
-	psu.mutation.SetKey(s)
-	return psu
+func (_u *ProviderSettingUpdate) SetKey(v string) *ProviderSettingUpdate {
+	_u.mutation.SetKey(v)
+	return _u
 }
 
 // SetNillableKey sets the "key" field if the given value is not nil.
-func (psu *ProviderSettingUpdate) SetNillableKey(s *string) *ProviderSettingUpdate {
-	if s != nil {
-		psu.SetKey(*s)
+func (_u *ProviderSettingUpdate) SetNillableKey(v *string) *ProviderSettingUpdate {
+	if v != nil {
+		_u.SetKey(*v)
 	}
-	return psu
+	return _u
 }
 
 // ClearKey clears the value of the "key" field.
-func (psu *ProviderSettingUpdate) ClearKey() *ProviderSettingUpdate {
-	psu.mutation.ClearKey()
-	return psu
+func (_u *ProviderSettingUpdate) ClearKey() *ProviderSettingUpdate {
+	_u.mutation.ClearKey()
+	return _u
 }
 
 // SetValue sets the "value" field.
-func (psu *ProviderSettingUpdate) SetValue(s string) *ProviderSettingUpdate {
-	psu.mutation.SetValue(s)
-	return psu
+func (_u *ProviderSettingUpdate) SetValue(v string) *ProviderSettingUpdate {
+	_u.mutation.SetValue(v)
+	return _u
 }
 
 // SetNillableValue sets the "value" field if the given value is not nil.
-func (psu *ProviderSettingUpdate) SetNillableValue(s *string) *ProviderSettingUpdate {
-	if s != nil {
-		psu.SetValue(*s)
+func (_u *ProviderSettingUpdate) SetNillableValue(v *string) *ProviderSettingUpdate {
+	if v != nil {
+		_u.SetValue(*v)
 	}
-	return psu
+	return _u
 }
 
 // ClearValue clears the value of the "value" field.
-func (psu *ProviderSettingUpdate) ClearValue() *ProviderSettingUpdate {
-	psu.mutation.ClearValue()
-	return psu
+func (_u *ProviderSettingUpdate) ClearValue() *ProviderSettingUpdate {
+	_u.mutation.ClearValue()
+	return _u
 }
 
 // SetDescription sets the "description" field.
-func (psu *ProviderSettingUpdate) SetDescription(s string) *ProviderSettingUpdate {
-	psu.mutation.SetDescription(s)
-	return psu
+func (_u *ProviderSettingUpdate) SetDescription(v string) *ProviderSettingUpdate {
+	_u.mutation.SetDescription(v)
+	return _u
 }
 
 // SetNillableDescription sets the "description" field if the given value is not nil.
-func (psu *ProviderSettingUpdate) SetNillableDescription(s *string) *ProviderSettingUpdate {
-	if s != nil {
-		psu.SetDescription(*s)
+func (_u *ProviderSettingUpdate) SetNillableDescription(v *string) *ProviderSettingUpdate {
+	if v != nil {
+		_u.SetDescription(*v)
 	}
-	return psu
+	return _u
 }
 
 // ClearDescription clears the value of the "description" field.
-func (psu *ProviderSettingUpdate) ClearDescription() *ProviderSettingUpdate {
-	psu.mutation.ClearDescription()
-	return psu
+func (_u *ProviderSettingUpdate) ClearDescription() *ProviderSettingUpdate {
+	_u.mutation.ClearDescription()
+	return _u
 }
 
 // SetIsEncrypted sets the "is_encrypted" field.
-func (psu *ProviderSettingUpdate) SetIsEncrypted(b bool) *ProviderSettingUpdate {
-	psu.mutation.SetIsEncrypted(b)
-	return psu
+func (_u *ProviderSettingUpdate) SetIsEncrypted(v bool) *ProviderSettingUpdate {
+	_u.mutation.SetIsEncrypted(v)
+	return _u
 }
 
 // SetNillableIsEncrypted sets the "is_encrypted" field if the given value is not nil.
-func (psu *ProviderSettingUpdate) SetNillableIsEncrypted(b *bool) *ProviderSettingUpdate {
-	if b != nil {
-		psu.SetIsEncrypted(*b)
+func (_u *ProviderSettingUpdate) SetNillableIsEncrypted(v *bool) *ProviderSettingUpdate {
+	if v != nil {
+		_u.SetIsEncrypted(*v)
 	}
-	return psu
+	return _u
 }
 
 // SetIsPlatform sets the "is_platform" field.
-func (psu *ProviderSettingUpdate) SetIsPlatform(b bool) *ProviderSettingUpdate {
-	psu.mutation.SetIsPlatform(b)
-	return psu
+func (_u *ProviderSettingUpdate) SetIsPlatform(v bool) *ProviderSettingUpdate {
+	_u.mutation.SetIsPlatform(v)
+	return _u
 }
 
 // SetNillableIsPlatform sets the "is_platform" field if the given value is not nil.
-func (psu *ProviderSettingUpdate) SetNillableIsPlatform(b *bool) *ProviderSettingUpdate {
-	if b != nil {
-		psu.SetIsPlatform(*b)
+func (_u *ProviderSettingUpdate) SetNillableIsPlatform(v *bool) *ProviderSettingUpdate {
+	if v != nil {
+		_u.SetIsPlatform(*v)
 	}
-	return psu
+	return _u
 }
 
 // SetIsPlatformManaged sets the "is_platform_managed" field.
-func (psu *ProviderSettingUpdate) SetIsPlatformManaged(b bool) *ProviderSettingUpdate {
-	psu.mutation.SetIsPlatformManaged(b)
-	return psu
+func (_u *ProviderSettingUpdate) SetIsPlatformManaged(v bool) *ProviderSettingUpdate {
+	_u.mutation.SetIsPlatformManaged(v)
+	return _u
 }
 
 // SetNillableIsPlatformManaged sets the "is_platform_managed" field if the given value is not nil.
-func (psu *ProviderSettingUpdate) SetNillableIsPlatformManaged(b *bool) *ProviderSettingUpdate {
-	if b != nil {
-		psu.SetIsPlatformManaged(*b)
+func (_u *ProviderSettingUpdate) SetNillableIsPlatformManaged(v *bool) *ProviderSettingUpdate {
+	if v != nil {
+		_u.SetIsPlatformManaged(*v)
 	}
-	return psu
+	return _u
 }
 
 // SetEnvironment sets the "environment" field.
-func (psu *ProviderSettingUpdate) SetEnvironment(s string) *ProviderSettingUpdate {
-	psu.mutation.SetEnvironment(s)
-	return psu
+func (_u *ProviderSettingUpdate) SetEnvironment(v string) *ProviderSettingUpdate {
+	_u.mutation.SetEnvironment(v)
+	return _u
 }
 
 // SetNillableEnvironment sets the "environment" field if the given value is not nil.
-func (psu *ProviderSettingUpdate) SetNillableEnvironment(s *string) *ProviderSettingUpdate {
-	if s != nil {
-		psu.SetEnvironment(*s)
+func (_u *ProviderSettingUpdate) SetNillableEnvironment(v *string) *ProviderSettingUpdate {
+	if v != nil {
+		_u.SetEnvironment(*v)
 	}
-	return psu
+	return _u
 }
 
 // SetIsSecret sets the "is_secret" field.
-func (psu *ProviderSettingUpdate) SetIsSecret(b bool) *ProviderSettingUpdate {
-	psu.mutation.SetIsSecret(b)
-	return psu
+func (_u *ProviderSettingUpdate) SetIsSecret(v bool) *ProviderSettingUpdate {
+	_u.mutation.SetIsSecret(v)
+	return _u
 }
 
 // SetNillableIsSecret sets the "is_secret" field if the given value is not nil.
-func (psu *ProviderSettingUpdate) SetNillableIsSecret(b *bool) *ProviderSettingUpdate {
-	if b != nil {
-		psu.SetIsSecret(*b)
+func (_u *ProviderSettingUpdate) SetNillableIsSecret(v *bool) *ProviderSettingUpdate {
+	if v != nil {
+		_u.SetIsSecret(*v)
 	}
-	return psu
+	return _u
 }
 
 // SetIsActive sets the "is_active" field.
-func (psu *ProviderSettingUpdate) SetIsActive(b bool) *ProviderSettingUpdate {
-	psu.mutation.SetIsActive(b)
-	return psu
+func (_u *ProviderSettingUpdate) SetIsActive(v bool) *ProviderSettingUpdate {
+	_u.mutation.SetIsActive(v)
+	return _u
 }
 
 // SetNillableIsActive sets the "is_active" field if the given value is not nil.
-func (psu *ProviderSettingUpdate) SetNillableIsActive(b *bool) *ProviderSettingUpdate {
-	if b != nil {
-		psu.SetIsActive(*b)
+func (_u *ProviderSettingUpdate) SetNillableIsActive(v *bool) *ProviderSettingUpdate {
+	if v != nil {
+		_u.SetIsActive(*v)
 	}
-	return psu
+	return _u
 }
 
 // SetStatus sets the "status" field.
-func (psu *ProviderSettingUpdate) SetStatus(s string) *ProviderSettingUpdate {
-	psu.mutation.SetStatus(s)
-	return psu
+func (_u *ProviderSettingUpdate) SetStatus(v string) *ProviderSettingUpdate {
+	_u.mutation.SetStatus(v)
+	return _u
 }
 
 // SetNillableStatus sets the "status" field if the given value is not nil.
-func (psu *ProviderSettingUpdate) SetNillableStatus(s *string) *ProviderSettingUpdate {
-	if s != nil {
-		psu.SetStatus(*s)
+func (_u *ProviderSettingUpdate) SetNillableStatus(v *string) *ProviderSettingUpdate {
+	if v != nil {
+		_u.SetStatus(*v)
 	}
-	return psu
+	return _u
 }
 
 // ClearStatus clears the value of the "status" field.
-func (psu *ProviderSettingUpdate) ClearStatus() *ProviderSettingUpdate {
-	psu.mutation.ClearStatus()
-	return psu
+func (_u *ProviderSettingUpdate) ClearStatus() *ProviderSettingUpdate {
+	_u.mutation.ClearStatus()
+	return _u
 }
 
 // Mutation returns the ProviderSettingMutation object of the builder.
-func (psu *ProviderSettingUpdate) Mutation() *ProviderSettingMutation {
-	return psu.mutation
+func (_u *ProviderSettingUpdate) Mutation() *ProviderSettingMutation {
+	return _u.mutation
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
-func (psu *ProviderSettingUpdate) Save(ctx context.Context) (int, error) {
-	return withHooks(ctx, psu.sqlSave, psu.mutation, psu.hooks)
+func (_u *ProviderSettingUpdate) Save(ctx context.Context) (int, error) {
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (psu *ProviderSettingUpdate) SaveX(ctx context.Context) int {
-	affected, err := psu.Save(ctx)
+func (_u *ProviderSettingUpdate) SaveX(ctx context.Context) int {
+	affected, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -306,104 +306,104 @@ func (psu *ProviderSettingUpdate) SaveX(ctx context.Context) int {
 }
 
 // Exec executes the query.
-func (psu *ProviderSettingUpdate) Exec(ctx context.Context) error {
-	_, err := psu.Save(ctx)
+func (_u *ProviderSettingUpdate) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (psu *ProviderSettingUpdate) ExecX(ctx context.Context) {
-	if err := psu.Exec(ctx); err != nil {
+func (_u *ProviderSettingUpdate) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
-func (psu *ProviderSettingUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *ProviderSettingUpdate {
-	psu.modifiers = append(psu.modifiers, modifiers...)
-	return psu
+func (_u *ProviderSettingUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *ProviderSettingUpdate {
+	_u.modifiers = append(_u.modifiers, modifiers...)
+	return _u
 }
 
-func (psu *ProviderSettingUpdate) sqlSave(ctx context.Context) (n int, err error) {
+func (_u *ProviderSettingUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	_spec := sqlgraph.NewUpdateSpec(providersetting.Table, providersetting.Columns, sqlgraph.NewFieldSpec(providersetting.FieldID, field.TypeInt))
-	if ps := psu.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := psu.mutation.TenantID(); ok {
+	if value, ok := _u.mutation.TenantID(); ok {
 		_spec.SetField(providersetting.FieldTenantID, field.TypeString, value)
 	}
-	if value, ok := psu.mutation.Channel(); ok {
+	if value, ok := _u.mutation.Channel(); ok {
 		_spec.SetField(providersetting.FieldChannel, field.TypeString, value)
 	}
-	if psu.mutation.ChannelCleared() {
+	if _u.mutation.ChannelCleared() {
 		_spec.ClearField(providersetting.FieldChannel, field.TypeString)
 	}
-	if value, ok := psu.mutation.Provider(); ok {
+	if value, ok := _u.mutation.Provider(); ok {
 		_spec.SetField(providersetting.FieldProvider, field.TypeString, value)
 	}
-	if psu.mutation.ProviderCleared() {
+	if _u.mutation.ProviderCleared() {
 		_spec.ClearField(providersetting.FieldProvider, field.TypeString)
 	}
-	if value, ok := psu.mutation.ProviderType(); ok {
+	if value, ok := _u.mutation.ProviderType(); ok {
 		_spec.SetField(providersetting.FieldProviderType, field.TypeString, value)
 	}
-	if psu.mutation.ProviderTypeCleared() {
+	if _u.mutation.ProviderTypeCleared() {
 		_spec.ClearField(providersetting.FieldProviderType, field.TypeString)
 	}
-	if value, ok := psu.mutation.ProviderName(); ok {
+	if value, ok := _u.mutation.ProviderName(); ok {
 		_spec.SetField(providersetting.FieldProviderName, field.TypeString, value)
 	}
-	if psu.mutation.ProviderNameCleared() {
+	if _u.mutation.ProviderNameCleared() {
 		_spec.ClearField(providersetting.FieldProviderName, field.TypeString)
 	}
-	if value, ok := psu.mutation.Key(); ok {
+	if value, ok := _u.mutation.Key(); ok {
 		_spec.SetField(providersetting.FieldKey, field.TypeString, value)
 	}
-	if psu.mutation.KeyCleared() {
+	if _u.mutation.KeyCleared() {
 		_spec.ClearField(providersetting.FieldKey, field.TypeString)
 	}
-	if value, ok := psu.mutation.Value(); ok {
+	if value, ok := _u.mutation.Value(); ok {
 		_spec.SetField(providersetting.FieldValue, field.TypeString, value)
 	}
-	if psu.mutation.ValueCleared() {
+	if _u.mutation.ValueCleared() {
 		_spec.ClearField(providersetting.FieldValue, field.TypeString)
 	}
-	if value, ok := psu.mutation.Description(); ok {
+	if value, ok := _u.mutation.Description(); ok {
 		_spec.SetField(providersetting.FieldDescription, field.TypeString, value)
 	}
-	if psu.mutation.DescriptionCleared() {
+	if _u.mutation.DescriptionCleared() {
 		_spec.ClearField(providersetting.FieldDescription, field.TypeString)
 	}
-	if value, ok := psu.mutation.IsEncrypted(); ok {
+	if value, ok := _u.mutation.IsEncrypted(); ok {
 		_spec.SetField(providersetting.FieldIsEncrypted, field.TypeBool, value)
 	}
-	if value, ok := psu.mutation.IsPlatform(); ok {
+	if value, ok := _u.mutation.IsPlatform(); ok {
 		_spec.SetField(providersetting.FieldIsPlatform, field.TypeBool, value)
 	}
-	if value, ok := psu.mutation.IsPlatformManaged(); ok {
+	if value, ok := _u.mutation.IsPlatformManaged(); ok {
 		_spec.SetField(providersetting.FieldIsPlatformManaged, field.TypeBool, value)
 	}
-	if value, ok := psu.mutation.Environment(); ok {
+	if value, ok := _u.mutation.Environment(); ok {
 		_spec.SetField(providersetting.FieldEnvironment, field.TypeString, value)
 	}
-	if value, ok := psu.mutation.IsSecret(); ok {
+	if value, ok := _u.mutation.IsSecret(); ok {
 		_spec.SetField(providersetting.FieldIsSecret, field.TypeBool, value)
 	}
-	if value, ok := psu.mutation.IsActive(); ok {
+	if value, ok := _u.mutation.IsActive(); ok {
 		_spec.SetField(providersetting.FieldIsActive, field.TypeBool, value)
 	}
-	if value, ok := psu.mutation.Status(); ok {
+	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(providersetting.FieldStatus, field.TypeString, value)
 	}
-	if psu.mutation.StatusCleared() {
+	if _u.mutation.StatusCleared() {
 		_spec.ClearField(providersetting.FieldStatus, field.TypeString)
 	}
-	_spec.AddModifiers(psu.modifiers...)
-	if n, err = sqlgraph.UpdateNodes(ctx, psu.driver, _spec); err != nil {
+	_spec.AddModifiers(_u.modifiers...)
+	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{providersetting.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -411,8 +411,8 @@ func (psu *ProviderSettingUpdate) sqlSave(ctx context.Context) (n int, err error
 		}
 		return 0, err
 	}
-	psu.mutation.done = true
-	return n, nil
+	_u.mutation.done = true
+	return _node, nil
 }
 
 // ProviderSettingUpdateOne is the builder for updating a single ProviderSetting entity.
@@ -425,289 +425,289 @@ type ProviderSettingUpdateOne struct {
 }
 
 // SetTenantID sets the "tenant_id" field.
-func (psuo *ProviderSettingUpdateOne) SetTenantID(s string) *ProviderSettingUpdateOne {
-	psuo.mutation.SetTenantID(s)
-	return psuo
+func (_u *ProviderSettingUpdateOne) SetTenantID(v string) *ProviderSettingUpdateOne {
+	_u.mutation.SetTenantID(v)
+	return _u
 }
 
 // SetNillableTenantID sets the "tenant_id" field if the given value is not nil.
-func (psuo *ProviderSettingUpdateOne) SetNillableTenantID(s *string) *ProviderSettingUpdateOne {
-	if s != nil {
-		psuo.SetTenantID(*s)
+func (_u *ProviderSettingUpdateOne) SetNillableTenantID(v *string) *ProviderSettingUpdateOne {
+	if v != nil {
+		_u.SetTenantID(*v)
 	}
-	return psuo
+	return _u
 }
 
 // SetChannel sets the "channel" field.
-func (psuo *ProviderSettingUpdateOne) SetChannel(s string) *ProviderSettingUpdateOne {
-	psuo.mutation.SetChannel(s)
-	return psuo
+func (_u *ProviderSettingUpdateOne) SetChannel(v string) *ProviderSettingUpdateOne {
+	_u.mutation.SetChannel(v)
+	return _u
 }
 
 // SetNillableChannel sets the "channel" field if the given value is not nil.
-func (psuo *ProviderSettingUpdateOne) SetNillableChannel(s *string) *ProviderSettingUpdateOne {
-	if s != nil {
-		psuo.SetChannel(*s)
+func (_u *ProviderSettingUpdateOne) SetNillableChannel(v *string) *ProviderSettingUpdateOne {
+	if v != nil {
+		_u.SetChannel(*v)
 	}
-	return psuo
+	return _u
 }
 
 // ClearChannel clears the value of the "channel" field.
-func (psuo *ProviderSettingUpdateOne) ClearChannel() *ProviderSettingUpdateOne {
-	psuo.mutation.ClearChannel()
-	return psuo
+func (_u *ProviderSettingUpdateOne) ClearChannel() *ProviderSettingUpdateOne {
+	_u.mutation.ClearChannel()
+	return _u
 }
 
 // SetProvider sets the "provider" field.
-func (psuo *ProviderSettingUpdateOne) SetProvider(s string) *ProviderSettingUpdateOne {
-	psuo.mutation.SetProvider(s)
-	return psuo
+func (_u *ProviderSettingUpdateOne) SetProvider(v string) *ProviderSettingUpdateOne {
+	_u.mutation.SetProvider(v)
+	return _u
 }
 
 // SetNillableProvider sets the "provider" field if the given value is not nil.
-func (psuo *ProviderSettingUpdateOne) SetNillableProvider(s *string) *ProviderSettingUpdateOne {
-	if s != nil {
-		psuo.SetProvider(*s)
+func (_u *ProviderSettingUpdateOne) SetNillableProvider(v *string) *ProviderSettingUpdateOne {
+	if v != nil {
+		_u.SetProvider(*v)
 	}
-	return psuo
+	return _u
 }
 
 // ClearProvider clears the value of the "provider" field.
-func (psuo *ProviderSettingUpdateOne) ClearProvider() *ProviderSettingUpdateOne {
-	psuo.mutation.ClearProvider()
-	return psuo
+func (_u *ProviderSettingUpdateOne) ClearProvider() *ProviderSettingUpdateOne {
+	_u.mutation.ClearProvider()
+	return _u
 }
 
 // SetProviderType sets the "provider_type" field.
-func (psuo *ProviderSettingUpdateOne) SetProviderType(s string) *ProviderSettingUpdateOne {
-	psuo.mutation.SetProviderType(s)
-	return psuo
+func (_u *ProviderSettingUpdateOne) SetProviderType(v string) *ProviderSettingUpdateOne {
+	_u.mutation.SetProviderType(v)
+	return _u
 }
 
 // SetNillableProviderType sets the "provider_type" field if the given value is not nil.
-func (psuo *ProviderSettingUpdateOne) SetNillableProviderType(s *string) *ProviderSettingUpdateOne {
-	if s != nil {
-		psuo.SetProviderType(*s)
+func (_u *ProviderSettingUpdateOne) SetNillableProviderType(v *string) *ProviderSettingUpdateOne {
+	if v != nil {
+		_u.SetProviderType(*v)
 	}
-	return psuo
+	return _u
 }
 
 // ClearProviderType clears the value of the "provider_type" field.
-func (psuo *ProviderSettingUpdateOne) ClearProviderType() *ProviderSettingUpdateOne {
-	psuo.mutation.ClearProviderType()
-	return psuo
+func (_u *ProviderSettingUpdateOne) ClearProviderType() *ProviderSettingUpdateOne {
+	_u.mutation.ClearProviderType()
+	return _u
 }
 
 // SetProviderName sets the "provider_name" field.
-func (psuo *ProviderSettingUpdateOne) SetProviderName(s string) *ProviderSettingUpdateOne {
-	psuo.mutation.SetProviderName(s)
-	return psuo
+func (_u *ProviderSettingUpdateOne) SetProviderName(v string) *ProviderSettingUpdateOne {
+	_u.mutation.SetProviderName(v)
+	return _u
 }
 
 // SetNillableProviderName sets the "provider_name" field if the given value is not nil.
-func (psuo *ProviderSettingUpdateOne) SetNillableProviderName(s *string) *ProviderSettingUpdateOne {
-	if s != nil {
-		psuo.SetProviderName(*s)
+func (_u *ProviderSettingUpdateOne) SetNillableProviderName(v *string) *ProviderSettingUpdateOne {
+	if v != nil {
+		_u.SetProviderName(*v)
 	}
-	return psuo
+	return _u
 }
 
 // ClearProviderName clears the value of the "provider_name" field.
-func (psuo *ProviderSettingUpdateOne) ClearProviderName() *ProviderSettingUpdateOne {
-	psuo.mutation.ClearProviderName()
-	return psuo
+func (_u *ProviderSettingUpdateOne) ClearProviderName() *ProviderSettingUpdateOne {
+	_u.mutation.ClearProviderName()
+	return _u
 }
 
 // SetKey sets the "key" field.
-func (psuo *ProviderSettingUpdateOne) SetKey(s string) *ProviderSettingUpdateOne {
-	psuo.mutation.SetKey(s)
-	return psuo
+func (_u *ProviderSettingUpdateOne) SetKey(v string) *ProviderSettingUpdateOne {
+	_u.mutation.SetKey(v)
+	return _u
 }
 
 // SetNillableKey sets the "key" field if the given value is not nil.
-func (psuo *ProviderSettingUpdateOne) SetNillableKey(s *string) *ProviderSettingUpdateOne {
-	if s != nil {
-		psuo.SetKey(*s)
+func (_u *ProviderSettingUpdateOne) SetNillableKey(v *string) *ProviderSettingUpdateOne {
+	if v != nil {
+		_u.SetKey(*v)
 	}
-	return psuo
+	return _u
 }
 
 // ClearKey clears the value of the "key" field.
-func (psuo *ProviderSettingUpdateOne) ClearKey() *ProviderSettingUpdateOne {
-	psuo.mutation.ClearKey()
-	return psuo
+func (_u *ProviderSettingUpdateOne) ClearKey() *ProviderSettingUpdateOne {
+	_u.mutation.ClearKey()
+	return _u
 }
 
 // SetValue sets the "value" field.
-func (psuo *ProviderSettingUpdateOne) SetValue(s string) *ProviderSettingUpdateOne {
-	psuo.mutation.SetValue(s)
-	return psuo
+func (_u *ProviderSettingUpdateOne) SetValue(v string) *ProviderSettingUpdateOne {
+	_u.mutation.SetValue(v)
+	return _u
 }
 
 // SetNillableValue sets the "value" field if the given value is not nil.
-func (psuo *ProviderSettingUpdateOne) SetNillableValue(s *string) *ProviderSettingUpdateOne {
-	if s != nil {
-		psuo.SetValue(*s)
+func (_u *ProviderSettingUpdateOne) SetNillableValue(v *string) *ProviderSettingUpdateOne {
+	if v != nil {
+		_u.SetValue(*v)
 	}
-	return psuo
+	return _u
 }
 
 // ClearValue clears the value of the "value" field.
-func (psuo *ProviderSettingUpdateOne) ClearValue() *ProviderSettingUpdateOne {
-	psuo.mutation.ClearValue()
-	return psuo
+func (_u *ProviderSettingUpdateOne) ClearValue() *ProviderSettingUpdateOne {
+	_u.mutation.ClearValue()
+	return _u
 }
 
 // SetDescription sets the "description" field.
-func (psuo *ProviderSettingUpdateOne) SetDescription(s string) *ProviderSettingUpdateOne {
-	psuo.mutation.SetDescription(s)
-	return psuo
+func (_u *ProviderSettingUpdateOne) SetDescription(v string) *ProviderSettingUpdateOne {
+	_u.mutation.SetDescription(v)
+	return _u
 }
 
 // SetNillableDescription sets the "description" field if the given value is not nil.
-func (psuo *ProviderSettingUpdateOne) SetNillableDescription(s *string) *ProviderSettingUpdateOne {
-	if s != nil {
-		psuo.SetDescription(*s)
+func (_u *ProviderSettingUpdateOne) SetNillableDescription(v *string) *ProviderSettingUpdateOne {
+	if v != nil {
+		_u.SetDescription(*v)
 	}
-	return psuo
+	return _u
 }
 
 // ClearDescription clears the value of the "description" field.
-func (psuo *ProviderSettingUpdateOne) ClearDescription() *ProviderSettingUpdateOne {
-	psuo.mutation.ClearDescription()
-	return psuo
+func (_u *ProviderSettingUpdateOne) ClearDescription() *ProviderSettingUpdateOne {
+	_u.mutation.ClearDescription()
+	return _u
 }
 
 // SetIsEncrypted sets the "is_encrypted" field.
-func (psuo *ProviderSettingUpdateOne) SetIsEncrypted(b bool) *ProviderSettingUpdateOne {
-	psuo.mutation.SetIsEncrypted(b)
-	return psuo
+func (_u *ProviderSettingUpdateOne) SetIsEncrypted(v bool) *ProviderSettingUpdateOne {
+	_u.mutation.SetIsEncrypted(v)
+	return _u
 }
 
 // SetNillableIsEncrypted sets the "is_encrypted" field if the given value is not nil.
-func (psuo *ProviderSettingUpdateOne) SetNillableIsEncrypted(b *bool) *ProviderSettingUpdateOne {
-	if b != nil {
-		psuo.SetIsEncrypted(*b)
+func (_u *ProviderSettingUpdateOne) SetNillableIsEncrypted(v *bool) *ProviderSettingUpdateOne {
+	if v != nil {
+		_u.SetIsEncrypted(*v)
 	}
-	return psuo
+	return _u
 }
 
 // SetIsPlatform sets the "is_platform" field.
-func (psuo *ProviderSettingUpdateOne) SetIsPlatform(b bool) *ProviderSettingUpdateOne {
-	psuo.mutation.SetIsPlatform(b)
-	return psuo
+func (_u *ProviderSettingUpdateOne) SetIsPlatform(v bool) *ProviderSettingUpdateOne {
+	_u.mutation.SetIsPlatform(v)
+	return _u
 }
 
 // SetNillableIsPlatform sets the "is_platform" field if the given value is not nil.
-func (psuo *ProviderSettingUpdateOne) SetNillableIsPlatform(b *bool) *ProviderSettingUpdateOne {
-	if b != nil {
-		psuo.SetIsPlatform(*b)
+func (_u *ProviderSettingUpdateOne) SetNillableIsPlatform(v *bool) *ProviderSettingUpdateOne {
+	if v != nil {
+		_u.SetIsPlatform(*v)
 	}
-	return psuo
+	return _u
 }
 
 // SetIsPlatformManaged sets the "is_platform_managed" field.
-func (psuo *ProviderSettingUpdateOne) SetIsPlatformManaged(b bool) *ProviderSettingUpdateOne {
-	psuo.mutation.SetIsPlatformManaged(b)
-	return psuo
+func (_u *ProviderSettingUpdateOne) SetIsPlatformManaged(v bool) *ProviderSettingUpdateOne {
+	_u.mutation.SetIsPlatformManaged(v)
+	return _u
 }
 
 // SetNillableIsPlatformManaged sets the "is_platform_managed" field if the given value is not nil.
-func (psuo *ProviderSettingUpdateOne) SetNillableIsPlatformManaged(b *bool) *ProviderSettingUpdateOne {
-	if b != nil {
-		psuo.SetIsPlatformManaged(*b)
+func (_u *ProviderSettingUpdateOne) SetNillableIsPlatformManaged(v *bool) *ProviderSettingUpdateOne {
+	if v != nil {
+		_u.SetIsPlatformManaged(*v)
 	}
-	return psuo
+	return _u
 }
 
 // SetEnvironment sets the "environment" field.
-func (psuo *ProviderSettingUpdateOne) SetEnvironment(s string) *ProviderSettingUpdateOne {
-	psuo.mutation.SetEnvironment(s)
-	return psuo
+func (_u *ProviderSettingUpdateOne) SetEnvironment(v string) *ProviderSettingUpdateOne {
+	_u.mutation.SetEnvironment(v)
+	return _u
 }
 
 // SetNillableEnvironment sets the "environment" field if the given value is not nil.
-func (psuo *ProviderSettingUpdateOne) SetNillableEnvironment(s *string) *ProviderSettingUpdateOne {
-	if s != nil {
-		psuo.SetEnvironment(*s)
+func (_u *ProviderSettingUpdateOne) SetNillableEnvironment(v *string) *ProviderSettingUpdateOne {
+	if v != nil {
+		_u.SetEnvironment(*v)
 	}
-	return psuo
+	return _u
 }
 
 // SetIsSecret sets the "is_secret" field.
-func (psuo *ProviderSettingUpdateOne) SetIsSecret(b bool) *ProviderSettingUpdateOne {
-	psuo.mutation.SetIsSecret(b)
-	return psuo
+func (_u *ProviderSettingUpdateOne) SetIsSecret(v bool) *ProviderSettingUpdateOne {
+	_u.mutation.SetIsSecret(v)
+	return _u
 }
 
 // SetNillableIsSecret sets the "is_secret" field if the given value is not nil.
-func (psuo *ProviderSettingUpdateOne) SetNillableIsSecret(b *bool) *ProviderSettingUpdateOne {
-	if b != nil {
-		psuo.SetIsSecret(*b)
+func (_u *ProviderSettingUpdateOne) SetNillableIsSecret(v *bool) *ProviderSettingUpdateOne {
+	if v != nil {
+		_u.SetIsSecret(*v)
 	}
-	return psuo
+	return _u
 }
 
 // SetIsActive sets the "is_active" field.
-func (psuo *ProviderSettingUpdateOne) SetIsActive(b bool) *ProviderSettingUpdateOne {
-	psuo.mutation.SetIsActive(b)
-	return psuo
+func (_u *ProviderSettingUpdateOne) SetIsActive(v bool) *ProviderSettingUpdateOne {
+	_u.mutation.SetIsActive(v)
+	return _u
 }
 
 // SetNillableIsActive sets the "is_active" field if the given value is not nil.
-func (psuo *ProviderSettingUpdateOne) SetNillableIsActive(b *bool) *ProviderSettingUpdateOne {
-	if b != nil {
-		psuo.SetIsActive(*b)
+func (_u *ProviderSettingUpdateOne) SetNillableIsActive(v *bool) *ProviderSettingUpdateOne {
+	if v != nil {
+		_u.SetIsActive(*v)
 	}
-	return psuo
+	return _u
 }
 
 // SetStatus sets the "status" field.
-func (psuo *ProviderSettingUpdateOne) SetStatus(s string) *ProviderSettingUpdateOne {
-	psuo.mutation.SetStatus(s)
-	return psuo
+func (_u *ProviderSettingUpdateOne) SetStatus(v string) *ProviderSettingUpdateOne {
+	_u.mutation.SetStatus(v)
+	return _u
 }
 
 // SetNillableStatus sets the "status" field if the given value is not nil.
-func (psuo *ProviderSettingUpdateOne) SetNillableStatus(s *string) *ProviderSettingUpdateOne {
-	if s != nil {
-		psuo.SetStatus(*s)
+func (_u *ProviderSettingUpdateOne) SetNillableStatus(v *string) *ProviderSettingUpdateOne {
+	if v != nil {
+		_u.SetStatus(*v)
 	}
-	return psuo
+	return _u
 }
 
 // ClearStatus clears the value of the "status" field.
-func (psuo *ProviderSettingUpdateOne) ClearStatus() *ProviderSettingUpdateOne {
-	psuo.mutation.ClearStatus()
-	return psuo
+func (_u *ProviderSettingUpdateOne) ClearStatus() *ProviderSettingUpdateOne {
+	_u.mutation.ClearStatus()
+	return _u
 }
 
 // Mutation returns the ProviderSettingMutation object of the builder.
-func (psuo *ProviderSettingUpdateOne) Mutation() *ProviderSettingMutation {
-	return psuo.mutation
+func (_u *ProviderSettingUpdateOne) Mutation() *ProviderSettingMutation {
+	return _u.mutation
 }
 
 // Where appends a list predicates to the ProviderSettingUpdate builder.
-func (psuo *ProviderSettingUpdateOne) Where(ps ...predicate.ProviderSetting) *ProviderSettingUpdateOne {
-	psuo.mutation.Where(ps...)
-	return psuo
+func (_u *ProviderSettingUpdateOne) Where(ps ...predicate.ProviderSetting) *ProviderSettingUpdateOne {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
-func (psuo *ProviderSettingUpdateOne) Select(field string, fields ...string) *ProviderSettingUpdateOne {
-	psuo.fields = append([]string{field}, fields...)
-	return psuo
+func (_u *ProviderSettingUpdateOne) Select(field string, fields ...string) *ProviderSettingUpdateOne {
+	_u.fields = append([]string{field}, fields...)
+	return _u
 }
 
 // Save executes the query and returns the updated ProviderSetting entity.
-func (psuo *ProviderSettingUpdateOne) Save(ctx context.Context) (*ProviderSetting, error) {
-	return withHooks(ctx, psuo.sqlSave, psuo.mutation, psuo.hooks)
+func (_u *ProviderSettingUpdateOne) Save(ctx context.Context) (*ProviderSetting, error) {
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (psuo *ProviderSettingUpdateOne) SaveX(ctx context.Context) *ProviderSetting {
-	node, err := psuo.Save(ctx)
+func (_u *ProviderSettingUpdateOne) SaveX(ctx context.Context) *ProviderSetting {
+	node, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -715,32 +715,32 @@ func (psuo *ProviderSettingUpdateOne) SaveX(ctx context.Context) *ProviderSettin
 }
 
 // Exec executes the query on the entity.
-func (psuo *ProviderSettingUpdateOne) Exec(ctx context.Context) error {
-	_, err := psuo.Save(ctx)
+func (_u *ProviderSettingUpdateOne) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (psuo *ProviderSettingUpdateOne) ExecX(ctx context.Context) {
-	if err := psuo.Exec(ctx); err != nil {
+func (_u *ProviderSettingUpdateOne) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
-func (psuo *ProviderSettingUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *ProviderSettingUpdateOne {
-	psuo.modifiers = append(psuo.modifiers, modifiers...)
-	return psuo
+func (_u *ProviderSettingUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *ProviderSettingUpdateOne {
+	_u.modifiers = append(_u.modifiers, modifiers...)
+	return _u
 }
 
-func (psuo *ProviderSettingUpdateOne) sqlSave(ctx context.Context) (_node *ProviderSetting, err error) {
+func (_u *ProviderSettingUpdateOne) sqlSave(ctx context.Context) (_node *ProviderSetting, err error) {
 	_spec := sqlgraph.NewUpdateSpec(providersetting.Table, providersetting.Columns, sqlgraph.NewFieldSpec(providersetting.FieldID, field.TypeInt))
-	id, ok := psuo.mutation.ID()
+	id, ok := _u.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "ProviderSetting.id" for update`)}
 	}
 	_spec.Node.ID.Value = id
-	if fields := psuo.fields; len(fields) > 0 {
+	if fields := _u.fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		_spec.Node.Columns = append(_spec.Node.Columns, providersetting.FieldID)
 		for _, f := range fields {
@@ -752,87 +752,87 @@ func (psuo *ProviderSettingUpdateOne) sqlSave(ctx context.Context) (_node *Provi
 			}
 		}
 	}
-	if ps := psuo.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := psuo.mutation.TenantID(); ok {
+	if value, ok := _u.mutation.TenantID(); ok {
 		_spec.SetField(providersetting.FieldTenantID, field.TypeString, value)
 	}
-	if value, ok := psuo.mutation.Channel(); ok {
+	if value, ok := _u.mutation.Channel(); ok {
 		_spec.SetField(providersetting.FieldChannel, field.TypeString, value)
 	}
-	if psuo.mutation.ChannelCleared() {
+	if _u.mutation.ChannelCleared() {
 		_spec.ClearField(providersetting.FieldChannel, field.TypeString)
 	}
-	if value, ok := psuo.mutation.Provider(); ok {
+	if value, ok := _u.mutation.Provider(); ok {
 		_spec.SetField(providersetting.FieldProvider, field.TypeString, value)
 	}
-	if psuo.mutation.ProviderCleared() {
+	if _u.mutation.ProviderCleared() {
 		_spec.ClearField(providersetting.FieldProvider, field.TypeString)
 	}
-	if value, ok := psuo.mutation.ProviderType(); ok {
+	if value, ok := _u.mutation.ProviderType(); ok {
 		_spec.SetField(providersetting.FieldProviderType, field.TypeString, value)
 	}
-	if psuo.mutation.ProviderTypeCleared() {
+	if _u.mutation.ProviderTypeCleared() {
 		_spec.ClearField(providersetting.FieldProviderType, field.TypeString)
 	}
-	if value, ok := psuo.mutation.ProviderName(); ok {
+	if value, ok := _u.mutation.ProviderName(); ok {
 		_spec.SetField(providersetting.FieldProviderName, field.TypeString, value)
 	}
-	if psuo.mutation.ProviderNameCleared() {
+	if _u.mutation.ProviderNameCleared() {
 		_spec.ClearField(providersetting.FieldProviderName, field.TypeString)
 	}
-	if value, ok := psuo.mutation.Key(); ok {
+	if value, ok := _u.mutation.Key(); ok {
 		_spec.SetField(providersetting.FieldKey, field.TypeString, value)
 	}
-	if psuo.mutation.KeyCleared() {
+	if _u.mutation.KeyCleared() {
 		_spec.ClearField(providersetting.FieldKey, field.TypeString)
 	}
-	if value, ok := psuo.mutation.Value(); ok {
+	if value, ok := _u.mutation.Value(); ok {
 		_spec.SetField(providersetting.FieldValue, field.TypeString, value)
 	}
-	if psuo.mutation.ValueCleared() {
+	if _u.mutation.ValueCleared() {
 		_spec.ClearField(providersetting.FieldValue, field.TypeString)
 	}
-	if value, ok := psuo.mutation.Description(); ok {
+	if value, ok := _u.mutation.Description(); ok {
 		_spec.SetField(providersetting.FieldDescription, field.TypeString, value)
 	}
-	if psuo.mutation.DescriptionCleared() {
+	if _u.mutation.DescriptionCleared() {
 		_spec.ClearField(providersetting.FieldDescription, field.TypeString)
 	}
-	if value, ok := psuo.mutation.IsEncrypted(); ok {
+	if value, ok := _u.mutation.IsEncrypted(); ok {
 		_spec.SetField(providersetting.FieldIsEncrypted, field.TypeBool, value)
 	}
-	if value, ok := psuo.mutation.IsPlatform(); ok {
+	if value, ok := _u.mutation.IsPlatform(); ok {
 		_spec.SetField(providersetting.FieldIsPlatform, field.TypeBool, value)
 	}
-	if value, ok := psuo.mutation.IsPlatformManaged(); ok {
+	if value, ok := _u.mutation.IsPlatformManaged(); ok {
 		_spec.SetField(providersetting.FieldIsPlatformManaged, field.TypeBool, value)
 	}
-	if value, ok := psuo.mutation.Environment(); ok {
+	if value, ok := _u.mutation.Environment(); ok {
 		_spec.SetField(providersetting.FieldEnvironment, field.TypeString, value)
 	}
-	if value, ok := psuo.mutation.IsSecret(); ok {
+	if value, ok := _u.mutation.IsSecret(); ok {
 		_spec.SetField(providersetting.FieldIsSecret, field.TypeBool, value)
 	}
-	if value, ok := psuo.mutation.IsActive(); ok {
+	if value, ok := _u.mutation.IsActive(); ok {
 		_spec.SetField(providersetting.FieldIsActive, field.TypeBool, value)
 	}
-	if value, ok := psuo.mutation.Status(); ok {
+	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(providersetting.FieldStatus, field.TypeString, value)
 	}
-	if psuo.mutation.StatusCleared() {
+	if _u.mutation.StatusCleared() {
 		_spec.ClearField(providersetting.FieldStatus, field.TypeString)
 	}
-	_spec.AddModifiers(psuo.modifiers...)
-	_node = &ProviderSetting{config: psuo.config}
+	_spec.AddModifiers(_u.modifiers...)
+	_node = &ProviderSetting{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues
-	if err = sqlgraph.UpdateNode(ctx, psuo.driver, _spec); err != nil {
+	if err = sqlgraph.UpdateNode(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{providersetting.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -840,6 +840,6 @@ func (psuo *ProviderSettingUpdateOne) sqlSave(ctx context.Context) (_node *Provi
 		}
 		return nil, err
 	}
-	psuo.mutation.done = true
+	_u.mutation.done = true
 	return _node, nil
 }

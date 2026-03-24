@@ -397,8 +397,8 @@ func (c *CreditTransactionClient) Update() *CreditTransactionUpdate {
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *CreditTransactionClient) UpdateOne(ct *CreditTransaction) *CreditTransactionUpdateOne {
-	mutation := newCreditTransactionMutation(c.config, OpUpdateOne, withCreditTransaction(ct))
+func (c *CreditTransactionClient) UpdateOne(_m *CreditTransaction) *CreditTransactionUpdateOne {
+	mutation := newCreditTransactionMutation(c.config, OpUpdateOne, withCreditTransaction(_m))
 	return &CreditTransactionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
@@ -415,8 +415,8 @@ func (c *CreditTransactionClient) Delete() *CreditTransactionDelete {
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *CreditTransactionClient) DeleteOne(ct *CreditTransaction) *CreditTransactionDeleteOne {
-	return c.DeleteOneID(ct.ID)
+func (c *CreditTransactionClient) DeleteOne(_m *CreditTransaction) *CreditTransactionDeleteOne {
+	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
@@ -530,8 +530,8 @@ func (c *DeliveryLogClient) Update() *DeliveryLogUpdate {
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *DeliveryLogClient) UpdateOne(dl *DeliveryLog) *DeliveryLogUpdateOne {
-	mutation := newDeliveryLogMutation(c.config, OpUpdateOne, withDeliveryLog(dl))
+func (c *DeliveryLogClient) UpdateOne(_m *DeliveryLog) *DeliveryLogUpdateOne {
+	mutation := newDeliveryLogMutation(c.config, OpUpdateOne, withDeliveryLog(_m))
 	return &DeliveryLogUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
@@ -548,8 +548,8 @@ func (c *DeliveryLogClient) Delete() *DeliveryLogDelete {
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *DeliveryLogClient) DeleteOne(dl *DeliveryLog) *DeliveryLogDeleteOne {
-	return c.DeleteOneID(dl.ID)
+func (c *DeliveryLogClient) DeleteOne(_m *DeliveryLog) *DeliveryLogDeleteOne {
+	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
@@ -663,8 +663,8 @@ func (c *NotificationPermissionClient) Update() *NotificationPermissionUpdate {
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *NotificationPermissionClient) UpdateOne(np *NotificationPermission) *NotificationPermissionUpdateOne {
-	mutation := newNotificationPermissionMutation(c.config, OpUpdateOne, withNotificationPermission(np))
+func (c *NotificationPermissionClient) UpdateOne(_m *NotificationPermission) *NotificationPermissionUpdateOne {
+	mutation := newNotificationPermissionMutation(c.config, OpUpdateOne, withNotificationPermission(_m))
 	return &NotificationPermissionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
@@ -681,8 +681,8 @@ func (c *NotificationPermissionClient) Delete() *NotificationPermissionDelete {
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *NotificationPermissionClient) DeleteOne(np *NotificationPermission) *NotificationPermissionDeleteOne {
-	return c.DeleteOneID(np.ID)
+func (c *NotificationPermissionClient) DeleteOne(_m *NotificationPermission) *NotificationPermissionDeleteOne {
+	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
@@ -717,32 +717,32 @@ func (c *NotificationPermissionClient) GetX(ctx context.Context, id uuid.UUID) *
 }
 
 // QueryRoles queries the roles edge of a NotificationPermission.
-func (c *NotificationPermissionClient) QueryRoles(np *NotificationPermission) *NotificationRoleQuery {
+func (c *NotificationPermissionClient) QueryRoles(_m *NotificationPermission) *NotificationRoleQuery {
 	query := (&NotificationRoleClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := np.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(notificationpermission.Table, notificationpermission.FieldID, id),
 			sqlgraph.To(notificationrole.Table, notificationrole.FieldID),
 			sqlgraph.Edge(sqlgraph.M2M, true, notificationpermission.RolesTable, notificationpermission.RolesPrimaryKey...),
 		)
-		fromV = sqlgraph.Neighbors(np.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
 }
 
 // QueryNotificationRolePermissions queries the notification_role_permissions edge of a NotificationPermission.
-func (c *NotificationPermissionClient) QueryNotificationRolePermissions(np *NotificationPermission) *NotificationRolePermissionQuery {
+func (c *NotificationPermissionClient) QueryNotificationRolePermissions(_m *NotificationPermission) *NotificationRolePermissionQuery {
 	query := (&NotificationRolePermissionClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := np.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(notificationpermission.Table, notificationpermission.FieldID, id),
 			sqlgraph.To(notificationrolepermission.Table, notificationrolepermission.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, true, notificationpermission.NotificationRolePermissionsTable, notificationpermission.NotificationRolePermissionsColumn),
 		)
-		fromV = sqlgraph.Neighbors(np.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
@@ -828,8 +828,8 @@ func (c *NotificationRoleClient) Update() *NotificationRoleUpdate {
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *NotificationRoleClient) UpdateOne(nr *NotificationRole) *NotificationRoleUpdateOne {
-	mutation := newNotificationRoleMutation(c.config, OpUpdateOne, withNotificationRole(nr))
+func (c *NotificationRoleClient) UpdateOne(_m *NotificationRole) *NotificationRoleUpdateOne {
+	mutation := newNotificationRoleMutation(c.config, OpUpdateOne, withNotificationRole(_m))
 	return &NotificationRoleUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
@@ -846,8 +846,8 @@ func (c *NotificationRoleClient) Delete() *NotificationRoleDelete {
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *NotificationRoleClient) DeleteOne(nr *NotificationRole) *NotificationRoleDeleteOne {
-	return c.DeleteOneID(nr.ID)
+func (c *NotificationRoleClient) DeleteOne(_m *NotificationRole) *NotificationRoleDeleteOne {
+	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
@@ -882,48 +882,48 @@ func (c *NotificationRoleClient) GetX(ctx context.Context, id uuid.UUID) *Notifi
 }
 
 // QueryPermissions queries the permissions edge of a NotificationRole.
-func (c *NotificationRoleClient) QueryPermissions(nr *NotificationRole) *NotificationPermissionQuery {
+func (c *NotificationRoleClient) QueryPermissions(_m *NotificationRole) *NotificationPermissionQuery {
 	query := (&NotificationPermissionClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := nr.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(notificationrole.Table, notificationrole.FieldID, id),
 			sqlgraph.To(notificationpermission.Table, notificationpermission.FieldID),
 			sqlgraph.Edge(sqlgraph.M2M, false, notificationrole.PermissionsTable, notificationrole.PermissionsPrimaryKey...),
 		)
-		fromV = sqlgraph.Neighbors(nr.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
 }
 
 // QueryUserAssignments queries the user_assignments edge of a NotificationRole.
-func (c *NotificationRoleClient) QueryUserAssignments(nr *NotificationRole) *UserRoleAssignmentQuery {
+func (c *NotificationRoleClient) QueryUserAssignments(_m *NotificationRole) *UserRoleAssignmentQuery {
 	query := (&UserRoleAssignmentClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := nr.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(notificationrole.Table, notificationrole.FieldID, id),
 			sqlgraph.To(userroleassignment.Table, userroleassignment.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, notificationrole.UserAssignmentsTable, notificationrole.UserAssignmentsColumn),
 		)
-		fromV = sqlgraph.Neighbors(nr.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
 }
 
 // QueryNotificationRolePermissions queries the notification_role_permissions edge of a NotificationRole.
-func (c *NotificationRoleClient) QueryNotificationRolePermissions(nr *NotificationRole) *NotificationRolePermissionQuery {
+func (c *NotificationRoleClient) QueryNotificationRolePermissions(_m *NotificationRole) *NotificationRolePermissionQuery {
 	query := (&NotificationRolePermissionClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := nr.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(notificationrole.Table, notificationrole.FieldID, id),
 			sqlgraph.To(notificationrolepermission.Table, notificationrolepermission.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, true, notificationrole.NotificationRolePermissionsTable, notificationrole.NotificationRolePermissionsColumn),
 		)
-		fromV = sqlgraph.Neighbors(nr.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
@@ -1009,8 +1009,8 @@ func (c *NotificationRolePermissionClient) Update() *NotificationRolePermissionU
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *NotificationRolePermissionClient) UpdateOne(nrp *NotificationRolePermission) *NotificationRolePermissionUpdateOne {
-	mutation := newNotificationRolePermissionMutation(c.config, OpUpdateOne, withNotificationRolePermission(nrp))
+func (c *NotificationRolePermissionClient) UpdateOne(_m *NotificationRolePermission) *NotificationRolePermissionUpdateOne {
+	mutation := newNotificationRolePermissionMutation(c.config, OpUpdateOne, withNotificationRolePermission(_m))
 	return &NotificationRolePermissionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
@@ -1027,8 +1027,8 @@ func (c *NotificationRolePermissionClient) Delete() *NotificationRolePermissionD
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *NotificationRolePermissionClient) DeleteOne(nrp *NotificationRolePermission) *NotificationRolePermissionDeleteOne {
-	return c.DeleteOneID(nrp.ID)
+func (c *NotificationRolePermissionClient) DeleteOne(_m *NotificationRolePermission) *NotificationRolePermissionDeleteOne {
+	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
@@ -1063,32 +1063,32 @@ func (c *NotificationRolePermissionClient) GetX(ctx context.Context, id int) *No
 }
 
 // QueryRole queries the role edge of a NotificationRolePermission.
-func (c *NotificationRolePermissionClient) QueryRole(nrp *NotificationRolePermission) *NotificationRoleQuery {
+func (c *NotificationRolePermissionClient) QueryRole(_m *NotificationRolePermission) *NotificationRoleQuery {
 	query := (&NotificationRoleClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := nrp.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(notificationrolepermission.Table, notificationrolepermission.FieldID, id),
 			sqlgraph.To(notificationrole.Table, notificationrole.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, false, notificationrolepermission.RoleTable, notificationrolepermission.RoleColumn),
 		)
-		fromV = sqlgraph.Neighbors(nrp.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
 }
 
 // QueryPermission queries the permission edge of a NotificationRolePermission.
-func (c *NotificationRolePermissionClient) QueryPermission(nrp *NotificationRolePermission) *NotificationPermissionQuery {
+func (c *NotificationRolePermissionClient) QueryPermission(_m *NotificationRolePermission) *NotificationPermissionQuery {
 	query := (&NotificationPermissionClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := nrp.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(notificationrolepermission.Table, notificationrolepermission.FieldID, id),
 			sqlgraph.To(notificationpermission.Table, notificationpermission.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, false, notificationrolepermission.PermissionTable, notificationrolepermission.PermissionColumn),
 		)
-		fromV = sqlgraph.Neighbors(nrp.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
@@ -1174,8 +1174,8 @@ func (c *OutboxEventClient) Update() *OutboxEventUpdate {
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *OutboxEventClient) UpdateOne(oe *OutboxEvent) *OutboxEventUpdateOne {
-	mutation := newOutboxEventMutation(c.config, OpUpdateOne, withOutboxEvent(oe))
+func (c *OutboxEventClient) UpdateOne(_m *OutboxEvent) *OutboxEventUpdateOne {
+	mutation := newOutboxEventMutation(c.config, OpUpdateOne, withOutboxEvent(_m))
 	return &OutboxEventUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
@@ -1192,8 +1192,8 @@ func (c *OutboxEventClient) Delete() *OutboxEventDelete {
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *OutboxEventClient) DeleteOne(oe *OutboxEvent) *OutboxEventDeleteOne {
-	return c.DeleteOneID(oe.ID)
+func (c *OutboxEventClient) DeleteOne(_m *OutboxEvent) *OutboxEventDeleteOne {
+	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
@@ -1307,8 +1307,8 @@ func (c *PermissionClient) Update() *PermissionUpdate {
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *PermissionClient) UpdateOne(pe *Permission) *PermissionUpdateOne {
-	mutation := newPermissionMutation(c.config, OpUpdateOne, withPermission(pe))
+func (c *PermissionClient) UpdateOne(_m *Permission) *PermissionUpdateOne {
+	mutation := newPermissionMutation(c.config, OpUpdateOne, withPermission(_m))
 	return &PermissionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
@@ -1325,8 +1325,8 @@ func (c *PermissionClient) Delete() *PermissionDelete {
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *PermissionClient) DeleteOne(pe *Permission) *PermissionDeleteOne {
-	return c.DeleteOneID(pe.ID)
+func (c *PermissionClient) DeleteOne(_m *Permission) *PermissionDeleteOne {
+	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
@@ -1361,16 +1361,16 @@ func (c *PermissionClient) GetX(ctx context.Context, id uuid.UUID) *Permission {
 }
 
 // QueryRoles queries the roles edge of a Permission.
-func (c *PermissionClient) QueryRoles(pe *Permission) *RoleQuery {
+func (c *PermissionClient) QueryRoles(_m *Permission) *RoleQuery {
 	query := (&RoleClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := pe.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(permission.Table, permission.FieldID, id),
 			sqlgraph.To(role.Table, role.FieldID),
 			sqlgraph.Edge(sqlgraph.M2M, true, permission.RolesTable, permission.RolesPrimaryKey...),
 		)
-		fromV = sqlgraph.Neighbors(pe.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
@@ -1456,8 +1456,8 @@ func (c *PlatformBillingClient) Update() *PlatformBillingUpdate {
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *PlatformBillingClient) UpdateOne(pb *PlatformBilling) *PlatformBillingUpdateOne {
-	mutation := newPlatformBillingMutation(c.config, OpUpdateOne, withPlatformBilling(pb))
+func (c *PlatformBillingClient) UpdateOne(_m *PlatformBilling) *PlatformBillingUpdateOne {
+	mutation := newPlatformBillingMutation(c.config, OpUpdateOne, withPlatformBilling(_m))
 	return &PlatformBillingUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
@@ -1474,8 +1474,8 @@ func (c *PlatformBillingClient) Delete() *PlatformBillingDelete {
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *PlatformBillingClient) DeleteOne(pb *PlatformBilling) *PlatformBillingDeleteOne {
-	return c.DeleteOneID(pb.ID)
+func (c *PlatformBillingClient) DeleteOne(_m *PlatformBilling) *PlatformBillingDeleteOne {
+	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
@@ -1589,8 +1589,8 @@ func (c *ProviderSettingClient) Update() *ProviderSettingUpdate {
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *ProviderSettingClient) UpdateOne(ps *ProviderSetting) *ProviderSettingUpdateOne {
-	mutation := newProviderSettingMutation(c.config, OpUpdateOne, withProviderSetting(ps))
+func (c *ProviderSettingClient) UpdateOne(_m *ProviderSetting) *ProviderSettingUpdateOne {
+	mutation := newProviderSettingMutation(c.config, OpUpdateOne, withProviderSetting(_m))
 	return &ProviderSettingUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
@@ -1607,8 +1607,8 @@ func (c *ProviderSettingClient) Delete() *ProviderSettingDelete {
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *ProviderSettingClient) DeleteOne(ps *ProviderSetting) *ProviderSettingDeleteOne {
-	return c.DeleteOneID(ps.ID)
+func (c *ProviderSettingClient) DeleteOne(_m *ProviderSetting) *ProviderSettingDeleteOne {
+	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
@@ -1722,8 +1722,8 @@ func (c *RateLimitConfigClient) Update() *RateLimitConfigUpdate {
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *RateLimitConfigClient) UpdateOne(rlc *RateLimitConfig) *RateLimitConfigUpdateOne {
-	mutation := newRateLimitConfigMutation(c.config, OpUpdateOne, withRateLimitConfig(rlc))
+func (c *RateLimitConfigClient) UpdateOne(_m *RateLimitConfig) *RateLimitConfigUpdateOne {
+	mutation := newRateLimitConfigMutation(c.config, OpUpdateOne, withRateLimitConfig(_m))
 	return &RateLimitConfigUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
@@ -1740,8 +1740,8 @@ func (c *RateLimitConfigClient) Delete() *RateLimitConfigDelete {
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *RateLimitConfigClient) DeleteOne(rlc *RateLimitConfig) *RateLimitConfigDeleteOne {
-	return c.DeleteOneID(rlc.ID)
+func (c *RateLimitConfigClient) DeleteOne(_m *RateLimitConfig) *RateLimitConfigDeleteOne {
+	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
@@ -1855,8 +1855,8 @@ func (c *RoleClient) Update() *RoleUpdate {
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *RoleClient) UpdateOne(r *Role) *RoleUpdateOne {
-	mutation := newRoleMutation(c.config, OpUpdateOne, withRole(r))
+func (c *RoleClient) UpdateOne(_m *Role) *RoleUpdateOne {
+	mutation := newRoleMutation(c.config, OpUpdateOne, withRole(_m))
 	return &RoleUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
@@ -1873,8 +1873,8 @@ func (c *RoleClient) Delete() *RoleDelete {
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *RoleClient) DeleteOne(r *Role) *RoleDeleteOne {
-	return c.DeleteOneID(r.ID)
+func (c *RoleClient) DeleteOne(_m *Role) *RoleDeleteOne {
+	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
@@ -1909,32 +1909,32 @@ func (c *RoleClient) GetX(ctx context.Context, id string) *Role {
 }
 
 // QueryPermissions queries the permissions edge of a Role.
-func (c *RoleClient) QueryPermissions(r *Role) *PermissionQuery {
+func (c *RoleClient) QueryPermissions(_m *Role) *PermissionQuery {
 	query := (&PermissionClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := r.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(role.Table, role.FieldID, id),
 			sqlgraph.To(permission.Table, permission.FieldID),
 			sqlgraph.Edge(sqlgraph.M2M, false, role.PermissionsTable, role.PermissionsPrimaryKey...),
 		)
-		fromV = sqlgraph.Neighbors(r.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
 }
 
 // QueryUsers queries the users edge of a Role.
-func (c *RoleClient) QueryUsers(r *Role) *UserQuery {
+func (c *RoleClient) QueryUsers(_m *Role) *UserQuery {
 	query := (&UserClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := r.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(role.Table, role.FieldID, id),
 			sqlgraph.To(user.Table, user.FieldID),
 			sqlgraph.Edge(sqlgraph.M2M, true, role.UsersTable, role.UsersPrimaryKey...),
 		)
-		fromV = sqlgraph.Neighbors(r.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
@@ -2020,8 +2020,8 @@ func (c *ServiceConfigClient) Update() *ServiceConfigUpdate {
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *ServiceConfigClient) UpdateOne(sc *ServiceConfig) *ServiceConfigUpdateOne {
-	mutation := newServiceConfigMutation(c.config, OpUpdateOne, withServiceConfig(sc))
+func (c *ServiceConfigClient) UpdateOne(_m *ServiceConfig) *ServiceConfigUpdateOne {
+	mutation := newServiceConfigMutation(c.config, OpUpdateOne, withServiceConfig(_m))
 	return &ServiceConfigUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
@@ -2038,8 +2038,8 @@ func (c *ServiceConfigClient) Delete() *ServiceConfigDelete {
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *ServiceConfigClient) DeleteOne(sc *ServiceConfig) *ServiceConfigDeleteOne {
-	return c.DeleteOneID(sc.ID)
+func (c *ServiceConfigClient) DeleteOne(_m *ServiceConfig) *ServiceConfigDeleteOne {
+	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
@@ -2153,8 +2153,8 @@ func (c *TemplateClient) Update() *TemplateUpdate {
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *TemplateClient) UpdateOne(t *Template) *TemplateUpdateOne {
-	mutation := newTemplateMutation(c.config, OpUpdateOne, withTemplate(t))
+func (c *TemplateClient) UpdateOne(_m *Template) *TemplateUpdateOne {
+	mutation := newTemplateMutation(c.config, OpUpdateOne, withTemplate(_m))
 	return &TemplateUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
@@ -2171,8 +2171,8 @@ func (c *TemplateClient) Delete() *TemplateDelete {
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *TemplateClient) DeleteOne(t *Template) *TemplateDeleteOne {
-	return c.DeleteOneID(t.ID)
+func (c *TemplateClient) DeleteOne(_m *Template) *TemplateDeleteOne {
+	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
@@ -2286,8 +2286,8 @@ func (c *TenantClient) Update() *TenantUpdate {
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *TenantClient) UpdateOne(t *Tenant) *TenantUpdateOne {
-	mutation := newTenantMutation(c.config, OpUpdateOne, withTenant(t))
+func (c *TenantClient) UpdateOne(_m *Tenant) *TenantUpdateOne {
+	mutation := newTenantMutation(c.config, OpUpdateOne, withTenant(_m))
 	return &TenantUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
@@ -2304,8 +2304,8 @@ func (c *TenantClient) Delete() *TenantDelete {
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *TenantClient) DeleteOne(t *Tenant) *TenantDeleteOne {
-	return c.DeleteOneID(t.ID)
+func (c *TenantClient) DeleteOne(_m *Tenant) *TenantDeleteOne {
+	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
@@ -2340,16 +2340,16 @@ func (c *TenantClient) GetX(ctx context.Context, id uuid.UUID) *Tenant {
 }
 
 // QueryUsers queries the users edge of a Tenant.
-func (c *TenantClient) QueryUsers(t *Tenant) *UserQuery {
+func (c *TenantClient) QueryUsers(_m *Tenant) *UserQuery {
 	query := (&UserClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := t.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(tenant.Table, tenant.FieldID, id),
 			sqlgraph.To(user.Table, user.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, tenant.UsersTable, tenant.UsersColumn),
 		)
-		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
@@ -2435,8 +2435,8 @@ func (c *TenantCreditClient) Update() *TenantCreditUpdate {
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *TenantCreditClient) UpdateOne(tc *TenantCredit) *TenantCreditUpdateOne {
-	mutation := newTenantCreditMutation(c.config, OpUpdateOne, withTenantCredit(tc))
+func (c *TenantCreditClient) UpdateOne(_m *TenantCredit) *TenantCreditUpdateOne {
+	mutation := newTenantCreditMutation(c.config, OpUpdateOne, withTenantCredit(_m))
 	return &TenantCreditUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
@@ -2453,8 +2453,8 @@ func (c *TenantCreditClient) Delete() *TenantCreditDelete {
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *TenantCreditClient) DeleteOne(tc *TenantCredit) *TenantCreditDeleteOne {
-	return c.DeleteOneID(tc.ID)
+func (c *TenantCreditClient) DeleteOne(_m *TenantCredit) *TenantCreditDeleteOne {
+	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
@@ -2568,8 +2568,8 @@ func (c *UserClient) Update() *UserUpdate {
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *UserClient) UpdateOne(u *User) *UserUpdateOne {
-	mutation := newUserMutation(c.config, OpUpdateOne, withUser(u))
+func (c *UserClient) UpdateOne(_m *User) *UserUpdateOne {
+	mutation := newUserMutation(c.config, OpUpdateOne, withUser(_m))
 	return &UserUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
@@ -2586,8 +2586,8 @@ func (c *UserClient) Delete() *UserDelete {
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *UserClient) DeleteOne(u *User) *UserDeleteOne {
-	return c.DeleteOneID(u.ID)
+func (c *UserClient) DeleteOne(_m *User) *UserDeleteOne {
+	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
@@ -2622,32 +2622,32 @@ func (c *UserClient) GetX(ctx context.Context, id uuid.UUID) *User {
 }
 
 // QueryTenant queries the tenant edge of a User.
-func (c *UserClient) QueryTenant(u *User) *TenantQuery {
+func (c *UserClient) QueryTenant(_m *User) *TenantQuery {
 	query := (&TenantClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := u.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(user.Table, user.FieldID, id),
 			sqlgraph.To(tenant.Table, tenant.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, user.TenantTable, user.TenantColumn),
 		)
-		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
 }
 
 // QueryRoles queries the roles edge of a User.
-func (c *UserClient) QueryRoles(u *User) *RoleQuery {
+func (c *UserClient) QueryRoles(_m *User) *RoleQuery {
 	query := (&RoleClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := u.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(user.Table, user.FieldID, id),
 			sqlgraph.To(role.Table, role.FieldID),
 			sqlgraph.Edge(sqlgraph.M2M, false, user.RolesTable, user.RolesPrimaryKey...),
 		)
-		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
@@ -2733,8 +2733,8 @@ func (c *UserRoleAssignmentClient) Update() *UserRoleAssignmentUpdate {
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *UserRoleAssignmentClient) UpdateOne(ura *UserRoleAssignment) *UserRoleAssignmentUpdateOne {
-	mutation := newUserRoleAssignmentMutation(c.config, OpUpdateOne, withUserRoleAssignment(ura))
+func (c *UserRoleAssignmentClient) UpdateOne(_m *UserRoleAssignment) *UserRoleAssignmentUpdateOne {
+	mutation := newUserRoleAssignmentMutation(c.config, OpUpdateOne, withUserRoleAssignment(_m))
 	return &UserRoleAssignmentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
@@ -2751,8 +2751,8 @@ func (c *UserRoleAssignmentClient) Delete() *UserRoleAssignmentDelete {
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *UserRoleAssignmentClient) DeleteOne(ura *UserRoleAssignment) *UserRoleAssignmentDeleteOne {
-	return c.DeleteOneID(ura.ID)
+func (c *UserRoleAssignmentClient) DeleteOne(_m *UserRoleAssignment) *UserRoleAssignmentDeleteOne {
+	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
@@ -2787,32 +2787,32 @@ func (c *UserRoleAssignmentClient) GetX(ctx context.Context, id uuid.UUID) *User
 }
 
 // QueryUser queries the user edge of a UserRoleAssignment.
-func (c *UserRoleAssignmentClient) QueryUser(ura *UserRoleAssignment) *UserQuery {
+func (c *UserRoleAssignmentClient) QueryUser(_m *UserRoleAssignment) *UserQuery {
 	query := (&UserClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := ura.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(userroleassignment.Table, userroleassignment.FieldID, id),
 			sqlgraph.To(user.Table, user.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, false, userroleassignment.UserTable, userroleassignment.UserColumn),
 		)
-		fromV = sqlgraph.Neighbors(ura.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
 }
 
 // QueryRole queries the role edge of a UserRoleAssignment.
-func (c *UserRoleAssignmentClient) QueryRole(ura *UserRoleAssignment) *NotificationRoleQuery {
+func (c *UserRoleAssignmentClient) QueryRole(_m *UserRoleAssignment) *NotificationRoleQuery {
 	query := (&NotificationRoleClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := ura.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(userroleassignment.Table, userroleassignment.FieldID, id),
 			sqlgraph.To(notificationrole.Table, notificationrole.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, false, userroleassignment.RoleTable, userroleassignment.RoleColumn),
 		)
-		fromV = sqlgraph.Neighbors(ura.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query

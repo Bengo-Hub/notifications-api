@@ -87,7 +87,7 @@ func (*NotificationPermission) scanValues(columns []string) ([]any, error) {
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the NotificationPermission fields.
-func (np *NotificationPermission) assignValues(columns []string, values []any) error {
+func (_m *NotificationPermission) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
@@ -97,52 +97,52 @@ func (np *NotificationPermission) assignValues(columns []string, values []any) e
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value != nil {
-				np.ID = *value
+				_m.ID = *value
 			}
 		case notificationpermission.FieldPermissionCode:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field permission_code", values[i])
 			} else if value.Valid {
-				np.PermissionCode = value.String
+				_m.PermissionCode = value.String
 			}
 		case notificationpermission.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field name", values[i])
 			} else if value.Valid {
-				np.Name = value.String
+				_m.Name = value.String
 			}
 		case notificationpermission.FieldModule:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field module", values[i])
 			} else if value.Valid {
-				np.Module = value.String
+				_m.Module = value.String
 			}
 		case notificationpermission.FieldAction:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field action", values[i])
 			} else if value.Valid {
-				np.Action = value.String
+				_m.Action = value.String
 			}
 		case notificationpermission.FieldResource:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field resource", values[i])
 			} else if value.Valid {
-				np.Resource = value.String
+				_m.Resource = value.String
 			}
 		case notificationpermission.FieldDescription:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field description", values[i])
 			} else if value.Valid {
-				np.Description = value.String
+				_m.Description = value.String
 			}
 		case notificationpermission.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
 			} else if value.Valid {
-				np.CreatedAt = value.Time
+				_m.CreatedAt = value.Time
 			}
 		default:
-			np.selectValues.Set(columns[i], values[i])
+			_m.selectValues.Set(columns[i], values[i])
 		}
 	}
 	return nil
@@ -150,63 +150,63 @@ func (np *NotificationPermission) assignValues(columns []string, values []any) e
 
 // Value returns the ent.Value that was dynamically selected and assigned to the NotificationPermission.
 // This includes values selected through modifiers, order, etc.
-func (np *NotificationPermission) Value(name string) (ent.Value, error) {
-	return np.selectValues.Get(name)
+func (_m *NotificationPermission) Value(name string) (ent.Value, error) {
+	return _m.selectValues.Get(name)
 }
 
 // QueryRoles queries the "roles" edge of the NotificationPermission entity.
-func (np *NotificationPermission) QueryRoles() *NotificationRoleQuery {
-	return NewNotificationPermissionClient(np.config).QueryRoles(np)
+func (_m *NotificationPermission) QueryRoles() *NotificationRoleQuery {
+	return NewNotificationPermissionClient(_m.config).QueryRoles(_m)
 }
 
 // QueryNotificationRolePermissions queries the "notification_role_permissions" edge of the NotificationPermission entity.
-func (np *NotificationPermission) QueryNotificationRolePermissions() *NotificationRolePermissionQuery {
-	return NewNotificationPermissionClient(np.config).QueryNotificationRolePermissions(np)
+func (_m *NotificationPermission) QueryNotificationRolePermissions() *NotificationRolePermissionQuery {
+	return NewNotificationPermissionClient(_m.config).QueryNotificationRolePermissions(_m)
 }
 
 // Update returns a builder for updating this NotificationPermission.
 // Note that you need to call NotificationPermission.Unwrap() before calling this method if this NotificationPermission
 // was returned from a transaction, and the transaction was committed or rolled back.
-func (np *NotificationPermission) Update() *NotificationPermissionUpdateOne {
-	return NewNotificationPermissionClient(np.config).UpdateOne(np)
+func (_m *NotificationPermission) Update() *NotificationPermissionUpdateOne {
+	return NewNotificationPermissionClient(_m.config).UpdateOne(_m)
 }
 
 // Unwrap unwraps the NotificationPermission entity that was returned from a transaction after it was closed,
 // so that all future queries will be executed through the driver which created the transaction.
-func (np *NotificationPermission) Unwrap() *NotificationPermission {
-	_tx, ok := np.config.driver.(*txDriver)
+func (_m *NotificationPermission) Unwrap() *NotificationPermission {
+	_tx, ok := _m.config.driver.(*txDriver)
 	if !ok {
 		panic("ent: NotificationPermission is not a transactional entity")
 	}
-	np.config.driver = _tx.drv
-	return np
+	_m.config.driver = _tx.drv
+	return _m
 }
 
 // String implements the fmt.Stringer.
-func (np *NotificationPermission) String() string {
+func (_m *NotificationPermission) String() string {
 	var builder strings.Builder
 	builder.WriteString("NotificationPermission(")
-	builder.WriteString(fmt.Sprintf("id=%v, ", np.ID))
+	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("permission_code=")
-	builder.WriteString(np.PermissionCode)
+	builder.WriteString(_m.PermissionCode)
 	builder.WriteString(", ")
 	builder.WriteString("name=")
-	builder.WriteString(np.Name)
+	builder.WriteString(_m.Name)
 	builder.WriteString(", ")
 	builder.WriteString("module=")
-	builder.WriteString(np.Module)
+	builder.WriteString(_m.Module)
 	builder.WriteString(", ")
 	builder.WriteString("action=")
-	builder.WriteString(np.Action)
+	builder.WriteString(_m.Action)
 	builder.WriteString(", ")
 	builder.WriteString("resource=")
-	builder.WriteString(np.Resource)
+	builder.WriteString(_m.Resource)
 	builder.WriteString(", ")
 	builder.WriteString("description=")
-	builder.WriteString(np.Description)
+	builder.WriteString(_m.Description)
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
-	builder.WriteString(np.CreatedAt.Format(time.ANSIC))
+	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()
 }

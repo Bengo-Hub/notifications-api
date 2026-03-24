@@ -20,56 +20,56 @@ type UserRoleAssignmentDelete struct {
 }
 
 // Where appends a list predicates to the UserRoleAssignmentDelete builder.
-func (urad *UserRoleAssignmentDelete) Where(ps ...predicate.UserRoleAssignment) *UserRoleAssignmentDelete {
-	urad.mutation.Where(ps...)
-	return urad
+func (_d *UserRoleAssignmentDelete) Where(ps ...predicate.UserRoleAssignment) *UserRoleAssignmentDelete {
+	_d.mutation.Where(ps...)
+	return _d
 }
 
 // Exec executes the deletion query and returns how many vertices were deleted.
-func (urad *UserRoleAssignmentDelete) Exec(ctx context.Context) (int, error) {
-	return withHooks(ctx, urad.sqlExec, urad.mutation, urad.hooks)
+func (_d *UserRoleAssignmentDelete) Exec(ctx context.Context) (int, error) {
+	return withHooks(ctx, _d.sqlExec, _d.mutation, _d.hooks)
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (urad *UserRoleAssignmentDelete) ExecX(ctx context.Context) int {
-	n, err := urad.Exec(ctx)
+func (_d *UserRoleAssignmentDelete) ExecX(ctx context.Context) int {
+	n, err := _d.Exec(ctx)
 	if err != nil {
 		panic(err)
 	}
 	return n
 }
 
-func (urad *UserRoleAssignmentDelete) sqlExec(ctx context.Context) (int, error) {
+func (_d *UserRoleAssignmentDelete) sqlExec(ctx context.Context) (int, error) {
 	_spec := sqlgraph.NewDeleteSpec(userroleassignment.Table, sqlgraph.NewFieldSpec(userroleassignment.FieldID, field.TypeUUID))
-	if ps := urad.mutation.predicates; len(ps) > 0 {
+	if ps := _d.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	affected, err := sqlgraph.DeleteNodes(ctx, urad.driver, _spec)
+	affected, err := sqlgraph.DeleteNodes(ctx, _d.driver, _spec)
 	if err != nil && sqlgraph.IsConstraintError(err) {
 		err = &ConstraintError{msg: err.Error(), wrap: err}
 	}
-	urad.mutation.done = true
+	_d.mutation.done = true
 	return affected, err
 }
 
 // UserRoleAssignmentDeleteOne is the builder for deleting a single UserRoleAssignment entity.
 type UserRoleAssignmentDeleteOne struct {
-	urad *UserRoleAssignmentDelete
+	_d *UserRoleAssignmentDelete
 }
 
 // Where appends a list predicates to the UserRoleAssignmentDelete builder.
-func (urado *UserRoleAssignmentDeleteOne) Where(ps ...predicate.UserRoleAssignment) *UserRoleAssignmentDeleteOne {
-	urado.urad.mutation.Where(ps...)
-	return urado
+func (_d *UserRoleAssignmentDeleteOne) Where(ps ...predicate.UserRoleAssignment) *UserRoleAssignmentDeleteOne {
+	_d._d.mutation.Where(ps...)
+	return _d
 }
 
 // Exec executes the deletion query.
-func (urado *UserRoleAssignmentDeleteOne) Exec(ctx context.Context) error {
-	n, err := urado.urad.Exec(ctx)
+func (_d *UserRoleAssignmentDeleteOne) Exec(ctx context.Context) error {
+	n, err := _d._d.Exec(ctx)
 	switch {
 	case err != nil:
 		return err
@@ -81,8 +81,8 @@ func (urado *UserRoleAssignmentDeleteOne) Exec(ctx context.Context) error {
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (urado *UserRoleAssignmentDeleteOne) ExecX(ctx context.Context) {
-	if err := urado.Exec(ctx); err != nil {
+func (_d *UserRoleAssignmentDeleteOne) ExecX(ctx context.Context) {
+	if err := _d.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math"
 
+	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -29,40 +30,40 @@ type CreditTransactionQuery struct {
 }
 
 // Where adds a new predicate for the CreditTransactionQuery builder.
-func (ctq *CreditTransactionQuery) Where(ps ...predicate.CreditTransaction) *CreditTransactionQuery {
-	ctq.predicates = append(ctq.predicates, ps...)
-	return ctq
+func (_q *CreditTransactionQuery) Where(ps ...predicate.CreditTransaction) *CreditTransactionQuery {
+	_q.predicates = append(_q.predicates, ps...)
+	return _q
 }
 
 // Limit the number of records to be returned by this query.
-func (ctq *CreditTransactionQuery) Limit(limit int) *CreditTransactionQuery {
-	ctq.ctx.Limit = &limit
-	return ctq
+func (_q *CreditTransactionQuery) Limit(limit int) *CreditTransactionQuery {
+	_q.ctx.Limit = &limit
+	return _q
 }
 
 // Offset to start from.
-func (ctq *CreditTransactionQuery) Offset(offset int) *CreditTransactionQuery {
-	ctq.ctx.Offset = &offset
-	return ctq
+func (_q *CreditTransactionQuery) Offset(offset int) *CreditTransactionQuery {
+	_q.ctx.Offset = &offset
+	return _q
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
-func (ctq *CreditTransactionQuery) Unique(unique bool) *CreditTransactionQuery {
-	ctq.ctx.Unique = &unique
-	return ctq
+func (_q *CreditTransactionQuery) Unique(unique bool) *CreditTransactionQuery {
+	_q.ctx.Unique = &unique
+	return _q
 }
 
 // Order specifies how the records should be ordered.
-func (ctq *CreditTransactionQuery) Order(o ...credittransaction.OrderOption) *CreditTransactionQuery {
-	ctq.order = append(ctq.order, o...)
-	return ctq
+func (_q *CreditTransactionQuery) Order(o ...credittransaction.OrderOption) *CreditTransactionQuery {
+	_q.order = append(_q.order, o...)
+	return _q
 }
 
 // First returns the first CreditTransaction entity from the query.
 // Returns a *NotFoundError when no CreditTransaction was found.
-func (ctq *CreditTransactionQuery) First(ctx context.Context) (*CreditTransaction, error) {
-	nodes, err := ctq.Limit(1).All(setContextOp(ctx, ctq.ctx, "First"))
+func (_q *CreditTransactionQuery) First(ctx context.Context) (*CreditTransaction, error) {
+	nodes, err := _q.Limit(1).All(setContextOp(ctx, _q.ctx, ent.OpQueryFirst))
 	if err != nil {
 		return nil, err
 	}
@@ -73,8 +74,8 @@ func (ctq *CreditTransactionQuery) First(ctx context.Context) (*CreditTransactio
 }
 
 // FirstX is like First, but panics if an error occurs.
-func (ctq *CreditTransactionQuery) FirstX(ctx context.Context) *CreditTransaction {
-	node, err := ctq.First(ctx)
+func (_q *CreditTransactionQuery) FirstX(ctx context.Context) *CreditTransaction {
+	node, err := _q.First(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
 	}
@@ -83,9 +84,9 @@ func (ctq *CreditTransactionQuery) FirstX(ctx context.Context) *CreditTransactio
 
 // FirstID returns the first CreditTransaction ID from the query.
 // Returns a *NotFoundError when no CreditTransaction ID was found.
-func (ctq *CreditTransactionQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
+func (_q *CreditTransactionQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
-	if ids, err = ctq.Limit(1).IDs(setContextOp(ctx, ctq.ctx, "FirstID")); err != nil {
+	if ids, err = _q.Limit(1).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
 	if len(ids) == 0 {
@@ -96,8 +97,8 @@ func (ctq *CreditTransactionQuery) FirstID(ctx context.Context) (id uuid.UUID, e
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (ctq *CreditTransactionQuery) FirstIDX(ctx context.Context) uuid.UUID {
-	id, err := ctq.FirstID(ctx)
+func (_q *CreditTransactionQuery) FirstIDX(ctx context.Context) uuid.UUID {
+	id, err := _q.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
 	}
@@ -107,8 +108,8 @@ func (ctq *CreditTransactionQuery) FirstIDX(ctx context.Context) uuid.UUID {
 // Only returns a single CreditTransaction entity found by the query, ensuring it only returns one.
 // Returns a *NotSingularError when more than one CreditTransaction entity is found.
 // Returns a *NotFoundError when no CreditTransaction entities are found.
-func (ctq *CreditTransactionQuery) Only(ctx context.Context) (*CreditTransaction, error) {
-	nodes, err := ctq.Limit(2).All(setContextOp(ctx, ctq.ctx, "Only"))
+func (_q *CreditTransactionQuery) Only(ctx context.Context) (*CreditTransaction, error) {
+	nodes, err := _q.Limit(2).All(setContextOp(ctx, _q.ctx, ent.OpQueryOnly))
 	if err != nil {
 		return nil, err
 	}
@@ -123,8 +124,8 @@ func (ctq *CreditTransactionQuery) Only(ctx context.Context) (*CreditTransaction
 }
 
 // OnlyX is like Only, but panics if an error occurs.
-func (ctq *CreditTransactionQuery) OnlyX(ctx context.Context) *CreditTransaction {
-	node, err := ctq.Only(ctx)
+func (_q *CreditTransactionQuery) OnlyX(ctx context.Context) *CreditTransaction {
+	node, err := _q.Only(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -134,9 +135,9 @@ func (ctq *CreditTransactionQuery) OnlyX(ctx context.Context) *CreditTransaction
 // OnlyID is like Only, but returns the only CreditTransaction ID in the query.
 // Returns a *NotSingularError when more than one CreditTransaction ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (ctq *CreditTransactionQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
+func (_q *CreditTransactionQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
-	if ids, err = ctq.Limit(2).IDs(setContextOp(ctx, ctq.ctx, "OnlyID")); err != nil {
+	if ids, err = _q.Limit(2).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
 	}
 	switch len(ids) {
@@ -151,8 +152,8 @@ func (ctq *CreditTransactionQuery) OnlyID(ctx context.Context) (id uuid.UUID, er
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (ctq *CreditTransactionQuery) OnlyIDX(ctx context.Context) uuid.UUID {
-	id, err := ctq.OnlyID(ctx)
+func (_q *CreditTransactionQuery) OnlyIDX(ctx context.Context) uuid.UUID {
+	id, err := _q.OnlyID(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -160,18 +161,18 @@ func (ctq *CreditTransactionQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 }
 
 // All executes the query and returns a list of CreditTransactions.
-func (ctq *CreditTransactionQuery) All(ctx context.Context) ([]*CreditTransaction, error) {
-	ctx = setContextOp(ctx, ctq.ctx, "All")
-	if err := ctq.prepareQuery(ctx); err != nil {
+func (_q *CreditTransactionQuery) All(ctx context.Context) ([]*CreditTransaction, error) {
+	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryAll)
+	if err := _q.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
 	qr := querierAll[[]*CreditTransaction, *CreditTransactionQuery]()
-	return withInterceptors[[]*CreditTransaction](ctx, ctq, qr, ctq.inters)
+	return withInterceptors[[]*CreditTransaction](ctx, _q, qr, _q.inters)
 }
 
 // AllX is like All, but panics if an error occurs.
-func (ctq *CreditTransactionQuery) AllX(ctx context.Context) []*CreditTransaction {
-	nodes, err := ctq.All(ctx)
+func (_q *CreditTransactionQuery) AllX(ctx context.Context) []*CreditTransaction {
+	nodes, err := _q.All(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -179,20 +180,20 @@ func (ctq *CreditTransactionQuery) AllX(ctx context.Context) []*CreditTransactio
 }
 
 // IDs executes the query and returns a list of CreditTransaction IDs.
-func (ctq *CreditTransactionQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
-	if ctq.ctx.Unique == nil && ctq.path != nil {
-		ctq.Unique(true)
+func (_q *CreditTransactionQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
+	if _q.ctx.Unique == nil && _q.path != nil {
+		_q.Unique(true)
 	}
-	ctx = setContextOp(ctx, ctq.ctx, "IDs")
-	if err = ctq.Select(credittransaction.FieldID).Scan(ctx, &ids); err != nil {
+	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryIDs)
+	if err = _q.Select(credittransaction.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (ctq *CreditTransactionQuery) IDsX(ctx context.Context) []uuid.UUID {
-	ids, err := ctq.IDs(ctx)
+func (_q *CreditTransactionQuery) IDsX(ctx context.Context) []uuid.UUID {
+	ids, err := _q.IDs(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -200,17 +201,17 @@ func (ctq *CreditTransactionQuery) IDsX(ctx context.Context) []uuid.UUID {
 }
 
 // Count returns the count of the given query.
-func (ctq *CreditTransactionQuery) Count(ctx context.Context) (int, error) {
-	ctx = setContextOp(ctx, ctq.ctx, "Count")
-	if err := ctq.prepareQuery(ctx); err != nil {
+func (_q *CreditTransactionQuery) Count(ctx context.Context) (int, error) {
+	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryCount)
+	if err := _q.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
-	return withInterceptors[int](ctx, ctq, querierCount[*CreditTransactionQuery](), ctq.inters)
+	return withInterceptors[int](ctx, _q, querierCount[*CreditTransactionQuery](), _q.inters)
 }
 
 // CountX is like Count, but panics if an error occurs.
-func (ctq *CreditTransactionQuery) CountX(ctx context.Context) int {
-	count, err := ctq.Count(ctx)
+func (_q *CreditTransactionQuery) CountX(ctx context.Context) int {
+	count, err := _q.Count(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -218,9 +219,9 @@ func (ctq *CreditTransactionQuery) CountX(ctx context.Context) int {
 }
 
 // Exist returns true if the query has elements in the graph.
-func (ctq *CreditTransactionQuery) Exist(ctx context.Context) (bool, error) {
-	ctx = setContextOp(ctx, ctq.ctx, "Exist")
-	switch _, err := ctq.FirstID(ctx); {
+func (_q *CreditTransactionQuery) Exist(ctx context.Context) (bool, error) {
+	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryExist)
+	switch _, err := _q.FirstID(ctx); {
 	case IsNotFound(err):
 		return false, nil
 	case err != nil:
@@ -231,8 +232,8 @@ func (ctq *CreditTransactionQuery) Exist(ctx context.Context) (bool, error) {
 }
 
 // ExistX is like Exist, but panics if an error occurs.
-func (ctq *CreditTransactionQuery) ExistX(ctx context.Context) bool {
-	exist, err := ctq.Exist(ctx)
+func (_q *CreditTransactionQuery) ExistX(ctx context.Context) bool {
+	exist, err := _q.Exist(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -241,19 +242,20 @@ func (ctq *CreditTransactionQuery) ExistX(ctx context.Context) bool {
 
 // Clone returns a duplicate of the CreditTransactionQuery builder, including all associated steps. It can be
 // used to prepare common query builders and use them differently after the clone is made.
-func (ctq *CreditTransactionQuery) Clone() *CreditTransactionQuery {
-	if ctq == nil {
+func (_q *CreditTransactionQuery) Clone() *CreditTransactionQuery {
+	if _q == nil {
 		return nil
 	}
 	return &CreditTransactionQuery{
-		config:     ctq.config,
-		ctx:        ctq.ctx.Clone(),
-		order:      append([]credittransaction.OrderOption{}, ctq.order...),
-		inters:     append([]Interceptor{}, ctq.inters...),
-		predicates: append([]predicate.CreditTransaction{}, ctq.predicates...),
+		config:     _q.config,
+		ctx:        _q.ctx.Clone(),
+		order:      append([]credittransaction.OrderOption{}, _q.order...),
+		inters:     append([]Interceptor{}, _q.inters...),
+		predicates: append([]predicate.CreditTransaction{}, _q.predicates...),
 		// clone intermediate query.
-		sql:  ctq.sql.Clone(),
-		path: ctq.path,
+		sql:       _q.sql.Clone(),
+		path:      _q.path,
+		modifiers: append([]func(*sql.Selector){}, _q.modifiers...),
 	}
 }
 
@@ -271,10 +273,10 @@ func (ctq *CreditTransactionQuery) Clone() *CreditTransactionQuery {
 //		GroupBy(credittransaction.FieldTenantID).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-func (ctq *CreditTransactionQuery) GroupBy(field string, fields ...string) *CreditTransactionGroupBy {
-	ctq.ctx.Fields = append([]string{field}, fields...)
-	grbuild := &CreditTransactionGroupBy{build: ctq}
-	grbuild.flds = &ctq.ctx.Fields
+func (_q *CreditTransactionQuery) GroupBy(field string, fields ...string) *CreditTransactionGroupBy {
+	_q.ctx.Fields = append([]string{field}, fields...)
+	grbuild := &CreditTransactionGroupBy{build: _q}
+	grbuild.flds = &_q.ctx.Fields
 	grbuild.label = credittransaction.Label
 	grbuild.scan = grbuild.Scan
 	return grbuild
@@ -292,65 +294,65 @@ func (ctq *CreditTransactionQuery) GroupBy(field string, fields ...string) *Cred
 //	client.CreditTransaction.Query().
 //		Select(credittransaction.FieldTenantID).
 //		Scan(ctx, &v)
-func (ctq *CreditTransactionQuery) Select(fields ...string) *CreditTransactionSelect {
-	ctq.ctx.Fields = append(ctq.ctx.Fields, fields...)
-	sbuild := &CreditTransactionSelect{CreditTransactionQuery: ctq}
+func (_q *CreditTransactionQuery) Select(fields ...string) *CreditTransactionSelect {
+	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
+	sbuild := &CreditTransactionSelect{CreditTransactionQuery: _q}
 	sbuild.label = credittransaction.Label
-	sbuild.flds, sbuild.scan = &ctq.ctx.Fields, sbuild.Scan
+	sbuild.flds, sbuild.scan = &_q.ctx.Fields, sbuild.Scan
 	return sbuild
 }
 
 // Aggregate returns a CreditTransactionSelect configured with the given aggregations.
-func (ctq *CreditTransactionQuery) Aggregate(fns ...AggregateFunc) *CreditTransactionSelect {
-	return ctq.Select().Aggregate(fns...)
+func (_q *CreditTransactionQuery) Aggregate(fns ...AggregateFunc) *CreditTransactionSelect {
+	return _q.Select().Aggregate(fns...)
 }
 
-func (ctq *CreditTransactionQuery) prepareQuery(ctx context.Context) error {
-	for _, inter := range ctq.inters {
+func (_q *CreditTransactionQuery) prepareQuery(ctx context.Context) error {
+	for _, inter := range _q.inters {
 		if inter == nil {
 			return fmt.Errorf("ent: uninitialized interceptor (forgotten import ent/runtime?)")
 		}
 		if trv, ok := inter.(Traverser); ok {
-			if err := trv.Traverse(ctx, ctq); err != nil {
+			if err := trv.Traverse(ctx, _q); err != nil {
 				return err
 			}
 		}
 	}
-	for _, f := range ctq.ctx.Fields {
+	for _, f := range _q.ctx.Fields {
 		if !credittransaction.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
 	}
-	if ctq.path != nil {
-		prev, err := ctq.path(ctx)
+	if _q.path != nil {
+		prev, err := _q.path(ctx)
 		if err != nil {
 			return err
 		}
-		ctq.sql = prev
+		_q.sql = prev
 	}
 	return nil
 }
 
-func (ctq *CreditTransactionQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*CreditTransaction, error) {
+func (_q *CreditTransactionQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*CreditTransaction, error) {
 	var (
 		nodes = []*CreditTransaction{}
-		_spec = ctq.querySpec()
+		_spec = _q.querySpec()
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*CreditTransaction).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []any) error {
-		node := &CreditTransaction{config: ctq.config}
+		node := &CreditTransaction{config: _q.config}
 		nodes = append(nodes, node)
 		return node.assignValues(columns, values)
 	}
-	if len(ctq.modifiers) > 0 {
-		_spec.Modifiers = ctq.modifiers
+	if len(_q.modifiers) > 0 {
+		_spec.Modifiers = _q.modifiers
 	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
-	if err := sqlgraph.QueryNodes(ctx, ctq.driver, _spec); err != nil {
+	if err := sqlgraph.QueryNodes(ctx, _q.driver, _spec); err != nil {
 		return nil, err
 	}
 	if len(nodes) == 0 {
@@ -359,27 +361,27 @@ func (ctq *CreditTransactionQuery) sqlAll(ctx context.Context, hooks ...queryHoo
 	return nodes, nil
 }
 
-func (ctq *CreditTransactionQuery) sqlCount(ctx context.Context) (int, error) {
-	_spec := ctq.querySpec()
-	if len(ctq.modifiers) > 0 {
-		_spec.Modifiers = ctq.modifiers
+func (_q *CreditTransactionQuery) sqlCount(ctx context.Context) (int, error) {
+	_spec := _q.querySpec()
+	if len(_q.modifiers) > 0 {
+		_spec.Modifiers = _q.modifiers
 	}
-	_spec.Node.Columns = ctq.ctx.Fields
-	if len(ctq.ctx.Fields) > 0 {
-		_spec.Unique = ctq.ctx.Unique != nil && *ctq.ctx.Unique
+	_spec.Node.Columns = _q.ctx.Fields
+	if len(_q.ctx.Fields) > 0 {
+		_spec.Unique = _q.ctx.Unique != nil && *_q.ctx.Unique
 	}
-	return sqlgraph.CountNodes(ctx, ctq.driver, _spec)
+	return sqlgraph.CountNodes(ctx, _q.driver, _spec)
 }
 
-func (ctq *CreditTransactionQuery) querySpec() *sqlgraph.QuerySpec {
+func (_q *CreditTransactionQuery) querySpec() *sqlgraph.QuerySpec {
 	_spec := sqlgraph.NewQuerySpec(credittransaction.Table, credittransaction.Columns, sqlgraph.NewFieldSpec(credittransaction.FieldID, field.TypeUUID))
-	_spec.From = ctq.sql
-	if unique := ctq.ctx.Unique; unique != nil {
+	_spec.From = _q.sql
+	if unique := _q.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
-	} else if ctq.path != nil {
+	} else if _q.path != nil {
 		_spec.Unique = true
 	}
-	if fields := ctq.ctx.Fields; len(fields) > 0 {
+	if fields := _q.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		_spec.Node.Columns = append(_spec.Node.Columns, credittransaction.FieldID)
 		for i := range fields {
@@ -388,20 +390,20 @@ func (ctq *CreditTransactionQuery) querySpec() *sqlgraph.QuerySpec {
 			}
 		}
 	}
-	if ps := ctq.predicates; len(ps) > 0 {
+	if ps := _q.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if limit := ctq.ctx.Limit; limit != nil {
+	if limit := _q.ctx.Limit; limit != nil {
 		_spec.Limit = *limit
 	}
-	if offset := ctq.ctx.Offset; offset != nil {
+	if offset := _q.ctx.Offset; offset != nil {
 		_spec.Offset = *offset
 	}
-	if ps := ctq.order; len(ps) > 0 {
+	if ps := _q.order; len(ps) > 0 {
 		_spec.Order = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
@@ -411,45 +413,45 @@ func (ctq *CreditTransactionQuery) querySpec() *sqlgraph.QuerySpec {
 	return _spec
 }
 
-func (ctq *CreditTransactionQuery) sqlQuery(ctx context.Context) *sql.Selector {
-	builder := sql.Dialect(ctq.driver.Dialect())
+func (_q *CreditTransactionQuery) sqlQuery(ctx context.Context) *sql.Selector {
+	builder := sql.Dialect(_q.driver.Dialect())
 	t1 := builder.Table(credittransaction.Table)
-	columns := ctq.ctx.Fields
+	columns := _q.ctx.Fields
 	if len(columns) == 0 {
 		columns = credittransaction.Columns
 	}
 	selector := builder.Select(t1.Columns(columns...)...).From(t1)
-	if ctq.sql != nil {
-		selector = ctq.sql
+	if _q.sql != nil {
+		selector = _q.sql
 		selector.Select(selector.Columns(columns...)...)
 	}
-	if ctq.ctx.Unique != nil && *ctq.ctx.Unique {
+	if _q.ctx.Unique != nil && *_q.ctx.Unique {
 		selector.Distinct()
 	}
-	for _, m := range ctq.modifiers {
+	for _, m := range _q.modifiers {
 		m(selector)
 	}
-	for _, p := range ctq.predicates {
+	for _, p := range _q.predicates {
 		p(selector)
 	}
-	for _, p := range ctq.order {
+	for _, p := range _q.order {
 		p(selector)
 	}
-	if offset := ctq.ctx.Offset; offset != nil {
+	if offset := _q.ctx.Offset; offset != nil {
 		// limit is mandatory for offset clause. We start
 		// with default value, and override it below if needed.
 		selector.Offset(*offset).Limit(math.MaxInt32)
 	}
-	if limit := ctq.ctx.Limit; limit != nil {
+	if limit := _q.ctx.Limit; limit != nil {
 		selector.Limit(*limit)
 	}
 	return selector
 }
 
 // Modify adds a query modifier for attaching custom logic to queries.
-func (ctq *CreditTransactionQuery) Modify(modifiers ...func(s *sql.Selector)) *CreditTransactionSelect {
-	ctq.modifiers = append(ctq.modifiers, modifiers...)
-	return ctq.Select()
+func (_q *CreditTransactionQuery) Modify(modifiers ...func(s *sql.Selector)) *CreditTransactionSelect {
+	_q.modifiers = append(_q.modifiers, modifiers...)
+	return _q.Select()
 }
 
 // CreditTransactionGroupBy is the group-by builder for CreditTransaction entities.
@@ -459,41 +461,41 @@ type CreditTransactionGroupBy struct {
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
-func (ctgb *CreditTransactionGroupBy) Aggregate(fns ...AggregateFunc) *CreditTransactionGroupBy {
-	ctgb.fns = append(ctgb.fns, fns...)
-	return ctgb
+func (_g *CreditTransactionGroupBy) Aggregate(fns ...AggregateFunc) *CreditTransactionGroupBy {
+	_g.fns = append(_g.fns, fns...)
+	return _g
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (ctgb *CreditTransactionGroupBy) Scan(ctx context.Context, v any) error {
-	ctx = setContextOp(ctx, ctgb.build.ctx, "GroupBy")
-	if err := ctgb.build.prepareQuery(ctx); err != nil {
+func (_g *CreditTransactionGroupBy) Scan(ctx context.Context, v any) error {
+	ctx = setContextOp(ctx, _g.build.ctx, ent.OpQueryGroupBy)
+	if err := _g.build.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*CreditTransactionQuery, *CreditTransactionGroupBy](ctx, ctgb.build, ctgb, ctgb.build.inters, v)
+	return scanWithInterceptors[*CreditTransactionQuery, *CreditTransactionGroupBy](ctx, _g.build, _g, _g.build.inters, v)
 }
 
-func (ctgb *CreditTransactionGroupBy) sqlScan(ctx context.Context, root *CreditTransactionQuery, v any) error {
+func (_g *CreditTransactionGroupBy) sqlScan(ctx context.Context, root *CreditTransactionQuery, v any) error {
 	selector := root.sqlQuery(ctx).Select()
-	aggregation := make([]string, 0, len(ctgb.fns))
-	for _, fn := range ctgb.fns {
+	aggregation := make([]string, 0, len(_g.fns))
+	for _, fn := range _g.fns {
 		aggregation = append(aggregation, fn(selector))
 	}
 	if len(selector.SelectedColumns()) == 0 {
-		columns := make([]string, 0, len(*ctgb.flds)+len(ctgb.fns))
-		for _, f := range *ctgb.flds {
+		columns := make([]string, 0, len(*_g.flds)+len(_g.fns))
+		for _, f := range *_g.flds {
 			columns = append(columns, selector.C(f))
 		}
 		columns = append(columns, aggregation...)
 		selector.Select(columns...)
 	}
-	selector.GroupBy(selector.Columns(*ctgb.flds...)...)
+	selector.GroupBy(selector.Columns(*_g.flds...)...)
 	if err := selector.Err(); err != nil {
 		return err
 	}
 	rows := &sql.Rows{}
 	query, args := selector.Query()
-	if err := ctgb.build.driver.Query(ctx, query, args, rows); err != nil {
+	if err := _g.build.driver.Query(ctx, query, args, rows); err != nil {
 		return err
 	}
 	defer rows.Close()
@@ -507,27 +509,27 @@ type CreditTransactionSelect struct {
 }
 
 // Aggregate adds the given aggregation functions to the selector query.
-func (cts *CreditTransactionSelect) Aggregate(fns ...AggregateFunc) *CreditTransactionSelect {
-	cts.fns = append(cts.fns, fns...)
-	return cts
+func (_s *CreditTransactionSelect) Aggregate(fns ...AggregateFunc) *CreditTransactionSelect {
+	_s.fns = append(_s.fns, fns...)
+	return _s
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (cts *CreditTransactionSelect) Scan(ctx context.Context, v any) error {
-	ctx = setContextOp(ctx, cts.ctx, "Select")
-	if err := cts.prepareQuery(ctx); err != nil {
+func (_s *CreditTransactionSelect) Scan(ctx context.Context, v any) error {
+	ctx = setContextOp(ctx, _s.ctx, ent.OpQuerySelect)
+	if err := _s.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*CreditTransactionQuery, *CreditTransactionSelect](ctx, cts.CreditTransactionQuery, cts, cts.inters, v)
+	return scanWithInterceptors[*CreditTransactionQuery, *CreditTransactionSelect](ctx, _s.CreditTransactionQuery, _s, _s.inters, v)
 }
 
-func (cts *CreditTransactionSelect) sqlScan(ctx context.Context, root *CreditTransactionQuery, v any) error {
+func (_s *CreditTransactionSelect) sqlScan(ctx context.Context, root *CreditTransactionQuery, v any) error {
 	selector := root.sqlQuery(ctx)
-	aggregation := make([]string, 0, len(cts.fns))
-	for _, fn := range cts.fns {
+	aggregation := make([]string, 0, len(_s.fns))
+	for _, fn := range _s.fns {
 		aggregation = append(aggregation, fn(selector))
 	}
-	switch n := len(*cts.selector.flds); {
+	switch n := len(*_s.selector.flds); {
 	case n == 0 && len(aggregation) > 0:
 		selector.Select(aggregation...)
 	case n != 0 && len(aggregation) > 0:
@@ -535,7 +537,7 @@ func (cts *CreditTransactionSelect) sqlScan(ctx context.Context, root *CreditTra
 	}
 	rows := &sql.Rows{}
 	query, args := selector.Query()
-	if err := cts.driver.Query(ctx, query, args, rows); err != nil {
+	if err := _s.driver.Query(ctx, query, args, rows); err != nil {
 		return err
 	}
 	defer rows.Close()
@@ -543,7 +545,7 @@ func (cts *CreditTransactionSelect) sqlScan(ctx context.Context, root *CreditTra
 }
 
 // Modify adds a query modifier for attaching custom logic to queries.
-func (cts *CreditTransactionSelect) Modify(modifiers ...func(s *sql.Selector)) *CreditTransactionSelect {
-	cts.modifiers = append(cts.modifiers, modifiers...)
-	return cts
+func (_s *CreditTransactionSelect) Modify(modifiers ...func(s *sql.Selector)) *CreditTransactionSelect {
+	_s.modifiers = append(_s.modifiers, modifiers...)
+	return _s
 }

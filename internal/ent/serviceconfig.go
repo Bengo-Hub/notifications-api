@@ -61,7 +61,7 @@ func (*ServiceConfig) scanValues(columns []string) ([]any, error) {
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the ServiceConfig fields.
-func (sc *ServiceConfig) assignValues(columns []string, values []any) error {
+func (_m *ServiceConfig) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
@@ -71,59 +71,59 @@ func (sc *ServiceConfig) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value != nil {
-				sc.ID = *value
+				_m.ID = *value
 			}
 		case serviceconfig.FieldTenantID:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
 				return fmt.Errorf("unexpected type %T for field tenant_id", values[i])
 			} else if value.Valid {
-				sc.TenantID = new(uuid.UUID)
-				*sc.TenantID = *value.S.(*uuid.UUID)
+				_m.TenantID = new(uuid.UUID)
+				*_m.TenantID = *value.S.(*uuid.UUID)
 			}
 		case serviceconfig.FieldConfigKey:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field config_key", values[i])
 			} else if value.Valid {
-				sc.ConfigKey = value.String
+				_m.ConfigKey = value.String
 			}
 		case serviceconfig.FieldConfigValue:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field config_value", values[i])
 			} else if value.Valid {
-				sc.ConfigValue = value.String
+				_m.ConfigValue = value.String
 			}
 		case serviceconfig.FieldConfigType:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field config_type", values[i])
 			} else if value.Valid {
-				sc.ConfigType = value.String
+				_m.ConfigType = value.String
 			}
 		case serviceconfig.FieldDescription:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field description", values[i])
 			} else if value.Valid {
-				sc.Description = value.String
+				_m.Description = value.String
 			}
 		case serviceconfig.FieldIsSecret:
 			if value, ok := values[i].(*sql.NullBool); !ok {
 				return fmt.Errorf("unexpected type %T for field is_secret", values[i])
 			} else if value.Valid {
-				sc.IsSecret = value.Bool
+				_m.IsSecret = value.Bool
 			}
 		case serviceconfig.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
 			} else if value.Valid {
-				sc.CreatedAt = value.Time
+				_m.CreatedAt = value.Time
 			}
 		case serviceconfig.FieldUpdatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
-				sc.UpdatedAt = value.Time
+				_m.UpdatedAt = value.Time
 			}
 		default:
-			sc.selectValues.Set(columns[i], values[i])
+			_m.selectValues.Set(columns[i], values[i])
 		}
 	}
 	return nil
@@ -131,58 +131,58 @@ func (sc *ServiceConfig) assignValues(columns []string, values []any) error {
 
 // Value returns the ent.Value that was dynamically selected and assigned to the ServiceConfig.
 // This includes values selected through modifiers, order, etc.
-func (sc *ServiceConfig) Value(name string) (ent.Value, error) {
-	return sc.selectValues.Get(name)
+func (_m *ServiceConfig) Value(name string) (ent.Value, error) {
+	return _m.selectValues.Get(name)
 }
 
 // Update returns a builder for updating this ServiceConfig.
 // Note that you need to call ServiceConfig.Unwrap() before calling this method if this ServiceConfig
 // was returned from a transaction, and the transaction was committed or rolled back.
-func (sc *ServiceConfig) Update() *ServiceConfigUpdateOne {
-	return NewServiceConfigClient(sc.config).UpdateOne(sc)
+func (_m *ServiceConfig) Update() *ServiceConfigUpdateOne {
+	return NewServiceConfigClient(_m.config).UpdateOne(_m)
 }
 
 // Unwrap unwraps the ServiceConfig entity that was returned from a transaction after it was closed,
 // so that all future queries will be executed through the driver which created the transaction.
-func (sc *ServiceConfig) Unwrap() *ServiceConfig {
-	_tx, ok := sc.config.driver.(*txDriver)
+func (_m *ServiceConfig) Unwrap() *ServiceConfig {
+	_tx, ok := _m.config.driver.(*txDriver)
 	if !ok {
 		panic("ent: ServiceConfig is not a transactional entity")
 	}
-	sc.config.driver = _tx.drv
-	return sc
+	_m.config.driver = _tx.drv
+	return _m
 }
 
 // String implements the fmt.Stringer.
-func (sc *ServiceConfig) String() string {
+func (_m *ServiceConfig) String() string {
 	var builder strings.Builder
 	builder.WriteString("ServiceConfig(")
-	builder.WriteString(fmt.Sprintf("id=%v, ", sc.ID))
-	if v := sc.TenantID; v != nil {
+	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
+	if v := _m.TenantID; v != nil {
 		builder.WriteString("tenant_id=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
 	builder.WriteString(", ")
 	builder.WriteString("config_key=")
-	builder.WriteString(sc.ConfigKey)
+	builder.WriteString(_m.ConfigKey)
 	builder.WriteString(", ")
 	builder.WriteString("config_value=")
-	builder.WriteString(sc.ConfigValue)
+	builder.WriteString(_m.ConfigValue)
 	builder.WriteString(", ")
 	builder.WriteString("config_type=")
-	builder.WriteString(sc.ConfigType)
+	builder.WriteString(_m.ConfigType)
 	builder.WriteString(", ")
 	builder.WriteString("description=")
-	builder.WriteString(sc.Description)
+	builder.WriteString(_m.Description)
 	builder.WriteString(", ")
 	builder.WriteString("is_secret=")
-	builder.WriteString(fmt.Sprintf("%v", sc.IsSecret))
+	builder.WriteString(fmt.Sprintf("%v", _m.IsSecret))
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
-	builder.WriteString(sc.CreatedAt.Format(time.ANSIC))
+	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
 	builder.WriteString("updated_at=")
-	builder.WriteString(sc.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString(_m.UpdatedAt.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()
 }

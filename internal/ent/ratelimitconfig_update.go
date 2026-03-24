@@ -24,170 +24,170 @@ type RateLimitConfigUpdate struct {
 }
 
 // Where appends a list predicates to the RateLimitConfigUpdate builder.
-func (rlcu *RateLimitConfigUpdate) Where(ps ...predicate.RateLimitConfig) *RateLimitConfigUpdate {
-	rlcu.mutation.Where(ps...)
-	return rlcu
+func (_u *RateLimitConfigUpdate) Where(ps ...predicate.RateLimitConfig) *RateLimitConfigUpdate {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // SetServiceName sets the "service_name" field.
-func (rlcu *RateLimitConfigUpdate) SetServiceName(s string) *RateLimitConfigUpdate {
-	rlcu.mutation.SetServiceName(s)
-	return rlcu
+func (_u *RateLimitConfigUpdate) SetServiceName(v string) *RateLimitConfigUpdate {
+	_u.mutation.SetServiceName(v)
+	return _u
 }
 
 // SetNillableServiceName sets the "service_name" field if the given value is not nil.
-func (rlcu *RateLimitConfigUpdate) SetNillableServiceName(s *string) *RateLimitConfigUpdate {
-	if s != nil {
-		rlcu.SetServiceName(*s)
+func (_u *RateLimitConfigUpdate) SetNillableServiceName(v *string) *RateLimitConfigUpdate {
+	if v != nil {
+		_u.SetServiceName(*v)
 	}
-	return rlcu
+	return _u
 }
 
 // SetKeyType sets the "key_type" field.
-func (rlcu *RateLimitConfigUpdate) SetKeyType(s string) *RateLimitConfigUpdate {
-	rlcu.mutation.SetKeyType(s)
-	return rlcu
+func (_u *RateLimitConfigUpdate) SetKeyType(v string) *RateLimitConfigUpdate {
+	_u.mutation.SetKeyType(v)
+	return _u
 }
 
 // SetNillableKeyType sets the "key_type" field if the given value is not nil.
-func (rlcu *RateLimitConfigUpdate) SetNillableKeyType(s *string) *RateLimitConfigUpdate {
-	if s != nil {
-		rlcu.SetKeyType(*s)
+func (_u *RateLimitConfigUpdate) SetNillableKeyType(v *string) *RateLimitConfigUpdate {
+	if v != nil {
+		_u.SetKeyType(*v)
 	}
-	return rlcu
+	return _u
 }
 
 // SetEndpointPattern sets the "endpoint_pattern" field.
-func (rlcu *RateLimitConfigUpdate) SetEndpointPattern(s string) *RateLimitConfigUpdate {
-	rlcu.mutation.SetEndpointPattern(s)
-	return rlcu
+func (_u *RateLimitConfigUpdate) SetEndpointPattern(v string) *RateLimitConfigUpdate {
+	_u.mutation.SetEndpointPattern(v)
+	return _u
 }
 
 // SetNillableEndpointPattern sets the "endpoint_pattern" field if the given value is not nil.
-func (rlcu *RateLimitConfigUpdate) SetNillableEndpointPattern(s *string) *RateLimitConfigUpdate {
-	if s != nil {
-		rlcu.SetEndpointPattern(*s)
+func (_u *RateLimitConfigUpdate) SetNillableEndpointPattern(v *string) *RateLimitConfigUpdate {
+	if v != nil {
+		_u.SetEndpointPattern(*v)
 	}
-	return rlcu
+	return _u
 }
 
 // SetRequestsPerWindow sets the "requests_per_window" field.
-func (rlcu *RateLimitConfigUpdate) SetRequestsPerWindow(i int) *RateLimitConfigUpdate {
-	rlcu.mutation.ResetRequestsPerWindow()
-	rlcu.mutation.SetRequestsPerWindow(i)
-	return rlcu
+func (_u *RateLimitConfigUpdate) SetRequestsPerWindow(v int) *RateLimitConfigUpdate {
+	_u.mutation.ResetRequestsPerWindow()
+	_u.mutation.SetRequestsPerWindow(v)
+	return _u
 }
 
 // SetNillableRequestsPerWindow sets the "requests_per_window" field if the given value is not nil.
-func (rlcu *RateLimitConfigUpdate) SetNillableRequestsPerWindow(i *int) *RateLimitConfigUpdate {
-	if i != nil {
-		rlcu.SetRequestsPerWindow(*i)
+func (_u *RateLimitConfigUpdate) SetNillableRequestsPerWindow(v *int) *RateLimitConfigUpdate {
+	if v != nil {
+		_u.SetRequestsPerWindow(*v)
 	}
-	return rlcu
+	return _u
 }
 
-// AddRequestsPerWindow adds i to the "requests_per_window" field.
-func (rlcu *RateLimitConfigUpdate) AddRequestsPerWindow(i int) *RateLimitConfigUpdate {
-	rlcu.mutation.AddRequestsPerWindow(i)
-	return rlcu
+// AddRequestsPerWindow adds value to the "requests_per_window" field.
+func (_u *RateLimitConfigUpdate) AddRequestsPerWindow(v int) *RateLimitConfigUpdate {
+	_u.mutation.AddRequestsPerWindow(v)
+	return _u
 }
 
 // SetWindowSeconds sets the "window_seconds" field.
-func (rlcu *RateLimitConfigUpdate) SetWindowSeconds(i int) *RateLimitConfigUpdate {
-	rlcu.mutation.ResetWindowSeconds()
-	rlcu.mutation.SetWindowSeconds(i)
-	return rlcu
+func (_u *RateLimitConfigUpdate) SetWindowSeconds(v int) *RateLimitConfigUpdate {
+	_u.mutation.ResetWindowSeconds()
+	_u.mutation.SetWindowSeconds(v)
+	return _u
 }
 
 // SetNillableWindowSeconds sets the "window_seconds" field if the given value is not nil.
-func (rlcu *RateLimitConfigUpdate) SetNillableWindowSeconds(i *int) *RateLimitConfigUpdate {
-	if i != nil {
-		rlcu.SetWindowSeconds(*i)
+func (_u *RateLimitConfigUpdate) SetNillableWindowSeconds(v *int) *RateLimitConfigUpdate {
+	if v != nil {
+		_u.SetWindowSeconds(*v)
 	}
-	return rlcu
+	return _u
 }
 
-// AddWindowSeconds adds i to the "window_seconds" field.
-func (rlcu *RateLimitConfigUpdate) AddWindowSeconds(i int) *RateLimitConfigUpdate {
-	rlcu.mutation.AddWindowSeconds(i)
-	return rlcu
+// AddWindowSeconds adds value to the "window_seconds" field.
+func (_u *RateLimitConfigUpdate) AddWindowSeconds(v int) *RateLimitConfigUpdate {
+	_u.mutation.AddWindowSeconds(v)
+	return _u
 }
 
 // SetBurstMultiplier sets the "burst_multiplier" field.
-func (rlcu *RateLimitConfigUpdate) SetBurstMultiplier(f float64) *RateLimitConfigUpdate {
-	rlcu.mutation.ResetBurstMultiplier()
-	rlcu.mutation.SetBurstMultiplier(f)
-	return rlcu
+func (_u *RateLimitConfigUpdate) SetBurstMultiplier(v float64) *RateLimitConfigUpdate {
+	_u.mutation.ResetBurstMultiplier()
+	_u.mutation.SetBurstMultiplier(v)
+	return _u
 }
 
 // SetNillableBurstMultiplier sets the "burst_multiplier" field if the given value is not nil.
-func (rlcu *RateLimitConfigUpdate) SetNillableBurstMultiplier(f *float64) *RateLimitConfigUpdate {
-	if f != nil {
-		rlcu.SetBurstMultiplier(*f)
+func (_u *RateLimitConfigUpdate) SetNillableBurstMultiplier(v *float64) *RateLimitConfigUpdate {
+	if v != nil {
+		_u.SetBurstMultiplier(*v)
 	}
-	return rlcu
+	return _u
 }
 
-// AddBurstMultiplier adds f to the "burst_multiplier" field.
-func (rlcu *RateLimitConfigUpdate) AddBurstMultiplier(f float64) *RateLimitConfigUpdate {
-	rlcu.mutation.AddBurstMultiplier(f)
-	return rlcu
+// AddBurstMultiplier adds value to the "burst_multiplier" field.
+func (_u *RateLimitConfigUpdate) AddBurstMultiplier(v float64) *RateLimitConfigUpdate {
+	_u.mutation.AddBurstMultiplier(v)
+	return _u
 }
 
 // SetIsActive sets the "is_active" field.
-func (rlcu *RateLimitConfigUpdate) SetIsActive(b bool) *RateLimitConfigUpdate {
-	rlcu.mutation.SetIsActive(b)
-	return rlcu
+func (_u *RateLimitConfigUpdate) SetIsActive(v bool) *RateLimitConfigUpdate {
+	_u.mutation.SetIsActive(v)
+	return _u
 }
 
 // SetNillableIsActive sets the "is_active" field if the given value is not nil.
-func (rlcu *RateLimitConfigUpdate) SetNillableIsActive(b *bool) *RateLimitConfigUpdate {
-	if b != nil {
-		rlcu.SetIsActive(*b)
+func (_u *RateLimitConfigUpdate) SetNillableIsActive(v *bool) *RateLimitConfigUpdate {
+	if v != nil {
+		_u.SetIsActive(*v)
 	}
-	return rlcu
+	return _u
 }
 
 // SetDescription sets the "description" field.
-func (rlcu *RateLimitConfigUpdate) SetDescription(s string) *RateLimitConfigUpdate {
-	rlcu.mutation.SetDescription(s)
-	return rlcu
+func (_u *RateLimitConfigUpdate) SetDescription(v string) *RateLimitConfigUpdate {
+	_u.mutation.SetDescription(v)
+	return _u
 }
 
 // SetNillableDescription sets the "description" field if the given value is not nil.
-func (rlcu *RateLimitConfigUpdate) SetNillableDescription(s *string) *RateLimitConfigUpdate {
-	if s != nil {
-		rlcu.SetDescription(*s)
+func (_u *RateLimitConfigUpdate) SetNillableDescription(v *string) *RateLimitConfigUpdate {
+	if v != nil {
+		_u.SetDescription(*v)
 	}
-	return rlcu
+	return _u
 }
 
 // ClearDescription clears the value of the "description" field.
-func (rlcu *RateLimitConfigUpdate) ClearDescription() *RateLimitConfigUpdate {
-	rlcu.mutation.ClearDescription()
-	return rlcu
+func (_u *RateLimitConfigUpdate) ClearDescription() *RateLimitConfigUpdate {
+	_u.mutation.ClearDescription()
+	return _u
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (rlcu *RateLimitConfigUpdate) SetUpdatedAt(t time.Time) *RateLimitConfigUpdate {
-	rlcu.mutation.SetUpdatedAt(t)
-	return rlcu
+func (_u *RateLimitConfigUpdate) SetUpdatedAt(v time.Time) *RateLimitConfigUpdate {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
 }
 
 // Mutation returns the RateLimitConfigMutation object of the builder.
-func (rlcu *RateLimitConfigUpdate) Mutation() *RateLimitConfigMutation {
-	return rlcu.mutation
+func (_u *RateLimitConfigUpdate) Mutation() *RateLimitConfigMutation {
+	return _u.mutation
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
-func (rlcu *RateLimitConfigUpdate) Save(ctx context.Context) (int, error) {
-	rlcu.defaults()
-	return withHooks(ctx, rlcu.sqlSave, rlcu.mutation, rlcu.hooks)
+func (_u *RateLimitConfigUpdate) Save(ctx context.Context) (int, error) {
+	_u.defaults()
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (rlcu *RateLimitConfigUpdate) SaveX(ctx context.Context) int {
-	affected, err := rlcu.Save(ctx)
+func (_u *RateLimitConfigUpdate) SaveX(ctx context.Context) int {
+	affected, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -195,44 +195,44 @@ func (rlcu *RateLimitConfigUpdate) SaveX(ctx context.Context) int {
 }
 
 // Exec executes the query.
-func (rlcu *RateLimitConfigUpdate) Exec(ctx context.Context) error {
-	_, err := rlcu.Save(ctx)
+func (_u *RateLimitConfigUpdate) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (rlcu *RateLimitConfigUpdate) ExecX(ctx context.Context) {
-	if err := rlcu.Exec(ctx); err != nil {
+func (_u *RateLimitConfigUpdate) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (rlcu *RateLimitConfigUpdate) defaults() {
-	if _, ok := rlcu.mutation.UpdatedAt(); !ok {
+func (_u *RateLimitConfigUpdate) defaults() {
+	if _, ok := _u.mutation.UpdatedAt(); !ok {
 		v := ratelimitconfig.UpdateDefaultUpdatedAt()
-		rlcu.mutation.SetUpdatedAt(v)
+		_u.mutation.SetUpdatedAt(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (rlcu *RateLimitConfigUpdate) check() error {
-	if v, ok := rlcu.mutation.ServiceName(); ok {
+func (_u *RateLimitConfigUpdate) check() error {
+	if v, ok := _u.mutation.ServiceName(); ok {
 		if err := ratelimitconfig.ServiceNameValidator(v); err != nil {
 			return &ValidationError{Name: "service_name", err: fmt.Errorf(`ent: validator failed for field "RateLimitConfig.service_name": %w`, err)}
 		}
 	}
-	if v, ok := rlcu.mutation.KeyType(); ok {
+	if v, ok := _u.mutation.KeyType(); ok {
 		if err := ratelimitconfig.KeyTypeValidator(v); err != nil {
 			return &ValidationError{Name: "key_type", err: fmt.Errorf(`ent: validator failed for field "RateLimitConfig.key_type": %w`, err)}
 		}
 	}
-	if v, ok := rlcu.mutation.RequestsPerWindow(); ok {
+	if v, ok := _u.mutation.RequestsPerWindow(); ok {
 		if err := ratelimitconfig.RequestsPerWindowValidator(v); err != nil {
 			return &ValidationError{Name: "requests_per_window", err: fmt.Errorf(`ent: validator failed for field "RateLimitConfig.requests_per_window": %w`, err)}
 		}
 	}
-	if v, ok := rlcu.mutation.WindowSeconds(); ok {
+	if v, ok := _u.mutation.WindowSeconds(); ok {
 		if err := ratelimitconfig.WindowSecondsValidator(v); err != nil {
 			return &ValidationError{Name: "window_seconds", err: fmt.Errorf(`ent: validator failed for field "RateLimitConfig.window_seconds": %w`, err)}
 		}
@@ -241,64 +241,64 @@ func (rlcu *RateLimitConfigUpdate) check() error {
 }
 
 // Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
-func (rlcu *RateLimitConfigUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *RateLimitConfigUpdate {
-	rlcu.modifiers = append(rlcu.modifiers, modifiers...)
-	return rlcu
+func (_u *RateLimitConfigUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *RateLimitConfigUpdate {
+	_u.modifiers = append(_u.modifiers, modifiers...)
+	return _u
 }
 
-func (rlcu *RateLimitConfigUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	if err := rlcu.check(); err != nil {
-		return n, err
+func (_u *RateLimitConfigUpdate) sqlSave(ctx context.Context) (_node int, err error) {
+	if err := _u.check(); err != nil {
+		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(ratelimitconfig.Table, ratelimitconfig.Columns, sqlgraph.NewFieldSpec(ratelimitconfig.FieldID, field.TypeUUID))
-	if ps := rlcu.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := rlcu.mutation.ServiceName(); ok {
+	if value, ok := _u.mutation.ServiceName(); ok {
 		_spec.SetField(ratelimitconfig.FieldServiceName, field.TypeString, value)
 	}
-	if value, ok := rlcu.mutation.KeyType(); ok {
+	if value, ok := _u.mutation.KeyType(); ok {
 		_spec.SetField(ratelimitconfig.FieldKeyType, field.TypeString, value)
 	}
-	if value, ok := rlcu.mutation.EndpointPattern(); ok {
+	if value, ok := _u.mutation.EndpointPattern(); ok {
 		_spec.SetField(ratelimitconfig.FieldEndpointPattern, field.TypeString, value)
 	}
-	if value, ok := rlcu.mutation.RequestsPerWindow(); ok {
+	if value, ok := _u.mutation.RequestsPerWindow(); ok {
 		_spec.SetField(ratelimitconfig.FieldRequestsPerWindow, field.TypeInt, value)
 	}
-	if value, ok := rlcu.mutation.AddedRequestsPerWindow(); ok {
+	if value, ok := _u.mutation.AddedRequestsPerWindow(); ok {
 		_spec.AddField(ratelimitconfig.FieldRequestsPerWindow, field.TypeInt, value)
 	}
-	if value, ok := rlcu.mutation.WindowSeconds(); ok {
+	if value, ok := _u.mutation.WindowSeconds(); ok {
 		_spec.SetField(ratelimitconfig.FieldWindowSeconds, field.TypeInt, value)
 	}
-	if value, ok := rlcu.mutation.AddedWindowSeconds(); ok {
+	if value, ok := _u.mutation.AddedWindowSeconds(); ok {
 		_spec.AddField(ratelimitconfig.FieldWindowSeconds, field.TypeInt, value)
 	}
-	if value, ok := rlcu.mutation.BurstMultiplier(); ok {
+	if value, ok := _u.mutation.BurstMultiplier(); ok {
 		_spec.SetField(ratelimitconfig.FieldBurstMultiplier, field.TypeFloat64, value)
 	}
-	if value, ok := rlcu.mutation.AddedBurstMultiplier(); ok {
+	if value, ok := _u.mutation.AddedBurstMultiplier(); ok {
 		_spec.AddField(ratelimitconfig.FieldBurstMultiplier, field.TypeFloat64, value)
 	}
-	if value, ok := rlcu.mutation.IsActive(); ok {
+	if value, ok := _u.mutation.IsActive(); ok {
 		_spec.SetField(ratelimitconfig.FieldIsActive, field.TypeBool, value)
 	}
-	if value, ok := rlcu.mutation.Description(); ok {
+	if value, ok := _u.mutation.Description(); ok {
 		_spec.SetField(ratelimitconfig.FieldDescription, field.TypeString, value)
 	}
-	if rlcu.mutation.DescriptionCleared() {
+	if _u.mutation.DescriptionCleared() {
 		_spec.ClearField(ratelimitconfig.FieldDescription, field.TypeString)
 	}
-	if value, ok := rlcu.mutation.UpdatedAt(); ok {
+	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(ratelimitconfig.FieldUpdatedAt, field.TypeTime, value)
 	}
-	_spec.AddModifiers(rlcu.modifiers...)
-	if n, err = sqlgraph.UpdateNodes(ctx, rlcu.driver, _spec); err != nil {
+	_spec.AddModifiers(_u.modifiers...)
+	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{ratelimitconfig.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -306,8 +306,8 @@ func (rlcu *RateLimitConfigUpdate) sqlSave(ctx context.Context) (n int, err erro
 		}
 		return 0, err
 	}
-	rlcu.mutation.done = true
-	return n, nil
+	_u.mutation.done = true
+	return _node, nil
 }
 
 // RateLimitConfigUpdateOne is the builder for updating a single RateLimitConfig entity.
@@ -320,177 +320,177 @@ type RateLimitConfigUpdateOne struct {
 }
 
 // SetServiceName sets the "service_name" field.
-func (rlcuo *RateLimitConfigUpdateOne) SetServiceName(s string) *RateLimitConfigUpdateOne {
-	rlcuo.mutation.SetServiceName(s)
-	return rlcuo
+func (_u *RateLimitConfigUpdateOne) SetServiceName(v string) *RateLimitConfigUpdateOne {
+	_u.mutation.SetServiceName(v)
+	return _u
 }
 
 // SetNillableServiceName sets the "service_name" field if the given value is not nil.
-func (rlcuo *RateLimitConfigUpdateOne) SetNillableServiceName(s *string) *RateLimitConfigUpdateOne {
-	if s != nil {
-		rlcuo.SetServiceName(*s)
+func (_u *RateLimitConfigUpdateOne) SetNillableServiceName(v *string) *RateLimitConfigUpdateOne {
+	if v != nil {
+		_u.SetServiceName(*v)
 	}
-	return rlcuo
+	return _u
 }
 
 // SetKeyType sets the "key_type" field.
-func (rlcuo *RateLimitConfigUpdateOne) SetKeyType(s string) *RateLimitConfigUpdateOne {
-	rlcuo.mutation.SetKeyType(s)
-	return rlcuo
+func (_u *RateLimitConfigUpdateOne) SetKeyType(v string) *RateLimitConfigUpdateOne {
+	_u.mutation.SetKeyType(v)
+	return _u
 }
 
 // SetNillableKeyType sets the "key_type" field if the given value is not nil.
-func (rlcuo *RateLimitConfigUpdateOne) SetNillableKeyType(s *string) *RateLimitConfigUpdateOne {
-	if s != nil {
-		rlcuo.SetKeyType(*s)
+func (_u *RateLimitConfigUpdateOne) SetNillableKeyType(v *string) *RateLimitConfigUpdateOne {
+	if v != nil {
+		_u.SetKeyType(*v)
 	}
-	return rlcuo
+	return _u
 }
 
 // SetEndpointPattern sets the "endpoint_pattern" field.
-func (rlcuo *RateLimitConfigUpdateOne) SetEndpointPattern(s string) *RateLimitConfigUpdateOne {
-	rlcuo.mutation.SetEndpointPattern(s)
-	return rlcuo
+func (_u *RateLimitConfigUpdateOne) SetEndpointPattern(v string) *RateLimitConfigUpdateOne {
+	_u.mutation.SetEndpointPattern(v)
+	return _u
 }
 
 // SetNillableEndpointPattern sets the "endpoint_pattern" field if the given value is not nil.
-func (rlcuo *RateLimitConfigUpdateOne) SetNillableEndpointPattern(s *string) *RateLimitConfigUpdateOne {
-	if s != nil {
-		rlcuo.SetEndpointPattern(*s)
+func (_u *RateLimitConfigUpdateOne) SetNillableEndpointPattern(v *string) *RateLimitConfigUpdateOne {
+	if v != nil {
+		_u.SetEndpointPattern(*v)
 	}
-	return rlcuo
+	return _u
 }
 
 // SetRequestsPerWindow sets the "requests_per_window" field.
-func (rlcuo *RateLimitConfigUpdateOne) SetRequestsPerWindow(i int) *RateLimitConfigUpdateOne {
-	rlcuo.mutation.ResetRequestsPerWindow()
-	rlcuo.mutation.SetRequestsPerWindow(i)
-	return rlcuo
+func (_u *RateLimitConfigUpdateOne) SetRequestsPerWindow(v int) *RateLimitConfigUpdateOne {
+	_u.mutation.ResetRequestsPerWindow()
+	_u.mutation.SetRequestsPerWindow(v)
+	return _u
 }
 
 // SetNillableRequestsPerWindow sets the "requests_per_window" field if the given value is not nil.
-func (rlcuo *RateLimitConfigUpdateOne) SetNillableRequestsPerWindow(i *int) *RateLimitConfigUpdateOne {
-	if i != nil {
-		rlcuo.SetRequestsPerWindow(*i)
+func (_u *RateLimitConfigUpdateOne) SetNillableRequestsPerWindow(v *int) *RateLimitConfigUpdateOne {
+	if v != nil {
+		_u.SetRequestsPerWindow(*v)
 	}
-	return rlcuo
+	return _u
 }
 
-// AddRequestsPerWindow adds i to the "requests_per_window" field.
-func (rlcuo *RateLimitConfigUpdateOne) AddRequestsPerWindow(i int) *RateLimitConfigUpdateOne {
-	rlcuo.mutation.AddRequestsPerWindow(i)
-	return rlcuo
+// AddRequestsPerWindow adds value to the "requests_per_window" field.
+func (_u *RateLimitConfigUpdateOne) AddRequestsPerWindow(v int) *RateLimitConfigUpdateOne {
+	_u.mutation.AddRequestsPerWindow(v)
+	return _u
 }
 
 // SetWindowSeconds sets the "window_seconds" field.
-func (rlcuo *RateLimitConfigUpdateOne) SetWindowSeconds(i int) *RateLimitConfigUpdateOne {
-	rlcuo.mutation.ResetWindowSeconds()
-	rlcuo.mutation.SetWindowSeconds(i)
-	return rlcuo
+func (_u *RateLimitConfigUpdateOne) SetWindowSeconds(v int) *RateLimitConfigUpdateOne {
+	_u.mutation.ResetWindowSeconds()
+	_u.mutation.SetWindowSeconds(v)
+	return _u
 }
 
 // SetNillableWindowSeconds sets the "window_seconds" field if the given value is not nil.
-func (rlcuo *RateLimitConfigUpdateOne) SetNillableWindowSeconds(i *int) *RateLimitConfigUpdateOne {
-	if i != nil {
-		rlcuo.SetWindowSeconds(*i)
+func (_u *RateLimitConfigUpdateOne) SetNillableWindowSeconds(v *int) *RateLimitConfigUpdateOne {
+	if v != nil {
+		_u.SetWindowSeconds(*v)
 	}
-	return rlcuo
+	return _u
 }
 
-// AddWindowSeconds adds i to the "window_seconds" field.
-func (rlcuo *RateLimitConfigUpdateOne) AddWindowSeconds(i int) *RateLimitConfigUpdateOne {
-	rlcuo.mutation.AddWindowSeconds(i)
-	return rlcuo
+// AddWindowSeconds adds value to the "window_seconds" field.
+func (_u *RateLimitConfigUpdateOne) AddWindowSeconds(v int) *RateLimitConfigUpdateOne {
+	_u.mutation.AddWindowSeconds(v)
+	return _u
 }
 
 // SetBurstMultiplier sets the "burst_multiplier" field.
-func (rlcuo *RateLimitConfigUpdateOne) SetBurstMultiplier(f float64) *RateLimitConfigUpdateOne {
-	rlcuo.mutation.ResetBurstMultiplier()
-	rlcuo.mutation.SetBurstMultiplier(f)
-	return rlcuo
+func (_u *RateLimitConfigUpdateOne) SetBurstMultiplier(v float64) *RateLimitConfigUpdateOne {
+	_u.mutation.ResetBurstMultiplier()
+	_u.mutation.SetBurstMultiplier(v)
+	return _u
 }
 
 // SetNillableBurstMultiplier sets the "burst_multiplier" field if the given value is not nil.
-func (rlcuo *RateLimitConfigUpdateOne) SetNillableBurstMultiplier(f *float64) *RateLimitConfigUpdateOne {
-	if f != nil {
-		rlcuo.SetBurstMultiplier(*f)
+func (_u *RateLimitConfigUpdateOne) SetNillableBurstMultiplier(v *float64) *RateLimitConfigUpdateOne {
+	if v != nil {
+		_u.SetBurstMultiplier(*v)
 	}
-	return rlcuo
+	return _u
 }
 
-// AddBurstMultiplier adds f to the "burst_multiplier" field.
-func (rlcuo *RateLimitConfigUpdateOne) AddBurstMultiplier(f float64) *RateLimitConfigUpdateOne {
-	rlcuo.mutation.AddBurstMultiplier(f)
-	return rlcuo
+// AddBurstMultiplier adds value to the "burst_multiplier" field.
+func (_u *RateLimitConfigUpdateOne) AddBurstMultiplier(v float64) *RateLimitConfigUpdateOne {
+	_u.mutation.AddBurstMultiplier(v)
+	return _u
 }
 
 // SetIsActive sets the "is_active" field.
-func (rlcuo *RateLimitConfigUpdateOne) SetIsActive(b bool) *RateLimitConfigUpdateOne {
-	rlcuo.mutation.SetIsActive(b)
-	return rlcuo
+func (_u *RateLimitConfigUpdateOne) SetIsActive(v bool) *RateLimitConfigUpdateOne {
+	_u.mutation.SetIsActive(v)
+	return _u
 }
 
 // SetNillableIsActive sets the "is_active" field if the given value is not nil.
-func (rlcuo *RateLimitConfigUpdateOne) SetNillableIsActive(b *bool) *RateLimitConfigUpdateOne {
-	if b != nil {
-		rlcuo.SetIsActive(*b)
+func (_u *RateLimitConfigUpdateOne) SetNillableIsActive(v *bool) *RateLimitConfigUpdateOne {
+	if v != nil {
+		_u.SetIsActive(*v)
 	}
-	return rlcuo
+	return _u
 }
 
 // SetDescription sets the "description" field.
-func (rlcuo *RateLimitConfigUpdateOne) SetDescription(s string) *RateLimitConfigUpdateOne {
-	rlcuo.mutation.SetDescription(s)
-	return rlcuo
+func (_u *RateLimitConfigUpdateOne) SetDescription(v string) *RateLimitConfigUpdateOne {
+	_u.mutation.SetDescription(v)
+	return _u
 }
 
 // SetNillableDescription sets the "description" field if the given value is not nil.
-func (rlcuo *RateLimitConfigUpdateOne) SetNillableDescription(s *string) *RateLimitConfigUpdateOne {
-	if s != nil {
-		rlcuo.SetDescription(*s)
+func (_u *RateLimitConfigUpdateOne) SetNillableDescription(v *string) *RateLimitConfigUpdateOne {
+	if v != nil {
+		_u.SetDescription(*v)
 	}
-	return rlcuo
+	return _u
 }
 
 // ClearDescription clears the value of the "description" field.
-func (rlcuo *RateLimitConfigUpdateOne) ClearDescription() *RateLimitConfigUpdateOne {
-	rlcuo.mutation.ClearDescription()
-	return rlcuo
+func (_u *RateLimitConfigUpdateOne) ClearDescription() *RateLimitConfigUpdateOne {
+	_u.mutation.ClearDescription()
+	return _u
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (rlcuo *RateLimitConfigUpdateOne) SetUpdatedAt(t time.Time) *RateLimitConfigUpdateOne {
-	rlcuo.mutation.SetUpdatedAt(t)
-	return rlcuo
+func (_u *RateLimitConfigUpdateOne) SetUpdatedAt(v time.Time) *RateLimitConfigUpdateOne {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
 }
 
 // Mutation returns the RateLimitConfigMutation object of the builder.
-func (rlcuo *RateLimitConfigUpdateOne) Mutation() *RateLimitConfigMutation {
-	return rlcuo.mutation
+func (_u *RateLimitConfigUpdateOne) Mutation() *RateLimitConfigMutation {
+	return _u.mutation
 }
 
 // Where appends a list predicates to the RateLimitConfigUpdate builder.
-func (rlcuo *RateLimitConfigUpdateOne) Where(ps ...predicate.RateLimitConfig) *RateLimitConfigUpdateOne {
-	rlcuo.mutation.Where(ps...)
-	return rlcuo
+func (_u *RateLimitConfigUpdateOne) Where(ps ...predicate.RateLimitConfig) *RateLimitConfigUpdateOne {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
-func (rlcuo *RateLimitConfigUpdateOne) Select(field string, fields ...string) *RateLimitConfigUpdateOne {
-	rlcuo.fields = append([]string{field}, fields...)
-	return rlcuo
+func (_u *RateLimitConfigUpdateOne) Select(field string, fields ...string) *RateLimitConfigUpdateOne {
+	_u.fields = append([]string{field}, fields...)
+	return _u
 }
 
 // Save executes the query and returns the updated RateLimitConfig entity.
-func (rlcuo *RateLimitConfigUpdateOne) Save(ctx context.Context) (*RateLimitConfig, error) {
-	rlcuo.defaults()
-	return withHooks(ctx, rlcuo.sqlSave, rlcuo.mutation, rlcuo.hooks)
+func (_u *RateLimitConfigUpdateOne) Save(ctx context.Context) (*RateLimitConfig, error) {
+	_u.defaults()
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (rlcuo *RateLimitConfigUpdateOne) SaveX(ctx context.Context) *RateLimitConfig {
-	node, err := rlcuo.Save(ctx)
+func (_u *RateLimitConfigUpdateOne) SaveX(ctx context.Context) *RateLimitConfig {
+	node, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -498,44 +498,44 @@ func (rlcuo *RateLimitConfigUpdateOne) SaveX(ctx context.Context) *RateLimitConf
 }
 
 // Exec executes the query on the entity.
-func (rlcuo *RateLimitConfigUpdateOne) Exec(ctx context.Context) error {
-	_, err := rlcuo.Save(ctx)
+func (_u *RateLimitConfigUpdateOne) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (rlcuo *RateLimitConfigUpdateOne) ExecX(ctx context.Context) {
-	if err := rlcuo.Exec(ctx); err != nil {
+func (_u *RateLimitConfigUpdateOne) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (rlcuo *RateLimitConfigUpdateOne) defaults() {
-	if _, ok := rlcuo.mutation.UpdatedAt(); !ok {
+func (_u *RateLimitConfigUpdateOne) defaults() {
+	if _, ok := _u.mutation.UpdatedAt(); !ok {
 		v := ratelimitconfig.UpdateDefaultUpdatedAt()
-		rlcuo.mutation.SetUpdatedAt(v)
+		_u.mutation.SetUpdatedAt(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (rlcuo *RateLimitConfigUpdateOne) check() error {
-	if v, ok := rlcuo.mutation.ServiceName(); ok {
+func (_u *RateLimitConfigUpdateOne) check() error {
+	if v, ok := _u.mutation.ServiceName(); ok {
 		if err := ratelimitconfig.ServiceNameValidator(v); err != nil {
 			return &ValidationError{Name: "service_name", err: fmt.Errorf(`ent: validator failed for field "RateLimitConfig.service_name": %w`, err)}
 		}
 	}
-	if v, ok := rlcuo.mutation.KeyType(); ok {
+	if v, ok := _u.mutation.KeyType(); ok {
 		if err := ratelimitconfig.KeyTypeValidator(v); err != nil {
 			return &ValidationError{Name: "key_type", err: fmt.Errorf(`ent: validator failed for field "RateLimitConfig.key_type": %w`, err)}
 		}
 	}
-	if v, ok := rlcuo.mutation.RequestsPerWindow(); ok {
+	if v, ok := _u.mutation.RequestsPerWindow(); ok {
 		if err := ratelimitconfig.RequestsPerWindowValidator(v); err != nil {
 			return &ValidationError{Name: "requests_per_window", err: fmt.Errorf(`ent: validator failed for field "RateLimitConfig.requests_per_window": %w`, err)}
 		}
 	}
-	if v, ok := rlcuo.mutation.WindowSeconds(); ok {
+	if v, ok := _u.mutation.WindowSeconds(); ok {
 		if err := ratelimitconfig.WindowSecondsValidator(v); err != nil {
 			return &ValidationError{Name: "window_seconds", err: fmt.Errorf(`ent: validator failed for field "RateLimitConfig.window_seconds": %w`, err)}
 		}
@@ -544,22 +544,22 @@ func (rlcuo *RateLimitConfigUpdateOne) check() error {
 }
 
 // Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
-func (rlcuo *RateLimitConfigUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *RateLimitConfigUpdateOne {
-	rlcuo.modifiers = append(rlcuo.modifiers, modifiers...)
-	return rlcuo
+func (_u *RateLimitConfigUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *RateLimitConfigUpdateOne {
+	_u.modifiers = append(_u.modifiers, modifiers...)
+	return _u
 }
 
-func (rlcuo *RateLimitConfigUpdateOne) sqlSave(ctx context.Context) (_node *RateLimitConfig, err error) {
-	if err := rlcuo.check(); err != nil {
+func (_u *RateLimitConfigUpdateOne) sqlSave(ctx context.Context) (_node *RateLimitConfig, err error) {
+	if err := _u.check(); err != nil {
 		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(ratelimitconfig.Table, ratelimitconfig.Columns, sqlgraph.NewFieldSpec(ratelimitconfig.FieldID, field.TypeUUID))
-	id, ok := rlcuo.mutation.ID()
+	id, ok := _u.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "RateLimitConfig.id" for update`)}
 	}
 	_spec.Node.ID.Value = id
-	if fields := rlcuo.fields; len(fields) > 0 {
+	if fields := _u.fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		_spec.Node.Columns = append(_spec.Node.Columns, ratelimitconfig.FieldID)
 		for _, f := range fields {
@@ -571,57 +571,57 @@ func (rlcuo *RateLimitConfigUpdateOne) sqlSave(ctx context.Context) (_node *Rate
 			}
 		}
 	}
-	if ps := rlcuo.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := rlcuo.mutation.ServiceName(); ok {
+	if value, ok := _u.mutation.ServiceName(); ok {
 		_spec.SetField(ratelimitconfig.FieldServiceName, field.TypeString, value)
 	}
-	if value, ok := rlcuo.mutation.KeyType(); ok {
+	if value, ok := _u.mutation.KeyType(); ok {
 		_spec.SetField(ratelimitconfig.FieldKeyType, field.TypeString, value)
 	}
-	if value, ok := rlcuo.mutation.EndpointPattern(); ok {
+	if value, ok := _u.mutation.EndpointPattern(); ok {
 		_spec.SetField(ratelimitconfig.FieldEndpointPattern, field.TypeString, value)
 	}
-	if value, ok := rlcuo.mutation.RequestsPerWindow(); ok {
+	if value, ok := _u.mutation.RequestsPerWindow(); ok {
 		_spec.SetField(ratelimitconfig.FieldRequestsPerWindow, field.TypeInt, value)
 	}
-	if value, ok := rlcuo.mutation.AddedRequestsPerWindow(); ok {
+	if value, ok := _u.mutation.AddedRequestsPerWindow(); ok {
 		_spec.AddField(ratelimitconfig.FieldRequestsPerWindow, field.TypeInt, value)
 	}
-	if value, ok := rlcuo.mutation.WindowSeconds(); ok {
+	if value, ok := _u.mutation.WindowSeconds(); ok {
 		_spec.SetField(ratelimitconfig.FieldWindowSeconds, field.TypeInt, value)
 	}
-	if value, ok := rlcuo.mutation.AddedWindowSeconds(); ok {
+	if value, ok := _u.mutation.AddedWindowSeconds(); ok {
 		_spec.AddField(ratelimitconfig.FieldWindowSeconds, field.TypeInt, value)
 	}
-	if value, ok := rlcuo.mutation.BurstMultiplier(); ok {
+	if value, ok := _u.mutation.BurstMultiplier(); ok {
 		_spec.SetField(ratelimitconfig.FieldBurstMultiplier, field.TypeFloat64, value)
 	}
-	if value, ok := rlcuo.mutation.AddedBurstMultiplier(); ok {
+	if value, ok := _u.mutation.AddedBurstMultiplier(); ok {
 		_spec.AddField(ratelimitconfig.FieldBurstMultiplier, field.TypeFloat64, value)
 	}
-	if value, ok := rlcuo.mutation.IsActive(); ok {
+	if value, ok := _u.mutation.IsActive(); ok {
 		_spec.SetField(ratelimitconfig.FieldIsActive, field.TypeBool, value)
 	}
-	if value, ok := rlcuo.mutation.Description(); ok {
+	if value, ok := _u.mutation.Description(); ok {
 		_spec.SetField(ratelimitconfig.FieldDescription, field.TypeString, value)
 	}
-	if rlcuo.mutation.DescriptionCleared() {
+	if _u.mutation.DescriptionCleared() {
 		_spec.ClearField(ratelimitconfig.FieldDescription, field.TypeString)
 	}
-	if value, ok := rlcuo.mutation.UpdatedAt(); ok {
+	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(ratelimitconfig.FieldUpdatedAt, field.TypeTime, value)
 	}
-	_spec.AddModifiers(rlcuo.modifiers...)
-	_node = &RateLimitConfig{config: rlcuo.config}
+	_spec.AddModifiers(_u.modifiers...)
+	_node = &RateLimitConfig{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues
-	if err = sqlgraph.UpdateNode(ctx, rlcuo.driver, _spec); err != nil {
+	if err = sqlgraph.UpdateNode(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{ratelimitconfig.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -629,6 +629,6 @@ func (rlcuo *RateLimitConfigUpdateOne) sqlSave(ctx context.Context) (_node *Rate
 		}
 		return nil, err
 	}
-	rlcuo.mutation.done = true
+	_u.mutation.done = true
 	return _node, nil
 }

@@ -92,7 +92,7 @@ func (*UserRoleAssignment) scanValues(columns []string) ([]any, error) {
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the UserRoleAssignment fields.
-func (ura *UserRoleAssignment) assignValues(columns []string, values []any) error {
+func (_m *UserRoleAssignment) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
@@ -102,53 +102,53 @@ func (ura *UserRoleAssignment) assignValues(columns []string, values []any) erro
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value != nil {
-				ura.ID = *value
+				_m.ID = *value
 			}
 		case userroleassignment.FieldTenantID:
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field tenant_id", values[i])
 			} else if value != nil {
-				ura.TenantID = *value
+				_m.TenantID = *value
 			}
 		case userroleassignment.FieldUserID:
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field user_id", values[i])
 			} else if value != nil {
-				ura.UserID = *value
+				_m.UserID = *value
 			}
 		case userroleassignment.FieldRoleID:
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field role_id", values[i])
 			} else if value != nil {
-				ura.RoleID = *value
+				_m.RoleID = *value
 			}
 		case userroleassignment.FieldAssignedBy:
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field assigned_by", values[i])
 			} else if value != nil {
-				ura.AssignedBy = *value
+				_m.AssignedBy = *value
 			}
 		case userroleassignment.FieldAssignedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field assigned_at", values[i])
 			} else if value.Valid {
-				ura.AssignedAt = value.Time
+				_m.AssignedAt = value.Time
 			}
 		case userroleassignment.FieldExpiresAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field expires_at", values[i])
 			} else if value.Valid {
-				ura.ExpiresAt = value.Time
+				_m.ExpiresAt = value.Time
 			}
 		case userroleassignment.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
 				return fmt.Errorf("unexpected type %T for field notification_role_user_assignments", values[i])
 			} else if value.Valid {
-				ura.notification_role_user_assignments = new(uuid.UUID)
-				*ura.notification_role_user_assignments = *value.S.(*uuid.UUID)
+				_m.notification_role_user_assignments = new(uuid.UUID)
+				*_m.notification_role_user_assignments = *value.S.(*uuid.UUID)
 			}
 		default:
-			ura.selectValues.Set(columns[i], values[i])
+			_m.selectValues.Set(columns[i], values[i])
 		}
 	}
 	return nil
@@ -156,60 +156,60 @@ func (ura *UserRoleAssignment) assignValues(columns []string, values []any) erro
 
 // Value returns the ent.Value that was dynamically selected and assigned to the UserRoleAssignment.
 // This includes values selected through modifiers, order, etc.
-func (ura *UserRoleAssignment) Value(name string) (ent.Value, error) {
-	return ura.selectValues.Get(name)
+func (_m *UserRoleAssignment) Value(name string) (ent.Value, error) {
+	return _m.selectValues.Get(name)
 }
 
 // QueryUser queries the "user" edge of the UserRoleAssignment entity.
-func (ura *UserRoleAssignment) QueryUser() *UserQuery {
-	return NewUserRoleAssignmentClient(ura.config).QueryUser(ura)
+func (_m *UserRoleAssignment) QueryUser() *UserQuery {
+	return NewUserRoleAssignmentClient(_m.config).QueryUser(_m)
 }
 
 // QueryRole queries the "role" edge of the UserRoleAssignment entity.
-func (ura *UserRoleAssignment) QueryRole() *NotificationRoleQuery {
-	return NewUserRoleAssignmentClient(ura.config).QueryRole(ura)
+func (_m *UserRoleAssignment) QueryRole() *NotificationRoleQuery {
+	return NewUserRoleAssignmentClient(_m.config).QueryRole(_m)
 }
 
 // Update returns a builder for updating this UserRoleAssignment.
 // Note that you need to call UserRoleAssignment.Unwrap() before calling this method if this UserRoleAssignment
 // was returned from a transaction, and the transaction was committed or rolled back.
-func (ura *UserRoleAssignment) Update() *UserRoleAssignmentUpdateOne {
-	return NewUserRoleAssignmentClient(ura.config).UpdateOne(ura)
+func (_m *UserRoleAssignment) Update() *UserRoleAssignmentUpdateOne {
+	return NewUserRoleAssignmentClient(_m.config).UpdateOne(_m)
 }
 
 // Unwrap unwraps the UserRoleAssignment entity that was returned from a transaction after it was closed,
 // so that all future queries will be executed through the driver which created the transaction.
-func (ura *UserRoleAssignment) Unwrap() *UserRoleAssignment {
-	_tx, ok := ura.config.driver.(*txDriver)
+func (_m *UserRoleAssignment) Unwrap() *UserRoleAssignment {
+	_tx, ok := _m.config.driver.(*txDriver)
 	if !ok {
 		panic("ent: UserRoleAssignment is not a transactional entity")
 	}
-	ura.config.driver = _tx.drv
-	return ura
+	_m.config.driver = _tx.drv
+	return _m
 }
 
 // String implements the fmt.Stringer.
-func (ura *UserRoleAssignment) String() string {
+func (_m *UserRoleAssignment) String() string {
 	var builder strings.Builder
 	builder.WriteString("UserRoleAssignment(")
-	builder.WriteString(fmt.Sprintf("id=%v, ", ura.ID))
+	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("tenant_id=")
-	builder.WriteString(fmt.Sprintf("%v", ura.TenantID))
+	builder.WriteString(fmt.Sprintf("%v", _m.TenantID))
 	builder.WriteString(", ")
 	builder.WriteString("user_id=")
-	builder.WriteString(fmt.Sprintf("%v", ura.UserID))
+	builder.WriteString(fmt.Sprintf("%v", _m.UserID))
 	builder.WriteString(", ")
 	builder.WriteString("role_id=")
-	builder.WriteString(fmt.Sprintf("%v", ura.RoleID))
+	builder.WriteString(fmt.Sprintf("%v", _m.RoleID))
 	builder.WriteString(", ")
 	builder.WriteString("assigned_by=")
-	builder.WriteString(fmt.Sprintf("%v", ura.AssignedBy))
+	builder.WriteString(fmt.Sprintf("%v", _m.AssignedBy))
 	builder.WriteString(", ")
 	builder.WriteString("assigned_at=")
-	builder.WriteString(ura.AssignedAt.Format(time.ANSIC))
+	builder.WriteString(_m.AssignedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
 	builder.WriteString("expires_at=")
-	builder.WriteString(ura.ExpiresAt.Format(time.ANSIC))
+	builder.WriteString(_m.ExpiresAt.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()
 }

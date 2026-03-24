@@ -27,129 +27,129 @@ type NotificationPermissionCreate struct {
 }
 
 // SetPermissionCode sets the "permission_code" field.
-func (npc *NotificationPermissionCreate) SetPermissionCode(s string) *NotificationPermissionCreate {
-	npc.mutation.SetPermissionCode(s)
-	return npc
+func (_c *NotificationPermissionCreate) SetPermissionCode(v string) *NotificationPermissionCreate {
+	_c.mutation.SetPermissionCode(v)
+	return _c
 }
 
 // SetName sets the "name" field.
-func (npc *NotificationPermissionCreate) SetName(s string) *NotificationPermissionCreate {
-	npc.mutation.SetName(s)
-	return npc
+func (_c *NotificationPermissionCreate) SetName(v string) *NotificationPermissionCreate {
+	_c.mutation.SetName(v)
+	return _c
 }
 
 // SetModule sets the "module" field.
-func (npc *NotificationPermissionCreate) SetModule(s string) *NotificationPermissionCreate {
-	npc.mutation.SetModule(s)
-	return npc
+func (_c *NotificationPermissionCreate) SetModule(v string) *NotificationPermissionCreate {
+	_c.mutation.SetModule(v)
+	return _c
 }
 
 // SetAction sets the "action" field.
-func (npc *NotificationPermissionCreate) SetAction(s string) *NotificationPermissionCreate {
-	npc.mutation.SetAction(s)
-	return npc
+func (_c *NotificationPermissionCreate) SetAction(v string) *NotificationPermissionCreate {
+	_c.mutation.SetAction(v)
+	return _c
 }
 
 // SetResource sets the "resource" field.
-func (npc *NotificationPermissionCreate) SetResource(s string) *NotificationPermissionCreate {
-	npc.mutation.SetResource(s)
-	return npc
+func (_c *NotificationPermissionCreate) SetResource(v string) *NotificationPermissionCreate {
+	_c.mutation.SetResource(v)
+	return _c
 }
 
 // SetNillableResource sets the "resource" field if the given value is not nil.
-func (npc *NotificationPermissionCreate) SetNillableResource(s *string) *NotificationPermissionCreate {
-	if s != nil {
-		npc.SetResource(*s)
+func (_c *NotificationPermissionCreate) SetNillableResource(v *string) *NotificationPermissionCreate {
+	if v != nil {
+		_c.SetResource(*v)
 	}
-	return npc
+	return _c
 }
 
 // SetDescription sets the "description" field.
-func (npc *NotificationPermissionCreate) SetDescription(s string) *NotificationPermissionCreate {
-	npc.mutation.SetDescription(s)
-	return npc
+func (_c *NotificationPermissionCreate) SetDescription(v string) *NotificationPermissionCreate {
+	_c.mutation.SetDescription(v)
+	return _c
 }
 
 // SetNillableDescription sets the "description" field if the given value is not nil.
-func (npc *NotificationPermissionCreate) SetNillableDescription(s *string) *NotificationPermissionCreate {
-	if s != nil {
-		npc.SetDescription(*s)
+func (_c *NotificationPermissionCreate) SetNillableDescription(v *string) *NotificationPermissionCreate {
+	if v != nil {
+		_c.SetDescription(*v)
 	}
-	return npc
+	return _c
 }
 
 // SetCreatedAt sets the "created_at" field.
-func (npc *NotificationPermissionCreate) SetCreatedAt(t time.Time) *NotificationPermissionCreate {
-	npc.mutation.SetCreatedAt(t)
-	return npc
+func (_c *NotificationPermissionCreate) SetCreatedAt(v time.Time) *NotificationPermissionCreate {
+	_c.mutation.SetCreatedAt(v)
+	return _c
 }
 
 // SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (npc *NotificationPermissionCreate) SetNillableCreatedAt(t *time.Time) *NotificationPermissionCreate {
-	if t != nil {
-		npc.SetCreatedAt(*t)
+func (_c *NotificationPermissionCreate) SetNillableCreatedAt(v *time.Time) *NotificationPermissionCreate {
+	if v != nil {
+		_c.SetCreatedAt(*v)
 	}
-	return npc
+	return _c
 }
 
 // SetID sets the "id" field.
-func (npc *NotificationPermissionCreate) SetID(u uuid.UUID) *NotificationPermissionCreate {
-	npc.mutation.SetID(u)
-	return npc
+func (_c *NotificationPermissionCreate) SetID(v uuid.UUID) *NotificationPermissionCreate {
+	_c.mutation.SetID(v)
+	return _c
 }
 
 // SetNillableID sets the "id" field if the given value is not nil.
-func (npc *NotificationPermissionCreate) SetNillableID(u *uuid.UUID) *NotificationPermissionCreate {
-	if u != nil {
-		npc.SetID(*u)
+func (_c *NotificationPermissionCreate) SetNillableID(v *uuid.UUID) *NotificationPermissionCreate {
+	if v != nil {
+		_c.SetID(*v)
 	}
-	return npc
+	return _c
 }
 
 // AddRoleIDs adds the "roles" edge to the NotificationRole entity by IDs.
-func (npc *NotificationPermissionCreate) AddRoleIDs(ids ...uuid.UUID) *NotificationPermissionCreate {
-	npc.mutation.AddRoleIDs(ids...)
-	return npc
+func (_c *NotificationPermissionCreate) AddRoleIDs(ids ...uuid.UUID) *NotificationPermissionCreate {
+	_c.mutation.AddRoleIDs(ids...)
+	return _c
 }
 
 // AddRoles adds the "roles" edges to the NotificationRole entity.
-func (npc *NotificationPermissionCreate) AddRoles(n ...*NotificationRole) *NotificationPermissionCreate {
-	ids := make([]uuid.UUID, len(n))
-	for i := range n {
-		ids[i] = n[i].ID
+func (_c *NotificationPermissionCreate) AddRoles(v ...*NotificationRole) *NotificationPermissionCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return npc.AddRoleIDs(ids...)
+	return _c.AddRoleIDs(ids...)
 }
 
 // AddNotificationRolePermissionIDs adds the "notification_role_permissions" edge to the NotificationRolePermission entity by IDs.
-func (npc *NotificationPermissionCreate) AddNotificationRolePermissionIDs(ids ...int) *NotificationPermissionCreate {
-	npc.mutation.AddNotificationRolePermissionIDs(ids...)
-	return npc
+func (_c *NotificationPermissionCreate) AddNotificationRolePermissionIDs(ids ...int) *NotificationPermissionCreate {
+	_c.mutation.AddNotificationRolePermissionIDs(ids...)
+	return _c
 }
 
 // AddNotificationRolePermissions adds the "notification_role_permissions" edges to the NotificationRolePermission entity.
-func (npc *NotificationPermissionCreate) AddNotificationRolePermissions(n ...*NotificationRolePermission) *NotificationPermissionCreate {
-	ids := make([]int, len(n))
-	for i := range n {
-		ids[i] = n[i].ID
+func (_c *NotificationPermissionCreate) AddNotificationRolePermissions(v ...*NotificationRolePermission) *NotificationPermissionCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return npc.AddNotificationRolePermissionIDs(ids...)
+	return _c.AddNotificationRolePermissionIDs(ids...)
 }
 
 // Mutation returns the NotificationPermissionMutation object of the builder.
-func (npc *NotificationPermissionCreate) Mutation() *NotificationPermissionMutation {
-	return npc.mutation
+func (_c *NotificationPermissionCreate) Mutation() *NotificationPermissionMutation {
+	return _c.mutation
 }
 
 // Save creates the NotificationPermission in the database.
-func (npc *NotificationPermissionCreate) Save(ctx context.Context) (*NotificationPermission, error) {
-	npc.defaults()
-	return withHooks(ctx, npc.sqlSave, npc.mutation, npc.hooks)
+func (_c *NotificationPermissionCreate) Save(ctx context.Context) (*NotificationPermission, error) {
+	_c.defaults()
+	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.
-func (npc *NotificationPermissionCreate) SaveX(ctx context.Context) *NotificationPermission {
-	v, err := npc.Save(ctx)
+func (_c *NotificationPermissionCreate) SaveX(ctx context.Context) *NotificationPermission {
+	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -157,76 +157,76 @@ func (npc *NotificationPermissionCreate) SaveX(ctx context.Context) *Notificatio
 }
 
 // Exec executes the query.
-func (npc *NotificationPermissionCreate) Exec(ctx context.Context) error {
-	_, err := npc.Save(ctx)
+func (_c *NotificationPermissionCreate) Exec(ctx context.Context) error {
+	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (npc *NotificationPermissionCreate) ExecX(ctx context.Context) {
-	if err := npc.Exec(ctx); err != nil {
+func (_c *NotificationPermissionCreate) ExecX(ctx context.Context) {
+	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (npc *NotificationPermissionCreate) defaults() {
-	if _, ok := npc.mutation.CreatedAt(); !ok {
+func (_c *NotificationPermissionCreate) defaults() {
+	if _, ok := _c.mutation.CreatedAt(); !ok {
 		v := notificationpermission.DefaultCreatedAt()
-		npc.mutation.SetCreatedAt(v)
+		_c.mutation.SetCreatedAt(v)
 	}
-	if _, ok := npc.mutation.ID(); !ok {
+	if _, ok := _c.mutation.ID(); !ok {
 		v := notificationpermission.DefaultID()
-		npc.mutation.SetID(v)
+		_c.mutation.SetID(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (npc *NotificationPermissionCreate) check() error {
-	if _, ok := npc.mutation.PermissionCode(); !ok {
+func (_c *NotificationPermissionCreate) check() error {
+	if _, ok := _c.mutation.PermissionCode(); !ok {
 		return &ValidationError{Name: "permission_code", err: errors.New(`ent: missing required field "NotificationPermission.permission_code"`)}
 	}
-	if v, ok := npc.mutation.PermissionCode(); ok {
+	if v, ok := _c.mutation.PermissionCode(); ok {
 		if err := notificationpermission.PermissionCodeValidator(v); err != nil {
 			return &ValidationError{Name: "permission_code", err: fmt.Errorf(`ent: validator failed for field "NotificationPermission.permission_code": %w`, err)}
 		}
 	}
-	if _, ok := npc.mutation.Name(); !ok {
+	if _, ok := _c.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "NotificationPermission.name"`)}
 	}
-	if v, ok := npc.mutation.Name(); ok {
+	if v, ok := _c.mutation.Name(); ok {
 		if err := notificationpermission.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "NotificationPermission.name": %w`, err)}
 		}
 	}
-	if _, ok := npc.mutation.Module(); !ok {
+	if _, ok := _c.mutation.Module(); !ok {
 		return &ValidationError{Name: "module", err: errors.New(`ent: missing required field "NotificationPermission.module"`)}
 	}
-	if v, ok := npc.mutation.Module(); ok {
+	if v, ok := _c.mutation.Module(); ok {
 		if err := notificationpermission.ModuleValidator(v); err != nil {
 			return &ValidationError{Name: "module", err: fmt.Errorf(`ent: validator failed for field "NotificationPermission.module": %w`, err)}
 		}
 	}
-	if _, ok := npc.mutation.Action(); !ok {
+	if _, ok := _c.mutation.Action(); !ok {
 		return &ValidationError{Name: "action", err: errors.New(`ent: missing required field "NotificationPermission.action"`)}
 	}
-	if v, ok := npc.mutation.Action(); ok {
+	if v, ok := _c.mutation.Action(); ok {
 		if err := notificationpermission.ActionValidator(v); err != nil {
 			return &ValidationError{Name: "action", err: fmt.Errorf(`ent: validator failed for field "NotificationPermission.action": %w`, err)}
 		}
 	}
-	if _, ok := npc.mutation.CreatedAt(); !ok {
+	if _, ok := _c.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "NotificationPermission.created_at"`)}
 	}
 	return nil
 }
 
-func (npc *NotificationPermissionCreate) sqlSave(ctx context.Context) (*NotificationPermission, error) {
-	if err := npc.check(); err != nil {
+func (_c *NotificationPermissionCreate) sqlSave(ctx context.Context) (*NotificationPermission, error) {
+	if err := _c.check(); err != nil {
 		return nil, err
 	}
-	_node, _spec := npc.createSpec()
-	if err := sqlgraph.CreateNode(ctx, npc.driver, _spec); err != nil {
+	_node, _spec := _c.createSpec()
+	if err := sqlgraph.CreateNode(ctx, _c.driver, _spec); err != nil {
 		if sqlgraph.IsConstraintError(err) {
 			err = &ConstraintError{msg: err.Error(), wrap: err}
 		}
@@ -239,50 +239,50 @@ func (npc *NotificationPermissionCreate) sqlSave(ctx context.Context) (*Notifica
 			return nil, err
 		}
 	}
-	npc.mutation.id = &_node.ID
-	npc.mutation.done = true
+	_c.mutation.id = &_node.ID
+	_c.mutation.done = true
 	return _node, nil
 }
 
-func (npc *NotificationPermissionCreate) createSpec() (*NotificationPermission, *sqlgraph.CreateSpec) {
+func (_c *NotificationPermissionCreate) createSpec() (*NotificationPermission, *sqlgraph.CreateSpec) {
 	var (
-		_node = &NotificationPermission{config: npc.config}
+		_node = &NotificationPermission{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(notificationpermission.Table, sqlgraph.NewFieldSpec(notificationpermission.FieldID, field.TypeUUID))
 	)
-	_spec.OnConflict = npc.conflict
-	if id, ok := npc.mutation.ID(); ok {
+	_spec.OnConflict = _c.conflict
+	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
 	}
-	if value, ok := npc.mutation.PermissionCode(); ok {
+	if value, ok := _c.mutation.PermissionCode(); ok {
 		_spec.SetField(notificationpermission.FieldPermissionCode, field.TypeString, value)
 		_node.PermissionCode = value
 	}
-	if value, ok := npc.mutation.Name(); ok {
+	if value, ok := _c.mutation.Name(); ok {
 		_spec.SetField(notificationpermission.FieldName, field.TypeString, value)
 		_node.Name = value
 	}
-	if value, ok := npc.mutation.Module(); ok {
+	if value, ok := _c.mutation.Module(); ok {
 		_spec.SetField(notificationpermission.FieldModule, field.TypeString, value)
 		_node.Module = value
 	}
-	if value, ok := npc.mutation.Action(); ok {
+	if value, ok := _c.mutation.Action(); ok {
 		_spec.SetField(notificationpermission.FieldAction, field.TypeString, value)
 		_node.Action = value
 	}
-	if value, ok := npc.mutation.Resource(); ok {
+	if value, ok := _c.mutation.Resource(); ok {
 		_spec.SetField(notificationpermission.FieldResource, field.TypeString, value)
 		_node.Resource = value
 	}
-	if value, ok := npc.mutation.Description(); ok {
+	if value, ok := _c.mutation.Description(); ok {
 		_spec.SetField(notificationpermission.FieldDescription, field.TypeString, value)
 		_node.Description = value
 	}
-	if value, ok := npc.mutation.CreatedAt(); ok {
+	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(notificationpermission.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
 	}
-	if nodes := npc.mutation.RolesIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.RolesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: true,
@@ -298,7 +298,7 @@ func (npc *NotificationPermissionCreate) createSpec() (*NotificationPermission, 
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := npc.mutation.NotificationRolePermissionsIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.NotificationRolePermissionsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: true,
@@ -333,10 +333,10 @@ func (npc *NotificationPermissionCreate) createSpec() (*NotificationPermission, 
 //			SetPermissionCode(v+v).
 //		}).
 //		Exec(ctx)
-func (npc *NotificationPermissionCreate) OnConflict(opts ...sql.ConflictOption) *NotificationPermissionUpsertOne {
-	npc.conflict = opts
+func (_c *NotificationPermissionCreate) OnConflict(opts ...sql.ConflictOption) *NotificationPermissionUpsertOne {
+	_c.conflict = opts
 	return &NotificationPermissionUpsertOne{
-		create: npc,
+		create: _c,
 	}
 }
 
@@ -346,10 +346,10 @@ func (npc *NotificationPermissionCreate) OnConflict(opts ...sql.ConflictOption) 
 //	client.NotificationPermission.Create().
 //		OnConflict(sql.ConflictColumns(columns...)).
 //		Exec(ctx)
-func (npc *NotificationPermissionCreate) OnConflictColumns(columns ...string) *NotificationPermissionUpsertOne {
-	npc.conflict = append(npc.conflict, sql.ConflictColumns(columns...))
+func (_c *NotificationPermissionCreate) OnConflictColumns(columns ...string) *NotificationPermissionUpsertOne {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
 	return &NotificationPermissionUpsertOne{
-		create: npc,
+		create: _c,
 	}
 }
 
@@ -646,16 +646,16 @@ type NotificationPermissionCreateBulk struct {
 }
 
 // Save creates the NotificationPermission entities in the database.
-func (npcb *NotificationPermissionCreateBulk) Save(ctx context.Context) ([]*NotificationPermission, error) {
-	if npcb.err != nil {
-		return nil, npcb.err
+func (_c *NotificationPermissionCreateBulk) Save(ctx context.Context) ([]*NotificationPermission, error) {
+	if _c.err != nil {
+		return nil, _c.err
 	}
-	specs := make([]*sqlgraph.CreateSpec, len(npcb.builders))
-	nodes := make([]*NotificationPermission, len(npcb.builders))
-	mutators := make([]Mutator, len(npcb.builders))
-	for i := range npcb.builders {
+	specs := make([]*sqlgraph.CreateSpec, len(_c.builders))
+	nodes := make([]*NotificationPermission, len(_c.builders))
+	mutators := make([]Mutator, len(_c.builders))
+	for i := range _c.builders {
 		func(i int, root context.Context) {
-			builder := npcb.builders[i]
+			builder := _c.builders[i]
 			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*NotificationPermissionMutation)
@@ -669,12 +669,12 @@ func (npcb *NotificationPermissionCreateBulk) Save(ctx context.Context) ([]*Noti
 				var err error
 				nodes[i], specs[i] = builder.createSpec()
 				if i < len(mutators)-1 {
-					_, err = mutators[i+1].Mutate(root, npcb.builders[i+1].mutation)
+					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
-					spec.OnConflict = npcb.conflict
+					spec.OnConflict = _c.conflict
 					// Invoke the actual operation on the latest mutation in the chain.
-					if err = sqlgraph.BatchCreate(ctx, npcb.driver, spec); err != nil {
+					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
 							err = &ConstraintError{msg: err.Error(), wrap: err}
 						}
@@ -694,7 +694,7 @@ func (npcb *NotificationPermissionCreateBulk) Save(ctx context.Context) ([]*Noti
 		}(i, ctx)
 	}
 	if len(mutators) > 0 {
-		if _, err := mutators[0].Mutate(ctx, npcb.builders[0].mutation); err != nil {
+		if _, err := mutators[0].Mutate(ctx, _c.builders[0].mutation); err != nil {
 			return nil, err
 		}
 	}
@@ -702,8 +702,8 @@ func (npcb *NotificationPermissionCreateBulk) Save(ctx context.Context) ([]*Noti
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (npcb *NotificationPermissionCreateBulk) SaveX(ctx context.Context) []*NotificationPermission {
-	v, err := npcb.Save(ctx)
+func (_c *NotificationPermissionCreateBulk) SaveX(ctx context.Context) []*NotificationPermission {
+	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -711,14 +711,14 @@ func (npcb *NotificationPermissionCreateBulk) SaveX(ctx context.Context) []*Noti
 }
 
 // Exec executes the query.
-func (npcb *NotificationPermissionCreateBulk) Exec(ctx context.Context) error {
-	_, err := npcb.Save(ctx)
+func (_c *NotificationPermissionCreateBulk) Exec(ctx context.Context) error {
+	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (npcb *NotificationPermissionCreateBulk) ExecX(ctx context.Context) {
-	if err := npcb.Exec(ctx); err != nil {
+func (_c *NotificationPermissionCreateBulk) ExecX(ctx context.Context) {
+	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
@@ -738,10 +738,10 @@ func (npcb *NotificationPermissionCreateBulk) ExecX(ctx context.Context) {
 //			SetPermissionCode(v+v).
 //		}).
 //		Exec(ctx)
-func (npcb *NotificationPermissionCreateBulk) OnConflict(opts ...sql.ConflictOption) *NotificationPermissionUpsertBulk {
-	npcb.conflict = opts
+func (_c *NotificationPermissionCreateBulk) OnConflict(opts ...sql.ConflictOption) *NotificationPermissionUpsertBulk {
+	_c.conflict = opts
 	return &NotificationPermissionUpsertBulk{
-		create: npcb,
+		create: _c,
 	}
 }
 
@@ -751,10 +751,10 @@ func (npcb *NotificationPermissionCreateBulk) OnConflict(opts ...sql.ConflictOpt
 //	client.NotificationPermission.Create().
 //		OnConflict(sql.ConflictColumns(columns...)).
 //		Exec(ctx)
-func (npcb *NotificationPermissionCreateBulk) OnConflictColumns(columns ...string) *NotificationPermissionUpsertBulk {
-	npcb.conflict = append(npcb.conflict, sql.ConflictColumns(columns...))
+func (_c *NotificationPermissionCreateBulk) OnConflictColumns(columns ...string) *NotificationPermissionUpsertBulk {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
 	return &NotificationPermissionUpsertBulk{
-		create: npcb,
+		create: _c,
 	}
 }
 

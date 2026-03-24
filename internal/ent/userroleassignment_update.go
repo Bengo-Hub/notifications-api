@@ -27,122 +27,122 @@ type UserRoleAssignmentUpdate struct {
 }
 
 // Where appends a list predicates to the UserRoleAssignmentUpdate builder.
-func (urau *UserRoleAssignmentUpdate) Where(ps ...predicate.UserRoleAssignment) *UserRoleAssignmentUpdate {
-	urau.mutation.Where(ps...)
-	return urau
+func (_u *UserRoleAssignmentUpdate) Where(ps ...predicate.UserRoleAssignment) *UserRoleAssignmentUpdate {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // SetTenantID sets the "tenant_id" field.
-func (urau *UserRoleAssignmentUpdate) SetTenantID(u uuid.UUID) *UserRoleAssignmentUpdate {
-	urau.mutation.SetTenantID(u)
-	return urau
+func (_u *UserRoleAssignmentUpdate) SetTenantID(v uuid.UUID) *UserRoleAssignmentUpdate {
+	_u.mutation.SetTenantID(v)
+	return _u
 }
 
 // SetNillableTenantID sets the "tenant_id" field if the given value is not nil.
-func (urau *UserRoleAssignmentUpdate) SetNillableTenantID(u *uuid.UUID) *UserRoleAssignmentUpdate {
-	if u != nil {
-		urau.SetTenantID(*u)
+func (_u *UserRoleAssignmentUpdate) SetNillableTenantID(v *uuid.UUID) *UserRoleAssignmentUpdate {
+	if v != nil {
+		_u.SetTenantID(*v)
 	}
-	return urau
+	return _u
 }
 
 // SetUserID sets the "user_id" field.
-func (urau *UserRoleAssignmentUpdate) SetUserID(u uuid.UUID) *UserRoleAssignmentUpdate {
-	urau.mutation.SetUserID(u)
-	return urau
+func (_u *UserRoleAssignmentUpdate) SetUserID(v uuid.UUID) *UserRoleAssignmentUpdate {
+	_u.mutation.SetUserID(v)
+	return _u
 }
 
 // SetNillableUserID sets the "user_id" field if the given value is not nil.
-func (urau *UserRoleAssignmentUpdate) SetNillableUserID(u *uuid.UUID) *UserRoleAssignmentUpdate {
-	if u != nil {
-		urau.SetUserID(*u)
+func (_u *UserRoleAssignmentUpdate) SetNillableUserID(v *uuid.UUID) *UserRoleAssignmentUpdate {
+	if v != nil {
+		_u.SetUserID(*v)
 	}
-	return urau
+	return _u
 }
 
 // SetRoleID sets the "role_id" field.
-func (urau *UserRoleAssignmentUpdate) SetRoleID(u uuid.UUID) *UserRoleAssignmentUpdate {
-	urau.mutation.SetRoleID(u)
-	return urau
+func (_u *UserRoleAssignmentUpdate) SetRoleID(v uuid.UUID) *UserRoleAssignmentUpdate {
+	_u.mutation.SetRoleID(v)
+	return _u
 }
 
 // SetNillableRoleID sets the "role_id" field if the given value is not nil.
-func (urau *UserRoleAssignmentUpdate) SetNillableRoleID(u *uuid.UUID) *UserRoleAssignmentUpdate {
-	if u != nil {
-		urau.SetRoleID(*u)
+func (_u *UserRoleAssignmentUpdate) SetNillableRoleID(v *uuid.UUID) *UserRoleAssignmentUpdate {
+	if v != nil {
+		_u.SetRoleID(*v)
 	}
-	return urau
+	return _u
 }
 
 // SetAssignedBy sets the "assigned_by" field.
-func (urau *UserRoleAssignmentUpdate) SetAssignedBy(u uuid.UUID) *UserRoleAssignmentUpdate {
-	urau.mutation.SetAssignedBy(u)
-	return urau
+func (_u *UserRoleAssignmentUpdate) SetAssignedBy(v uuid.UUID) *UserRoleAssignmentUpdate {
+	_u.mutation.SetAssignedBy(v)
+	return _u
 }
 
 // SetNillableAssignedBy sets the "assigned_by" field if the given value is not nil.
-func (urau *UserRoleAssignmentUpdate) SetNillableAssignedBy(u *uuid.UUID) *UserRoleAssignmentUpdate {
-	if u != nil {
-		urau.SetAssignedBy(*u)
+func (_u *UserRoleAssignmentUpdate) SetNillableAssignedBy(v *uuid.UUID) *UserRoleAssignmentUpdate {
+	if v != nil {
+		_u.SetAssignedBy(*v)
 	}
-	return urau
+	return _u
 }
 
 // SetExpiresAt sets the "expires_at" field.
-func (urau *UserRoleAssignmentUpdate) SetExpiresAt(t time.Time) *UserRoleAssignmentUpdate {
-	urau.mutation.SetExpiresAt(t)
-	return urau
+func (_u *UserRoleAssignmentUpdate) SetExpiresAt(v time.Time) *UserRoleAssignmentUpdate {
+	_u.mutation.SetExpiresAt(v)
+	return _u
 }
 
 // SetNillableExpiresAt sets the "expires_at" field if the given value is not nil.
-func (urau *UserRoleAssignmentUpdate) SetNillableExpiresAt(t *time.Time) *UserRoleAssignmentUpdate {
-	if t != nil {
-		urau.SetExpiresAt(*t)
+func (_u *UserRoleAssignmentUpdate) SetNillableExpiresAt(v *time.Time) *UserRoleAssignmentUpdate {
+	if v != nil {
+		_u.SetExpiresAt(*v)
 	}
-	return urau
+	return _u
 }
 
 // ClearExpiresAt clears the value of the "expires_at" field.
-func (urau *UserRoleAssignmentUpdate) ClearExpiresAt() *UserRoleAssignmentUpdate {
-	urau.mutation.ClearExpiresAt()
-	return urau
+func (_u *UserRoleAssignmentUpdate) ClearExpiresAt() *UserRoleAssignmentUpdate {
+	_u.mutation.ClearExpiresAt()
+	return _u
 }
 
 // SetUser sets the "user" edge to the User entity.
-func (urau *UserRoleAssignmentUpdate) SetUser(u *User) *UserRoleAssignmentUpdate {
-	return urau.SetUserID(u.ID)
+func (_u *UserRoleAssignmentUpdate) SetUser(v *User) *UserRoleAssignmentUpdate {
+	return _u.SetUserID(v.ID)
 }
 
 // SetRole sets the "role" edge to the NotificationRole entity.
-func (urau *UserRoleAssignmentUpdate) SetRole(n *NotificationRole) *UserRoleAssignmentUpdate {
-	return urau.SetRoleID(n.ID)
+func (_u *UserRoleAssignmentUpdate) SetRole(v *NotificationRole) *UserRoleAssignmentUpdate {
+	return _u.SetRoleID(v.ID)
 }
 
 // Mutation returns the UserRoleAssignmentMutation object of the builder.
-func (urau *UserRoleAssignmentUpdate) Mutation() *UserRoleAssignmentMutation {
-	return urau.mutation
+func (_u *UserRoleAssignmentUpdate) Mutation() *UserRoleAssignmentMutation {
+	return _u.mutation
 }
 
 // ClearUser clears the "user" edge to the User entity.
-func (urau *UserRoleAssignmentUpdate) ClearUser() *UserRoleAssignmentUpdate {
-	urau.mutation.ClearUser()
-	return urau
+func (_u *UserRoleAssignmentUpdate) ClearUser() *UserRoleAssignmentUpdate {
+	_u.mutation.ClearUser()
+	return _u
 }
 
 // ClearRole clears the "role" edge to the NotificationRole entity.
-func (urau *UserRoleAssignmentUpdate) ClearRole() *UserRoleAssignmentUpdate {
-	urau.mutation.ClearRole()
-	return urau
+func (_u *UserRoleAssignmentUpdate) ClearRole() *UserRoleAssignmentUpdate {
+	_u.mutation.ClearRole()
+	return _u
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
-func (urau *UserRoleAssignmentUpdate) Save(ctx context.Context) (int, error) {
-	return withHooks(ctx, urau.sqlSave, urau.mutation, urau.hooks)
+func (_u *UserRoleAssignmentUpdate) Save(ctx context.Context) (int, error) {
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (urau *UserRoleAssignmentUpdate) SaveX(ctx context.Context) int {
-	affected, err := urau.Save(ctx)
+func (_u *UserRoleAssignmentUpdate) SaveX(ctx context.Context) int {
+	affected, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -150,60 +150,60 @@ func (urau *UserRoleAssignmentUpdate) SaveX(ctx context.Context) int {
 }
 
 // Exec executes the query.
-func (urau *UserRoleAssignmentUpdate) Exec(ctx context.Context) error {
-	_, err := urau.Save(ctx)
+func (_u *UserRoleAssignmentUpdate) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (urau *UserRoleAssignmentUpdate) ExecX(ctx context.Context) {
-	if err := urau.Exec(ctx); err != nil {
+func (_u *UserRoleAssignmentUpdate) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (urau *UserRoleAssignmentUpdate) check() error {
-	if _, ok := urau.mutation.UserID(); urau.mutation.UserCleared() && !ok {
+func (_u *UserRoleAssignmentUpdate) check() error {
+	if _u.mutation.UserCleared() && len(_u.mutation.UserIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "UserRoleAssignment.user"`)
 	}
-	if _, ok := urau.mutation.RoleID(); urau.mutation.RoleCleared() && !ok {
+	if _u.mutation.RoleCleared() && len(_u.mutation.RoleIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "UserRoleAssignment.role"`)
 	}
 	return nil
 }
 
 // Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
-func (urau *UserRoleAssignmentUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *UserRoleAssignmentUpdate {
-	urau.modifiers = append(urau.modifiers, modifiers...)
-	return urau
+func (_u *UserRoleAssignmentUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *UserRoleAssignmentUpdate {
+	_u.modifiers = append(_u.modifiers, modifiers...)
+	return _u
 }
 
-func (urau *UserRoleAssignmentUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	if err := urau.check(); err != nil {
-		return n, err
+func (_u *UserRoleAssignmentUpdate) sqlSave(ctx context.Context) (_node int, err error) {
+	if err := _u.check(); err != nil {
+		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(userroleassignment.Table, userroleassignment.Columns, sqlgraph.NewFieldSpec(userroleassignment.FieldID, field.TypeUUID))
-	if ps := urau.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := urau.mutation.TenantID(); ok {
+	if value, ok := _u.mutation.TenantID(); ok {
 		_spec.SetField(userroleassignment.FieldTenantID, field.TypeUUID, value)
 	}
-	if value, ok := urau.mutation.AssignedBy(); ok {
+	if value, ok := _u.mutation.AssignedBy(); ok {
 		_spec.SetField(userroleassignment.FieldAssignedBy, field.TypeUUID, value)
 	}
-	if value, ok := urau.mutation.ExpiresAt(); ok {
+	if value, ok := _u.mutation.ExpiresAt(); ok {
 		_spec.SetField(userroleassignment.FieldExpiresAt, field.TypeTime, value)
 	}
-	if urau.mutation.ExpiresAtCleared() {
+	if _u.mutation.ExpiresAtCleared() {
 		_spec.ClearField(userroleassignment.FieldExpiresAt, field.TypeTime)
 	}
-	if urau.mutation.UserCleared() {
+	if _u.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -216,7 +216,7 @@ func (urau *UserRoleAssignmentUpdate) sqlSave(ctx context.Context) (n int, err e
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := urau.mutation.UserIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.UserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -232,7 +232,7 @@ func (urau *UserRoleAssignmentUpdate) sqlSave(ctx context.Context) (n int, err e
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if urau.mutation.RoleCleared() {
+	if _u.mutation.RoleCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -245,7 +245,7 @@ func (urau *UserRoleAssignmentUpdate) sqlSave(ctx context.Context) (n int, err e
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := urau.mutation.RoleIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.RoleIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -261,8 +261,8 @@ func (urau *UserRoleAssignmentUpdate) sqlSave(ctx context.Context) (n int, err e
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	_spec.AddModifiers(urau.modifiers...)
-	if n, err = sqlgraph.UpdateNodes(ctx, urau.driver, _spec); err != nil {
+	_spec.AddModifiers(_u.modifiers...)
+	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{userroleassignment.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -270,8 +270,8 @@ func (urau *UserRoleAssignmentUpdate) sqlSave(ctx context.Context) (n int, err e
 		}
 		return 0, err
 	}
-	urau.mutation.done = true
-	return n, nil
+	_u.mutation.done = true
+	return _node, nil
 }
 
 // UserRoleAssignmentUpdateOne is the builder for updating a single UserRoleAssignment entity.
@@ -284,129 +284,129 @@ type UserRoleAssignmentUpdateOne struct {
 }
 
 // SetTenantID sets the "tenant_id" field.
-func (urauo *UserRoleAssignmentUpdateOne) SetTenantID(u uuid.UUID) *UserRoleAssignmentUpdateOne {
-	urauo.mutation.SetTenantID(u)
-	return urauo
+func (_u *UserRoleAssignmentUpdateOne) SetTenantID(v uuid.UUID) *UserRoleAssignmentUpdateOne {
+	_u.mutation.SetTenantID(v)
+	return _u
 }
 
 // SetNillableTenantID sets the "tenant_id" field if the given value is not nil.
-func (urauo *UserRoleAssignmentUpdateOne) SetNillableTenantID(u *uuid.UUID) *UserRoleAssignmentUpdateOne {
-	if u != nil {
-		urauo.SetTenantID(*u)
+func (_u *UserRoleAssignmentUpdateOne) SetNillableTenantID(v *uuid.UUID) *UserRoleAssignmentUpdateOne {
+	if v != nil {
+		_u.SetTenantID(*v)
 	}
-	return urauo
+	return _u
 }
 
 // SetUserID sets the "user_id" field.
-func (urauo *UserRoleAssignmentUpdateOne) SetUserID(u uuid.UUID) *UserRoleAssignmentUpdateOne {
-	urauo.mutation.SetUserID(u)
-	return urauo
+func (_u *UserRoleAssignmentUpdateOne) SetUserID(v uuid.UUID) *UserRoleAssignmentUpdateOne {
+	_u.mutation.SetUserID(v)
+	return _u
 }
 
 // SetNillableUserID sets the "user_id" field if the given value is not nil.
-func (urauo *UserRoleAssignmentUpdateOne) SetNillableUserID(u *uuid.UUID) *UserRoleAssignmentUpdateOne {
-	if u != nil {
-		urauo.SetUserID(*u)
+func (_u *UserRoleAssignmentUpdateOne) SetNillableUserID(v *uuid.UUID) *UserRoleAssignmentUpdateOne {
+	if v != nil {
+		_u.SetUserID(*v)
 	}
-	return urauo
+	return _u
 }
 
 // SetRoleID sets the "role_id" field.
-func (urauo *UserRoleAssignmentUpdateOne) SetRoleID(u uuid.UUID) *UserRoleAssignmentUpdateOne {
-	urauo.mutation.SetRoleID(u)
-	return urauo
+func (_u *UserRoleAssignmentUpdateOne) SetRoleID(v uuid.UUID) *UserRoleAssignmentUpdateOne {
+	_u.mutation.SetRoleID(v)
+	return _u
 }
 
 // SetNillableRoleID sets the "role_id" field if the given value is not nil.
-func (urauo *UserRoleAssignmentUpdateOne) SetNillableRoleID(u *uuid.UUID) *UserRoleAssignmentUpdateOne {
-	if u != nil {
-		urauo.SetRoleID(*u)
+func (_u *UserRoleAssignmentUpdateOne) SetNillableRoleID(v *uuid.UUID) *UserRoleAssignmentUpdateOne {
+	if v != nil {
+		_u.SetRoleID(*v)
 	}
-	return urauo
+	return _u
 }
 
 // SetAssignedBy sets the "assigned_by" field.
-func (urauo *UserRoleAssignmentUpdateOne) SetAssignedBy(u uuid.UUID) *UserRoleAssignmentUpdateOne {
-	urauo.mutation.SetAssignedBy(u)
-	return urauo
+func (_u *UserRoleAssignmentUpdateOne) SetAssignedBy(v uuid.UUID) *UserRoleAssignmentUpdateOne {
+	_u.mutation.SetAssignedBy(v)
+	return _u
 }
 
 // SetNillableAssignedBy sets the "assigned_by" field if the given value is not nil.
-func (urauo *UserRoleAssignmentUpdateOne) SetNillableAssignedBy(u *uuid.UUID) *UserRoleAssignmentUpdateOne {
-	if u != nil {
-		urauo.SetAssignedBy(*u)
+func (_u *UserRoleAssignmentUpdateOne) SetNillableAssignedBy(v *uuid.UUID) *UserRoleAssignmentUpdateOne {
+	if v != nil {
+		_u.SetAssignedBy(*v)
 	}
-	return urauo
+	return _u
 }
 
 // SetExpiresAt sets the "expires_at" field.
-func (urauo *UserRoleAssignmentUpdateOne) SetExpiresAt(t time.Time) *UserRoleAssignmentUpdateOne {
-	urauo.mutation.SetExpiresAt(t)
-	return urauo
+func (_u *UserRoleAssignmentUpdateOne) SetExpiresAt(v time.Time) *UserRoleAssignmentUpdateOne {
+	_u.mutation.SetExpiresAt(v)
+	return _u
 }
 
 // SetNillableExpiresAt sets the "expires_at" field if the given value is not nil.
-func (urauo *UserRoleAssignmentUpdateOne) SetNillableExpiresAt(t *time.Time) *UserRoleAssignmentUpdateOne {
-	if t != nil {
-		urauo.SetExpiresAt(*t)
+func (_u *UserRoleAssignmentUpdateOne) SetNillableExpiresAt(v *time.Time) *UserRoleAssignmentUpdateOne {
+	if v != nil {
+		_u.SetExpiresAt(*v)
 	}
-	return urauo
+	return _u
 }
 
 // ClearExpiresAt clears the value of the "expires_at" field.
-func (urauo *UserRoleAssignmentUpdateOne) ClearExpiresAt() *UserRoleAssignmentUpdateOne {
-	urauo.mutation.ClearExpiresAt()
-	return urauo
+func (_u *UserRoleAssignmentUpdateOne) ClearExpiresAt() *UserRoleAssignmentUpdateOne {
+	_u.mutation.ClearExpiresAt()
+	return _u
 }
 
 // SetUser sets the "user" edge to the User entity.
-func (urauo *UserRoleAssignmentUpdateOne) SetUser(u *User) *UserRoleAssignmentUpdateOne {
-	return urauo.SetUserID(u.ID)
+func (_u *UserRoleAssignmentUpdateOne) SetUser(v *User) *UserRoleAssignmentUpdateOne {
+	return _u.SetUserID(v.ID)
 }
 
 // SetRole sets the "role" edge to the NotificationRole entity.
-func (urauo *UserRoleAssignmentUpdateOne) SetRole(n *NotificationRole) *UserRoleAssignmentUpdateOne {
-	return urauo.SetRoleID(n.ID)
+func (_u *UserRoleAssignmentUpdateOne) SetRole(v *NotificationRole) *UserRoleAssignmentUpdateOne {
+	return _u.SetRoleID(v.ID)
 }
 
 // Mutation returns the UserRoleAssignmentMutation object of the builder.
-func (urauo *UserRoleAssignmentUpdateOne) Mutation() *UserRoleAssignmentMutation {
-	return urauo.mutation
+func (_u *UserRoleAssignmentUpdateOne) Mutation() *UserRoleAssignmentMutation {
+	return _u.mutation
 }
 
 // ClearUser clears the "user" edge to the User entity.
-func (urauo *UserRoleAssignmentUpdateOne) ClearUser() *UserRoleAssignmentUpdateOne {
-	urauo.mutation.ClearUser()
-	return urauo
+func (_u *UserRoleAssignmentUpdateOne) ClearUser() *UserRoleAssignmentUpdateOne {
+	_u.mutation.ClearUser()
+	return _u
 }
 
 // ClearRole clears the "role" edge to the NotificationRole entity.
-func (urauo *UserRoleAssignmentUpdateOne) ClearRole() *UserRoleAssignmentUpdateOne {
-	urauo.mutation.ClearRole()
-	return urauo
+func (_u *UserRoleAssignmentUpdateOne) ClearRole() *UserRoleAssignmentUpdateOne {
+	_u.mutation.ClearRole()
+	return _u
 }
 
 // Where appends a list predicates to the UserRoleAssignmentUpdate builder.
-func (urauo *UserRoleAssignmentUpdateOne) Where(ps ...predicate.UserRoleAssignment) *UserRoleAssignmentUpdateOne {
-	urauo.mutation.Where(ps...)
-	return urauo
+func (_u *UserRoleAssignmentUpdateOne) Where(ps ...predicate.UserRoleAssignment) *UserRoleAssignmentUpdateOne {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
-func (urauo *UserRoleAssignmentUpdateOne) Select(field string, fields ...string) *UserRoleAssignmentUpdateOne {
-	urauo.fields = append([]string{field}, fields...)
-	return urauo
+func (_u *UserRoleAssignmentUpdateOne) Select(field string, fields ...string) *UserRoleAssignmentUpdateOne {
+	_u.fields = append([]string{field}, fields...)
+	return _u
 }
 
 // Save executes the query and returns the updated UserRoleAssignment entity.
-func (urauo *UserRoleAssignmentUpdateOne) Save(ctx context.Context) (*UserRoleAssignment, error) {
-	return withHooks(ctx, urauo.sqlSave, urauo.mutation, urauo.hooks)
+func (_u *UserRoleAssignmentUpdateOne) Save(ctx context.Context) (*UserRoleAssignment, error) {
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (urauo *UserRoleAssignmentUpdateOne) SaveX(ctx context.Context) *UserRoleAssignment {
-	node, err := urauo.Save(ctx)
+func (_u *UserRoleAssignmentUpdateOne) SaveX(ctx context.Context) *UserRoleAssignment {
+	node, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -414,46 +414,46 @@ func (urauo *UserRoleAssignmentUpdateOne) SaveX(ctx context.Context) *UserRoleAs
 }
 
 // Exec executes the query on the entity.
-func (urauo *UserRoleAssignmentUpdateOne) Exec(ctx context.Context) error {
-	_, err := urauo.Save(ctx)
+func (_u *UserRoleAssignmentUpdateOne) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (urauo *UserRoleAssignmentUpdateOne) ExecX(ctx context.Context) {
-	if err := urauo.Exec(ctx); err != nil {
+func (_u *UserRoleAssignmentUpdateOne) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (urauo *UserRoleAssignmentUpdateOne) check() error {
-	if _, ok := urauo.mutation.UserID(); urauo.mutation.UserCleared() && !ok {
+func (_u *UserRoleAssignmentUpdateOne) check() error {
+	if _u.mutation.UserCleared() && len(_u.mutation.UserIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "UserRoleAssignment.user"`)
 	}
-	if _, ok := urauo.mutation.RoleID(); urauo.mutation.RoleCleared() && !ok {
+	if _u.mutation.RoleCleared() && len(_u.mutation.RoleIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "UserRoleAssignment.role"`)
 	}
 	return nil
 }
 
 // Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
-func (urauo *UserRoleAssignmentUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *UserRoleAssignmentUpdateOne {
-	urauo.modifiers = append(urauo.modifiers, modifiers...)
-	return urauo
+func (_u *UserRoleAssignmentUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *UserRoleAssignmentUpdateOne {
+	_u.modifiers = append(_u.modifiers, modifiers...)
+	return _u
 }
 
-func (urauo *UserRoleAssignmentUpdateOne) sqlSave(ctx context.Context) (_node *UserRoleAssignment, err error) {
-	if err := urauo.check(); err != nil {
+func (_u *UserRoleAssignmentUpdateOne) sqlSave(ctx context.Context) (_node *UserRoleAssignment, err error) {
+	if err := _u.check(); err != nil {
 		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(userroleassignment.Table, userroleassignment.Columns, sqlgraph.NewFieldSpec(userroleassignment.FieldID, field.TypeUUID))
-	id, ok := urauo.mutation.ID()
+	id, ok := _u.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "UserRoleAssignment.id" for update`)}
 	}
 	_spec.Node.ID.Value = id
-	if fields := urauo.fields; len(fields) > 0 {
+	if fields := _u.fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		_spec.Node.Columns = append(_spec.Node.Columns, userroleassignment.FieldID)
 		for _, f := range fields {
@@ -465,26 +465,26 @@ func (urauo *UserRoleAssignmentUpdateOne) sqlSave(ctx context.Context) (_node *U
 			}
 		}
 	}
-	if ps := urauo.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := urauo.mutation.TenantID(); ok {
+	if value, ok := _u.mutation.TenantID(); ok {
 		_spec.SetField(userroleassignment.FieldTenantID, field.TypeUUID, value)
 	}
-	if value, ok := urauo.mutation.AssignedBy(); ok {
+	if value, ok := _u.mutation.AssignedBy(); ok {
 		_spec.SetField(userroleassignment.FieldAssignedBy, field.TypeUUID, value)
 	}
-	if value, ok := urauo.mutation.ExpiresAt(); ok {
+	if value, ok := _u.mutation.ExpiresAt(); ok {
 		_spec.SetField(userroleassignment.FieldExpiresAt, field.TypeTime, value)
 	}
-	if urauo.mutation.ExpiresAtCleared() {
+	if _u.mutation.ExpiresAtCleared() {
 		_spec.ClearField(userroleassignment.FieldExpiresAt, field.TypeTime)
 	}
-	if urauo.mutation.UserCleared() {
+	if _u.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -497,7 +497,7 @@ func (urauo *UserRoleAssignmentUpdateOne) sqlSave(ctx context.Context) (_node *U
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := urauo.mutation.UserIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.UserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -513,7 +513,7 @@ func (urauo *UserRoleAssignmentUpdateOne) sqlSave(ctx context.Context) (_node *U
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if urauo.mutation.RoleCleared() {
+	if _u.mutation.RoleCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -526,7 +526,7 @@ func (urauo *UserRoleAssignmentUpdateOne) sqlSave(ctx context.Context) (_node *U
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := urauo.mutation.RoleIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.RoleIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -542,11 +542,11 @@ func (urauo *UserRoleAssignmentUpdateOne) sqlSave(ctx context.Context) (_node *U
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	_spec.AddModifiers(urauo.modifiers...)
-	_node = &UserRoleAssignment{config: urauo.config}
+	_spec.AddModifiers(_u.modifiers...)
+	_node = &UserRoleAssignment{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues
-	if err = sqlgraph.UpdateNode(ctx, urauo.driver, _spec); err != nil {
+	if err = sqlgraph.UpdateNode(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{userroleassignment.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -554,6 +554,6 @@ func (urauo *UserRoleAssignmentUpdateOne) sqlSave(ctx context.Context) (_node *U
 		}
 		return nil, err
 	}
-	urauo.mutation.done = true
+	_u.mutation.done = true
 	return _node, nil
 }

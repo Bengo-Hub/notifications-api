@@ -20,56 +20,56 @@ type TenantCreditDelete struct {
 }
 
 // Where appends a list predicates to the TenantCreditDelete builder.
-func (tcd *TenantCreditDelete) Where(ps ...predicate.TenantCredit) *TenantCreditDelete {
-	tcd.mutation.Where(ps...)
-	return tcd
+func (_d *TenantCreditDelete) Where(ps ...predicate.TenantCredit) *TenantCreditDelete {
+	_d.mutation.Where(ps...)
+	return _d
 }
 
 // Exec executes the deletion query and returns how many vertices were deleted.
-func (tcd *TenantCreditDelete) Exec(ctx context.Context) (int, error) {
-	return withHooks(ctx, tcd.sqlExec, tcd.mutation, tcd.hooks)
+func (_d *TenantCreditDelete) Exec(ctx context.Context) (int, error) {
+	return withHooks(ctx, _d.sqlExec, _d.mutation, _d.hooks)
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (tcd *TenantCreditDelete) ExecX(ctx context.Context) int {
-	n, err := tcd.Exec(ctx)
+func (_d *TenantCreditDelete) ExecX(ctx context.Context) int {
+	n, err := _d.Exec(ctx)
 	if err != nil {
 		panic(err)
 	}
 	return n
 }
 
-func (tcd *TenantCreditDelete) sqlExec(ctx context.Context) (int, error) {
+func (_d *TenantCreditDelete) sqlExec(ctx context.Context) (int, error) {
 	_spec := sqlgraph.NewDeleteSpec(tenantcredit.Table, sqlgraph.NewFieldSpec(tenantcredit.FieldID, field.TypeUUID))
-	if ps := tcd.mutation.predicates; len(ps) > 0 {
+	if ps := _d.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	affected, err := sqlgraph.DeleteNodes(ctx, tcd.driver, _spec)
+	affected, err := sqlgraph.DeleteNodes(ctx, _d.driver, _spec)
 	if err != nil && sqlgraph.IsConstraintError(err) {
 		err = &ConstraintError{msg: err.Error(), wrap: err}
 	}
-	tcd.mutation.done = true
+	_d.mutation.done = true
 	return affected, err
 }
 
 // TenantCreditDeleteOne is the builder for deleting a single TenantCredit entity.
 type TenantCreditDeleteOne struct {
-	tcd *TenantCreditDelete
+	_d *TenantCreditDelete
 }
 
 // Where appends a list predicates to the TenantCreditDelete builder.
-func (tcdo *TenantCreditDeleteOne) Where(ps ...predicate.TenantCredit) *TenantCreditDeleteOne {
-	tcdo.tcd.mutation.Where(ps...)
-	return tcdo
+func (_d *TenantCreditDeleteOne) Where(ps ...predicate.TenantCredit) *TenantCreditDeleteOne {
+	_d._d.mutation.Where(ps...)
+	return _d
 }
 
 // Exec executes the deletion query.
-func (tcdo *TenantCreditDeleteOne) Exec(ctx context.Context) error {
-	n, err := tcdo.tcd.Exec(ctx)
+func (_d *TenantCreditDeleteOne) Exec(ctx context.Context) error {
+	n, err := _d._d.Exec(ctx)
 	switch {
 	case err != nil:
 		return err
@@ -81,8 +81,8 @@ func (tcdo *TenantCreditDeleteOne) Exec(ctx context.Context) error {
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (tcdo *TenantCreditDeleteOne) ExecX(ctx context.Context) {
-	if err := tcdo.Exec(ctx); err != nil {
+func (_d *TenantCreditDeleteOne) ExecX(ctx context.Context) {
+	if err := _d.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

@@ -25,127 +25,127 @@ type ServiceConfigUpdate struct {
 }
 
 // Where appends a list predicates to the ServiceConfigUpdate builder.
-func (scu *ServiceConfigUpdate) Where(ps ...predicate.ServiceConfig) *ServiceConfigUpdate {
-	scu.mutation.Where(ps...)
-	return scu
+func (_u *ServiceConfigUpdate) Where(ps ...predicate.ServiceConfig) *ServiceConfigUpdate {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // SetTenantID sets the "tenant_id" field.
-func (scu *ServiceConfigUpdate) SetTenantID(u uuid.UUID) *ServiceConfigUpdate {
-	scu.mutation.SetTenantID(u)
-	return scu
+func (_u *ServiceConfigUpdate) SetTenantID(v uuid.UUID) *ServiceConfigUpdate {
+	_u.mutation.SetTenantID(v)
+	return _u
 }
 
 // SetNillableTenantID sets the "tenant_id" field if the given value is not nil.
-func (scu *ServiceConfigUpdate) SetNillableTenantID(u *uuid.UUID) *ServiceConfigUpdate {
-	if u != nil {
-		scu.SetTenantID(*u)
+func (_u *ServiceConfigUpdate) SetNillableTenantID(v *uuid.UUID) *ServiceConfigUpdate {
+	if v != nil {
+		_u.SetTenantID(*v)
 	}
-	return scu
+	return _u
 }
 
 // ClearTenantID clears the value of the "tenant_id" field.
-func (scu *ServiceConfigUpdate) ClearTenantID() *ServiceConfigUpdate {
-	scu.mutation.ClearTenantID()
-	return scu
+func (_u *ServiceConfigUpdate) ClearTenantID() *ServiceConfigUpdate {
+	_u.mutation.ClearTenantID()
+	return _u
 }
 
 // SetConfigKey sets the "config_key" field.
-func (scu *ServiceConfigUpdate) SetConfigKey(s string) *ServiceConfigUpdate {
-	scu.mutation.SetConfigKey(s)
-	return scu
+func (_u *ServiceConfigUpdate) SetConfigKey(v string) *ServiceConfigUpdate {
+	_u.mutation.SetConfigKey(v)
+	return _u
 }
 
 // SetNillableConfigKey sets the "config_key" field if the given value is not nil.
-func (scu *ServiceConfigUpdate) SetNillableConfigKey(s *string) *ServiceConfigUpdate {
-	if s != nil {
-		scu.SetConfigKey(*s)
+func (_u *ServiceConfigUpdate) SetNillableConfigKey(v *string) *ServiceConfigUpdate {
+	if v != nil {
+		_u.SetConfigKey(*v)
 	}
-	return scu
+	return _u
 }
 
 // SetConfigValue sets the "config_value" field.
-func (scu *ServiceConfigUpdate) SetConfigValue(s string) *ServiceConfigUpdate {
-	scu.mutation.SetConfigValue(s)
-	return scu
+func (_u *ServiceConfigUpdate) SetConfigValue(v string) *ServiceConfigUpdate {
+	_u.mutation.SetConfigValue(v)
+	return _u
 }
 
 // SetNillableConfigValue sets the "config_value" field if the given value is not nil.
-func (scu *ServiceConfigUpdate) SetNillableConfigValue(s *string) *ServiceConfigUpdate {
-	if s != nil {
-		scu.SetConfigValue(*s)
+func (_u *ServiceConfigUpdate) SetNillableConfigValue(v *string) *ServiceConfigUpdate {
+	if v != nil {
+		_u.SetConfigValue(*v)
 	}
-	return scu
+	return _u
 }
 
 // SetConfigType sets the "config_type" field.
-func (scu *ServiceConfigUpdate) SetConfigType(s string) *ServiceConfigUpdate {
-	scu.mutation.SetConfigType(s)
-	return scu
+func (_u *ServiceConfigUpdate) SetConfigType(v string) *ServiceConfigUpdate {
+	_u.mutation.SetConfigType(v)
+	return _u
 }
 
 // SetNillableConfigType sets the "config_type" field if the given value is not nil.
-func (scu *ServiceConfigUpdate) SetNillableConfigType(s *string) *ServiceConfigUpdate {
-	if s != nil {
-		scu.SetConfigType(*s)
+func (_u *ServiceConfigUpdate) SetNillableConfigType(v *string) *ServiceConfigUpdate {
+	if v != nil {
+		_u.SetConfigType(*v)
 	}
-	return scu
+	return _u
 }
 
 // SetDescription sets the "description" field.
-func (scu *ServiceConfigUpdate) SetDescription(s string) *ServiceConfigUpdate {
-	scu.mutation.SetDescription(s)
-	return scu
+func (_u *ServiceConfigUpdate) SetDescription(v string) *ServiceConfigUpdate {
+	_u.mutation.SetDescription(v)
+	return _u
 }
 
 // SetNillableDescription sets the "description" field if the given value is not nil.
-func (scu *ServiceConfigUpdate) SetNillableDescription(s *string) *ServiceConfigUpdate {
-	if s != nil {
-		scu.SetDescription(*s)
+func (_u *ServiceConfigUpdate) SetNillableDescription(v *string) *ServiceConfigUpdate {
+	if v != nil {
+		_u.SetDescription(*v)
 	}
-	return scu
+	return _u
 }
 
 // ClearDescription clears the value of the "description" field.
-func (scu *ServiceConfigUpdate) ClearDescription() *ServiceConfigUpdate {
-	scu.mutation.ClearDescription()
-	return scu
+func (_u *ServiceConfigUpdate) ClearDescription() *ServiceConfigUpdate {
+	_u.mutation.ClearDescription()
+	return _u
 }
 
 // SetIsSecret sets the "is_secret" field.
-func (scu *ServiceConfigUpdate) SetIsSecret(b bool) *ServiceConfigUpdate {
-	scu.mutation.SetIsSecret(b)
-	return scu
+func (_u *ServiceConfigUpdate) SetIsSecret(v bool) *ServiceConfigUpdate {
+	_u.mutation.SetIsSecret(v)
+	return _u
 }
 
 // SetNillableIsSecret sets the "is_secret" field if the given value is not nil.
-func (scu *ServiceConfigUpdate) SetNillableIsSecret(b *bool) *ServiceConfigUpdate {
-	if b != nil {
-		scu.SetIsSecret(*b)
+func (_u *ServiceConfigUpdate) SetNillableIsSecret(v *bool) *ServiceConfigUpdate {
+	if v != nil {
+		_u.SetIsSecret(*v)
 	}
-	return scu
+	return _u
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (scu *ServiceConfigUpdate) SetUpdatedAt(t time.Time) *ServiceConfigUpdate {
-	scu.mutation.SetUpdatedAt(t)
-	return scu
+func (_u *ServiceConfigUpdate) SetUpdatedAt(v time.Time) *ServiceConfigUpdate {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
 }
 
 // Mutation returns the ServiceConfigMutation object of the builder.
-func (scu *ServiceConfigUpdate) Mutation() *ServiceConfigMutation {
-	return scu.mutation
+func (_u *ServiceConfigUpdate) Mutation() *ServiceConfigMutation {
+	return _u.mutation
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
-func (scu *ServiceConfigUpdate) Save(ctx context.Context) (int, error) {
-	scu.defaults()
-	return withHooks(ctx, scu.sqlSave, scu.mutation, scu.hooks)
+func (_u *ServiceConfigUpdate) Save(ctx context.Context) (int, error) {
+	_u.defaults()
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (scu *ServiceConfigUpdate) SaveX(ctx context.Context) int {
-	affected, err := scu.Save(ctx)
+func (_u *ServiceConfigUpdate) SaveX(ctx context.Context) int {
+	affected, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -153,34 +153,34 @@ func (scu *ServiceConfigUpdate) SaveX(ctx context.Context) int {
 }
 
 // Exec executes the query.
-func (scu *ServiceConfigUpdate) Exec(ctx context.Context) error {
-	_, err := scu.Save(ctx)
+func (_u *ServiceConfigUpdate) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (scu *ServiceConfigUpdate) ExecX(ctx context.Context) {
-	if err := scu.Exec(ctx); err != nil {
+func (_u *ServiceConfigUpdate) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (scu *ServiceConfigUpdate) defaults() {
-	if _, ok := scu.mutation.UpdatedAt(); !ok {
+func (_u *ServiceConfigUpdate) defaults() {
+	if _, ok := _u.mutation.UpdatedAt(); !ok {
 		v := serviceconfig.UpdateDefaultUpdatedAt()
-		scu.mutation.SetUpdatedAt(v)
+		_u.mutation.SetUpdatedAt(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (scu *ServiceConfigUpdate) check() error {
-	if v, ok := scu.mutation.ConfigKey(); ok {
+func (_u *ServiceConfigUpdate) check() error {
+	if v, ok := _u.mutation.ConfigKey(); ok {
 		if err := serviceconfig.ConfigKeyValidator(v); err != nil {
 			return &ValidationError{Name: "config_key", err: fmt.Errorf(`ent: validator failed for field "ServiceConfig.config_key": %w`, err)}
 		}
 	}
-	if v, ok := scu.mutation.ConfigValue(); ok {
+	if v, ok := _u.mutation.ConfigValue(); ok {
 		if err := serviceconfig.ConfigValueValidator(v); err != nil {
 			return &ValidationError{Name: "config_value", err: fmt.Errorf(`ent: validator failed for field "ServiceConfig.config_value": %w`, err)}
 		}
@@ -189,52 +189,52 @@ func (scu *ServiceConfigUpdate) check() error {
 }
 
 // Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
-func (scu *ServiceConfigUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *ServiceConfigUpdate {
-	scu.modifiers = append(scu.modifiers, modifiers...)
-	return scu
+func (_u *ServiceConfigUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *ServiceConfigUpdate {
+	_u.modifiers = append(_u.modifiers, modifiers...)
+	return _u
 }
 
-func (scu *ServiceConfigUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	if err := scu.check(); err != nil {
-		return n, err
+func (_u *ServiceConfigUpdate) sqlSave(ctx context.Context) (_node int, err error) {
+	if err := _u.check(); err != nil {
+		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(serviceconfig.Table, serviceconfig.Columns, sqlgraph.NewFieldSpec(serviceconfig.FieldID, field.TypeUUID))
-	if ps := scu.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := scu.mutation.TenantID(); ok {
+	if value, ok := _u.mutation.TenantID(); ok {
 		_spec.SetField(serviceconfig.FieldTenantID, field.TypeUUID, value)
 	}
-	if scu.mutation.TenantIDCleared() {
+	if _u.mutation.TenantIDCleared() {
 		_spec.ClearField(serviceconfig.FieldTenantID, field.TypeUUID)
 	}
-	if value, ok := scu.mutation.ConfigKey(); ok {
+	if value, ok := _u.mutation.ConfigKey(); ok {
 		_spec.SetField(serviceconfig.FieldConfigKey, field.TypeString, value)
 	}
-	if value, ok := scu.mutation.ConfigValue(); ok {
+	if value, ok := _u.mutation.ConfigValue(); ok {
 		_spec.SetField(serviceconfig.FieldConfigValue, field.TypeString, value)
 	}
-	if value, ok := scu.mutation.ConfigType(); ok {
+	if value, ok := _u.mutation.ConfigType(); ok {
 		_spec.SetField(serviceconfig.FieldConfigType, field.TypeString, value)
 	}
-	if value, ok := scu.mutation.Description(); ok {
+	if value, ok := _u.mutation.Description(); ok {
 		_spec.SetField(serviceconfig.FieldDescription, field.TypeString, value)
 	}
-	if scu.mutation.DescriptionCleared() {
+	if _u.mutation.DescriptionCleared() {
 		_spec.ClearField(serviceconfig.FieldDescription, field.TypeString)
 	}
-	if value, ok := scu.mutation.IsSecret(); ok {
+	if value, ok := _u.mutation.IsSecret(); ok {
 		_spec.SetField(serviceconfig.FieldIsSecret, field.TypeBool, value)
 	}
-	if value, ok := scu.mutation.UpdatedAt(); ok {
+	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(serviceconfig.FieldUpdatedAt, field.TypeTime, value)
 	}
-	_spec.AddModifiers(scu.modifiers...)
-	if n, err = sqlgraph.UpdateNodes(ctx, scu.driver, _spec); err != nil {
+	_spec.AddModifiers(_u.modifiers...)
+	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{serviceconfig.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -242,8 +242,8 @@ func (scu *ServiceConfigUpdate) sqlSave(ctx context.Context) (n int, err error) 
 		}
 		return 0, err
 	}
-	scu.mutation.done = true
-	return n, nil
+	_u.mutation.done = true
+	return _node, nil
 }
 
 // ServiceConfigUpdateOne is the builder for updating a single ServiceConfig entity.
@@ -256,134 +256,134 @@ type ServiceConfigUpdateOne struct {
 }
 
 // SetTenantID sets the "tenant_id" field.
-func (scuo *ServiceConfigUpdateOne) SetTenantID(u uuid.UUID) *ServiceConfigUpdateOne {
-	scuo.mutation.SetTenantID(u)
-	return scuo
+func (_u *ServiceConfigUpdateOne) SetTenantID(v uuid.UUID) *ServiceConfigUpdateOne {
+	_u.mutation.SetTenantID(v)
+	return _u
 }
 
 // SetNillableTenantID sets the "tenant_id" field if the given value is not nil.
-func (scuo *ServiceConfigUpdateOne) SetNillableTenantID(u *uuid.UUID) *ServiceConfigUpdateOne {
-	if u != nil {
-		scuo.SetTenantID(*u)
+func (_u *ServiceConfigUpdateOne) SetNillableTenantID(v *uuid.UUID) *ServiceConfigUpdateOne {
+	if v != nil {
+		_u.SetTenantID(*v)
 	}
-	return scuo
+	return _u
 }
 
 // ClearTenantID clears the value of the "tenant_id" field.
-func (scuo *ServiceConfigUpdateOne) ClearTenantID() *ServiceConfigUpdateOne {
-	scuo.mutation.ClearTenantID()
-	return scuo
+func (_u *ServiceConfigUpdateOne) ClearTenantID() *ServiceConfigUpdateOne {
+	_u.mutation.ClearTenantID()
+	return _u
 }
 
 // SetConfigKey sets the "config_key" field.
-func (scuo *ServiceConfigUpdateOne) SetConfigKey(s string) *ServiceConfigUpdateOne {
-	scuo.mutation.SetConfigKey(s)
-	return scuo
+func (_u *ServiceConfigUpdateOne) SetConfigKey(v string) *ServiceConfigUpdateOne {
+	_u.mutation.SetConfigKey(v)
+	return _u
 }
 
 // SetNillableConfigKey sets the "config_key" field if the given value is not nil.
-func (scuo *ServiceConfigUpdateOne) SetNillableConfigKey(s *string) *ServiceConfigUpdateOne {
-	if s != nil {
-		scuo.SetConfigKey(*s)
+func (_u *ServiceConfigUpdateOne) SetNillableConfigKey(v *string) *ServiceConfigUpdateOne {
+	if v != nil {
+		_u.SetConfigKey(*v)
 	}
-	return scuo
+	return _u
 }
 
 // SetConfigValue sets the "config_value" field.
-func (scuo *ServiceConfigUpdateOne) SetConfigValue(s string) *ServiceConfigUpdateOne {
-	scuo.mutation.SetConfigValue(s)
-	return scuo
+func (_u *ServiceConfigUpdateOne) SetConfigValue(v string) *ServiceConfigUpdateOne {
+	_u.mutation.SetConfigValue(v)
+	return _u
 }
 
 // SetNillableConfigValue sets the "config_value" field if the given value is not nil.
-func (scuo *ServiceConfigUpdateOne) SetNillableConfigValue(s *string) *ServiceConfigUpdateOne {
-	if s != nil {
-		scuo.SetConfigValue(*s)
+func (_u *ServiceConfigUpdateOne) SetNillableConfigValue(v *string) *ServiceConfigUpdateOne {
+	if v != nil {
+		_u.SetConfigValue(*v)
 	}
-	return scuo
+	return _u
 }
 
 // SetConfigType sets the "config_type" field.
-func (scuo *ServiceConfigUpdateOne) SetConfigType(s string) *ServiceConfigUpdateOne {
-	scuo.mutation.SetConfigType(s)
-	return scuo
+func (_u *ServiceConfigUpdateOne) SetConfigType(v string) *ServiceConfigUpdateOne {
+	_u.mutation.SetConfigType(v)
+	return _u
 }
 
 // SetNillableConfigType sets the "config_type" field if the given value is not nil.
-func (scuo *ServiceConfigUpdateOne) SetNillableConfigType(s *string) *ServiceConfigUpdateOne {
-	if s != nil {
-		scuo.SetConfigType(*s)
+func (_u *ServiceConfigUpdateOne) SetNillableConfigType(v *string) *ServiceConfigUpdateOne {
+	if v != nil {
+		_u.SetConfigType(*v)
 	}
-	return scuo
+	return _u
 }
 
 // SetDescription sets the "description" field.
-func (scuo *ServiceConfigUpdateOne) SetDescription(s string) *ServiceConfigUpdateOne {
-	scuo.mutation.SetDescription(s)
-	return scuo
+func (_u *ServiceConfigUpdateOne) SetDescription(v string) *ServiceConfigUpdateOne {
+	_u.mutation.SetDescription(v)
+	return _u
 }
 
 // SetNillableDescription sets the "description" field if the given value is not nil.
-func (scuo *ServiceConfigUpdateOne) SetNillableDescription(s *string) *ServiceConfigUpdateOne {
-	if s != nil {
-		scuo.SetDescription(*s)
+func (_u *ServiceConfigUpdateOne) SetNillableDescription(v *string) *ServiceConfigUpdateOne {
+	if v != nil {
+		_u.SetDescription(*v)
 	}
-	return scuo
+	return _u
 }
 
 // ClearDescription clears the value of the "description" field.
-func (scuo *ServiceConfigUpdateOne) ClearDescription() *ServiceConfigUpdateOne {
-	scuo.mutation.ClearDescription()
-	return scuo
+func (_u *ServiceConfigUpdateOne) ClearDescription() *ServiceConfigUpdateOne {
+	_u.mutation.ClearDescription()
+	return _u
 }
 
 // SetIsSecret sets the "is_secret" field.
-func (scuo *ServiceConfigUpdateOne) SetIsSecret(b bool) *ServiceConfigUpdateOne {
-	scuo.mutation.SetIsSecret(b)
-	return scuo
+func (_u *ServiceConfigUpdateOne) SetIsSecret(v bool) *ServiceConfigUpdateOne {
+	_u.mutation.SetIsSecret(v)
+	return _u
 }
 
 // SetNillableIsSecret sets the "is_secret" field if the given value is not nil.
-func (scuo *ServiceConfigUpdateOne) SetNillableIsSecret(b *bool) *ServiceConfigUpdateOne {
-	if b != nil {
-		scuo.SetIsSecret(*b)
+func (_u *ServiceConfigUpdateOne) SetNillableIsSecret(v *bool) *ServiceConfigUpdateOne {
+	if v != nil {
+		_u.SetIsSecret(*v)
 	}
-	return scuo
+	return _u
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (scuo *ServiceConfigUpdateOne) SetUpdatedAt(t time.Time) *ServiceConfigUpdateOne {
-	scuo.mutation.SetUpdatedAt(t)
-	return scuo
+func (_u *ServiceConfigUpdateOne) SetUpdatedAt(v time.Time) *ServiceConfigUpdateOne {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
 }
 
 // Mutation returns the ServiceConfigMutation object of the builder.
-func (scuo *ServiceConfigUpdateOne) Mutation() *ServiceConfigMutation {
-	return scuo.mutation
+func (_u *ServiceConfigUpdateOne) Mutation() *ServiceConfigMutation {
+	return _u.mutation
 }
 
 // Where appends a list predicates to the ServiceConfigUpdate builder.
-func (scuo *ServiceConfigUpdateOne) Where(ps ...predicate.ServiceConfig) *ServiceConfigUpdateOne {
-	scuo.mutation.Where(ps...)
-	return scuo
+func (_u *ServiceConfigUpdateOne) Where(ps ...predicate.ServiceConfig) *ServiceConfigUpdateOne {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
-func (scuo *ServiceConfigUpdateOne) Select(field string, fields ...string) *ServiceConfigUpdateOne {
-	scuo.fields = append([]string{field}, fields...)
-	return scuo
+func (_u *ServiceConfigUpdateOne) Select(field string, fields ...string) *ServiceConfigUpdateOne {
+	_u.fields = append([]string{field}, fields...)
+	return _u
 }
 
 // Save executes the query and returns the updated ServiceConfig entity.
-func (scuo *ServiceConfigUpdateOne) Save(ctx context.Context) (*ServiceConfig, error) {
-	scuo.defaults()
-	return withHooks(ctx, scuo.sqlSave, scuo.mutation, scuo.hooks)
+func (_u *ServiceConfigUpdateOne) Save(ctx context.Context) (*ServiceConfig, error) {
+	_u.defaults()
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (scuo *ServiceConfigUpdateOne) SaveX(ctx context.Context) *ServiceConfig {
-	node, err := scuo.Save(ctx)
+func (_u *ServiceConfigUpdateOne) SaveX(ctx context.Context) *ServiceConfig {
+	node, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -391,34 +391,34 @@ func (scuo *ServiceConfigUpdateOne) SaveX(ctx context.Context) *ServiceConfig {
 }
 
 // Exec executes the query on the entity.
-func (scuo *ServiceConfigUpdateOne) Exec(ctx context.Context) error {
-	_, err := scuo.Save(ctx)
+func (_u *ServiceConfigUpdateOne) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (scuo *ServiceConfigUpdateOne) ExecX(ctx context.Context) {
-	if err := scuo.Exec(ctx); err != nil {
+func (_u *ServiceConfigUpdateOne) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (scuo *ServiceConfigUpdateOne) defaults() {
-	if _, ok := scuo.mutation.UpdatedAt(); !ok {
+func (_u *ServiceConfigUpdateOne) defaults() {
+	if _, ok := _u.mutation.UpdatedAt(); !ok {
 		v := serviceconfig.UpdateDefaultUpdatedAt()
-		scuo.mutation.SetUpdatedAt(v)
+		_u.mutation.SetUpdatedAt(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (scuo *ServiceConfigUpdateOne) check() error {
-	if v, ok := scuo.mutation.ConfigKey(); ok {
+func (_u *ServiceConfigUpdateOne) check() error {
+	if v, ok := _u.mutation.ConfigKey(); ok {
 		if err := serviceconfig.ConfigKeyValidator(v); err != nil {
 			return &ValidationError{Name: "config_key", err: fmt.Errorf(`ent: validator failed for field "ServiceConfig.config_key": %w`, err)}
 		}
 	}
-	if v, ok := scuo.mutation.ConfigValue(); ok {
+	if v, ok := _u.mutation.ConfigValue(); ok {
 		if err := serviceconfig.ConfigValueValidator(v); err != nil {
 			return &ValidationError{Name: "config_value", err: fmt.Errorf(`ent: validator failed for field "ServiceConfig.config_value": %w`, err)}
 		}
@@ -427,22 +427,22 @@ func (scuo *ServiceConfigUpdateOne) check() error {
 }
 
 // Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
-func (scuo *ServiceConfigUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *ServiceConfigUpdateOne {
-	scuo.modifiers = append(scuo.modifiers, modifiers...)
-	return scuo
+func (_u *ServiceConfigUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *ServiceConfigUpdateOne {
+	_u.modifiers = append(_u.modifiers, modifiers...)
+	return _u
 }
 
-func (scuo *ServiceConfigUpdateOne) sqlSave(ctx context.Context) (_node *ServiceConfig, err error) {
-	if err := scuo.check(); err != nil {
+func (_u *ServiceConfigUpdateOne) sqlSave(ctx context.Context) (_node *ServiceConfig, err error) {
+	if err := _u.check(); err != nil {
 		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(serviceconfig.Table, serviceconfig.Columns, sqlgraph.NewFieldSpec(serviceconfig.FieldID, field.TypeUUID))
-	id, ok := scuo.mutation.ID()
+	id, ok := _u.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "ServiceConfig.id" for update`)}
 	}
 	_spec.Node.ID.Value = id
-	if fields := scuo.fields; len(fields) > 0 {
+	if fields := _u.fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		_spec.Node.Columns = append(_spec.Node.Columns, serviceconfig.FieldID)
 		for _, f := range fields {
@@ -454,45 +454,45 @@ func (scuo *ServiceConfigUpdateOne) sqlSave(ctx context.Context) (_node *Service
 			}
 		}
 	}
-	if ps := scuo.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := scuo.mutation.TenantID(); ok {
+	if value, ok := _u.mutation.TenantID(); ok {
 		_spec.SetField(serviceconfig.FieldTenantID, field.TypeUUID, value)
 	}
-	if scuo.mutation.TenantIDCleared() {
+	if _u.mutation.TenantIDCleared() {
 		_spec.ClearField(serviceconfig.FieldTenantID, field.TypeUUID)
 	}
-	if value, ok := scuo.mutation.ConfigKey(); ok {
+	if value, ok := _u.mutation.ConfigKey(); ok {
 		_spec.SetField(serviceconfig.FieldConfigKey, field.TypeString, value)
 	}
-	if value, ok := scuo.mutation.ConfigValue(); ok {
+	if value, ok := _u.mutation.ConfigValue(); ok {
 		_spec.SetField(serviceconfig.FieldConfigValue, field.TypeString, value)
 	}
-	if value, ok := scuo.mutation.ConfigType(); ok {
+	if value, ok := _u.mutation.ConfigType(); ok {
 		_spec.SetField(serviceconfig.FieldConfigType, field.TypeString, value)
 	}
-	if value, ok := scuo.mutation.Description(); ok {
+	if value, ok := _u.mutation.Description(); ok {
 		_spec.SetField(serviceconfig.FieldDescription, field.TypeString, value)
 	}
-	if scuo.mutation.DescriptionCleared() {
+	if _u.mutation.DescriptionCleared() {
 		_spec.ClearField(serviceconfig.FieldDescription, field.TypeString)
 	}
-	if value, ok := scuo.mutation.IsSecret(); ok {
+	if value, ok := _u.mutation.IsSecret(); ok {
 		_spec.SetField(serviceconfig.FieldIsSecret, field.TypeBool, value)
 	}
-	if value, ok := scuo.mutation.UpdatedAt(); ok {
+	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(serviceconfig.FieldUpdatedAt, field.TypeTime, value)
 	}
-	_spec.AddModifiers(scuo.modifiers...)
-	_node = &ServiceConfig{config: scuo.config}
+	_spec.AddModifiers(_u.modifiers...)
+	_node = &ServiceConfig{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues
-	if err = sqlgraph.UpdateNode(ctx, scuo.driver, _spec); err != nil {
+	if err = sqlgraph.UpdateNode(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{serviceconfig.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -500,6 +500,6 @@ func (scuo *ServiceConfigUpdateOne) sqlSave(ctx context.Context) (_node *Service
 		}
 		return nil, err
 	}
-	scuo.mutation.done = true
+	_u.mutation.done = true
 	return _node, nil
 }

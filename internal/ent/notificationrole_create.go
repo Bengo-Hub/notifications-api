@@ -28,152 +28,152 @@ type NotificationRoleCreate struct {
 }
 
 // SetTenantID sets the "tenant_id" field.
-func (nrc *NotificationRoleCreate) SetTenantID(u uuid.UUID) *NotificationRoleCreate {
-	nrc.mutation.SetTenantID(u)
-	return nrc
+func (_c *NotificationRoleCreate) SetTenantID(v uuid.UUID) *NotificationRoleCreate {
+	_c.mutation.SetTenantID(v)
+	return _c
 }
 
 // SetRoleCode sets the "role_code" field.
-func (nrc *NotificationRoleCreate) SetRoleCode(s string) *NotificationRoleCreate {
-	nrc.mutation.SetRoleCode(s)
-	return nrc
+func (_c *NotificationRoleCreate) SetRoleCode(v string) *NotificationRoleCreate {
+	_c.mutation.SetRoleCode(v)
+	return _c
 }
 
 // SetName sets the "name" field.
-func (nrc *NotificationRoleCreate) SetName(s string) *NotificationRoleCreate {
-	nrc.mutation.SetName(s)
-	return nrc
+func (_c *NotificationRoleCreate) SetName(v string) *NotificationRoleCreate {
+	_c.mutation.SetName(v)
+	return _c
 }
 
 // SetDescription sets the "description" field.
-func (nrc *NotificationRoleCreate) SetDescription(s string) *NotificationRoleCreate {
-	nrc.mutation.SetDescription(s)
-	return nrc
+func (_c *NotificationRoleCreate) SetDescription(v string) *NotificationRoleCreate {
+	_c.mutation.SetDescription(v)
+	return _c
 }
 
 // SetNillableDescription sets the "description" field if the given value is not nil.
-func (nrc *NotificationRoleCreate) SetNillableDescription(s *string) *NotificationRoleCreate {
-	if s != nil {
-		nrc.SetDescription(*s)
+func (_c *NotificationRoleCreate) SetNillableDescription(v *string) *NotificationRoleCreate {
+	if v != nil {
+		_c.SetDescription(*v)
 	}
-	return nrc
+	return _c
 }
 
 // SetIsSystemRole sets the "is_system_role" field.
-func (nrc *NotificationRoleCreate) SetIsSystemRole(b bool) *NotificationRoleCreate {
-	nrc.mutation.SetIsSystemRole(b)
-	return nrc
+func (_c *NotificationRoleCreate) SetIsSystemRole(v bool) *NotificationRoleCreate {
+	_c.mutation.SetIsSystemRole(v)
+	return _c
 }
 
 // SetNillableIsSystemRole sets the "is_system_role" field if the given value is not nil.
-func (nrc *NotificationRoleCreate) SetNillableIsSystemRole(b *bool) *NotificationRoleCreate {
-	if b != nil {
-		nrc.SetIsSystemRole(*b)
+func (_c *NotificationRoleCreate) SetNillableIsSystemRole(v *bool) *NotificationRoleCreate {
+	if v != nil {
+		_c.SetIsSystemRole(*v)
 	}
-	return nrc
+	return _c
 }
 
 // SetCreatedAt sets the "created_at" field.
-func (nrc *NotificationRoleCreate) SetCreatedAt(t time.Time) *NotificationRoleCreate {
-	nrc.mutation.SetCreatedAt(t)
-	return nrc
+func (_c *NotificationRoleCreate) SetCreatedAt(v time.Time) *NotificationRoleCreate {
+	_c.mutation.SetCreatedAt(v)
+	return _c
 }
 
 // SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (nrc *NotificationRoleCreate) SetNillableCreatedAt(t *time.Time) *NotificationRoleCreate {
-	if t != nil {
-		nrc.SetCreatedAt(*t)
+func (_c *NotificationRoleCreate) SetNillableCreatedAt(v *time.Time) *NotificationRoleCreate {
+	if v != nil {
+		_c.SetCreatedAt(*v)
 	}
-	return nrc
+	return _c
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (nrc *NotificationRoleCreate) SetUpdatedAt(t time.Time) *NotificationRoleCreate {
-	nrc.mutation.SetUpdatedAt(t)
-	return nrc
+func (_c *NotificationRoleCreate) SetUpdatedAt(v time.Time) *NotificationRoleCreate {
+	_c.mutation.SetUpdatedAt(v)
+	return _c
 }
 
 // SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
-func (nrc *NotificationRoleCreate) SetNillableUpdatedAt(t *time.Time) *NotificationRoleCreate {
-	if t != nil {
-		nrc.SetUpdatedAt(*t)
+func (_c *NotificationRoleCreate) SetNillableUpdatedAt(v *time.Time) *NotificationRoleCreate {
+	if v != nil {
+		_c.SetUpdatedAt(*v)
 	}
-	return nrc
+	return _c
 }
 
 // SetID sets the "id" field.
-func (nrc *NotificationRoleCreate) SetID(u uuid.UUID) *NotificationRoleCreate {
-	nrc.mutation.SetID(u)
-	return nrc
+func (_c *NotificationRoleCreate) SetID(v uuid.UUID) *NotificationRoleCreate {
+	_c.mutation.SetID(v)
+	return _c
 }
 
 // SetNillableID sets the "id" field if the given value is not nil.
-func (nrc *NotificationRoleCreate) SetNillableID(u *uuid.UUID) *NotificationRoleCreate {
-	if u != nil {
-		nrc.SetID(*u)
+func (_c *NotificationRoleCreate) SetNillableID(v *uuid.UUID) *NotificationRoleCreate {
+	if v != nil {
+		_c.SetID(*v)
 	}
-	return nrc
+	return _c
 }
 
 // AddPermissionIDs adds the "permissions" edge to the NotificationPermission entity by IDs.
-func (nrc *NotificationRoleCreate) AddPermissionIDs(ids ...uuid.UUID) *NotificationRoleCreate {
-	nrc.mutation.AddPermissionIDs(ids...)
-	return nrc
+func (_c *NotificationRoleCreate) AddPermissionIDs(ids ...uuid.UUID) *NotificationRoleCreate {
+	_c.mutation.AddPermissionIDs(ids...)
+	return _c
 }
 
 // AddPermissions adds the "permissions" edges to the NotificationPermission entity.
-func (nrc *NotificationRoleCreate) AddPermissions(n ...*NotificationPermission) *NotificationRoleCreate {
-	ids := make([]uuid.UUID, len(n))
-	for i := range n {
-		ids[i] = n[i].ID
+func (_c *NotificationRoleCreate) AddPermissions(v ...*NotificationPermission) *NotificationRoleCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return nrc.AddPermissionIDs(ids...)
+	return _c.AddPermissionIDs(ids...)
 }
 
 // AddUserAssignmentIDs adds the "user_assignments" edge to the UserRoleAssignment entity by IDs.
-func (nrc *NotificationRoleCreate) AddUserAssignmentIDs(ids ...uuid.UUID) *NotificationRoleCreate {
-	nrc.mutation.AddUserAssignmentIDs(ids...)
-	return nrc
+func (_c *NotificationRoleCreate) AddUserAssignmentIDs(ids ...uuid.UUID) *NotificationRoleCreate {
+	_c.mutation.AddUserAssignmentIDs(ids...)
+	return _c
 }
 
 // AddUserAssignments adds the "user_assignments" edges to the UserRoleAssignment entity.
-func (nrc *NotificationRoleCreate) AddUserAssignments(u ...*UserRoleAssignment) *NotificationRoleCreate {
-	ids := make([]uuid.UUID, len(u))
-	for i := range u {
-		ids[i] = u[i].ID
+func (_c *NotificationRoleCreate) AddUserAssignments(v ...*UserRoleAssignment) *NotificationRoleCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return nrc.AddUserAssignmentIDs(ids...)
+	return _c.AddUserAssignmentIDs(ids...)
 }
 
 // AddNotificationRolePermissionIDs adds the "notification_role_permissions" edge to the NotificationRolePermission entity by IDs.
-func (nrc *NotificationRoleCreate) AddNotificationRolePermissionIDs(ids ...int) *NotificationRoleCreate {
-	nrc.mutation.AddNotificationRolePermissionIDs(ids...)
-	return nrc
+func (_c *NotificationRoleCreate) AddNotificationRolePermissionIDs(ids ...int) *NotificationRoleCreate {
+	_c.mutation.AddNotificationRolePermissionIDs(ids...)
+	return _c
 }
 
 // AddNotificationRolePermissions adds the "notification_role_permissions" edges to the NotificationRolePermission entity.
-func (nrc *NotificationRoleCreate) AddNotificationRolePermissions(n ...*NotificationRolePermission) *NotificationRoleCreate {
-	ids := make([]int, len(n))
-	for i := range n {
-		ids[i] = n[i].ID
+func (_c *NotificationRoleCreate) AddNotificationRolePermissions(v ...*NotificationRolePermission) *NotificationRoleCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return nrc.AddNotificationRolePermissionIDs(ids...)
+	return _c.AddNotificationRolePermissionIDs(ids...)
 }
 
 // Mutation returns the NotificationRoleMutation object of the builder.
-func (nrc *NotificationRoleCreate) Mutation() *NotificationRoleMutation {
-	return nrc.mutation
+func (_c *NotificationRoleCreate) Mutation() *NotificationRoleMutation {
+	return _c.mutation
 }
 
 // Save creates the NotificationRole in the database.
-func (nrc *NotificationRoleCreate) Save(ctx context.Context) (*NotificationRole, error) {
-	nrc.defaults()
-	return withHooks(ctx, nrc.sqlSave, nrc.mutation, nrc.hooks)
+func (_c *NotificationRoleCreate) Save(ctx context.Context) (*NotificationRole, error) {
+	_c.defaults()
+	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.
-func (nrc *NotificationRoleCreate) SaveX(ctx context.Context) *NotificationRole {
-	v, err := nrc.Save(ctx)
+func (_c *NotificationRoleCreate) SaveX(ctx context.Context) *NotificationRole {
+	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -181,77 +181,77 @@ func (nrc *NotificationRoleCreate) SaveX(ctx context.Context) *NotificationRole 
 }
 
 // Exec executes the query.
-func (nrc *NotificationRoleCreate) Exec(ctx context.Context) error {
-	_, err := nrc.Save(ctx)
+func (_c *NotificationRoleCreate) Exec(ctx context.Context) error {
+	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (nrc *NotificationRoleCreate) ExecX(ctx context.Context) {
-	if err := nrc.Exec(ctx); err != nil {
+func (_c *NotificationRoleCreate) ExecX(ctx context.Context) {
+	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (nrc *NotificationRoleCreate) defaults() {
-	if _, ok := nrc.mutation.IsSystemRole(); !ok {
+func (_c *NotificationRoleCreate) defaults() {
+	if _, ok := _c.mutation.IsSystemRole(); !ok {
 		v := notificationrole.DefaultIsSystemRole
-		nrc.mutation.SetIsSystemRole(v)
+		_c.mutation.SetIsSystemRole(v)
 	}
-	if _, ok := nrc.mutation.CreatedAt(); !ok {
+	if _, ok := _c.mutation.CreatedAt(); !ok {
 		v := notificationrole.DefaultCreatedAt()
-		nrc.mutation.SetCreatedAt(v)
+		_c.mutation.SetCreatedAt(v)
 	}
-	if _, ok := nrc.mutation.UpdatedAt(); !ok {
+	if _, ok := _c.mutation.UpdatedAt(); !ok {
 		v := notificationrole.DefaultUpdatedAt()
-		nrc.mutation.SetUpdatedAt(v)
+		_c.mutation.SetUpdatedAt(v)
 	}
-	if _, ok := nrc.mutation.ID(); !ok {
+	if _, ok := _c.mutation.ID(); !ok {
 		v := notificationrole.DefaultID()
-		nrc.mutation.SetID(v)
+		_c.mutation.SetID(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (nrc *NotificationRoleCreate) check() error {
-	if _, ok := nrc.mutation.TenantID(); !ok {
+func (_c *NotificationRoleCreate) check() error {
+	if _, ok := _c.mutation.TenantID(); !ok {
 		return &ValidationError{Name: "tenant_id", err: errors.New(`ent: missing required field "NotificationRole.tenant_id"`)}
 	}
-	if _, ok := nrc.mutation.RoleCode(); !ok {
+	if _, ok := _c.mutation.RoleCode(); !ok {
 		return &ValidationError{Name: "role_code", err: errors.New(`ent: missing required field "NotificationRole.role_code"`)}
 	}
-	if v, ok := nrc.mutation.RoleCode(); ok {
+	if v, ok := _c.mutation.RoleCode(); ok {
 		if err := notificationrole.RoleCodeValidator(v); err != nil {
 			return &ValidationError{Name: "role_code", err: fmt.Errorf(`ent: validator failed for field "NotificationRole.role_code": %w`, err)}
 		}
 	}
-	if _, ok := nrc.mutation.Name(); !ok {
+	if _, ok := _c.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "NotificationRole.name"`)}
 	}
-	if v, ok := nrc.mutation.Name(); ok {
+	if v, ok := _c.mutation.Name(); ok {
 		if err := notificationrole.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "NotificationRole.name": %w`, err)}
 		}
 	}
-	if _, ok := nrc.mutation.IsSystemRole(); !ok {
+	if _, ok := _c.mutation.IsSystemRole(); !ok {
 		return &ValidationError{Name: "is_system_role", err: errors.New(`ent: missing required field "NotificationRole.is_system_role"`)}
 	}
-	if _, ok := nrc.mutation.CreatedAt(); !ok {
+	if _, ok := _c.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "NotificationRole.created_at"`)}
 	}
-	if _, ok := nrc.mutation.UpdatedAt(); !ok {
+	if _, ok := _c.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "NotificationRole.updated_at"`)}
 	}
 	return nil
 }
 
-func (nrc *NotificationRoleCreate) sqlSave(ctx context.Context) (*NotificationRole, error) {
-	if err := nrc.check(); err != nil {
+func (_c *NotificationRoleCreate) sqlSave(ctx context.Context) (*NotificationRole, error) {
+	if err := _c.check(); err != nil {
 		return nil, err
 	}
-	_node, _spec := nrc.createSpec()
-	if err := sqlgraph.CreateNode(ctx, nrc.driver, _spec); err != nil {
+	_node, _spec := _c.createSpec()
+	if err := sqlgraph.CreateNode(ctx, _c.driver, _spec); err != nil {
 		if sqlgraph.IsConstraintError(err) {
 			err = &ConstraintError{msg: err.Error(), wrap: err}
 		}
@@ -264,50 +264,50 @@ func (nrc *NotificationRoleCreate) sqlSave(ctx context.Context) (*NotificationRo
 			return nil, err
 		}
 	}
-	nrc.mutation.id = &_node.ID
-	nrc.mutation.done = true
+	_c.mutation.id = &_node.ID
+	_c.mutation.done = true
 	return _node, nil
 }
 
-func (nrc *NotificationRoleCreate) createSpec() (*NotificationRole, *sqlgraph.CreateSpec) {
+func (_c *NotificationRoleCreate) createSpec() (*NotificationRole, *sqlgraph.CreateSpec) {
 	var (
-		_node = &NotificationRole{config: nrc.config}
+		_node = &NotificationRole{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(notificationrole.Table, sqlgraph.NewFieldSpec(notificationrole.FieldID, field.TypeUUID))
 	)
-	_spec.OnConflict = nrc.conflict
-	if id, ok := nrc.mutation.ID(); ok {
+	_spec.OnConflict = _c.conflict
+	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
 	}
-	if value, ok := nrc.mutation.TenantID(); ok {
+	if value, ok := _c.mutation.TenantID(); ok {
 		_spec.SetField(notificationrole.FieldTenantID, field.TypeUUID, value)
 		_node.TenantID = value
 	}
-	if value, ok := nrc.mutation.RoleCode(); ok {
+	if value, ok := _c.mutation.RoleCode(); ok {
 		_spec.SetField(notificationrole.FieldRoleCode, field.TypeString, value)
 		_node.RoleCode = value
 	}
-	if value, ok := nrc.mutation.Name(); ok {
+	if value, ok := _c.mutation.Name(); ok {
 		_spec.SetField(notificationrole.FieldName, field.TypeString, value)
 		_node.Name = value
 	}
-	if value, ok := nrc.mutation.Description(); ok {
+	if value, ok := _c.mutation.Description(); ok {
 		_spec.SetField(notificationrole.FieldDescription, field.TypeString, value)
 		_node.Description = value
 	}
-	if value, ok := nrc.mutation.IsSystemRole(); ok {
+	if value, ok := _c.mutation.IsSystemRole(); ok {
 		_spec.SetField(notificationrole.FieldIsSystemRole, field.TypeBool, value)
 		_node.IsSystemRole = value
 	}
-	if value, ok := nrc.mutation.CreatedAt(); ok {
+	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(notificationrole.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
 	}
-	if value, ok := nrc.mutation.UpdatedAt(); ok {
+	if value, ok := _c.mutation.UpdatedAt(); ok {
 		_spec.SetField(notificationrole.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
 	}
-	if nodes := nrc.mutation.PermissionsIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.PermissionsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: false,
@@ -323,7 +323,7 @@ func (nrc *NotificationRoleCreate) createSpec() (*NotificationRole, *sqlgraph.Cr
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := nrc.mutation.UserAssignmentsIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.UserAssignmentsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -339,7 +339,7 @@ func (nrc *NotificationRoleCreate) createSpec() (*NotificationRole, *sqlgraph.Cr
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := nrc.mutation.NotificationRolePermissionsIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.NotificationRolePermissionsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: true,
@@ -374,10 +374,10 @@ func (nrc *NotificationRoleCreate) createSpec() (*NotificationRole, *sqlgraph.Cr
 //			SetTenantID(v+v).
 //		}).
 //		Exec(ctx)
-func (nrc *NotificationRoleCreate) OnConflict(opts ...sql.ConflictOption) *NotificationRoleUpsertOne {
-	nrc.conflict = opts
+func (_c *NotificationRoleCreate) OnConflict(opts ...sql.ConflictOption) *NotificationRoleUpsertOne {
+	_c.conflict = opts
 	return &NotificationRoleUpsertOne{
-		create: nrc,
+		create: _c,
 	}
 }
 
@@ -387,10 +387,10 @@ func (nrc *NotificationRoleCreate) OnConflict(opts ...sql.ConflictOption) *Notif
 //	client.NotificationRole.Create().
 //		OnConflict(sql.ConflictColumns(columns...)).
 //		Exec(ctx)
-func (nrc *NotificationRoleCreate) OnConflictColumns(columns ...string) *NotificationRoleUpsertOne {
-	nrc.conflict = append(nrc.conflict, sql.ConflictColumns(columns...))
+func (_c *NotificationRoleCreate) OnConflictColumns(columns ...string) *NotificationRoleUpsertOne {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
 	return &NotificationRoleUpsertOne{
-		create: nrc,
+		create: _c,
 	}
 }
 
@@ -674,16 +674,16 @@ type NotificationRoleCreateBulk struct {
 }
 
 // Save creates the NotificationRole entities in the database.
-func (nrcb *NotificationRoleCreateBulk) Save(ctx context.Context) ([]*NotificationRole, error) {
-	if nrcb.err != nil {
-		return nil, nrcb.err
+func (_c *NotificationRoleCreateBulk) Save(ctx context.Context) ([]*NotificationRole, error) {
+	if _c.err != nil {
+		return nil, _c.err
 	}
-	specs := make([]*sqlgraph.CreateSpec, len(nrcb.builders))
-	nodes := make([]*NotificationRole, len(nrcb.builders))
-	mutators := make([]Mutator, len(nrcb.builders))
-	for i := range nrcb.builders {
+	specs := make([]*sqlgraph.CreateSpec, len(_c.builders))
+	nodes := make([]*NotificationRole, len(_c.builders))
+	mutators := make([]Mutator, len(_c.builders))
+	for i := range _c.builders {
 		func(i int, root context.Context) {
-			builder := nrcb.builders[i]
+			builder := _c.builders[i]
 			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*NotificationRoleMutation)
@@ -697,12 +697,12 @@ func (nrcb *NotificationRoleCreateBulk) Save(ctx context.Context) ([]*Notificati
 				var err error
 				nodes[i], specs[i] = builder.createSpec()
 				if i < len(mutators)-1 {
-					_, err = mutators[i+1].Mutate(root, nrcb.builders[i+1].mutation)
+					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
-					spec.OnConflict = nrcb.conflict
+					spec.OnConflict = _c.conflict
 					// Invoke the actual operation on the latest mutation in the chain.
-					if err = sqlgraph.BatchCreate(ctx, nrcb.driver, spec); err != nil {
+					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
 							err = &ConstraintError{msg: err.Error(), wrap: err}
 						}
@@ -722,7 +722,7 @@ func (nrcb *NotificationRoleCreateBulk) Save(ctx context.Context) ([]*Notificati
 		}(i, ctx)
 	}
 	if len(mutators) > 0 {
-		if _, err := mutators[0].Mutate(ctx, nrcb.builders[0].mutation); err != nil {
+		if _, err := mutators[0].Mutate(ctx, _c.builders[0].mutation); err != nil {
 			return nil, err
 		}
 	}
@@ -730,8 +730,8 @@ func (nrcb *NotificationRoleCreateBulk) Save(ctx context.Context) ([]*Notificati
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (nrcb *NotificationRoleCreateBulk) SaveX(ctx context.Context) []*NotificationRole {
-	v, err := nrcb.Save(ctx)
+func (_c *NotificationRoleCreateBulk) SaveX(ctx context.Context) []*NotificationRole {
+	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -739,14 +739,14 @@ func (nrcb *NotificationRoleCreateBulk) SaveX(ctx context.Context) []*Notificati
 }
 
 // Exec executes the query.
-func (nrcb *NotificationRoleCreateBulk) Exec(ctx context.Context) error {
-	_, err := nrcb.Save(ctx)
+func (_c *NotificationRoleCreateBulk) Exec(ctx context.Context) error {
+	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (nrcb *NotificationRoleCreateBulk) ExecX(ctx context.Context) {
-	if err := nrcb.Exec(ctx); err != nil {
+func (_c *NotificationRoleCreateBulk) ExecX(ctx context.Context) {
+	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
@@ -766,10 +766,10 @@ func (nrcb *NotificationRoleCreateBulk) ExecX(ctx context.Context) {
 //			SetTenantID(v+v).
 //		}).
 //		Exec(ctx)
-func (nrcb *NotificationRoleCreateBulk) OnConflict(opts ...sql.ConflictOption) *NotificationRoleUpsertBulk {
-	nrcb.conflict = opts
+func (_c *NotificationRoleCreateBulk) OnConflict(opts ...sql.ConflictOption) *NotificationRoleUpsertBulk {
+	_c.conflict = opts
 	return &NotificationRoleUpsertBulk{
-		create: nrcb,
+		create: _c,
 	}
 }
 
@@ -779,10 +779,10 @@ func (nrcb *NotificationRoleCreateBulk) OnConflict(opts ...sql.ConflictOption) *
 //	client.NotificationRole.Create().
 //		OnConflict(sql.ConflictColumns(columns...)).
 //		Exec(ctx)
-func (nrcb *NotificationRoleCreateBulk) OnConflictColumns(columns ...string) *NotificationRoleUpsertBulk {
-	nrcb.conflict = append(nrcb.conflict, sql.ConflictColumns(columns...))
+func (_c *NotificationRoleCreateBulk) OnConflictColumns(columns ...string) *NotificationRoleUpsertBulk {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
 	return &NotificationRoleUpsertBulk{
-		create: nrcb,
+		create: _c,
 	}
 }
 

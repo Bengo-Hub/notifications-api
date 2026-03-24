@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math"
 
+	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -29,40 +30,40 @@ type PlatformBillingQuery struct {
 }
 
 // Where adds a new predicate for the PlatformBillingQuery builder.
-func (pbq *PlatformBillingQuery) Where(ps ...predicate.PlatformBilling) *PlatformBillingQuery {
-	pbq.predicates = append(pbq.predicates, ps...)
-	return pbq
+func (_q *PlatformBillingQuery) Where(ps ...predicate.PlatformBilling) *PlatformBillingQuery {
+	_q.predicates = append(_q.predicates, ps...)
+	return _q
 }
 
 // Limit the number of records to be returned by this query.
-func (pbq *PlatformBillingQuery) Limit(limit int) *PlatformBillingQuery {
-	pbq.ctx.Limit = &limit
-	return pbq
+func (_q *PlatformBillingQuery) Limit(limit int) *PlatformBillingQuery {
+	_q.ctx.Limit = &limit
+	return _q
 }
 
 // Offset to start from.
-func (pbq *PlatformBillingQuery) Offset(offset int) *PlatformBillingQuery {
-	pbq.ctx.Offset = &offset
-	return pbq
+func (_q *PlatformBillingQuery) Offset(offset int) *PlatformBillingQuery {
+	_q.ctx.Offset = &offset
+	return _q
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
-func (pbq *PlatformBillingQuery) Unique(unique bool) *PlatformBillingQuery {
-	pbq.ctx.Unique = &unique
-	return pbq
+func (_q *PlatformBillingQuery) Unique(unique bool) *PlatformBillingQuery {
+	_q.ctx.Unique = &unique
+	return _q
 }
 
 // Order specifies how the records should be ordered.
-func (pbq *PlatformBillingQuery) Order(o ...platformbilling.OrderOption) *PlatformBillingQuery {
-	pbq.order = append(pbq.order, o...)
-	return pbq
+func (_q *PlatformBillingQuery) Order(o ...platformbilling.OrderOption) *PlatformBillingQuery {
+	_q.order = append(_q.order, o...)
+	return _q
 }
 
 // First returns the first PlatformBilling entity from the query.
 // Returns a *NotFoundError when no PlatformBilling was found.
-func (pbq *PlatformBillingQuery) First(ctx context.Context) (*PlatformBilling, error) {
-	nodes, err := pbq.Limit(1).All(setContextOp(ctx, pbq.ctx, "First"))
+func (_q *PlatformBillingQuery) First(ctx context.Context) (*PlatformBilling, error) {
+	nodes, err := _q.Limit(1).All(setContextOp(ctx, _q.ctx, ent.OpQueryFirst))
 	if err != nil {
 		return nil, err
 	}
@@ -73,8 +74,8 @@ func (pbq *PlatformBillingQuery) First(ctx context.Context) (*PlatformBilling, e
 }
 
 // FirstX is like First, but panics if an error occurs.
-func (pbq *PlatformBillingQuery) FirstX(ctx context.Context) *PlatformBilling {
-	node, err := pbq.First(ctx)
+func (_q *PlatformBillingQuery) FirstX(ctx context.Context) *PlatformBilling {
+	node, err := _q.First(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
 	}
@@ -83,9 +84,9 @@ func (pbq *PlatformBillingQuery) FirstX(ctx context.Context) *PlatformBilling {
 
 // FirstID returns the first PlatformBilling ID from the query.
 // Returns a *NotFoundError when no PlatformBilling ID was found.
-func (pbq *PlatformBillingQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
+func (_q *PlatformBillingQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
-	if ids, err = pbq.Limit(1).IDs(setContextOp(ctx, pbq.ctx, "FirstID")); err != nil {
+	if ids, err = _q.Limit(1).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
 	if len(ids) == 0 {
@@ -96,8 +97,8 @@ func (pbq *PlatformBillingQuery) FirstID(ctx context.Context) (id uuid.UUID, err
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (pbq *PlatformBillingQuery) FirstIDX(ctx context.Context) uuid.UUID {
-	id, err := pbq.FirstID(ctx)
+func (_q *PlatformBillingQuery) FirstIDX(ctx context.Context) uuid.UUID {
+	id, err := _q.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
 	}
@@ -107,8 +108,8 @@ func (pbq *PlatformBillingQuery) FirstIDX(ctx context.Context) uuid.UUID {
 // Only returns a single PlatformBilling entity found by the query, ensuring it only returns one.
 // Returns a *NotSingularError when more than one PlatformBilling entity is found.
 // Returns a *NotFoundError when no PlatformBilling entities are found.
-func (pbq *PlatformBillingQuery) Only(ctx context.Context) (*PlatformBilling, error) {
-	nodes, err := pbq.Limit(2).All(setContextOp(ctx, pbq.ctx, "Only"))
+func (_q *PlatformBillingQuery) Only(ctx context.Context) (*PlatformBilling, error) {
+	nodes, err := _q.Limit(2).All(setContextOp(ctx, _q.ctx, ent.OpQueryOnly))
 	if err != nil {
 		return nil, err
 	}
@@ -123,8 +124,8 @@ func (pbq *PlatformBillingQuery) Only(ctx context.Context) (*PlatformBilling, er
 }
 
 // OnlyX is like Only, but panics if an error occurs.
-func (pbq *PlatformBillingQuery) OnlyX(ctx context.Context) *PlatformBilling {
-	node, err := pbq.Only(ctx)
+func (_q *PlatformBillingQuery) OnlyX(ctx context.Context) *PlatformBilling {
+	node, err := _q.Only(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -134,9 +135,9 @@ func (pbq *PlatformBillingQuery) OnlyX(ctx context.Context) *PlatformBilling {
 // OnlyID is like Only, but returns the only PlatformBilling ID in the query.
 // Returns a *NotSingularError when more than one PlatformBilling ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (pbq *PlatformBillingQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
+func (_q *PlatformBillingQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
-	if ids, err = pbq.Limit(2).IDs(setContextOp(ctx, pbq.ctx, "OnlyID")); err != nil {
+	if ids, err = _q.Limit(2).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
 	}
 	switch len(ids) {
@@ -151,8 +152,8 @@ func (pbq *PlatformBillingQuery) OnlyID(ctx context.Context) (id uuid.UUID, err 
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (pbq *PlatformBillingQuery) OnlyIDX(ctx context.Context) uuid.UUID {
-	id, err := pbq.OnlyID(ctx)
+func (_q *PlatformBillingQuery) OnlyIDX(ctx context.Context) uuid.UUID {
+	id, err := _q.OnlyID(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -160,18 +161,18 @@ func (pbq *PlatformBillingQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 }
 
 // All executes the query and returns a list of PlatformBillings.
-func (pbq *PlatformBillingQuery) All(ctx context.Context) ([]*PlatformBilling, error) {
-	ctx = setContextOp(ctx, pbq.ctx, "All")
-	if err := pbq.prepareQuery(ctx); err != nil {
+func (_q *PlatformBillingQuery) All(ctx context.Context) ([]*PlatformBilling, error) {
+	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryAll)
+	if err := _q.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
 	qr := querierAll[[]*PlatformBilling, *PlatformBillingQuery]()
-	return withInterceptors[[]*PlatformBilling](ctx, pbq, qr, pbq.inters)
+	return withInterceptors[[]*PlatformBilling](ctx, _q, qr, _q.inters)
 }
 
 // AllX is like All, but panics if an error occurs.
-func (pbq *PlatformBillingQuery) AllX(ctx context.Context) []*PlatformBilling {
-	nodes, err := pbq.All(ctx)
+func (_q *PlatformBillingQuery) AllX(ctx context.Context) []*PlatformBilling {
+	nodes, err := _q.All(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -179,20 +180,20 @@ func (pbq *PlatformBillingQuery) AllX(ctx context.Context) []*PlatformBilling {
 }
 
 // IDs executes the query and returns a list of PlatformBilling IDs.
-func (pbq *PlatformBillingQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
-	if pbq.ctx.Unique == nil && pbq.path != nil {
-		pbq.Unique(true)
+func (_q *PlatformBillingQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
+	if _q.ctx.Unique == nil && _q.path != nil {
+		_q.Unique(true)
 	}
-	ctx = setContextOp(ctx, pbq.ctx, "IDs")
-	if err = pbq.Select(platformbilling.FieldID).Scan(ctx, &ids); err != nil {
+	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryIDs)
+	if err = _q.Select(platformbilling.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (pbq *PlatformBillingQuery) IDsX(ctx context.Context) []uuid.UUID {
-	ids, err := pbq.IDs(ctx)
+func (_q *PlatformBillingQuery) IDsX(ctx context.Context) []uuid.UUID {
+	ids, err := _q.IDs(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -200,17 +201,17 @@ func (pbq *PlatformBillingQuery) IDsX(ctx context.Context) []uuid.UUID {
 }
 
 // Count returns the count of the given query.
-func (pbq *PlatformBillingQuery) Count(ctx context.Context) (int, error) {
-	ctx = setContextOp(ctx, pbq.ctx, "Count")
-	if err := pbq.prepareQuery(ctx); err != nil {
+func (_q *PlatformBillingQuery) Count(ctx context.Context) (int, error) {
+	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryCount)
+	if err := _q.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
-	return withInterceptors[int](ctx, pbq, querierCount[*PlatformBillingQuery](), pbq.inters)
+	return withInterceptors[int](ctx, _q, querierCount[*PlatformBillingQuery](), _q.inters)
 }
 
 // CountX is like Count, but panics if an error occurs.
-func (pbq *PlatformBillingQuery) CountX(ctx context.Context) int {
-	count, err := pbq.Count(ctx)
+func (_q *PlatformBillingQuery) CountX(ctx context.Context) int {
+	count, err := _q.Count(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -218,9 +219,9 @@ func (pbq *PlatformBillingQuery) CountX(ctx context.Context) int {
 }
 
 // Exist returns true if the query has elements in the graph.
-func (pbq *PlatformBillingQuery) Exist(ctx context.Context) (bool, error) {
-	ctx = setContextOp(ctx, pbq.ctx, "Exist")
-	switch _, err := pbq.FirstID(ctx); {
+func (_q *PlatformBillingQuery) Exist(ctx context.Context) (bool, error) {
+	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryExist)
+	switch _, err := _q.FirstID(ctx); {
 	case IsNotFound(err):
 		return false, nil
 	case err != nil:
@@ -231,8 +232,8 @@ func (pbq *PlatformBillingQuery) Exist(ctx context.Context) (bool, error) {
 }
 
 // ExistX is like Exist, but panics if an error occurs.
-func (pbq *PlatformBillingQuery) ExistX(ctx context.Context) bool {
-	exist, err := pbq.Exist(ctx)
+func (_q *PlatformBillingQuery) ExistX(ctx context.Context) bool {
+	exist, err := _q.Exist(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -241,19 +242,20 @@ func (pbq *PlatformBillingQuery) ExistX(ctx context.Context) bool {
 
 // Clone returns a duplicate of the PlatformBillingQuery builder, including all associated steps. It can be
 // used to prepare common query builders and use them differently after the clone is made.
-func (pbq *PlatformBillingQuery) Clone() *PlatformBillingQuery {
-	if pbq == nil {
+func (_q *PlatformBillingQuery) Clone() *PlatformBillingQuery {
+	if _q == nil {
 		return nil
 	}
 	return &PlatformBillingQuery{
-		config:     pbq.config,
-		ctx:        pbq.ctx.Clone(),
-		order:      append([]platformbilling.OrderOption{}, pbq.order...),
-		inters:     append([]Interceptor{}, pbq.inters...),
-		predicates: append([]predicate.PlatformBilling{}, pbq.predicates...),
+		config:     _q.config,
+		ctx:        _q.ctx.Clone(),
+		order:      append([]platformbilling.OrderOption{}, _q.order...),
+		inters:     append([]Interceptor{}, _q.inters...),
+		predicates: append([]predicate.PlatformBilling{}, _q.predicates...),
 		// clone intermediate query.
-		sql:  pbq.sql.Clone(),
-		path: pbq.path,
+		sql:       _q.sql.Clone(),
+		path:      _q.path,
+		modifiers: append([]func(*sql.Selector){}, _q.modifiers...),
 	}
 }
 
@@ -271,10 +273,10 @@ func (pbq *PlatformBillingQuery) Clone() *PlatformBillingQuery {
 //		GroupBy(platformbilling.FieldCostPerSms).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-func (pbq *PlatformBillingQuery) GroupBy(field string, fields ...string) *PlatformBillingGroupBy {
-	pbq.ctx.Fields = append([]string{field}, fields...)
-	grbuild := &PlatformBillingGroupBy{build: pbq}
-	grbuild.flds = &pbq.ctx.Fields
+func (_q *PlatformBillingQuery) GroupBy(field string, fields ...string) *PlatformBillingGroupBy {
+	_q.ctx.Fields = append([]string{field}, fields...)
+	grbuild := &PlatformBillingGroupBy{build: _q}
+	grbuild.flds = &_q.ctx.Fields
 	grbuild.label = platformbilling.Label
 	grbuild.scan = grbuild.Scan
 	return grbuild
@@ -292,65 +294,65 @@ func (pbq *PlatformBillingQuery) GroupBy(field string, fields ...string) *Platfo
 //	client.PlatformBilling.Query().
 //		Select(platformbilling.FieldCostPerSms).
 //		Scan(ctx, &v)
-func (pbq *PlatformBillingQuery) Select(fields ...string) *PlatformBillingSelect {
-	pbq.ctx.Fields = append(pbq.ctx.Fields, fields...)
-	sbuild := &PlatformBillingSelect{PlatformBillingQuery: pbq}
+func (_q *PlatformBillingQuery) Select(fields ...string) *PlatformBillingSelect {
+	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
+	sbuild := &PlatformBillingSelect{PlatformBillingQuery: _q}
 	sbuild.label = platformbilling.Label
-	sbuild.flds, sbuild.scan = &pbq.ctx.Fields, sbuild.Scan
+	sbuild.flds, sbuild.scan = &_q.ctx.Fields, sbuild.Scan
 	return sbuild
 }
 
 // Aggregate returns a PlatformBillingSelect configured with the given aggregations.
-func (pbq *PlatformBillingQuery) Aggregate(fns ...AggregateFunc) *PlatformBillingSelect {
-	return pbq.Select().Aggregate(fns...)
+func (_q *PlatformBillingQuery) Aggregate(fns ...AggregateFunc) *PlatformBillingSelect {
+	return _q.Select().Aggregate(fns...)
 }
 
-func (pbq *PlatformBillingQuery) prepareQuery(ctx context.Context) error {
-	for _, inter := range pbq.inters {
+func (_q *PlatformBillingQuery) prepareQuery(ctx context.Context) error {
+	for _, inter := range _q.inters {
 		if inter == nil {
 			return fmt.Errorf("ent: uninitialized interceptor (forgotten import ent/runtime?)")
 		}
 		if trv, ok := inter.(Traverser); ok {
-			if err := trv.Traverse(ctx, pbq); err != nil {
+			if err := trv.Traverse(ctx, _q); err != nil {
 				return err
 			}
 		}
 	}
-	for _, f := range pbq.ctx.Fields {
+	for _, f := range _q.ctx.Fields {
 		if !platformbilling.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
 	}
-	if pbq.path != nil {
-		prev, err := pbq.path(ctx)
+	if _q.path != nil {
+		prev, err := _q.path(ctx)
 		if err != nil {
 			return err
 		}
-		pbq.sql = prev
+		_q.sql = prev
 	}
 	return nil
 }
 
-func (pbq *PlatformBillingQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*PlatformBilling, error) {
+func (_q *PlatformBillingQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*PlatformBilling, error) {
 	var (
 		nodes = []*PlatformBilling{}
-		_spec = pbq.querySpec()
+		_spec = _q.querySpec()
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*PlatformBilling).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []any) error {
-		node := &PlatformBilling{config: pbq.config}
+		node := &PlatformBilling{config: _q.config}
 		nodes = append(nodes, node)
 		return node.assignValues(columns, values)
 	}
-	if len(pbq.modifiers) > 0 {
-		_spec.Modifiers = pbq.modifiers
+	if len(_q.modifiers) > 0 {
+		_spec.Modifiers = _q.modifiers
 	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
-	if err := sqlgraph.QueryNodes(ctx, pbq.driver, _spec); err != nil {
+	if err := sqlgraph.QueryNodes(ctx, _q.driver, _spec); err != nil {
 		return nil, err
 	}
 	if len(nodes) == 0 {
@@ -359,27 +361,27 @@ func (pbq *PlatformBillingQuery) sqlAll(ctx context.Context, hooks ...queryHook)
 	return nodes, nil
 }
 
-func (pbq *PlatformBillingQuery) sqlCount(ctx context.Context) (int, error) {
-	_spec := pbq.querySpec()
-	if len(pbq.modifiers) > 0 {
-		_spec.Modifiers = pbq.modifiers
+func (_q *PlatformBillingQuery) sqlCount(ctx context.Context) (int, error) {
+	_spec := _q.querySpec()
+	if len(_q.modifiers) > 0 {
+		_spec.Modifiers = _q.modifiers
 	}
-	_spec.Node.Columns = pbq.ctx.Fields
-	if len(pbq.ctx.Fields) > 0 {
-		_spec.Unique = pbq.ctx.Unique != nil && *pbq.ctx.Unique
+	_spec.Node.Columns = _q.ctx.Fields
+	if len(_q.ctx.Fields) > 0 {
+		_spec.Unique = _q.ctx.Unique != nil && *_q.ctx.Unique
 	}
-	return sqlgraph.CountNodes(ctx, pbq.driver, _spec)
+	return sqlgraph.CountNodes(ctx, _q.driver, _spec)
 }
 
-func (pbq *PlatformBillingQuery) querySpec() *sqlgraph.QuerySpec {
+func (_q *PlatformBillingQuery) querySpec() *sqlgraph.QuerySpec {
 	_spec := sqlgraph.NewQuerySpec(platformbilling.Table, platformbilling.Columns, sqlgraph.NewFieldSpec(platformbilling.FieldID, field.TypeUUID))
-	_spec.From = pbq.sql
-	if unique := pbq.ctx.Unique; unique != nil {
+	_spec.From = _q.sql
+	if unique := _q.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
-	} else if pbq.path != nil {
+	} else if _q.path != nil {
 		_spec.Unique = true
 	}
-	if fields := pbq.ctx.Fields; len(fields) > 0 {
+	if fields := _q.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		_spec.Node.Columns = append(_spec.Node.Columns, platformbilling.FieldID)
 		for i := range fields {
@@ -388,20 +390,20 @@ func (pbq *PlatformBillingQuery) querySpec() *sqlgraph.QuerySpec {
 			}
 		}
 	}
-	if ps := pbq.predicates; len(ps) > 0 {
+	if ps := _q.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if limit := pbq.ctx.Limit; limit != nil {
+	if limit := _q.ctx.Limit; limit != nil {
 		_spec.Limit = *limit
 	}
-	if offset := pbq.ctx.Offset; offset != nil {
+	if offset := _q.ctx.Offset; offset != nil {
 		_spec.Offset = *offset
 	}
-	if ps := pbq.order; len(ps) > 0 {
+	if ps := _q.order; len(ps) > 0 {
 		_spec.Order = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
@@ -411,45 +413,45 @@ func (pbq *PlatformBillingQuery) querySpec() *sqlgraph.QuerySpec {
 	return _spec
 }
 
-func (pbq *PlatformBillingQuery) sqlQuery(ctx context.Context) *sql.Selector {
-	builder := sql.Dialect(pbq.driver.Dialect())
+func (_q *PlatformBillingQuery) sqlQuery(ctx context.Context) *sql.Selector {
+	builder := sql.Dialect(_q.driver.Dialect())
 	t1 := builder.Table(platformbilling.Table)
-	columns := pbq.ctx.Fields
+	columns := _q.ctx.Fields
 	if len(columns) == 0 {
 		columns = platformbilling.Columns
 	}
 	selector := builder.Select(t1.Columns(columns...)...).From(t1)
-	if pbq.sql != nil {
-		selector = pbq.sql
+	if _q.sql != nil {
+		selector = _q.sql
 		selector.Select(selector.Columns(columns...)...)
 	}
-	if pbq.ctx.Unique != nil && *pbq.ctx.Unique {
+	if _q.ctx.Unique != nil && *_q.ctx.Unique {
 		selector.Distinct()
 	}
-	for _, m := range pbq.modifiers {
+	for _, m := range _q.modifiers {
 		m(selector)
 	}
-	for _, p := range pbq.predicates {
+	for _, p := range _q.predicates {
 		p(selector)
 	}
-	for _, p := range pbq.order {
+	for _, p := range _q.order {
 		p(selector)
 	}
-	if offset := pbq.ctx.Offset; offset != nil {
+	if offset := _q.ctx.Offset; offset != nil {
 		// limit is mandatory for offset clause. We start
 		// with default value, and override it below if needed.
 		selector.Offset(*offset).Limit(math.MaxInt32)
 	}
-	if limit := pbq.ctx.Limit; limit != nil {
+	if limit := _q.ctx.Limit; limit != nil {
 		selector.Limit(*limit)
 	}
 	return selector
 }
 
 // Modify adds a query modifier for attaching custom logic to queries.
-func (pbq *PlatformBillingQuery) Modify(modifiers ...func(s *sql.Selector)) *PlatformBillingSelect {
-	pbq.modifiers = append(pbq.modifiers, modifiers...)
-	return pbq.Select()
+func (_q *PlatformBillingQuery) Modify(modifiers ...func(s *sql.Selector)) *PlatformBillingSelect {
+	_q.modifiers = append(_q.modifiers, modifiers...)
+	return _q.Select()
 }
 
 // PlatformBillingGroupBy is the group-by builder for PlatformBilling entities.
@@ -459,41 +461,41 @@ type PlatformBillingGroupBy struct {
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
-func (pbgb *PlatformBillingGroupBy) Aggregate(fns ...AggregateFunc) *PlatformBillingGroupBy {
-	pbgb.fns = append(pbgb.fns, fns...)
-	return pbgb
+func (_g *PlatformBillingGroupBy) Aggregate(fns ...AggregateFunc) *PlatformBillingGroupBy {
+	_g.fns = append(_g.fns, fns...)
+	return _g
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (pbgb *PlatformBillingGroupBy) Scan(ctx context.Context, v any) error {
-	ctx = setContextOp(ctx, pbgb.build.ctx, "GroupBy")
-	if err := pbgb.build.prepareQuery(ctx); err != nil {
+func (_g *PlatformBillingGroupBy) Scan(ctx context.Context, v any) error {
+	ctx = setContextOp(ctx, _g.build.ctx, ent.OpQueryGroupBy)
+	if err := _g.build.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*PlatformBillingQuery, *PlatformBillingGroupBy](ctx, pbgb.build, pbgb, pbgb.build.inters, v)
+	return scanWithInterceptors[*PlatformBillingQuery, *PlatformBillingGroupBy](ctx, _g.build, _g, _g.build.inters, v)
 }
 
-func (pbgb *PlatformBillingGroupBy) sqlScan(ctx context.Context, root *PlatformBillingQuery, v any) error {
+func (_g *PlatformBillingGroupBy) sqlScan(ctx context.Context, root *PlatformBillingQuery, v any) error {
 	selector := root.sqlQuery(ctx).Select()
-	aggregation := make([]string, 0, len(pbgb.fns))
-	for _, fn := range pbgb.fns {
+	aggregation := make([]string, 0, len(_g.fns))
+	for _, fn := range _g.fns {
 		aggregation = append(aggregation, fn(selector))
 	}
 	if len(selector.SelectedColumns()) == 0 {
-		columns := make([]string, 0, len(*pbgb.flds)+len(pbgb.fns))
-		for _, f := range *pbgb.flds {
+		columns := make([]string, 0, len(*_g.flds)+len(_g.fns))
+		for _, f := range *_g.flds {
 			columns = append(columns, selector.C(f))
 		}
 		columns = append(columns, aggregation...)
 		selector.Select(columns...)
 	}
-	selector.GroupBy(selector.Columns(*pbgb.flds...)...)
+	selector.GroupBy(selector.Columns(*_g.flds...)...)
 	if err := selector.Err(); err != nil {
 		return err
 	}
 	rows := &sql.Rows{}
 	query, args := selector.Query()
-	if err := pbgb.build.driver.Query(ctx, query, args, rows); err != nil {
+	if err := _g.build.driver.Query(ctx, query, args, rows); err != nil {
 		return err
 	}
 	defer rows.Close()
@@ -507,27 +509,27 @@ type PlatformBillingSelect struct {
 }
 
 // Aggregate adds the given aggregation functions to the selector query.
-func (pbs *PlatformBillingSelect) Aggregate(fns ...AggregateFunc) *PlatformBillingSelect {
-	pbs.fns = append(pbs.fns, fns...)
-	return pbs
+func (_s *PlatformBillingSelect) Aggregate(fns ...AggregateFunc) *PlatformBillingSelect {
+	_s.fns = append(_s.fns, fns...)
+	return _s
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (pbs *PlatformBillingSelect) Scan(ctx context.Context, v any) error {
-	ctx = setContextOp(ctx, pbs.ctx, "Select")
-	if err := pbs.prepareQuery(ctx); err != nil {
+func (_s *PlatformBillingSelect) Scan(ctx context.Context, v any) error {
+	ctx = setContextOp(ctx, _s.ctx, ent.OpQuerySelect)
+	if err := _s.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*PlatformBillingQuery, *PlatformBillingSelect](ctx, pbs.PlatformBillingQuery, pbs, pbs.inters, v)
+	return scanWithInterceptors[*PlatformBillingQuery, *PlatformBillingSelect](ctx, _s.PlatformBillingQuery, _s, _s.inters, v)
 }
 
-func (pbs *PlatformBillingSelect) sqlScan(ctx context.Context, root *PlatformBillingQuery, v any) error {
+func (_s *PlatformBillingSelect) sqlScan(ctx context.Context, root *PlatformBillingQuery, v any) error {
 	selector := root.sqlQuery(ctx)
-	aggregation := make([]string, 0, len(pbs.fns))
-	for _, fn := range pbs.fns {
+	aggregation := make([]string, 0, len(_s.fns))
+	for _, fn := range _s.fns {
 		aggregation = append(aggregation, fn(selector))
 	}
-	switch n := len(*pbs.selector.flds); {
+	switch n := len(*_s.selector.flds); {
 	case n == 0 && len(aggregation) > 0:
 		selector.Select(aggregation...)
 	case n != 0 && len(aggregation) > 0:
@@ -535,7 +537,7 @@ func (pbs *PlatformBillingSelect) sqlScan(ctx context.Context, root *PlatformBil
 	}
 	rows := &sql.Rows{}
 	query, args := selector.Query()
-	if err := pbs.driver.Query(ctx, query, args, rows); err != nil {
+	if err := _s.driver.Query(ctx, query, args, rows); err != nil {
 		return err
 	}
 	defer rows.Close()
@@ -543,7 +545,7 @@ func (pbs *PlatformBillingSelect) sqlScan(ctx context.Context, root *PlatformBil
 }
 
 // Modify adds a query modifier for attaching custom logic to queries.
-func (pbs *PlatformBillingSelect) Modify(modifiers ...func(s *sql.Selector)) *PlatformBillingSelect {
-	pbs.modifiers = append(pbs.modifiers, modifiers...)
-	return pbs
+func (_s *PlatformBillingSelect) Modify(modifiers ...func(s *sql.Selector)) *PlatformBillingSelect {
+	_s.modifiers = append(_s.modifiers, modifiers...)
+	return _s
 }

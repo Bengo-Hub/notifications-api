@@ -25,40 +25,40 @@ type NotificationRolePermissionCreate struct {
 }
 
 // SetRoleID sets the "role_id" field.
-func (nrpc *NotificationRolePermissionCreate) SetRoleID(u uuid.UUID) *NotificationRolePermissionCreate {
-	nrpc.mutation.SetRoleID(u)
-	return nrpc
+func (_c *NotificationRolePermissionCreate) SetRoleID(v uuid.UUID) *NotificationRolePermissionCreate {
+	_c.mutation.SetRoleID(v)
+	return _c
 }
 
 // SetPermissionID sets the "permission_id" field.
-func (nrpc *NotificationRolePermissionCreate) SetPermissionID(u uuid.UUID) *NotificationRolePermissionCreate {
-	nrpc.mutation.SetPermissionID(u)
-	return nrpc
+func (_c *NotificationRolePermissionCreate) SetPermissionID(v uuid.UUID) *NotificationRolePermissionCreate {
+	_c.mutation.SetPermissionID(v)
+	return _c
 }
 
 // SetRole sets the "role" edge to the NotificationRole entity.
-func (nrpc *NotificationRolePermissionCreate) SetRole(n *NotificationRole) *NotificationRolePermissionCreate {
-	return nrpc.SetRoleID(n.ID)
+func (_c *NotificationRolePermissionCreate) SetRole(v *NotificationRole) *NotificationRolePermissionCreate {
+	return _c.SetRoleID(v.ID)
 }
 
 // SetPermission sets the "permission" edge to the NotificationPermission entity.
-func (nrpc *NotificationRolePermissionCreate) SetPermission(n *NotificationPermission) *NotificationRolePermissionCreate {
-	return nrpc.SetPermissionID(n.ID)
+func (_c *NotificationRolePermissionCreate) SetPermission(v *NotificationPermission) *NotificationRolePermissionCreate {
+	return _c.SetPermissionID(v.ID)
 }
 
 // Mutation returns the NotificationRolePermissionMutation object of the builder.
-func (nrpc *NotificationRolePermissionCreate) Mutation() *NotificationRolePermissionMutation {
-	return nrpc.mutation
+func (_c *NotificationRolePermissionCreate) Mutation() *NotificationRolePermissionMutation {
+	return _c.mutation
 }
 
 // Save creates the NotificationRolePermission in the database.
-func (nrpc *NotificationRolePermissionCreate) Save(ctx context.Context) (*NotificationRolePermission, error) {
-	return withHooks(ctx, nrpc.sqlSave, nrpc.mutation, nrpc.hooks)
+func (_c *NotificationRolePermissionCreate) Save(ctx context.Context) (*NotificationRolePermission, error) {
+	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.
-func (nrpc *NotificationRolePermissionCreate) SaveX(ctx context.Context) *NotificationRolePermission {
-	v, err := nrpc.Save(ctx)
+func (_c *NotificationRolePermissionCreate) SaveX(ctx context.Context) *NotificationRolePermission {
+	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -66,41 +66,41 @@ func (nrpc *NotificationRolePermissionCreate) SaveX(ctx context.Context) *Notifi
 }
 
 // Exec executes the query.
-func (nrpc *NotificationRolePermissionCreate) Exec(ctx context.Context) error {
-	_, err := nrpc.Save(ctx)
+func (_c *NotificationRolePermissionCreate) Exec(ctx context.Context) error {
+	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (nrpc *NotificationRolePermissionCreate) ExecX(ctx context.Context) {
-	if err := nrpc.Exec(ctx); err != nil {
+func (_c *NotificationRolePermissionCreate) ExecX(ctx context.Context) {
+	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (nrpc *NotificationRolePermissionCreate) check() error {
-	if _, ok := nrpc.mutation.RoleID(); !ok {
+func (_c *NotificationRolePermissionCreate) check() error {
+	if _, ok := _c.mutation.RoleID(); !ok {
 		return &ValidationError{Name: "role_id", err: errors.New(`ent: missing required field "NotificationRolePermission.role_id"`)}
 	}
-	if _, ok := nrpc.mutation.PermissionID(); !ok {
+	if _, ok := _c.mutation.PermissionID(); !ok {
 		return &ValidationError{Name: "permission_id", err: errors.New(`ent: missing required field "NotificationRolePermission.permission_id"`)}
 	}
-	if _, ok := nrpc.mutation.RoleID(); !ok {
+	if len(_c.mutation.RoleIDs()) == 0 {
 		return &ValidationError{Name: "role", err: errors.New(`ent: missing required edge "NotificationRolePermission.role"`)}
 	}
-	if _, ok := nrpc.mutation.PermissionID(); !ok {
+	if len(_c.mutation.PermissionIDs()) == 0 {
 		return &ValidationError{Name: "permission", err: errors.New(`ent: missing required edge "NotificationRolePermission.permission"`)}
 	}
 	return nil
 }
 
-func (nrpc *NotificationRolePermissionCreate) sqlSave(ctx context.Context) (*NotificationRolePermission, error) {
-	if err := nrpc.check(); err != nil {
+func (_c *NotificationRolePermissionCreate) sqlSave(ctx context.Context) (*NotificationRolePermission, error) {
+	if err := _c.check(); err != nil {
 		return nil, err
 	}
-	_node, _spec := nrpc.createSpec()
-	if err := sqlgraph.CreateNode(ctx, nrpc.driver, _spec); err != nil {
+	_node, _spec := _c.createSpec()
+	if err := sqlgraph.CreateNode(ctx, _c.driver, _spec); err != nil {
 		if sqlgraph.IsConstraintError(err) {
 			err = &ConstraintError{msg: err.Error(), wrap: err}
 		}
@@ -108,18 +108,18 @@ func (nrpc *NotificationRolePermissionCreate) sqlSave(ctx context.Context) (*Not
 	}
 	id := _spec.ID.Value.(int64)
 	_node.ID = int(id)
-	nrpc.mutation.id = &_node.ID
-	nrpc.mutation.done = true
+	_c.mutation.id = &_node.ID
+	_c.mutation.done = true
 	return _node, nil
 }
 
-func (nrpc *NotificationRolePermissionCreate) createSpec() (*NotificationRolePermission, *sqlgraph.CreateSpec) {
+func (_c *NotificationRolePermissionCreate) createSpec() (*NotificationRolePermission, *sqlgraph.CreateSpec) {
 	var (
-		_node = &NotificationRolePermission{config: nrpc.config}
+		_node = &NotificationRolePermission{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(notificationrolepermission.Table, sqlgraph.NewFieldSpec(notificationrolepermission.FieldID, field.TypeInt))
 	)
-	_spec.OnConflict = nrpc.conflict
-	if nodes := nrpc.mutation.RoleIDs(); len(nodes) > 0 {
+	_spec.OnConflict = _c.conflict
+	if nodes := _c.mutation.RoleIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -136,7 +136,7 @@ func (nrpc *NotificationRolePermissionCreate) createSpec() (*NotificationRolePer
 		_node.RoleID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := nrpc.mutation.PermissionIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.PermissionIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -172,10 +172,10 @@ func (nrpc *NotificationRolePermissionCreate) createSpec() (*NotificationRolePer
 //			SetRoleID(v+v).
 //		}).
 //		Exec(ctx)
-func (nrpc *NotificationRolePermissionCreate) OnConflict(opts ...sql.ConflictOption) *NotificationRolePermissionUpsertOne {
-	nrpc.conflict = opts
+func (_c *NotificationRolePermissionCreate) OnConflict(opts ...sql.ConflictOption) *NotificationRolePermissionUpsertOne {
+	_c.conflict = opts
 	return &NotificationRolePermissionUpsertOne{
-		create: nrpc,
+		create: _c,
 	}
 }
 
@@ -185,10 +185,10 @@ func (nrpc *NotificationRolePermissionCreate) OnConflict(opts ...sql.ConflictOpt
 //	client.NotificationRolePermission.Create().
 //		OnConflict(sql.ConflictColumns(columns...)).
 //		Exec(ctx)
-func (nrpc *NotificationRolePermissionCreate) OnConflictColumns(columns ...string) *NotificationRolePermissionUpsertOne {
-	nrpc.conflict = append(nrpc.conflict, sql.ConflictColumns(columns...))
+func (_c *NotificationRolePermissionCreate) OnConflictColumns(columns ...string) *NotificationRolePermissionUpsertOne {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
 	return &NotificationRolePermissionUpsertOne{
-		create: nrpc,
+		create: _c,
 	}
 }
 
@@ -339,16 +339,16 @@ type NotificationRolePermissionCreateBulk struct {
 }
 
 // Save creates the NotificationRolePermission entities in the database.
-func (nrpcb *NotificationRolePermissionCreateBulk) Save(ctx context.Context) ([]*NotificationRolePermission, error) {
-	if nrpcb.err != nil {
-		return nil, nrpcb.err
+func (_c *NotificationRolePermissionCreateBulk) Save(ctx context.Context) ([]*NotificationRolePermission, error) {
+	if _c.err != nil {
+		return nil, _c.err
 	}
-	specs := make([]*sqlgraph.CreateSpec, len(nrpcb.builders))
-	nodes := make([]*NotificationRolePermission, len(nrpcb.builders))
-	mutators := make([]Mutator, len(nrpcb.builders))
-	for i := range nrpcb.builders {
+	specs := make([]*sqlgraph.CreateSpec, len(_c.builders))
+	nodes := make([]*NotificationRolePermission, len(_c.builders))
+	mutators := make([]Mutator, len(_c.builders))
+	for i := range _c.builders {
 		func(i int, root context.Context) {
-			builder := nrpcb.builders[i]
+			builder := _c.builders[i]
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*NotificationRolePermissionMutation)
 				if !ok {
@@ -361,12 +361,12 @@ func (nrpcb *NotificationRolePermissionCreateBulk) Save(ctx context.Context) ([]
 				var err error
 				nodes[i], specs[i] = builder.createSpec()
 				if i < len(mutators)-1 {
-					_, err = mutators[i+1].Mutate(root, nrpcb.builders[i+1].mutation)
+					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
-					spec.OnConflict = nrpcb.conflict
+					spec.OnConflict = _c.conflict
 					// Invoke the actual operation on the latest mutation in the chain.
-					if err = sqlgraph.BatchCreate(ctx, nrpcb.driver, spec); err != nil {
+					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
 							err = &ConstraintError{msg: err.Error(), wrap: err}
 						}
@@ -390,7 +390,7 @@ func (nrpcb *NotificationRolePermissionCreateBulk) Save(ctx context.Context) ([]
 		}(i, ctx)
 	}
 	if len(mutators) > 0 {
-		if _, err := mutators[0].Mutate(ctx, nrpcb.builders[0].mutation); err != nil {
+		if _, err := mutators[0].Mutate(ctx, _c.builders[0].mutation); err != nil {
 			return nil, err
 		}
 	}
@@ -398,8 +398,8 @@ func (nrpcb *NotificationRolePermissionCreateBulk) Save(ctx context.Context) ([]
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (nrpcb *NotificationRolePermissionCreateBulk) SaveX(ctx context.Context) []*NotificationRolePermission {
-	v, err := nrpcb.Save(ctx)
+func (_c *NotificationRolePermissionCreateBulk) SaveX(ctx context.Context) []*NotificationRolePermission {
+	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -407,14 +407,14 @@ func (nrpcb *NotificationRolePermissionCreateBulk) SaveX(ctx context.Context) []
 }
 
 // Exec executes the query.
-func (nrpcb *NotificationRolePermissionCreateBulk) Exec(ctx context.Context) error {
-	_, err := nrpcb.Save(ctx)
+func (_c *NotificationRolePermissionCreateBulk) Exec(ctx context.Context) error {
+	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (nrpcb *NotificationRolePermissionCreateBulk) ExecX(ctx context.Context) {
-	if err := nrpcb.Exec(ctx); err != nil {
+func (_c *NotificationRolePermissionCreateBulk) ExecX(ctx context.Context) {
+	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
@@ -434,10 +434,10 @@ func (nrpcb *NotificationRolePermissionCreateBulk) ExecX(ctx context.Context) {
 //			SetRoleID(v+v).
 //		}).
 //		Exec(ctx)
-func (nrpcb *NotificationRolePermissionCreateBulk) OnConflict(opts ...sql.ConflictOption) *NotificationRolePermissionUpsertBulk {
-	nrpcb.conflict = opts
+func (_c *NotificationRolePermissionCreateBulk) OnConflict(opts ...sql.ConflictOption) *NotificationRolePermissionUpsertBulk {
+	_c.conflict = opts
 	return &NotificationRolePermissionUpsertBulk{
-		create: nrpcb,
+		create: _c,
 	}
 }
 
@@ -447,10 +447,10 @@ func (nrpcb *NotificationRolePermissionCreateBulk) OnConflict(opts ...sql.Confli
 //	client.NotificationRolePermission.Create().
 //		OnConflict(sql.ConflictColumns(columns...)).
 //		Exec(ctx)
-func (nrpcb *NotificationRolePermissionCreateBulk) OnConflictColumns(columns ...string) *NotificationRolePermissionUpsertBulk {
-	nrpcb.conflict = append(nrpcb.conflict, sql.ConflictColumns(columns...))
+func (_c *NotificationRolePermissionCreateBulk) OnConflictColumns(columns ...string) *NotificationRolePermissionUpsertBulk {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
 	return &NotificationRolePermissionUpsertBulk{
-		create: nrpcb,
+		create: _c,
 	}
 }
 

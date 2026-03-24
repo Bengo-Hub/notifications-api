@@ -27,95 +27,95 @@ type UserRoleAssignmentCreate struct {
 }
 
 // SetTenantID sets the "tenant_id" field.
-func (urac *UserRoleAssignmentCreate) SetTenantID(u uuid.UUID) *UserRoleAssignmentCreate {
-	urac.mutation.SetTenantID(u)
-	return urac
+func (_c *UserRoleAssignmentCreate) SetTenantID(v uuid.UUID) *UserRoleAssignmentCreate {
+	_c.mutation.SetTenantID(v)
+	return _c
 }
 
 // SetUserID sets the "user_id" field.
-func (urac *UserRoleAssignmentCreate) SetUserID(u uuid.UUID) *UserRoleAssignmentCreate {
-	urac.mutation.SetUserID(u)
-	return urac
+func (_c *UserRoleAssignmentCreate) SetUserID(v uuid.UUID) *UserRoleAssignmentCreate {
+	_c.mutation.SetUserID(v)
+	return _c
 }
 
 // SetRoleID sets the "role_id" field.
-func (urac *UserRoleAssignmentCreate) SetRoleID(u uuid.UUID) *UserRoleAssignmentCreate {
-	urac.mutation.SetRoleID(u)
-	return urac
+func (_c *UserRoleAssignmentCreate) SetRoleID(v uuid.UUID) *UserRoleAssignmentCreate {
+	_c.mutation.SetRoleID(v)
+	return _c
 }
 
 // SetAssignedBy sets the "assigned_by" field.
-func (urac *UserRoleAssignmentCreate) SetAssignedBy(u uuid.UUID) *UserRoleAssignmentCreate {
-	urac.mutation.SetAssignedBy(u)
-	return urac
+func (_c *UserRoleAssignmentCreate) SetAssignedBy(v uuid.UUID) *UserRoleAssignmentCreate {
+	_c.mutation.SetAssignedBy(v)
+	return _c
 }
 
 // SetAssignedAt sets the "assigned_at" field.
-func (urac *UserRoleAssignmentCreate) SetAssignedAt(t time.Time) *UserRoleAssignmentCreate {
-	urac.mutation.SetAssignedAt(t)
-	return urac
+func (_c *UserRoleAssignmentCreate) SetAssignedAt(v time.Time) *UserRoleAssignmentCreate {
+	_c.mutation.SetAssignedAt(v)
+	return _c
 }
 
 // SetNillableAssignedAt sets the "assigned_at" field if the given value is not nil.
-func (urac *UserRoleAssignmentCreate) SetNillableAssignedAt(t *time.Time) *UserRoleAssignmentCreate {
-	if t != nil {
-		urac.SetAssignedAt(*t)
+func (_c *UserRoleAssignmentCreate) SetNillableAssignedAt(v *time.Time) *UserRoleAssignmentCreate {
+	if v != nil {
+		_c.SetAssignedAt(*v)
 	}
-	return urac
+	return _c
 }
 
 // SetExpiresAt sets the "expires_at" field.
-func (urac *UserRoleAssignmentCreate) SetExpiresAt(t time.Time) *UserRoleAssignmentCreate {
-	urac.mutation.SetExpiresAt(t)
-	return urac
+func (_c *UserRoleAssignmentCreate) SetExpiresAt(v time.Time) *UserRoleAssignmentCreate {
+	_c.mutation.SetExpiresAt(v)
+	return _c
 }
 
 // SetNillableExpiresAt sets the "expires_at" field if the given value is not nil.
-func (urac *UserRoleAssignmentCreate) SetNillableExpiresAt(t *time.Time) *UserRoleAssignmentCreate {
-	if t != nil {
-		urac.SetExpiresAt(*t)
+func (_c *UserRoleAssignmentCreate) SetNillableExpiresAt(v *time.Time) *UserRoleAssignmentCreate {
+	if v != nil {
+		_c.SetExpiresAt(*v)
 	}
-	return urac
+	return _c
 }
 
 // SetID sets the "id" field.
-func (urac *UserRoleAssignmentCreate) SetID(u uuid.UUID) *UserRoleAssignmentCreate {
-	urac.mutation.SetID(u)
-	return urac
+func (_c *UserRoleAssignmentCreate) SetID(v uuid.UUID) *UserRoleAssignmentCreate {
+	_c.mutation.SetID(v)
+	return _c
 }
 
 // SetNillableID sets the "id" field if the given value is not nil.
-func (urac *UserRoleAssignmentCreate) SetNillableID(u *uuid.UUID) *UserRoleAssignmentCreate {
-	if u != nil {
-		urac.SetID(*u)
+func (_c *UserRoleAssignmentCreate) SetNillableID(v *uuid.UUID) *UserRoleAssignmentCreate {
+	if v != nil {
+		_c.SetID(*v)
 	}
-	return urac
+	return _c
 }
 
 // SetUser sets the "user" edge to the User entity.
-func (urac *UserRoleAssignmentCreate) SetUser(u *User) *UserRoleAssignmentCreate {
-	return urac.SetUserID(u.ID)
+func (_c *UserRoleAssignmentCreate) SetUser(v *User) *UserRoleAssignmentCreate {
+	return _c.SetUserID(v.ID)
 }
 
 // SetRole sets the "role" edge to the NotificationRole entity.
-func (urac *UserRoleAssignmentCreate) SetRole(n *NotificationRole) *UserRoleAssignmentCreate {
-	return urac.SetRoleID(n.ID)
+func (_c *UserRoleAssignmentCreate) SetRole(v *NotificationRole) *UserRoleAssignmentCreate {
+	return _c.SetRoleID(v.ID)
 }
 
 // Mutation returns the UserRoleAssignmentMutation object of the builder.
-func (urac *UserRoleAssignmentCreate) Mutation() *UserRoleAssignmentMutation {
-	return urac.mutation
+func (_c *UserRoleAssignmentCreate) Mutation() *UserRoleAssignmentMutation {
+	return _c.mutation
 }
 
 // Save creates the UserRoleAssignment in the database.
-func (urac *UserRoleAssignmentCreate) Save(ctx context.Context) (*UserRoleAssignment, error) {
-	urac.defaults()
-	return withHooks(ctx, urac.sqlSave, urac.mutation, urac.hooks)
+func (_c *UserRoleAssignmentCreate) Save(ctx context.Context) (*UserRoleAssignment, error) {
+	_c.defaults()
+	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.
-func (urac *UserRoleAssignmentCreate) SaveX(ctx context.Context) *UserRoleAssignment {
-	v, err := urac.Save(ctx)
+func (_c *UserRoleAssignmentCreate) SaveX(ctx context.Context) *UserRoleAssignment {
+	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -123,62 +123,62 @@ func (urac *UserRoleAssignmentCreate) SaveX(ctx context.Context) *UserRoleAssign
 }
 
 // Exec executes the query.
-func (urac *UserRoleAssignmentCreate) Exec(ctx context.Context) error {
-	_, err := urac.Save(ctx)
+func (_c *UserRoleAssignmentCreate) Exec(ctx context.Context) error {
+	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (urac *UserRoleAssignmentCreate) ExecX(ctx context.Context) {
-	if err := urac.Exec(ctx); err != nil {
+func (_c *UserRoleAssignmentCreate) ExecX(ctx context.Context) {
+	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (urac *UserRoleAssignmentCreate) defaults() {
-	if _, ok := urac.mutation.AssignedAt(); !ok {
+func (_c *UserRoleAssignmentCreate) defaults() {
+	if _, ok := _c.mutation.AssignedAt(); !ok {
 		v := userroleassignment.DefaultAssignedAt()
-		urac.mutation.SetAssignedAt(v)
+		_c.mutation.SetAssignedAt(v)
 	}
-	if _, ok := urac.mutation.ID(); !ok {
+	if _, ok := _c.mutation.ID(); !ok {
 		v := userroleassignment.DefaultID()
-		urac.mutation.SetID(v)
+		_c.mutation.SetID(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (urac *UserRoleAssignmentCreate) check() error {
-	if _, ok := urac.mutation.TenantID(); !ok {
+func (_c *UserRoleAssignmentCreate) check() error {
+	if _, ok := _c.mutation.TenantID(); !ok {
 		return &ValidationError{Name: "tenant_id", err: errors.New(`ent: missing required field "UserRoleAssignment.tenant_id"`)}
 	}
-	if _, ok := urac.mutation.UserID(); !ok {
+	if _, ok := _c.mutation.UserID(); !ok {
 		return &ValidationError{Name: "user_id", err: errors.New(`ent: missing required field "UserRoleAssignment.user_id"`)}
 	}
-	if _, ok := urac.mutation.RoleID(); !ok {
+	if _, ok := _c.mutation.RoleID(); !ok {
 		return &ValidationError{Name: "role_id", err: errors.New(`ent: missing required field "UserRoleAssignment.role_id"`)}
 	}
-	if _, ok := urac.mutation.AssignedBy(); !ok {
+	if _, ok := _c.mutation.AssignedBy(); !ok {
 		return &ValidationError{Name: "assigned_by", err: errors.New(`ent: missing required field "UserRoleAssignment.assigned_by"`)}
 	}
-	if _, ok := urac.mutation.AssignedAt(); !ok {
+	if _, ok := _c.mutation.AssignedAt(); !ok {
 		return &ValidationError{Name: "assigned_at", err: errors.New(`ent: missing required field "UserRoleAssignment.assigned_at"`)}
 	}
-	if _, ok := urac.mutation.UserID(); !ok {
+	if len(_c.mutation.UserIDs()) == 0 {
 		return &ValidationError{Name: "user", err: errors.New(`ent: missing required edge "UserRoleAssignment.user"`)}
 	}
-	if _, ok := urac.mutation.RoleID(); !ok {
+	if len(_c.mutation.RoleIDs()) == 0 {
 		return &ValidationError{Name: "role", err: errors.New(`ent: missing required edge "UserRoleAssignment.role"`)}
 	}
 	return nil
 }
 
-func (urac *UserRoleAssignmentCreate) sqlSave(ctx context.Context) (*UserRoleAssignment, error) {
-	if err := urac.check(); err != nil {
+func (_c *UserRoleAssignmentCreate) sqlSave(ctx context.Context) (*UserRoleAssignment, error) {
+	if err := _c.check(); err != nil {
 		return nil, err
 	}
-	_node, _spec := urac.createSpec()
-	if err := sqlgraph.CreateNode(ctx, urac.driver, _spec); err != nil {
+	_node, _spec := _c.createSpec()
+	if err := sqlgraph.CreateNode(ctx, _c.driver, _spec); err != nil {
 		if sqlgraph.IsConstraintError(err) {
 			err = &ConstraintError{msg: err.Error(), wrap: err}
 		}
@@ -191,38 +191,38 @@ func (urac *UserRoleAssignmentCreate) sqlSave(ctx context.Context) (*UserRoleAss
 			return nil, err
 		}
 	}
-	urac.mutation.id = &_node.ID
-	urac.mutation.done = true
+	_c.mutation.id = &_node.ID
+	_c.mutation.done = true
 	return _node, nil
 }
 
-func (urac *UserRoleAssignmentCreate) createSpec() (*UserRoleAssignment, *sqlgraph.CreateSpec) {
+func (_c *UserRoleAssignmentCreate) createSpec() (*UserRoleAssignment, *sqlgraph.CreateSpec) {
 	var (
-		_node = &UserRoleAssignment{config: urac.config}
+		_node = &UserRoleAssignment{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(userroleassignment.Table, sqlgraph.NewFieldSpec(userroleassignment.FieldID, field.TypeUUID))
 	)
-	_spec.OnConflict = urac.conflict
-	if id, ok := urac.mutation.ID(); ok {
+	_spec.OnConflict = _c.conflict
+	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
 	}
-	if value, ok := urac.mutation.TenantID(); ok {
+	if value, ok := _c.mutation.TenantID(); ok {
 		_spec.SetField(userroleassignment.FieldTenantID, field.TypeUUID, value)
 		_node.TenantID = value
 	}
-	if value, ok := urac.mutation.AssignedBy(); ok {
+	if value, ok := _c.mutation.AssignedBy(); ok {
 		_spec.SetField(userroleassignment.FieldAssignedBy, field.TypeUUID, value)
 		_node.AssignedBy = value
 	}
-	if value, ok := urac.mutation.AssignedAt(); ok {
+	if value, ok := _c.mutation.AssignedAt(); ok {
 		_spec.SetField(userroleassignment.FieldAssignedAt, field.TypeTime, value)
 		_node.AssignedAt = value
 	}
-	if value, ok := urac.mutation.ExpiresAt(); ok {
+	if value, ok := _c.mutation.ExpiresAt(); ok {
 		_spec.SetField(userroleassignment.FieldExpiresAt, field.TypeTime, value)
 		_node.ExpiresAt = value
 	}
-	if nodes := urac.mutation.UserIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.UserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -239,7 +239,7 @@ func (urac *UserRoleAssignmentCreate) createSpec() (*UserRoleAssignment, *sqlgra
 		_node.UserID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := urac.mutation.RoleIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.RoleIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -275,10 +275,10 @@ func (urac *UserRoleAssignmentCreate) createSpec() (*UserRoleAssignment, *sqlgra
 //			SetTenantID(v+v).
 //		}).
 //		Exec(ctx)
-func (urac *UserRoleAssignmentCreate) OnConflict(opts ...sql.ConflictOption) *UserRoleAssignmentUpsertOne {
-	urac.conflict = opts
+func (_c *UserRoleAssignmentCreate) OnConflict(opts ...sql.ConflictOption) *UserRoleAssignmentUpsertOne {
+	_c.conflict = opts
 	return &UserRoleAssignmentUpsertOne{
-		create: urac,
+		create: _c,
 	}
 }
 
@@ -288,10 +288,10 @@ func (urac *UserRoleAssignmentCreate) OnConflict(opts ...sql.ConflictOption) *Us
 //	client.UserRoleAssignment.Create().
 //		OnConflict(sql.ConflictColumns(columns...)).
 //		Exec(ctx)
-func (urac *UserRoleAssignmentCreate) OnConflictColumns(columns ...string) *UserRoleAssignmentUpsertOne {
-	urac.conflict = append(urac.conflict, sql.ConflictColumns(columns...))
+func (_c *UserRoleAssignmentCreate) OnConflictColumns(columns ...string) *UserRoleAssignmentUpsertOne {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
 	return &UserRoleAssignmentUpsertOne{
-		create: urac,
+		create: _c,
 	}
 }
 
@@ -549,16 +549,16 @@ type UserRoleAssignmentCreateBulk struct {
 }
 
 // Save creates the UserRoleAssignment entities in the database.
-func (uracb *UserRoleAssignmentCreateBulk) Save(ctx context.Context) ([]*UserRoleAssignment, error) {
-	if uracb.err != nil {
-		return nil, uracb.err
+func (_c *UserRoleAssignmentCreateBulk) Save(ctx context.Context) ([]*UserRoleAssignment, error) {
+	if _c.err != nil {
+		return nil, _c.err
 	}
-	specs := make([]*sqlgraph.CreateSpec, len(uracb.builders))
-	nodes := make([]*UserRoleAssignment, len(uracb.builders))
-	mutators := make([]Mutator, len(uracb.builders))
-	for i := range uracb.builders {
+	specs := make([]*sqlgraph.CreateSpec, len(_c.builders))
+	nodes := make([]*UserRoleAssignment, len(_c.builders))
+	mutators := make([]Mutator, len(_c.builders))
+	for i := range _c.builders {
 		func(i int, root context.Context) {
-			builder := uracb.builders[i]
+			builder := _c.builders[i]
 			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*UserRoleAssignmentMutation)
@@ -572,12 +572,12 @@ func (uracb *UserRoleAssignmentCreateBulk) Save(ctx context.Context) ([]*UserRol
 				var err error
 				nodes[i], specs[i] = builder.createSpec()
 				if i < len(mutators)-1 {
-					_, err = mutators[i+1].Mutate(root, uracb.builders[i+1].mutation)
+					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
-					spec.OnConflict = uracb.conflict
+					spec.OnConflict = _c.conflict
 					// Invoke the actual operation on the latest mutation in the chain.
-					if err = sqlgraph.BatchCreate(ctx, uracb.driver, spec); err != nil {
+					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
 							err = &ConstraintError{msg: err.Error(), wrap: err}
 						}
@@ -597,7 +597,7 @@ func (uracb *UserRoleAssignmentCreateBulk) Save(ctx context.Context) ([]*UserRol
 		}(i, ctx)
 	}
 	if len(mutators) > 0 {
-		if _, err := mutators[0].Mutate(ctx, uracb.builders[0].mutation); err != nil {
+		if _, err := mutators[0].Mutate(ctx, _c.builders[0].mutation); err != nil {
 			return nil, err
 		}
 	}
@@ -605,8 +605,8 @@ func (uracb *UserRoleAssignmentCreateBulk) Save(ctx context.Context) ([]*UserRol
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (uracb *UserRoleAssignmentCreateBulk) SaveX(ctx context.Context) []*UserRoleAssignment {
-	v, err := uracb.Save(ctx)
+func (_c *UserRoleAssignmentCreateBulk) SaveX(ctx context.Context) []*UserRoleAssignment {
+	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -614,14 +614,14 @@ func (uracb *UserRoleAssignmentCreateBulk) SaveX(ctx context.Context) []*UserRol
 }
 
 // Exec executes the query.
-func (uracb *UserRoleAssignmentCreateBulk) Exec(ctx context.Context) error {
-	_, err := uracb.Save(ctx)
+func (_c *UserRoleAssignmentCreateBulk) Exec(ctx context.Context) error {
+	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (uracb *UserRoleAssignmentCreateBulk) ExecX(ctx context.Context) {
-	if err := uracb.Exec(ctx); err != nil {
+func (_c *UserRoleAssignmentCreateBulk) ExecX(ctx context.Context) {
+	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
@@ -641,10 +641,10 @@ func (uracb *UserRoleAssignmentCreateBulk) ExecX(ctx context.Context) {
 //			SetTenantID(v+v).
 //		}).
 //		Exec(ctx)
-func (uracb *UserRoleAssignmentCreateBulk) OnConflict(opts ...sql.ConflictOption) *UserRoleAssignmentUpsertBulk {
-	uracb.conflict = opts
+func (_c *UserRoleAssignmentCreateBulk) OnConflict(opts ...sql.ConflictOption) *UserRoleAssignmentUpsertBulk {
+	_c.conflict = opts
 	return &UserRoleAssignmentUpsertBulk{
-		create: uracb,
+		create: _c,
 	}
 }
 
@@ -654,10 +654,10 @@ func (uracb *UserRoleAssignmentCreateBulk) OnConflict(opts ...sql.ConflictOption
 //	client.UserRoleAssignment.Create().
 //		OnConflict(sql.ConflictColumns(columns...)).
 //		Exec(ctx)
-func (uracb *UserRoleAssignmentCreateBulk) OnConflictColumns(columns ...string) *UserRoleAssignmentUpsertBulk {
-	uracb.conflict = append(uracb.conflict, sql.ConflictColumns(columns...))
+func (_c *UserRoleAssignmentCreateBulk) OnConflictColumns(columns ...string) *UserRoleAssignmentUpsertBulk {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
 	return &UserRoleAssignmentUpsertBulk{
-		create: uracb,
+		create: _c,
 	}
 }
 

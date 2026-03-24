@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -28,29 +29,18 @@ func NewSyncer(client *ent.Client, authURL string) *Syncer {
 	}
 }
 
-// authAPITenantResponse is the full tenant JSON response from GET /api/v1/tenants/by-slug/{slug}.
+// authAPITenantResponse is the minimal tenant JSON response from GET /api/v1/tenants/by-slug/{slug}.
+// Only fields that this service persists locally are included.
 type authAPITenantResponse struct {
-	ID                 string         `json:"id"`
-	Name               string         `json:"name"`
-	Slug               string         `json:"slug"`
-	Status             string         `json:"status"`
-	ContactEmail       string         `json:"contact_email,omitempty"`
-	ContactPhone       string         `json:"contact_phone,omitempty"`
-	LogoURL            string         `json:"logo_url,omitempty"`
-	Website            string         `json:"website,omitempty"`
-	Country            string         `json:"country,omitempty"`
-	Timezone           string         `json:"timezone,omitempty"`
-	BrandColors        map[string]any `json:"brand_colors,omitempty"`
-	OrgSize            string         `json:"org_size,omitempty"`
-	UseCase            string         `json:"use_case,omitempty"`
-	SubscriptionPlan   string         `json:"subscription_plan,omitempty"`
-	SubscriptionStatus string         `json:"subscription_status,omitempty"`
-	TierLimits         map[string]any `json:"tier_limits,omitempty"`
-	Metadata           map[string]any `json:"metadata,omitempty"`
+	ID      string `json:"id"`
+	Name    string `json:"name"`
+	Slug    string `json:"slug"`
+	Status  string `json:"status"`
+	UseCase string `json:"use_case"`
 }
 
-// SyncTenant fetches the FULL tenant record from auth-api and persists it
-// in the local PG DB using Ent.
+// SyncTenant fetches the tenant record from auth-api and persists the minimal
+// reference in the local PG DB using Ent.
 func (s *Syncer) SyncTenant(ctx context.Context, slug string) (uuid.UUID, error) {
 	// Fast path: check if tenant exists locally
 	existing, err := s.client.Tenant.Query().Where(enttenant.SlugEQ(slug)).Only(ctx)
@@ -83,25 +73,17 @@ func (s *Syncer) SyncTenant(ctx context.Context, slug string) (uuid.UUID, error)
 		return uuid.Nil, fmt.Errorf("tenant.Syncer: invalid UUID %q: %w", remote.ID, err)
 	}
 
+	now := time.Now()
+
 	// Use Ent Upsert
 	err = s.client.Tenant.Create().
 		SetID(realID).
 		SetName(remote.Name).
 		SetSlug(remote.Slug).
 		SetStatus(remote.Status).
-		SetContactEmail(remote.ContactEmail).
-		SetContactPhone(remote.ContactPhone).
-		SetLogoURL(remote.LogoURL).
-		SetWebsite(remote.Website).
-		SetCountry(remote.Country).
-		SetTimezone(remote.Timezone).
-		SetBrandColors(remote.BrandColors).
-		SetOrgSize(remote.OrgSize).
-		SetUseCase(remote.UseCase).
-		SetSubscriptionPlan(remote.SubscriptionPlan).
-		SetSubscriptionStatus(remote.SubscriptionStatus).
-		SetTierLimits(remote.TierLimits).
-		SetMetadata(remote.Metadata).
+		SetNillableUseCase(nillableStr(remote.UseCase)).
+		SetSyncStatus("synced").
+		SetLastSyncAt(now).
 		OnConflictColumns("id").
 		UpdateNewValues().
 		Exec(ctx)
@@ -112,4 +94,12 @@ func (s *Syncer) SyncTenant(ctx context.Context, slug string) (uuid.UUID, error)
 
 	log.Printf("  [tenant-sync] dynamically synced %s (UUID %s) into notifications-api DB", slug, realID)
 	return realID, nil
+}
+
+// nillableStr returns a *string if non-empty, nil otherwise.
+func nillableStr(s string) *string {
+	if s == "" {
+		return nil
+	}
+	return &s
 }

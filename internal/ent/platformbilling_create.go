@@ -25,103 +25,103 @@ type PlatformBillingCreate struct {
 }
 
 // SetCostPerSms sets the "cost_per_sms" field.
-func (pbc *PlatformBillingCreate) SetCostPerSms(f float64) *PlatformBillingCreate {
-	pbc.mutation.SetCostPerSms(f)
-	return pbc
+func (_c *PlatformBillingCreate) SetCostPerSms(v float64) *PlatformBillingCreate {
+	_c.mutation.SetCostPerSms(v)
+	return _c
 }
 
 // SetNillableCostPerSms sets the "cost_per_sms" field if the given value is not nil.
-func (pbc *PlatformBillingCreate) SetNillableCostPerSms(f *float64) *PlatformBillingCreate {
-	if f != nil {
-		pbc.SetCostPerSms(*f)
+func (_c *PlatformBillingCreate) SetNillableCostPerSms(v *float64) *PlatformBillingCreate {
+	if v != nil {
+		_c.SetCostPerSms(*v)
 	}
-	return pbc
+	return _c
 }
 
 // SetCostPerWhatsapp sets the "cost_per_whatsapp" field.
-func (pbc *PlatformBillingCreate) SetCostPerWhatsapp(f float64) *PlatformBillingCreate {
-	pbc.mutation.SetCostPerWhatsapp(f)
-	return pbc
+func (_c *PlatformBillingCreate) SetCostPerWhatsapp(v float64) *PlatformBillingCreate {
+	_c.mutation.SetCostPerWhatsapp(v)
+	return _c
 }
 
 // SetNillableCostPerWhatsapp sets the "cost_per_whatsapp" field if the given value is not nil.
-func (pbc *PlatformBillingCreate) SetNillableCostPerWhatsapp(f *float64) *PlatformBillingCreate {
-	if f != nil {
-		pbc.SetCostPerWhatsapp(*f)
+func (_c *PlatformBillingCreate) SetNillableCostPerWhatsapp(v *float64) *PlatformBillingCreate {
+	if v != nil {
+		_c.SetCostPerWhatsapp(*v)
 	}
-	return pbc
+	return _c
 }
 
 // SetMinTopupAmount sets the "min_topup_amount" field.
-func (pbc *PlatformBillingCreate) SetMinTopupAmount(f float64) *PlatformBillingCreate {
-	pbc.mutation.SetMinTopupAmount(f)
-	return pbc
+func (_c *PlatformBillingCreate) SetMinTopupAmount(v float64) *PlatformBillingCreate {
+	_c.mutation.SetMinTopupAmount(v)
+	return _c
 }
 
 // SetNillableMinTopupAmount sets the "min_topup_amount" field if the given value is not nil.
-func (pbc *PlatformBillingCreate) SetNillableMinTopupAmount(f *float64) *PlatformBillingCreate {
-	if f != nil {
-		pbc.SetMinTopupAmount(*f)
+func (_c *PlatformBillingCreate) SetNillableMinTopupAmount(v *float64) *PlatformBillingCreate {
+	if v != nil {
+		_c.SetMinTopupAmount(*v)
 	}
-	return pbc
+	return _c
 }
 
 // SetTreasuryGatewayID sets the "treasury_gateway_id" field.
-func (pbc *PlatformBillingCreate) SetTreasuryGatewayID(u uuid.UUID) *PlatformBillingCreate {
-	pbc.mutation.SetTreasuryGatewayID(u)
-	return pbc
+func (_c *PlatformBillingCreate) SetTreasuryGatewayID(v uuid.UUID) *PlatformBillingCreate {
+	_c.mutation.SetTreasuryGatewayID(v)
+	return _c
 }
 
 // SetNillableTreasuryGatewayID sets the "treasury_gateway_id" field if the given value is not nil.
-func (pbc *PlatformBillingCreate) SetNillableTreasuryGatewayID(u *uuid.UUID) *PlatformBillingCreate {
-	if u != nil {
-		pbc.SetTreasuryGatewayID(*u)
+func (_c *PlatformBillingCreate) SetNillableTreasuryGatewayID(v *uuid.UUID) *PlatformBillingCreate {
+	if v != nil {
+		_c.SetTreasuryGatewayID(*v)
 	}
-	return pbc
+	return _c
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (pbc *PlatformBillingCreate) SetUpdatedAt(t time.Time) *PlatformBillingCreate {
-	pbc.mutation.SetUpdatedAt(t)
-	return pbc
+func (_c *PlatformBillingCreate) SetUpdatedAt(v time.Time) *PlatformBillingCreate {
+	_c.mutation.SetUpdatedAt(v)
+	return _c
 }
 
 // SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
-func (pbc *PlatformBillingCreate) SetNillableUpdatedAt(t *time.Time) *PlatformBillingCreate {
-	if t != nil {
-		pbc.SetUpdatedAt(*t)
+func (_c *PlatformBillingCreate) SetNillableUpdatedAt(v *time.Time) *PlatformBillingCreate {
+	if v != nil {
+		_c.SetUpdatedAt(*v)
 	}
-	return pbc
+	return _c
 }
 
 // SetID sets the "id" field.
-func (pbc *PlatformBillingCreate) SetID(u uuid.UUID) *PlatformBillingCreate {
-	pbc.mutation.SetID(u)
-	return pbc
+func (_c *PlatformBillingCreate) SetID(v uuid.UUID) *PlatformBillingCreate {
+	_c.mutation.SetID(v)
+	return _c
 }
 
 // SetNillableID sets the "id" field if the given value is not nil.
-func (pbc *PlatformBillingCreate) SetNillableID(u *uuid.UUID) *PlatformBillingCreate {
-	if u != nil {
-		pbc.SetID(*u)
+func (_c *PlatformBillingCreate) SetNillableID(v *uuid.UUID) *PlatformBillingCreate {
+	if v != nil {
+		_c.SetID(*v)
 	}
-	return pbc
+	return _c
 }
 
 // Mutation returns the PlatformBillingMutation object of the builder.
-func (pbc *PlatformBillingCreate) Mutation() *PlatformBillingMutation {
-	return pbc.mutation
+func (_c *PlatformBillingCreate) Mutation() *PlatformBillingMutation {
+	return _c.mutation
 }
 
 // Save creates the PlatformBilling in the database.
-func (pbc *PlatformBillingCreate) Save(ctx context.Context) (*PlatformBilling, error) {
-	pbc.defaults()
-	return withHooks(ctx, pbc.sqlSave, pbc.mutation, pbc.hooks)
+func (_c *PlatformBillingCreate) Save(ctx context.Context) (*PlatformBilling, error) {
+	_c.defaults()
+	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.
-func (pbc *PlatformBillingCreate) SaveX(ctx context.Context) *PlatformBilling {
-	v, err := pbc.Save(ctx)
+func (_c *PlatformBillingCreate) SaveX(ctx context.Context) *PlatformBilling {
+	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -129,65 +129,65 @@ func (pbc *PlatformBillingCreate) SaveX(ctx context.Context) *PlatformBilling {
 }
 
 // Exec executes the query.
-func (pbc *PlatformBillingCreate) Exec(ctx context.Context) error {
-	_, err := pbc.Save(ctx)
+func (_c *PlatformBillingCreate) Exec(ctx context.Context) error {
+	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (pbc *PlatformBillingCreate) ExecX(ctx context.Context) {
-	if err := pbc.Exec(ctx); err != nil {
+func (_c *PlatformBillingCreate) ExecX(ctx context.Context) {
+	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (pbc *PlatformBillingCreate) defaults() {
-	if _, ok := pbc.mutation.CostPerSms(); !ok {
+func (_c *PlatformBillingCreate) defaults() {
+	if _, ok := _c.mutation.CostPerSms(); !ok {
 		v := platformbilling.DefaultCostPerSms
-		pbc.mutation.SetCostPerSms(v)
+		_c.mutation.SetCostPerSms(v)
 	}
-	if _, ok := pbc.mutation.CostPerWhatsapp(); !ok {
+	if _, ok := _c.mutation.CostPerWhatsapp(); !ok {
 		v := platformbilling.DefaultCostPerWhatsapp
-		pbc.mutation.SetCostPerWhatsapp(v)
+		_c.mutation.SetCostPerWhatsapp(v)
 	}
-	if _, ok := pbc.mutation.MinTopupAmount(); !ok {
+	if _, ok := _c.mutation.MinTopupAmount(); !ok {
 		v := platformbilling.DefaultMinTopupAmount
-		pbc.mutation.SetMinTopupAmount(v)
+		_c.mutation.SetMinTopupAmount(v)
 	}
-	if _, ok := pbc.mutation.UpdatedAt(); !ok {
+	if _, ok := _c.mutation.UpdatedAt(); !ok {
 		v := platformbilling.DefaultUpdatedAt()
-		pbc.mutation.SetUpdatedAt(v)
+		_c.mutation.SetUpdatedAt(v)
 	}
-	if _, ok := pbc.mutation.ID(); !ok {
+	if _, ok := _c.mutation.ID(); !ok {
 		v := platformbilling.DefaultID()
-		pbc.mutation.SetID(v)
+		_c.mutation.SetID(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (pbc *PlatformBillingCreate) check() error {
-	if _, ok := pbc.mutation.CostPerSms(); !ok {
+func (_c *PlatformBillingCreate) check() error {
+	if _, ok := _c.mutation.CostPerSms(); !ok {
 		return &ValidationError{Name: "cost_per_sms", err: errors.New(`ent: missing required field "PlatformBilling.cost_per_sms"`)}
 	}
-	if _, ok := pbc.mutation.CostPerWhatsapp(); !ok {
+	if _, ok := _c.mutation.CostPerWhatsapp(); !ok {
 		return &ValidationError{Name: "cost_per_whatsapp", err: errors.New(`ent: missing required field "PlatformBilling.cost_per_whatsapp"`)}
 	}
-	if _, ok := pbc.mutation.MinTopupAmount(); !ok {
+	if _, ok := _c.mutation.MinTopupAmount(); !ok {
 		return &ValidationError{Name: "min_topup_amount", err: errors.New(`ent: missing required field "PlatformBilling.min_topup_amount"`)}
 	}
-	if _, ok := pbc.mutation.UpdatedAt(); !ok {
+	if _, ok := _c.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "PlatformBilling.updated_at"`)}
 	}
 	return nil
 }
 
-func (pbc *PlatformBillingCreate) sqlSave(ctx context.Context) (*PlatformBilling, error) {
-	if err := pbc.check(); err != nil {
+func (_c *PlatformBillingCreate) sqlSave(ctx context.Context) (*PlatformBilling, error) {
+	if err := _c.check(); err != nil {
 		return nil, err
 	}
-	_node, _spec := pbc.createSpec()
-	if err := sqlgraph.CreateNode(ctx, pbc.driver, _spec); err != nil {
+	_node, _spec := _c.createSpec()
+	if err := sqlgraph.CreateNode(ctx, _c.driver, _spec); err != nil {
 		if sqlgraph.IsConstraintError(err) {
 			err = &ConstraintError{msg: err.Error(), wrap: err}
 		}
@@ -200,38 +200,38 @@ func (pbc *PlatformBillingCreate) sqlSave(ctx context.Context) (*PlatformBilling
 			return nil, err
 		}
 	}
-	pbc.mutation.id = &_node.ID
-	pbc.mutation.done = true
+	_c.mutation.id = &_node.ID
+	_c.mutation.done = true
 	return _node, nil
 }
 
-func (pbc *PlatformBillingCreate) createSpec() (*PlatformBilling, *sqlgraph.CreateSpec) {
+func (_c *PlatformBillingCreate) createSpec() (*PlatformBilling, *sqlgraph.CreateSpec) {
 	var (
-		_node = &PlatformBilling{config: pbc.config}
+		_node = &PlatformBilling{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(platformbilling.Table, sqlgraph.NewFieldSpec(platformbilling.FieldID, field.TypeUUID))
 	)
-	_spec.OnConflict = pbc.conflict
-	if id, ok := pbc.mutation.ID(); ok {
+	_spec.OnConflict = _c.conflict
+	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
 	}
-	if value, ok := pbc.mutation.CostPerSms(); ok {
+	if value, ok := _c.mutation.CostPerSms(); ok {
 		_spec.SetField(platformbilling.FieldCostPerSms, field.TypeFloat64, value)
 		_node.CostPerSms = value
 	}
-	if value, ok := pbc.mutation.CostPerWhatsapp(); ok {
+	if value, ok := _c.mutation.CostPerWhatsapp(); ok {
 		_spec.SetField(platformbilling.FieldCostPerWhatsapp, field.TypeFloat64, value)
 		_node.CostPerWhatsapp = value
 	}
-	if value, ok := pbc.mutation.MinTopupAmount(); ok {
+	if value, ok := _c.mutation.MinTopupAmount(); ok {
 		_spec.SetField(platformbilling.FieldMinTopupAmount, field.TypeFloat64, value)
 		_node.MinTopupAmount = value
 	}
-	if value, ok := pbc.mutation.TreasuryGatewayID(); ok {
+	if value, ok := _c.mutation.TreasuryGatewayID(); ok {
 		_spec.SetField(platformbilling.FieldTreasuryGatewayID, field.TypeUUID, value)
 		_node.TreasuryGatewayID = &value
 	}
-	if value, ok := pbc.mutation.UpdatedAt(); ok {
+	if value, ok := _c.mutation.UpdatedAt(); ok {
 		_spec.SetField(platformbilling.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
 	}
@@ -254,10 +254,10 @@ func (pbc *PlatformBillingCreate) createSpec() (*PlatformBilling, *sqlgraph.Crea
 //			SetCostPerSms(v+v).
 //		}).
 //		Exec(ctx)
-func (pbc *PlatformBillingCreate) OnConflict(opts ...sql.ConflictOption) *PlatformBillingUpsertOne {
-	pbc.conflict = opts
+func (_c *PlatformBillingCreate) OnConflict(opts ...sql.ConflictOption) *PlatformBillingUpsertOne {
+	_c.conflict = opts
 	return &PlatformBillingUpsertOne{
-		create: pbc,
+		create: _c,
 	}
 }
 
@@ -267,10 +267,10 @@ func (pbc *PlatformBillingCreate) OnConflict(opts ...sql.ConflictOption) *Platfo
 //	client.PlatformBilling.Create().
 //		OnConflict(sql.ConflictColumns(columns...)).
 //		Exec(ctx)
-func (pbc *PlatformBillingCreate) OnConflictColumns(columns ...string) *PlatformBillingUpsertOne {
-	pbc.conflict = append(pbc.conflict, sql.ConflictColumns(columns...))
+func (_c *PlatformBillingCreate) OnConflictColumns(columns ...string) *PlatformBillingUpsertOne {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
 	return &PlatformBillingUpsertOne{
-		create: pbc,
+		create: _c,
 	}
 }
 
@@ -564,16 +564,16 @@ type PlatformBillingCreateBulk struct {
 }
 
 // Save creates the PlatformBilling entities in the database.
-func (pbcb *PlatformBillingCreateBulk) Save(ctx context.Context) ([]*PlatformBilling, error) {
-	if pbcb.err != nil {
-		return nil, pbcb.err
+func (_c *PlatformBillingCreateBulk) Save(ctx context.Context) ([]*PlatformBilling, error) {
+	if _c.err != nil {
+		return nil, _c.err
 	}
-	specs := make([]*sqlgraph.CreateSpec, len(pbcb.builders))
-	nodes := make([]*PlatformBilling, len(pbcb.builders))
-	mutators := make([]Mutator, len(pbcb.builders))
-	for i := range pbcb.builders {
+	specs := make([]*sqlgraph.CreateSpec, len(_c.builders))
+	nodes := make([]*PlatformBilling, len(_c.builders))
+	mutators := make([]Mutator, len(_c.builders))
+	for i := range _c.builders {
 		func(i int, root context.Context) {
-			builder := pbcb.builders[i]
+			builder := _c.builders[i]
 			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*PlatformBillingMutation)
@@ -587,12 +587,12 @@ func (pbcb *PlatformBillingCreateBulk) Save(ctx context.Context) ([]*PlatformBil
 				var err error
 				nodes[i], specs[i] = builder.createSpec()
 				if i < len(mutators)-1 {
-					_, err = mutators[i+1].Mutate(root, pbcb.builders[i+1].mutation)
+					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
-					spec.OnConflict = pbcb.conflict
+					spec.OnConflict = _c.conflict
 					// Invoke the actual operation on the latest mutation in the chain.
-					if err = sqlgraph.BatchCreate(ctx, pbcb.driver, spec); err != nil {
+					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
 							err = &ConstraintError{msg: err.Error(), wrap: err}
 						}
@@ -612,7 +612,7 @@ func (pbcb *PlatformBillingCreateBulk) Save(ctx context.Context) ([]*PlatformBil
 		}(i, ctx)
 	}
 	if len(mutators) > 0 {
-		if _, err := mutators[0].Mutate(ctx, pbcb.builders[0].mutation); err != nil {
+		if _, err := mutators[0].Mutate(ctx, _c.builders[0].mutation); err != nil {
 			return nil, err
 		}
 	}
@@ -620,8 +620,8 @@ func (pbcb *PlatformBillingCreateBulk) Save(ctx context.Context) ([]*PlatformBil
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (pbcb *PlatformBillingCreateBulk) SaveX(ctx context.Context) []*PlatformBilling {
-	v, err := pbcb.Save(ctx)
+func (_c *PlatformBillingCreateBulk) SaveX(ctx context.Context) []*PlatformBilling {
+	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -629,14 +629,14 @@ func (pbcb *PlatformBillingCreateBulk) SaveX(ctx context.Context) []*PlatformBil
 }
 
 // Exec executes the query.
-func (pbcb *PlatformBillingCreateBulk) Exec(ctx context.Context) error {
-	_, err := pbcb.Save(ctx)
+func (_c *PlatformBillingCreateBulk) Exec(ctx context.Context) error {
+	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (pbcb *PlatformBillingCreateBulk) ExecX(ctx context.Context) {
-	if err := pbcb.Exec(ctx); err != nil {
+func (_c *PlatformBillingCreateBulk) ExecX(ctx context.Context) {
+	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
@@ -656,10 +656,10 @@ func (pbcb *PlatformBillingCreateBulk) ExecX(ctx context.Context) {
 //			SetCostPerSms(v+v).
 //		}).
 //		Exec(ctx)
-func (pbcb *PlatformBillingCreateBulk) OnConflict(opts ...sql.ConflictOption) *PlatformBillingUpsertBulk {
-	pbcb.conflict = opts
+func (_c *PlatformBillingCreateBulk) OnConflict(opts ...sql.ConflictOption) *PlatformBillingUpsertBulk {
+	_c.conflict = opts
 	return &PlatformBillingUpsertBulk{
-		create: pbcb,
+		create: _c,
 	}
 }
 
@@ -669,10 +669,10 @@ func (pbcb *PlatformBillingCreateBulk) OnConflict(opts ...sql.ConflictOption) *P
 //	client.PlatformBilling.Create().
 //		OnConflict(sql.ConflictColumns(columns...)).
 //		Exec(ctx)
-func (pbcb *PlatformBillingCreateBulk) OnConflictColumns(columns ...string) *PlatformBillingUpsertBulk {
-	pbcb.conflict = append(pbcb.conflict, sql.ConflictColumns(columns...))
+func (_c *PlatformBillingCreateBulk) OnConflictColumns(columns ...string) *PlatformBillingUpsertBulk {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
 	return &PlatformBillingUpsertBulk{
-		create: pbcb,
+		create: _c,
 	}
 }
 

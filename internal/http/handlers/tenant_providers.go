@@ -14,7 +14,7 @@ import (
 	httpware "github.com/Bengo-Hub/httpware"
 )
 
-// TenantProviders handles tenant-level notification provider selection and branding.
+// TenantProviders handles tenant-level notification provider selection.
 type TenantProviders struct {
 	client     *ent.Client
 	logger     *zap.Logger
@@ -39,21 +39,11 @@ type selectProviderRequest struct {
 	Environment  string `json:"environment"`   // sandbox, production
 }
 
-type brandingRequest struct {
-	FromEmail      string `json:"from_email,omitempty"`
-	FromName       string `json:"from_name,omitempty"`
-	LogoURL        string `json:"logo_url,omitempty"`
-	PrimaryColor   string `json:"primary_color,omitempty"`
-	SecondaryColor string `json:"secondary_color,omitempty"`
-}
-
-type brandingResponse struct {
-	TenantID       string `json:"tenant_id"`
-	FromEmail      string `json:"from_email,omitempty"`
-	FromName       string `json:"from_name,omitempty"`
-	LogoURL        string `json:"logo_url,omitempty"`
-	PrimaryColor   string `json:"primary_color,omitempty"`
-	SecondaryColor string `json:"secondary_color,omitempty"`
+type brandingRedirectResponse struct {
+	TenantID   string `json:"tenant_id"`
+	TenantSlug string `json:"tenant_slug"`
+	Message    string `json:"message"`
+	AuthAPIURL string `json:"auth_api_url"`
 }
 
 // ListAvailable lists platform providers available for tenant selection.
@@ -217,7 +207,8 @@ func (h *TenantProviders) GetSelected(w http.ResponseWriter, r *http.Request) {
 	jsonResponse(w, http.StatusOK, map[string]any{"selected": result})
 }
 
-// GetBranding returns the tenant's notification branding.
+// GetBranding returns a redirect to auth-api for tenant branding.
+// Branding data (logo, colors, contact info) is managed exclusively by auth-api.
 func (h *TenantProviders) GetBranding(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	tenantID := httpware.GetTenantID(ctx)
@@ -236,105 +227,30 @@ func (h *TenantProviders) GetBranding(w http.ResponseWriter, r *http.Request) {
 
 	t, err := h.client.Tenant.Query().
 		Where(tenant.IDEQ(parseUUID(tenantID))).
-		Only(r.Context())
-	if err != nil {
-		jsonError(w, http.StatusNotFound, "tenant not found")
-		return
-	}
-
-	resp := brandingResponse{
-		TenantID:     t.ID.String(),
-		LogoURL:      t.LogoURL,
-	}
-
-	if t.BrandColors != nil {
-		if v, ok := t.BrandColors["primary"].(string); ok {
-			resp.PrimaryColor = v
-		}
-		if v, ok := t.BrandColors["secondary"].(string); ok {
-			resp.SecondaryColor = v
-		}
-	}
-
-	// Get from_email and from_name from metadata
-	if t.Metadata != nil {
-		if v, ok := t.Metadata["from_email"].(string); ok {
-			resp.FromEmail = v
-		}
-		if v, ok := t.Metadata["from_name"].(string); ok {
-			resp.FromName = v
-		}
-	}
-
-	jsonResponse(w, http.StatusOK, resp)
-}
-
-// UpdateBranding creates or updates the tenant's notification branding.
-func (h *TenantProviders) UpdateBranding(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	tenantID := httpware.GetTenantID(ctx)
-
-	// Platform owners can override via query param
-	if httpware.IsPlatformOwner(ctx) {
-		if q := r.URL.Query().Get("tenantId"); q != "" {
-			tenantID = q
-		}
-	}
-
-	if tenantID == "" {
-		jsonError(w, http.StatusBadRequest, "tenant ID required")
-		return
-	}
-
-	var req brandingRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		jsonError(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
-
-	ctx = r.Context()
-
-	t, err := h.client.Tenant.Query().
-		Where(tenant.IDEQ(parseUUID(tenantID))).
 		Only(ctx)
 	if err != nil {
 		jsonError(w, http.StatusNotFound, "tenant not found")
 		return
 	}
 
-	update := t.Update()
-	metadata := t.Metadata
-	if metadata == nil {
-		metadata = make(map[string]any)
-	}
-	metadata["from_email"] = req.FromEmail
-	metadata["from_name"] = req.FromName
-	update.SetMetadata(metadata)
-
-	if req.LogoURL != "" {
-		update.SetLogoURL(req.LogoURL)
+	resp := brandingRedirectResponse{
+		TenantID:   t.ID.String(),
+		TenantSlug: t.Slug,
+		Message:    "Branding is managed by auth-api. Fetch branding from the auth_api_url below.",
+		AuthAPIURL: "GET /api/v1/tenants/by-slug/" + t.Slug,
 	}
 
-	colors := t.BrandColors
-	if colors == nil {
-		colors = make(map[string]any)
-	}
-	if req.PrimaryColor != "" {
-		colors["primary"] = req.PrimaryColor
-	}
-	if req.SecondaryColor != "" {
-		colors["secondary"] = req.SecondaryColor
-	}
-	update.SetBrandColors(colors)
+	jsonResponse(w, http.StatusOK, resp)
+}
 
-	_, err = update.Save(ctx)
-	if err != nil {
-		h.logger.Error("failed to update branding", zap.Error(err))
-		jsonError(w, http.StatusInternalServerError, "failed to update branding")
-		return
-	}
-
-	jsonResponse(w, http.StatusOK, map[string]string{"message": "branding updated"})
+// UpdateBranding returns 410 Gone — branding is managed at the SSO portal.
+func (h *TenantProviders) UpdateBranding(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusGone)
+	_ = json.NewEncoder(w).Encode(map[string]string{
+		"error":   "gone",
+		"message": "Branding is managed at the SSO portal. Visit accounts.codevertexitsolutions.com/dashboard/settings to manage tenant branding.",
+	})
 }
 
 // GetProviderSettings returns the tenant's settings for a specific provider (non-secret values only).

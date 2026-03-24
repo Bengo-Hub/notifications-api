@@ -25,111 +25,111 @@ type CreditTransactionCreate struct {
 }
 
 // SetTenantID sets the "tenant_id" field.
-func (ctc *CreditTransactionCreate) SetTenantID(u uuid.UUID) *CreditTransactionCreate {
-	ctc.mutation.SetTenantID(u)
-	return ctc
+func (_c *CreditTransactionCreate) SetTenantID(v uuid.UUID) *CreditTransactionCreate {
+	_c.mutation.SetTenantID(v)
+	return _c
 }
 
 // SetType sets the "type" field.
-func (ctc *CreditTransactionCreate) SetType(c credittransaction.Type) *CreditTransactionCreate {
-	ctc.mutation.SetType(c)
-	return ctc
+func (_c *CreditTransactionCreate) SetType(v credittransaction.Type) *CreditTransactionCreate {
+	_c.mutation.SetType(v)
+	return _c
 }
 
 // SetAction sets the "action" field.
-func (ctc *CreditTransactionCreate) SetAction(c credittransaction.Action) *CreditTransactionCreate {
-	ctc.mutation.SetAction(c)
-	return ctc
+func (_c *CreditTransactionCreate) SetAction(v credittransaction.Action) *CreditTransactionCreate {
+	_c.mutation.SetAction(v)
+	return _c
 }
 
 // SetAmount sets the "amount" field.
-func (ctc *CreditTransactionCreate) SetAmount(f float64) *CreditTransactionCreate {
-	ctc.mutation.SetAmount(f)
-	return ctc
+func (_c *CreditTransactionCreate) SetAmount(v float64) *CreditTransactionCreate {
+	_c.mutation.SetAmount(v)
+	return _c
 }
 
 // SetNewBalance sets the "new_balance" field.
-func (ctc *CreditTransactionCreate) SetNewBalance(f float64) *CreditTransactionCreate {
-	ctc.mutation.SetNewBalance(f)
-	return ctc
+func (_c *CreditTransactionCreate) SetNewBalance(v float64) *CreditTransactionCreate {
+	_c.mutation.SetNewBalance(v)
+	return _c
 }
 
 // SetReferenceID sets the "reference_id" field.
-func (ctc *CreditTransactionCreate) SetReferenceID(s string) *CreditTransactionCreate {
-	ctc.mutation.SetReferenceID(s)
-	return ctc
+func (_c *CreditTransactionCreate) SetReferenceID(v string) *CreditTransactionCreate {
+	_c.mutation.SetReferenceID(v)
+	return _c
 }
 
 // SetNillableReferenceID sets the "reference_id" field if the given value is not nil.
-func (ctc *CreditTransactionCreate) SetNillableReferenceID(s *string) *CreditTransactionCreate {
-	if s != nil {
-		ctc.SetReferenceID(*s)
+func (_c *CreditTransactionCreate) SetNillableReferenceID(v *string) *CreditTransactionCreate {
+	if v != nil {
+		_c.SetReferenceID(*v)
 	}
-	return ctc
+	return _c
 }
 
 // SetDescription sets the "description" field.
-func (ctc *CreditTransactionCreate) SetDescription(s string) *CreditTransactionCreate {
-	ctc.mutation.SetDescription(s)
-	return ctc
+func (_c *CreditTransactionCreate) SetDescription(v string) *CreditTransactionCreate {
+	_c.mutation.SetDescription(v)
+	return _c
 }
 
 // SetNillableDescription sets the "description" field if the given value is not nil.
-func (ctc *CreditTransactionCreate) SetNillableDescription(s *string) *CreditTransactionCreate {
-	if s != nil {
-		ctc.SetDescription(*s)
+func (_c *CreditTransactionCreate) SetNillableDescription(v *string) *CreditTransactionCreate {
+	if v != nil {
+		_c.SetDescription(*v)
 	}
-	return ctc
+	return _c
 }
 
 // SetMetadata sets the "metadata" field.
-func (ctc *CreditTransactionCreate) SetMetadata(m map[string]interface{}) *CreditTransactionCreate {
-	ctc.mutation.SetMetadata(m)
-	return ctc
+func (_c *CreditTransactionCreate) SetMetadata(v map[string]interface{}) *CreditTransactionCreate {
+	_c.mutation.SetMetadata(v)
+	return _c
 }
 
 // SetCreatedAt sets the "created_at" field.
-func (ctc *CreditTransactionCreate) SetCreatedAt(t time.Time) *CreditTransactionCreate {
-	ctc.mutation.SetCreatedAt(t)
-	return ctc
+func (_c *CreditTransactionCreate) SetCreatedAt(v time.Time) *CreditTransactionCreate {
+	_c.mutation.SetCreatedAt(v)
+	return _c
 }
 
 // SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (ctc *CreditTransactionCreate) SetNillableCreatedAt(t *time.Time) *CreditTransactionCreate {
-	if t != nil {
-		ctc.SetCreatedAt(*t)
+func (_c *CreditTransactionCreate) SetNillableCreatedAt(v *time.Time) *CreditTransactionCreate {
+	if v != nil {
+		_c.SetCreatedAt(*v)
 	}
-	return ctc
+	return _c
 }
 
 // SetID sets the "id" field.
-func (ctc *CreditTransactionCreate) SetID(u uuid.UUID) *CreditTransactionCreate {
-	ctc.mutation.SetID(u)
-	return ctc
+func (_c *CreditTransactionCreate) SetID(v uuid.UUID) *CreditTransactionCreate {
+	_c.mutation.SetID(v)
+	return _c
 }
 
 // SetNillableID sets the "id" field if the given value is not nil.
-func (ctc *CreditTransactionCreate) SetNillableID(u *uuid.UUID) *CreditTransactionCreate {
-	if u != nil {
-		ctc.SetID(*u)
+func (_c *CreditTransactionCreate) SetNillableID(v *uuid.UUID) *CreditTransactionCreate {
+	if v != nil {
+		_c.SetID(*v)
 	}
-	return ctc
+	return _c
 }
 
 // Mutation returns the CreditTransactionMutation object of the builder.
-func (ctc *CreditTransactionCreate) Mutation() *CreditTransactionMutation {
-	return ctc.mutation
+func (_c *CreditTransactionCreate) Mutation() *CreditTransactionMutation {
+	return _c.mutation
 }
 
 // Save creates the CreditTransaction in the database.
-func (ctc *CreditTransactionCreate) Save(ctx context.Context) (*CreditTransaction, error) {
-	ctc.defaults()
-	return withHooks(ctx, ctc.sqlSave, ctc.mutation, ctc.hooks)
+func (_c *CreditTransactionCreate) Save(ctx context.Context) (*CreditTransaction, error) {
+	_c.defaults()
+	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.
-func (ctc *CreditTransactionCreate) SaveX(ctx context.Context) *CreditTransaction {
-	v, err := ctc.Save(ctx)
+func (_c *CreditTransactionCreate) SaveX(ctx context.Context) *CreditTransaction {
+	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -137,76 +137,76 @@ func (ctc *CreditTransactionCreate) SaveX(ctx context.Context) *CreditTransactio
 }
 
 // Exec executes the query.
-func (ctc *CreditTransactionCreate) Exec(ctx context.Context) error {
-	_, err := ctc.Save(ctx)
+func (_c *CreditTransactionCreate) Exec(ctx context.Context) error {
+	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (ctc *CreditTransactionCreate) ExecX(ctx context.Context) {
-	if err := ctc.Exec(ctx); err != nil {
+func (_c *CreditTransactionCreate) ExecX(ctx context.Context) {
+	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (ctc *CreditTransactionCreate) defaults() {
-	if _, ok := ctc.mutation.Metadata(); !ok {
+func (_c *CreditTransactionCreate) defaults() {
+	if _, ok := _c.mutation.Metadata(); !ok {
 		v := credittransaction.DefaultMetadata
-		ctc.mutation.SetMetadata(v)
+		_c.mutation.SetMetadata(v)
 	}
-	if _, ok := ctc.mutation.CreatedAt(); !ok {
+	if _, ok := _c.mutation.CreatedAt(); !ok {
 		v := credittransaction.DefaultCreatedAt()
-		ctc.mutation.SetCreatedAt(v)
+		_c.mutation.SetCreatedAt(v)
 	}
-	if _, ok := ctc.mutation.ID(); !ok {
+	if _, ok := _c.mutation.ID(); !ok {
 		v := credittransaction.DefaultID()
-		ctc.mutation.SetID(v)
+		_c.mutation.SetID(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (ctc *CreditTransactionCreate) check() error {
-	if _, ok := ctc.mutation.TenantID(); !ok {
+func (_c *CreditTransactionCreate) check() error {
+	if _, ok := _c.mutation.TenantID(); !ok {
 		return &ValidationError{Name: "tenant_id", err: errors.New(`ent: missing required field "CreditTransaction.tenant_id"`)}
 	}
-	if _, ok := ctc.mutation.GetType(); !ok {
+	if _, ok := _c.mutation.GetType(); !ok {
 		return &ValidationError{Name: "type", err: errors.New(`ent: missing required field "CreditTransaction.type"`)}
 	}
-	if v, ok := ctc.mutation.GetType(); ok {
+	if v, ok := _c.mutation.GetType(); ok {
 		if err := credittransaction.TypeValidator(v); err != nil {
 			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "CreditTransaction.type": %w`, err)}
 		}
 	}
-	if _, ok := ctc.mutation.Action(); !ok {
+	if _, ok := _c.mutation.Action(); !ok {
 		return &ValidationError{Name: "action", err: errors.New(`ent: missing required field "CreditTransaction.action"`)}
 	}
-	if v, ok := ctc.mutation.Action(); ok {
+	if v, ok := _c.mutation.Action(); ok {
 		if err := credittransaction.ActionValidator(v); err != nil {
 			return &ValidationError{Name: "action", err: fmt.Errorf(`ent: validator failed for field "CreditTransaction.action": %w`, err)}
 		}
 	}
-	if _, ok := ctc.mutation.Amount(); !ok {
+	if _, ok := _c.mutation.Amount(); !ok {
 		return &ValidationError{Name: "amount", err: errors.New(`ent: missing required field "CreditTransaction.amount"`)}
 	}
-	if _, ok := ctc.mutation.NewBalance(); !ok {
+	if _, ok := _c.mutation.NewBalance(); !ok {
 		return &ValidationError{Name: "new_balance", err: errors.New(`ent: missing required field "CreditTransaction.new_balance"`)}
 	}
-	if _, ok := ctc.mutation.Metadata(); !ok {
+	if _, ok := _c.mutation.Metadata(); !ok {
 		return &ValidationError{Name: "metadata", err: errors.New(`ent: missing required field "CreditTransaction.metadata"`)}
 	}
-	if _, ok := ctc.mutation.CreatedAt(); !ok {
+	if _, ok := _c.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "CreditTransaction.created_at"`)}
 	}
 	return nil
 }
 
-func (ctc *CreditTransactionCreate) sqlSave(ctx context.Context) (*CreditTransaction, error) {
-	if err := ctc.check(); err != nil {
+func (_c *CreditTransactionCreate) sqlSave(ctx context.Context) (*CreditTransaction, error) {
+	if err := _c.check(); err != nil {
 		return nil, err
 	}
-	_node, _spec := ctc.createSpec()
-	if err := sqlgraph.CreateNode(ctx, ctc.driver, _spec); err != nil {
+	_node, _spec := _c.createSpec()
+	if err := sqlgraph.CreateNode(ctx, _c.driver, _spec); err != nil {
 		if sqlgraph.IsConstraintError(err) {
 			err = &ConstraintError{msg: err.Error(), wrap: err}
 		}
@@ -219,54 +219,54 @@ func (ctc *CreditTransactionCreate) sqlSave(ctx context.Context) (*CreditTransac
 			return nil, err
 		}
 	}
-	ctc.mutation.id = &_node.ID
-	ctc.mutation.done = true
+	_c.mutation.id = &_node.ID
+	_c.mutation.done = true
 	return _node, nil
 }
 
-func (ctc *CreditTransactionCreate) createSpec() (*CreditTransaction, *sqlgraph.CreateSpec) {
+func (_c *CreditTransactionCreate) createSpec() (*CreditTransaction, *sqlgraph.CreateSpec) {
 	var (
-		_node = &CreditTransaction{config: ctc.config}
+		_node = &CreditTransaction{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(credittransaction.Table, sqlgraph.NewFieldSpec(credittransaction.FieldID, field.TypeUUID))
 	)
-	_spec.OnConflict = ctc.conflict
-	if id, ok := ctc.mutation.ID(); ok {
+	_spec.OnConflict = _c.conflict
+	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
 	}
-	if value, ok := ctc.mutation.TenantID(); ok {
+	if value, ok := _c.mutation.TenantID(); ok {
 		_spec.SetField(credittransaction.FieldTenantID, field.TypeUUID, value)
 		_node.TenantID = value
 	}
-	if value, ok := ctc.mutation.GetType(); ok {
+	if value, ok := _c.mutation.GetType(); ok {
 		_spec.SetField(credittransaction.FieldType, field.TypeEnum, value)
 		_node.Type = value
 	}
-	if value, ok := ctc.mutation.Action(); ok {
+	if value, ok := _c.mutation.Action(); ok {
 		_spec.SetField(credittransaction.FieldAction, field.TypeEnum, value)
 		_node.Action = value
 	}
-	if value, ok := ctc.mutation.Amount(); ok {
+	if value, ok := _c.mutation.Amount(); ok {
 		_spec.SetField(credittransaction.FieldAmount, field.TypeFloat64, value)
 		_node.Amount = value
 	}
-	if value, ok := ctc.mutation.NewBalance(); ok {
+	if value, ok := _c.mutation.NewBalance(); ok {
 		_spec.SetField(credittransaction.FieldNewBalance, field.TypeFloat64, value)
 		_node.NewBalance = value
 	}
-	if value, ok := ctc.mutation.ReferenceID(); ok {
+	if value, ok := _c.mutation.ReferenceID(); ok {
 		_spec.SetField(credittransaction.FieldReferenceID, field.TypeString, value)
 		_node.ReferenceID = value
 	}
-	if value, ok := ctc.mutation.Description(); ok {
+	if value, ok := _c.mutation.Description(); ok {
 		_spec.SetField(credittransaction.FieldDescription, field.TypeString, value)
 		_node.Description = value
 	}
-	if value, ok := ctc.mutation.Metadata(); ok {
+	if value, ok := _c.mutation.Metadata(); ok {
 		_spec.SetField(credittransaction.FieldMetadata, field.TypeJSON, value)
 		_node.Metadata = value
 	}
-	if value, ok := ctc.mutation.CreatedAt(); ok {
+	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(credittransaction.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
 	}
@@ -289,10 +289,10 @@ func (ctc *CreditTransactionCreate) createSpec() (*CreditTransaction, *sqlgraph.
 //			SetTenantID(v+v).
 //		}).
 //		Exec(ctx)
-func (ctc *CreditTransactionCreate) OnConflict(opts ...sql.ConflictOption) *CreditTransactionUpsertOne {
-	ctc.conflict = opts
+func (_c *CreditTransactionCreate) OnConflict(opts ...sql.ConflictOption) *CreditTransactionUpsertOne {
+	_c.conflict = opts
 	return &CreditTransactionUpsertOne{
-		create: ctc,
+		create: _c,
 	}
 }
 
@@ -302,10 +302,10 @@ func (ctc *CreditTransactionCreate) OnConflict(opts ...sql.ConflictOption) *Cred
 //	client.CreditTransaction.Create().
 //		OnConflict(sql.ConflictColumns(columns...)).
 //		Exec(ctx)
-func (ctc *CreditTransactionCreate) OnConflictColumns(columns ...string) *CreditTransactionUpsertOne {
-	ctc.conflict = append(ctc.conflict, sql.ConflictColumns(columns...))
+func (_c *CreditTransactionCreate) OnConflictColumns(columns ...string) *CreditTransactionUpsertOne {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
 	return &CreditTransactionUpsertOne{
-		create: ctc,
+		create: _c,
 	}
 }
 
@@ -680,16 +680,16 @@ type CreditTransactionCreateBulk struct {
 }
 
 // Save creates the CreditTransaction entities in the database.
-func (ctcb *CreditTransactionCreateBulk) Save(ctx context.Context) ([]*CreditTransaction, error) {
-	if ctcb.err != nil {
-		return nil, ctcb.err
+func (_c *CreditTransactionCreateBulk) Save(ctx context.Context) ([]*CreditTransaction, error) {
+	if _c.err != nil {
+		return nil, _c.err
 	}
-	specs := make([]*sqlgraph.CreateSpec, len(ctcb.builders))
-	nodes := make([]*CreditTransaction, len(ctcb.builders))
-	mutators := make([]Mutator, len(ctcb.builders))
-	for i := range ctcb.builders {
+	specs := make([]*sqlgraph.CreateSpec, len(_c.builders))
+	nodes := make([]*CreditTransaction, len(_c.builders))
+	mutators := make([]Mutator, len(_c.builders))
+	for i := range _c.builders {
 		func(i int, root context.Context) {
-			builder := ctcb.builders[i]
+			builder := _c.builders[i]
 			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*CreditTransactionMutation)
@@ -703,12 +703,12 @@ func (ctcb *CreditTransactionCreateBulk) Save(ctx context.Context) ([]*CreditTra
 				var err error
 				nodes[i], specs[i] = builder.createSpec()
 				if i < len(mutators)-1 {
-					_, err = mutators[i+1].Mutate(root, ctcb.builders[i+1].mutation)
+					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
-					spec.OnConflict = ctcb.conflict
+					spec.OnConflict = _c.conflict
 					// Invoke the actual operation on the latest mutation in the chain.
-					if err = sqlgraph.BatchCreate(ctx, ctcb.driver, spec); err != nil {
+					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
 							err = &ConstraintError{msg: err.Error(), wrap: err}
 						}
@@ -728,7 +728,7 @@ func (ctcb *CreditTransactionCreateBulk) Save(ctx context.Context) ([]*CreditTra
 		}(i, ctx)
 	}
 	if len(mutators) > 0 {
-		if _, err := mutators[0].Mutate(ctx, ctcb.builders[0].mutation); err != nil {
+		if _, err := mutators[0].Mutate(ctx, _c.builders[0].mutation); err != nil {
 			return nil, err
 		}
 	}
@@ -736,8 +736,8 @@ func (ctcb *CreditTransactionCreateBulk) Save(ctx context.Context) ([]*CreditTra
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (ctcb *CreditTransactionCreateBulk) SaveX(ctx context.Context) []*CreditTransaction {
-	v, err := ctcb.Save(ctx)
+func (_c *CreditTransactionCreateBulk) SaveX(ctx context.Context) []*CreditTransaction {
+	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -745,14 +745,14 @@ func (ctcb *CreditTransactionCreateBulk) SaveX(ctx context.Context) []*CreditTra
 }
 
 // Exec executes the query.
-func (ctcb *CreditTransactionCreateBulk) Exec(ctx context.Context) error {
-	_, err := ctcb.Save(ctx)
+func (_c *CreditTransactionCreateBulk) Exec(ctx context.Context) error {
+	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (ctcb *CreditTransactionCreateBulk) ExecX(ctx context.Context) {
-	if err := ctcb.Exec(ctx); err != nil {
+func (_c *CreditTransactionCreateBulk) ExecX(ctx context.Context) {
+	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
@@ -772,10 +772,10 @@ func (ctcb *CreditTransactionCreateBulk) ExecX(ctx context.Context) {
 //			SetTenantID(v+v).
 //		}).
 //		Exec(ctx)
-func (ctcb *CreditTransactionCreateBulk) OnConflict(opts ...sql.ConflictOption) *CreditTransactionUpsertBulk {
-	ctcb.conflict = opts
+func (_c *CreditTransactionCreateBulk) OnConflict(opts ...sql.ConflictOption) *CreditTransactionUpsertBulk {
+	_c.conflict = opts
 	return &CreditTransactionUpsertBulk{
-		create: ctcb,
+		create: _c,
 	}
 }
 
@@ -785,10 +785,10 @@ func (ctcb *CreditTransactionCreateBulk) OnConflict(opts ...sql.ConflictOption) 
 //	client.CreditTransaction.Create().
 //		OnConflict(sql.ConflictColumns(columns...)).
 //		Exec(ctx)
-func (ctcb *CreditTransactionCreateBulk) OnConflictColumns(columns ...string) *CreditTransactionUpsertBulk {
-	ctcb.conflict = append(ctcb.conflict, sql.ConflictColumns(columns...))
+func (_c *CreditTransactionCreateBulk) OnConflictColumns(columns ...string) *CreditTransactionUpsertBulk {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
 	return &CreditTransactionUpsertBulk{
-		create: ctcb,
+		create: _c,
 	}
 }
 

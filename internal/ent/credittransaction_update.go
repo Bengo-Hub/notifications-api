@@ -24,154 +24,154 @@ type CreditTransactionUpdate struct {
 }
 
 // Where appends a list predicates to the CreditTransactionUpdate builder.
-func (ctu *CreditTransactionUpdate) Where(ps ...predicate.CreditTransaction) *CreditTransactionUpdate {
-	ctu.mutation.Where(ps...)
-	return ctu
+func (_u *CreditTransactionUpdate) Where(ps ...predicate.CreditTransaction) *CreditTransactionUpdate {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // SetTenantID sets the "tenant_id" field.
-func (ctu *CreditTransactionUpdate) SetTenantID(u uuid.UUID) *CreditTransactionUpdate {
-	ctu.mutation.SetTenantID(u)
-	return ctu
+func (_u *CreditTransactionUpdate) SetTenantID(v uuid.UUID) *CreditTransactionUpdate {
+	_u.mutation.SetTenantID(v)
+	return _u
 }
 
 // SetNillableTenantID sets the "tenant_id" field if the given value is not nil.
-func (ctu *CreditTransactionUpdate) SetNillableTenantID(u *uuid.UUID) *CreditTransactionUpdate {
-	if u != nil {
-		ctu.SetTenantID(*u)
+func (_u *CreditTransactionUpdate) SetNillableTenantID(v *uuid.UUID) *CreditTransactionUpdate {
+	if v != nil {
+		_u.SetTenantID(*v)
 	}
-	return ctu
+	return _u
 }
 
 // SetType sets the "type" field.
-func (ctu *CreditTransactionUpdate) SetType(c credittransaction.Type) *CreditTransactionUpdate {
-	ctu.mutation.SetType(c)
-	return ctu
+func (_u *CreditTransactionUpdate) SetType(v credittransaction.Type) *CreditTransactionUpdate {
+	_u.mutation.SetType(v)
+	return _u
 }
 
 // SetNillableType sets the "type" field if the given value is not nil.
-func (ctu *CreditTransactionUpdate) SetNillableType(c *credittransaction.Type) *CreditTransactionUpdate {
-	if c != nil {
-		ctu.SetType(*c)
+func (_u *CreditTransactionUpdate) SetNillableType(v *credittransaction.Type) *CreditTransactionUpdate {
+	if v != nil {
+		_u.SetType(*v)
 	}
-	return ctu
+	return _u
 }
 
 // SetAction sets the "action" field.
-func (ctu *CreditTransactionUpdate) SetAction(c credittransaction.Action) *CreditTransactionUpdate {
-	ctu.mutation.SetAction(c)
-	return ctu
+func (_u *CreditTransactionUpdate) SetAction(v credittransaction.Action) *CreditTransactionUpdate {
+	_u.mutation.SetAction(v)
+	return _u
 }
 
 // SetNillableAction sets the "action" field if the given value is not nil.
-func (ctu *CreditTransactionUpdate) SetNillableAction(c *credittransaction.Action) *CreditTransactionUpdate {
-	if c != nil {
-		ctu.SetAction(*c)
+func (_u *CreditTransactionUpdate) SetNillableAction(v *credittransaction.Action) *CreditTransactionUpdate {
+	if v != nil {
+		_u.SetAction(*v)
 	}
-	return ctu
+	return _u
 }
 
 // SetAmount sets the "amount" field.
-func (ctu *CreditTransactionUpdate) SetAmount(f float64) *CreditTransactionUpdate {
-	ctu.mutation.ResetAmount()
-	ctu.mutation.SetAmount(f)
-	return ctu
+func (_u *CreditTransactionUpdate) SetAmount(v float64) *CreditTransactionUpdate {
+	_u.mutation.ResetAmount()
+	_u.mutation.SetAmount(v)
+	return _u
 }
 
 // SetNillableAmount sets the "amount" field if the given value is not nil.
-func (ctu *CreditTransactionUpdate) SetNillableAmount(f *float64) *CreditTransactionUpdate {
-	if f != nil {
-		ctu.SetAmount(*f)
+func (_u *CreditTransactionUpdate) SetNillableAmount(v *float64) *CreditTransactionUpdate {
+	if v != nil {
+		_u.SetAmount(*v)
 	}
-	return ctu
+	return _u
 }
 
-// AddAmount adds f to the "amount" field.
-func (ctu *CreditTransactionUpdate) AddAmount(f float64) *CreditTransactionUpdate {
-	ctu.mutation.AddAmount(f)
-	return ctu
+// AddAmount adds value to the "amount" field.
+func (_u *CreditTransactionUpdate) AddAmount(v float64) *CreditTransactionUpdate {
+	_u.mutation.AddAmount(v)
+	return _u
 }
 
 // SetNewBalance sets the "new_balance" field.
-func (ctu *CreditTransactionUpdate) SetNewBalance(f float64) *CreditTransactionUpdate {
-	ctu.mutation.ResetNewBalance()
-	ctu.mutation.SetNewBalance(f)
-	return ctu
+func (_u *CreditTransactionUpdate) SetNewBalance(v float64) *CreditTransactionUpdate {
+	_u.mutation.ResetNewBalance()
+	_u.mutation.SetNewBalance(v)
+	return _u
 }
 
 // SetNillableNewBalance sets the "new_balance" field if the given value is not nil.
-func (ctu *CreditTransactionUpdate) SetNillableNewBalance(f *float64) *CreditTransactionUpdate {
-	if f != nil {
-		ctu.SetNewBalance(*f)
+func (_u *CreditTransactionUpdate) SetNillableNewBalance(v *float64) *CreditTransactionUpdate {
+	if v != nil {
+		_u.SetNewBalance(*v)
 	}
-	return ctu
+	return _u
 }
 
-// AddNewBalance adds f to the "new_balance" field.
-func (ctu *CreditTransactionUpdate) AddNewBalance(f float64) *CreditTransactionUpdate {
-	ctu.mutation.AddNewBalance(f)
-	return ctu
+// AddNewBalance adds value to the "new_balance" field.
+func (_u *CreditTransactionUpdate) AddNewBalance(v float64) *CreditTransactionUpdate {
+	_u.mutation.AddNewBalance(v)
+	return _u
 }
 
 // SetReferenceID sets the "reference_id" field.
-func (ctu *CreditTransactionUpdate) SetReferenceID(s string) *CreditTransactionUpdate {
-	ctu.mutation.SetReferenceID(s)
-	return ctu
+func (_u *CreditTransactionUpdate) SetReferenceID(v string) *CreditTransactionUpdate {
+	_u.mutation.SetReferenceID(v)
+	return _u
 }
 
 // SetNillableReferenceID sets the "reference_id" field if the given value is not nil.
-func (ctu *CreditTransactionUpdate) SetNillableReferenceID(s *string) *CreditTransactionUpdate {
-	if s != nil {
-		ctu.SetReferenceID(*s)
+func (_u *CreditTransactionUpdate) SetNillableReferenceID(v *string) *CreditTransactionUpdate {
+	if v != nil {
+		_u.SetReferenceID(*v)
 	}
-	return ctu
+	return _u
 }
 
 // ClearReferenceID clears the value of the "reference_id" field.
-func (ctu *CreditTransactionUpdate) ClearReferenceID() *CreditTransactionUpdate {
-	ctu.mutation.ClearReferenceID()
-	return ctu
+func (_u *CreditTransactionUpdate) ClearReferenceID() *CreditTransactionUpdate {
+	_u.mutation.ClearReferenceID()
+	return _u
 }
 
 // SetDescription sets the "description" field.
-func (ctu *CreditTransactionUpdate) SetDescription(s string) *CreditTransactionUpdate {
-	ctu.mutation.SetDescription(s)
-	return ctu
+func (_u *CreditTransactionUpdate) SetDescription(v string) *CreditTransactionUpdate {
+	_u.mutation.SetDescription(v)
+	return _u
 }
 
 // SetNillableDescription sets the "description" field if the given value is not nil.
-func (ctu *CreditTransactionUpdate) SetNillableDescription(s *string) *CreditTransactionUpdate {
-	if s != nil {
-		ctu.SetDescription(*s)
+func (_u *CreditTransactionUpdate) SetNillableDescription(v *string) *CreditTransactionUpdate {
+	if v != nil {
+		_u.SetDescription(*v)
 	}
-	return ctu
+	return _u
 }
 
 // ClearDescription clears the value of the "description" field.
-func (ctu *CreditTransactionUpdate) ClearDescription() *CreditTransactionUpdate {
-	ctu.mutation.ClearDescription()
-	return ctu
+func (_u *CreditTransactionUpdate) ClearDescription() *CreditTransactionUpdate {
+	_u.mutation.ClearDescription()
+	return _u
 }
 
 // SetMetadata sets the "metadata" field.
-func (ctu *CreditTransactionUpdate) SetMetadata(m map[string]interface{}) *CreditTransactionUpdate {
-	ctu.mutation.SetMetadata(m)
-	return ctu
+func (_u *CreditTransactionUpdate) SetMetadata(v map[string]interface{}) *CreditTransactionUpdate {
+	_u.mutation.SetMetadata(v)
+	return _u
 }
 
 // Mutation returns the CreditTransactionMutation object of the builder.
-func (ctu *CreditTransactionUpdate) Mutation() *CreditTransactionMutation {
-	return ctu.mutation
+func (_u *CreditTransactionUpdate) Mutation() *CreditTransactionMutation {
+	return _u.mutation
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
-func (ctu *CreditTransactionUpdate) Save(ctx context.Context) (int, error) {
-	return withHooks(ctx, ctu.sqlSave, ctu.mutation, ctu.hooks)
+func (_u *CreditTransactionUpdate) Save(ctx context.Context) (int, error) {
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (ctu *CreditTransactionUpdate) SaveX(ctx context.Context) int {
-	affected, err := ctu.Save(ctx)
+func (_u *CreditTransactionUpdate) SaveX(ctx context.Context) int {
+	affected, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -179,26 +179,26 @@ func (ctu *CreditTransactionUpdate) SaveX(ctx context.Context) int {
 }
 
 // Exec executes the query.
-func (ctu *CreditTransactionUpdate) Exec(ctx context.Context) error {
-	_, err := ctu.Save(ctx)
+func (_u *CreditTransactionUpdate) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (ctu *CreditTransactionUpdate) ExecX(ctx context.Context) {
-	if err := ctu.Exec(ctx); err != nil {
+func (_u *CreditTransactionUpdate) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (ctu *CreditTransactionUpdate) check() error {
-	if v, ok := ctu.mutation.GetType(); ok {
+func (_u *CreditTransactionUpdate) check() error {
+	if v, ok := _u.mutation.GetType(); ok {
 		if err := credittransaction.TypeValidator(v); err != nil {
 			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "CreditTransaction.type": %w`, err)}
 		}
 	}
-	if v, ok := ctu.mutation.Action(); ok {
+	if v, ok := _u.mutation.Action(); ok {
 		if err := credittransaction.ActionValidator(v); err != nil {
 			return &ValidationError{Name: "action", err: fmt.Errorf(`ent: validator failed for field "CreditTransaction.action": %w`, err)}
 		}
@@ -207,61 +207,61 @@ func (ctu *CreditTransactionUpdate) check() error {
 }
 
 // Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
-func (ctu *CreditTransactionUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *CreditTransactionUpdate {
-	ctu.modifiers = append(ctu.modifiers, modifiers...)
-	return ctu
+func (_u *CreditTransactionUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *CreditTransactionUpdate {
+	_u.modifiers = append(_u.modifiers, modifiers...)
+	return _u
 }
 
-func (ctu *CreditTransactionUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	if err := ctu.check(); err != nil {
-		return n, err
+func (_u *CreditTransactionUpdate) sqlSave(ctx context.Context) (_node int, err error) {
+	if err := _u.check(); err != nil {
+		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(credittransaction.Table, credittransaction.Columns, sqlgraph.NewFieldSpec(credittransaction.FieldID, field.TypeUUID))
-	if ps := ctu.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := ctu.mutation.TenantID(); ok {
+	if value, ok := _u.mutation.TenantID(); ok {
 		_spec.SetField(credittransaction.FieldTenantID, field.TypeUUID, value)
 	}
-	if value, ok := ctu.mutation.GetType(); ok {
+	if value, ok := _u.mutation.GetType(); ok {
 		_spec.SetField(credittransaction.FieldType, field.TypeEnum, value)
 	}
-	if value, ok := ctu.mutation.Action(); ok {
+	if value, ok := _u.mutation.Action(); ok {
 		_spec.SetField(credittransaction.FieldAction, field.TypeEnum, value)
 	}
-	if value, ok := ctu.mutation.Amount(); ok {
+	if value, ok := _u.mutation.Amount(); ok {
 		_spec.SetField(credittransaction.FieldAmount, field.TypeFloat64, value)
 	}
-	if value, ok := ctu.mutation.AddedAmount(); ok {
+	if value, ok := _u.mutation.AddedAmount(); ok {
 		_spec.AddField(credittransaction.FieldAmount, field.TypeFloat64, value)
 	}
-	if value, ok := ctu.mutation.NewBalance(); ok {
+	if value, ok := _u.mutation.NewBalance(); ok {
 		_spec.SetField(credittransaction.FieldNewBalance, field.TypeFloat64, value)
 	}
-	if value, ok := ctu.mutation.AddedNewBalance(); ok {
+	if value, ok := _u.mutation.AddedNewBalance(); ok {
 		_spec.AddField(credittransaction.FieldNewBalance, field.TypeFloat64, value)
 	}
-	if value, ok := ctu.mutation.ReferenceID(); ok {
+	if value, ok := _u.mutation.ReferenceID(); ok {
 		_spec.SetField(credittransaction.FieldReferenceID, field.TypeString, value)
 	}
-	if ctu.mutation.ReferenceIDCleared() {
+	if _u.mutation.ReferenceIDCleared() {
 		_spec.ClearField(credittransaction.FieldReferenceID, field.TypeString)
 	}
-	if value, ok := ctu.mutation.Description(); ok {
+	if value, ok := _u.mutation.Description(); ok {
 		_spec.SetField(credittransaction.FieldDescription, field.TypeString, value)
 	}
-	if ctu.mutation.DescriptionCleared() {
+	if _u.mutation.DescriptionCleared() {
 		_spec.ClearField(credittransaction.FieldDescription, field.TypeString)
 	}
-	if value, ok := ctu.mutation.Metadata(); ok {
+	if value, ok := _u.mutation.Metadata(); ok {
 		_spec.SetField(credittransaction.FieldMetadata, field.TypeJSON, value)
 	}
-	_spec.AddModifiers(ctu.modifiers...)
-	if n, err = sqlgraph.UpdateNodes(ctx, ctu.driver, _spec); err != nil {
+	_spec.AddModifiers(_u.modifiers...)
+	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{credittransaction.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -269,8 +269,8 @@ func (ctu *CreditTransactionUpdate) sqlSave(ctx context.Context) (n int, err err
 		}
 		return 0, err
 	}
-	ctu.mutation.done = true
-	return n, nil
+	_u.mutation.done = true
+	return _node, nil
 }
 
 // CreditTransactionUpdateOne is the builder for updating a single CreditTransaction entity.
@@ -283,161 +283,161 @@ type CreditTransactionUpdateOne struct {
 }
 
 // SetTenantID sets the "tenant_id" field.
-func (ctuo *CreditTransactionUpdateOne) SetTenantID(u uuid.UUID) *CreditTransactionUpdateOne {
-	ctuo.mutation.SetTenantID(u)
-	return ctuo
+func (_u *CreditTransactionUpdateOne) SetTenantID(v uuid.UUID) *CreditTransactionUpdateOne {
+	_u.mutation.SetTenantID(v)
+	return _u
 }
 
 // SetNillableTenantID sets the "tenant_id" field if the given value is not nil.
-func (ctuo *CreditTransactionUpdateOne) SetNillableTenantID(u *uuid.UUID) *CreditTransactionUpdateOne {
-	if u != nil {
-		ctuo.SetTenantID(*u)
+func (_u *CreditTransactionUpdateOne) SetNillableTenantID(v *uuid.UUID) *CreditTransactionUpdateOne {
+	if v != nil {
+		_u.SetTenantID(*v)
 	}
-	return ctuo
+	return _u
 }
 
 // SetType sets the "type" field.
-func (ctuo *CreditTransactionUpdateOne) SetType(c credittransaction.Type) *CreditTransactionUpdateOne {
-	ctuo.mutation.SetType(c)
-	return ctuo
+func (_u *CreditTransactionUpdateOne) SetType(v credittransaction.Type) *CreditTransactionUpdateOne {
+	_u.mutation.SetType(v)
+	return _u
 }
 
 // SetNillableType sets the "type" field if the given value is not nil.
-func (ctuo *CreditTransactionUpdateOne) SetNillableType(c *credittransaction.Type) *CreditTransactionUpdateOne {
-	if c != nil {
-		ctuo.SetType(*c)
+func (_u *CreditTransactionUpdateOne) SetNillableType(v *credittransaction.Type) *CreditTransactionUpdateOne {
+	if v != nil {
+		_u.SetType(*v)
 	}
-	return ctuo
+	return _u
 }
 
 // SetAction sets the "action" field.
-func (ctuo *CreditTransactionUpdateOne) SetAction(c credittransaction.Action) *CreditTransactionUpdateOne {
-	ctuo.mutation.SetAction(c)
-	return ctuo
+func (_u *CreditTransactionUpdateOne) SetAction(v credittransaction.Action) *CreditTransactionUpdateOne {
+	_u.mutation.SetAction(v)
+	return _u
 }
 
 // SetNillableAction sets the "action" field if the given value is not nil.
-func (ctuo *CreditTransactionUpdateOne) SetNillableAction(c *credittransaction.Action) *CreditTransactionUpdateOne {
-	if c != nil {
-		ctuo.SetAction(*c)
+func (_u *CreditTransactionUpdateOne) SetNillableAction(v *credittransaction.Action) *CreditTransactionUpdateOne {
+	if v != nil {
+		_u.SetAction(*v)
 	}
-	return ctuo
+	return _u
 }
 
 // SetAmount sets the "amount" field.
-func (ctuo *CreditTransactionUpdateOne) SetAmount(f float64) *CreditTransactionUpdateOne {
-	ctuo.mutation.ResetAmount()
-	ctuo.mutation.SetAmount(f)
-	return ctuo
+func (_u *CreditTransactionUpdateOne) SetAmount(v float64) *CreditTransactionUpdateOne {
+	_u.mutation.ResetAmount()
+	_u.mutation.SetAmount(v)
+	return _u
 }
 
 // SetNillableAmount sets the "amount" field if the given value is not nil.
-func (ctuo *CreditTransactionUpdateOne) SetNillableAmount(f *float64) *CreditTransactionUpdateOne {
-	if f != nil {
-		ctuo.SetAmount(*f)
+func (_u *CreditTransactionUpdateOne) SetNillableAmount(v *float64) *CreditTransactionUpdateOne {
+	if v != nil {
+		_u.SetAmount(*v)
 	}
-	return ctuo
+	return _u
 }
 
-// AddAmount adds f to the "amount" field.
-func (ctuo *CreditTransactionUpdateOne) AddAmount(f float64) *CreditTransactionUpdateOne {
-	ctuo.mutation.AddAmount(f)
-	return ctuo
+// AddAmount adds value to the "amount" field.
+func (_u *CreditTransactionUpdateOne) AddAmount(v float64) *CreditTransactionUpdateOne {
+	_u.mutation.AddAmount(v)
+	return _u
 }
 
 // SetNewBalance sets the "new_balance" field.
-func (ctuo *CreditTransactionUpdateOne) SetNewBalance(f float64) *CreditTransactionUpdateOne {
-	ctuo.mutation.ResetNewBalance()
-	ctuo.mutation.SetNewBalance(f)
-	return ctuo
+func (_u *CreditTransactionUpdateOne) SetNewBalance(v float64) *CreditTransactionUpdateOne {
+	_u.mutation.ResetNewBalance()
+	_u.mutation.SetNewBalance(v)
+	return _u
 }
 
 // SetNillableNewBalance sets the "new_balance" field if the given value is not nil.
-func (ctuo *CreditTransactionUpdateOne) SetNillableNewBalance(f *float64) *CreditTransactionUpdateOne {
-	if f != nil {
-		ctuo.SetNewBalance(*f)
+func (_u *CreditTransactionUpdateOne) SetNillableNewBalance(v *float64) *CreditTransactionUpdateOne {
+	if v != nil {
+		_u.SetNewBalance(*v)
 	}
-	return ctuo
+	return _u
 }
 
-// AddNewBalance adds f to the "new_balance" field.
-func (ctuo *CreditTransactionUpdateOne) AddNewBalance(f float64) *CreditTransactionUpdateOne {
-	ctuo.mutation.AddNewBalance(f)
-	return ctuo
+// AddNewBalance adds value to the "new_balance" field.
+func (_u *CreditTransactionUpdateOne) AddNewBalance(v float64) *CreditTransactionUpdateOne {
+	_u.mutation.AddNewBalance(v)
+	return _u
 }
 
 // SetReferenceID sets the "reference_id" field.
-func (ctuo *CreditTransactionUpdateOne) SetReferenceID(s string) *CreditTransactionUpdateOne {
-	ctuo.mutation.SetReferenceID(s)
-	return ctuo
+func (_u *CreditTransactionUpdateOne) SetReferenceID(v string) *CreditTransactionUpdateOne {
+	_u.mutation.SetReferenceID(v)
+	return _u
 }
 
 // SetNillableReferenceID sets the "reference_id" field if the given value is not nil.
-func (ctuo *CreditTransactionUpdateOne) SetNillableReferenceID(s *string) *CreditTransactionUpdateOne {
-	if s != nil {
-		ctuo.SetReferenceID(*s)
+func (_u *CreditTransactionUpdateOne) SetNillableReferenceID(v *string) *CreditTransactionUpdateOne {
+	if v != nil {
+		_u.SetReferenceID(*v)
 	}
-	return ctuo
+	return _u
 }
 
 // ClearReferenceID clears the value of the "reference_id" field.
-func (ctuo *CreditTransactionUpdateOne) ClearReferenceID() *CreditTransactionUpdateOne {
-	ctuo.mutation.ClearReferenceID()
-	return ctuo
+func (_u *CreditTransactionUpdateOne) ClearReferenceID() *CreditTransactionUpdateOne {
+	_u.mutation.ClearReferenceID()
+	return _u
 }
 
 // SetDescription sets the "description" field.
-func (ctuo *CreditTransactionUpdateOne) SetDescription(s string) *CreditTransactionUpdateOne {
-	ctuo.mutation.SetDescription(s)
-	return ctuo
+func (_u *CreditTransactionUpdateOne) SetDescription(v string) *CreditTransactionUpdateOne {
+	_u.mutation.SetDescription(v)
+	return _u
 }
 
 // SetNillableDescription sets the "description" field if the given value is not nil.
-func (ctuo *CreditTransactionUpdateOne) SetNillableDescription(s *string) *CreditTransactionUpdateOne {
-	if s != nil {
-		ctuo.SetDescription(*s)
+func (_u *CreditTransactionUpdateOne) SetNillableDescription(v *string) *CreditTransactionUpdateOne {
+	if v != nil {
+		_u.SetDescription(*v)
 	}
-	return ctuo
+	return _u
 }
 
 // ClearDescription clears the value of the "description" field.
-func (ctuo *CreditTransactionUpdateOne) ClearDescription() *CreditTransactionUpdateOne {
-	ctuo.mutation.ClearDescription()
-	return ctuo
+func (_u *CreditTransactionUpdateOne) ClearDescription() *CreditTransactionUpdateOne {
+	_u.mutation.ClearDescription()
+	return _u
 }
 
 // SetMetadata sets the "metadata" field.
-func (ctuo *CreditTransactionUpdateOne) SetMetadata(m map[string]interface{}) *CreditTransactionUpdateOne {
-	ctuo.mutation.SetMetadata(m)
-	return ctuo
+func (_u *CreditTransactionUpdateOne) SetMetadata(v map[string]interface{}) *CreditTransactionUpdateOne {
+	_u.mutation.SetMetadata(v)
+	return _u
 }
 
 // Mutation returns the CreditTransactionMutation object of the builder.
-func (ctuo *CreditTransactionUpdateOne) Mutation() *CreditTransactionMutation {
-	return ctuo.mutation
+func (_u *CreditTransactionUpdateOne) Mutation() *CreditTransactionMutation {
+	return _u.mutation
 }
 
 // Where appends a list predicates to the CreditTransactionUpdate builder.
-func (ctuo *CreditTransactionUpdateOne) Where(ps ...predicate.CreditTransaction) *CreditTransactionUpdateOne {
-	ctuo.mutation.Where(ps...)
-	return ctuo
+func (_u *CreditTransactionUpdateOne) Where(ps ...predicate.CreditTransaction) *CreditTransactionUpdateOne {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
-func (ctuo *CreditTransactionUpdateOne) Select(field string, fields ...string) *CreditTransactionUpdateOne {
-	ctuo.fields = append([]string{field}, fields...)
-	return ctuo
+func (_u *CreditTransactionUpdateOne) Select(field string, fields ...string) *CreditTransactionUpdateOne {
+	_u.fields = append([]string{field}, fields...)
+	return _u
 }
 
 // Save executes the query and returns the updated CreditTransaction entity.
-func (ctuo *CreditTransactionUpdateOne) Save(ctx context.Context) (*CreditTransaction, error) {
-	return withHooks(ctx, ctuo.sqlSave, ctuo.mutation, ctuo.hooks)
+func (_u *CreditTransactionUpdateOne) Save(ctx context.Context) (*CreditTransaction, error) {
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (ctuo *CreditTransactionUpdateOne) SaveX(ctx context.Context) *CreditTransaction {
-	node, err := ctuo.Save(ctx)
+func (_u *CreditTransactionUpdateOne) SaveX(ctx context.Context) *CreditTransaction {
+	node, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -445,26 +445,26 @@ func (ctuo *CreditTransactionUpdateOne) SaveX(ctx context.Context) *CreditTransa
 }
 
 // Exec executes the query on the entity.
-func (ctuo *CreditTransactionUpdateOne) Exec(ctx context.Context) error {
-	_, err := ctuo.Save(ctx)
+func (_u *CreditTransactionUpdateOne) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (ctuo *CreditTransactionUpdateOne) ExecX(ctx context.Context) {
-	if err := ctuo.Exec(ctx); err != nil {
+func (_u *CreditTransactionUpdateOne) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (ctuo *CreditTransactionUpdateOne) check() error {
-	if v, ok := ctuo.mutation.GetType(); ok {
+func (_u *CreditTransactionUpdateOne) check() error {
+	if v, ok := _u.mutation.GetType(); ok {
 		if err := credittransaction.TypeValidator(v); err != nil {
 			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "CreditTransaction.type": %w`, err)}
 		}
 	}
-	if v, ok := ctuo.mutation.Action(); ok {
+	if v, ok := _u.mutation.Action(); ok {
 		if err := credittransaction.ActionValidator(v); err != nil {
 			return &ValidationError{Name: "action", err: fmt.Errorf(`ent: validator failed for field "CreditTransaction.action": %w`, err)}
 		}
@@ -473,22 +473,22 @@ func (ctuo *CreditTransactionUpdateOne) check() error {
 }
 
 // Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
-func (ctuo *CreditTransactionUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *CreditTransactionUpdateOne {
-	ctuo.modifiers = append(ctuo.modifiers, modifiers...)
-	return ctuo
+func (_u *CreditTransactionUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *CreditTransactionUpdateOne {
+	_u.modifiers = append(_u.modifiers, modifiers...)
+	return _u
 }
 
-func (ctuo *CreditTransactionUpdateOne) sqlSave(ctx context.Context) (_node *CreditTransaction, err error) {
-	if err := ctuo.check(); err != nil {
+func (_u *CreditTransactionUpdateOne) sqlSave(ctx context.Context) (_node *CreditTransaction, err error) {
+	if err := _u.check(); err != nil {
 		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(credittransaction.Table, credittransaction.Columns, sqlgraph.NewFieldSpec(credittransaction.FieldID, field.TypeUUID))
-	id, ok := ctuo.mutation.ID()
+	id, ok := _u.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "CreditTransaction.id" for update`)}
 	}
 	_spec.Node.ID.Value = id
-	if fields := ctuo.fields; len(fields) > 0 {
+	if fields := _u.fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		_spec.Node.Columns = append(_spec.Node.Columns, credittransaction.FieldID)
 		for _, f := range fields {
@@ -500,54 +500,54 @@ func (ctuo *CreditTransactionUpdateOne) sqlSave(ctx context.Context) (_node *Cre
 			}
 		}
 	}
-	if ps := ctuo.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := ctuo.mutation.TenantID(); ok {
+	if value, ok := _u.mutation.TenantID(); ok {
 		_spec.SetField(credittransaction.FieldTenantID, field.TypeUUID, value)
 	}
-	if value, ok := ctuo.mutation.GetType(); ok {
+	if value, ok := _u.mutation.GetType(); ok {
 		_spec.SetField(credittransaction.FieldType, field.TypeEnum, value)
 	}
-	if value, ok := ctuo.mutation.Action(); ok {
+	if value, ok := _u.mutation.Action(); ok {
 		_spec.SetField(credittransaction.FieldAction, field.TypeEnum, value)
 	}
-	if value, ok := ctuo.mutation.Amount(); ok {
+	if value, ok := _u.mutation.Amount(); ok {
 		_spec.SetField(credittransaction.FieldAmount, field.TypeFloat64, value)
 	}
-	if value, ok := ctuo.mutation.AddedAmount(); ok {
+	if value, ok := _u.mutation.AddedAmount(); ok {
 		_spec.AddField(credittransaction.FieldAmount, field.TypeFloat64, value)
 	}
-	if value, ok := ctuo.mutation.NewBalance(); ok {
+	if value, ok := _u.mutation.NewBalance(); ok {
 		_spec.SetField(credittransaction.FieldNewBalance, field.TypeFloat64, value)
 	}
-	if value, ok := ctuo.mutation.AddedNewBalance(); ok {
+	if value, ok := _u.mutation.AddedNewBalance(); ok {
 		_spec.AddField(credittransaction.FieldNewBalance, field.TypeFloat64, value)
 	}
-	if value, ok := ctuo.mutation.ReferenceID(); ok {
+	if value, ok := _u.mutation.ReferenceID(); ok {
 		_spec.SetField(credittransaction.FieldReferenceID, field.TypeString, value)
 	}
-	if ctuo.mutation.ReferenceIDCleared() {
+	if _u.mutation.ReferenceIDCleared() {
 		_spec.ClearField(credittransaction.FieldReferenceID, field.TypeString)
 	}
-	if value, ok := ctuo.mutation.Description(); ok {
+	if value, ok := _u.mutation.Description(); ok {
 		_spec.SetField(credittransaction.FieldDescription, field.TypeString, value)
 	}
-	if ctuo.mutation.DescriptionCleared() {
+	if _u.mutation.DescriptionCleared() {
 		_spec.ClearField(credittransaction.FieldDescription, field.TypeString)
 	}
-	if value, ok := ctuo.mutation.Metadata(); ok {
+	if value, ok := _u.mutation.Metadata(); ok {
 		_spec.SetField(credittransaction.FieldMetadata, field.TypeJSON, value)
 	}
-	_spec.AddModifiers(ctuo.modifiers...)
-	_node = &CreditTransaction{config: ctuo.config}
+	_spec.AddModifiers(_u.modifiers...)
+	_node = &CreditTransaction{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues
-	if err = sqlgraph.UpdateNode(ctx, ctuo.driver, _spec); err != nil {
+	if err = sqlgraph.UpdateNode(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{credittransaction.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -555,6 +555,6 @@ func (ctuo *CreditTransactionUpdateOne) sqlSave(ctx context.Context) (_node *Cre
 		}
 		return nil, err
 	}
-	ctuo.mutation.done = true
+	_u.mutation.done = true
 	return _node, nil
 }

@@ -20,56 +20,56 @@ type DeliveryLogDelete struct {
 }
 
 // Where appends a list predicates to the DeliveryLogDelete builder.
-func (dld *DeliveryLogDelete) Where(ps ...predicate.DeliveryLog) *DeliveryLogDelete {
-	dld.mutation.Where(ps...)
-	return dld
+func (_d *DeliveryLogDelete) Where(ps ...predicate.DeliveryLog) *DeliveryLogDelete {
+	_d.mutation.Where(ps...)
+	return _d
 }
 
 // Exec executes the deletion query and returns how many vertices were deleted.
-func (dld *DeliveryLogDelete) Exec(ctx context.Context) (int, error) {
-	return withHooks(ctx, dld.sqlExec, dld.mutation, dld.hooks)
+func (_d *DeliveryLogDelete) Exec(ctx context.Context) (int, error) {
+	return withHooks(ctx, _d.sqlExec, _d.mutation, _d.hooks)
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (dld *DeliveryLogDelete) ExecX(ctx context.Context) int {
-	n, err := dld.Exec(ctx)
+func (_d *DeliveryLogDelete) ExecX(ctx context.Context) int {
+	n, err := _d.Exec(ctx)
 	if err != nil {
 		panic(err)
 	}
 	return n
 }
 
-func (dld *DeliveryLogDelete) sqlExec(ctx context.Context) (int, error) {
+func (_d *DeliveryLogDelete) sqlExec(ctx context.Context) (int, error) {
 	_spec := sqlgraph.NewDeleteSpec(deliverylog.Table, sqlgraph.NewFieldSpec(deliverylog.FieldID, field.TypeUUID))
-	if ps := dld.mutation.predicates; len(ps) > 0 {
+	if ps := _d.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	affected, err := sqlgraph.DeleteNodes(ctx, dld.driver, _spec)
+	affected, err := sqlgraph.DeleteNodes(ctx, _d.driver, _spec)
 	if err != nil && sqlgraph.IsConstraintError(err) {
 		err = &ConstraintError{msg: err.Error(), wrap: err}
 	}
-	dld.mutation.done = true
+	_d.mutation.done = true
 	return affected, err
 }
 
 // DeliveryLogDeleteOne is the builder for deleting a single DeliveryLog entity.
 type DeliveryLogDeleteOne struct {
-	dld *DeliveryLogDelete
+	_d *DeliveryLogDelete
 }
 
 // Where appends a list predicates to the DeliveryLogDelete builder.
-func (dldo *DeliveryLogDeleteOne) Where(ps ...predicate.DeliveryLog) *DeliveryLogDeleteOne {
-	dldo.dld.mutation.Where(ps...)
-	return dldo
+func (_d *DeliveryLogDeleteOne) Where(ps ...predicate.DeliveryLog) *DeliveryLogDeleteOne {
+	_d._d.mutation.Where(ps...)
+	return _d
 }
 
 // Exec executes the deletion query.
-func (dldo *DeliveryLogDeleteOne) Exec(ctx context.Context) error {
-	n, err := dldo.dld.Exec(ctx)
+func (_d *DeliveryLogDeleteOne) Exec(ctx context.Context) error {
+	n, err := _d._d.Exec(ctx)
 	switch {
 	case err != nil:
 		return err
@@ -81,8 +81,8 @@ func (dldo *DeliveryLogDeleteOne) Exec(ctx context.Context) error {
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (dldo *DeliveryLogDeleteOne) ExecX(ctx context.Context) {
-	if err := dldo.Exec(ctx); err != nil {
+func (_d *DeliveryLogDeleteOne) ExecX(ctx context.Context) {
+	if err := _d.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

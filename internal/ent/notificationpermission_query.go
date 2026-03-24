@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"math"
 
+	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -34,44 +35,44 @@ type NotificationPermissionQuery struct {
 }
 
 // Where adds a new predicate for the NotificationPermissionQuery builder.
-func (npq *NotificationPermissionQuery) Where(ps ...predicate.NotificationPermission) *NotificationPermissionQuery {
-	npq.predicates = append(npq.predicates, ps...)
-	return npq
+func (_q *NotificationPermissionQuery) Where(ps ...predicate.NotificationPermission) *NotificationPermissionQuery {
+	_q.predicates = append(_q.predicates, ps...)
+	return _q
 }
 
 // Limit the number of records to be returned by this query.
-func (npq *NotificationPermissionQuery) Limit(limit int) *NotificationPermissionQuery {
-	npq.ctx.Limit = &limit
-	return npq
+func (_q *NotificationPermissionQuery) Limit(limit int) *NotificationPermissionQuery {
+	_q.ctx.Limit = &limit
+	return _q
 }
 
 // Offset to start from.
-func (npq *NotificationPermissionQuery) Offset(offset int) *NotificationPermissionQuery {
-	npq.ctx.Offset = &offset
-	return npq
+func (_q *NotificationPermissionQuery) Offset(offset int) *NotificationPermissionQuery {
+	_q.ctx.Offset = &offset
+	return _q
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
-func (npq *NotificationPermissionQuery) Unique(unique bool) *NotificationPermissionQuery {
-	npq.ctx.Unique = &unique
-	return npq
+func (_q *NotificationPermissionQuery) Unique(unique bool) *NotificationPermissionQuery {
+	_q.ctx.Unique = &unique
+	return _q
 }
 
 // Order specifies how the records should be ordered.
-func (npq *NotificationPermissionQuery) Order(o ...notificationpermission.OrderOption) *NotificationPermissionQuery {
-	npq.order = append(npq.order, o...)
-	return npq
+func (_q *NotificationPermissionQuery) Order(o ...notificationpermission.OrderOption) *NotificationPermissionQuery {
+	_q.order = append(_q.order, o...)
+	return _q
 }
 
 // QueryRoles chains the current query on the "roles" edge.
-func (npq *NotificationPermissionQuery) QueryRoles() *NotificationRoleQuery {
-	query := (&NotificationRoleClient{config: npq.config}).Query()
+func (_q *NotificationPermissionQuery) QueryRoles() *NotificationRoleQuery {
+	query := (&NotificationRoleClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := npq.prepareQuery(ctx); err != nil {
+		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
 		}
-		selector := npq.sqlQuery(ctx)
+		selector := _q.sqlQuery(ctx)
 		if err := selector.Err(); err != nil {
 			return nil, err
 		}
@@ -80,20 +81,20 @@ func (npq *NotificationPermissionQuery) QueryRoles() *NotificationRoleQuery {
 			sqlgraph.To(notificationrole.Table, notificationrole.FieldID),
 			sqlgraph.Edge(sqlgraph.M2M, true, notificationpermission.RolesTable, notificationpermission.RolesPrimaryKey...),
 		)
-		fromU = sqlgraph.SetNeighbors(npq.driver.Dialect(), step)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
 	}
 	return query
 }
 
 // QueryNotificationRolePermissions chains the current query on the "notification_role_permissions" edge.
-func (npq *NotificationPermissionQuery) QueryNotificationRolePermissions() *NotificationRolePermissionQuery {
-	query := (&NotificationRolePermissionClient{config: npq.config}).Query()
+func (_q *NotificationPermissionQuery) QueryNotificationRolePermissions() *NotificationRolePermissionQuery {
+	query := (&NotificationRolePermissionClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := npq.prepareQuery(ctx); err != nil {
+		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
 		}
-		selector := npq.sqlQuery(ctx)
+		selector := _q.sqlQuery(ctx)
 		if err := selector.Err(); err != nil {
 			return nil, err
 		}
@@ -102,7 +103,7 @@ func (npq *NotificationPermissionQuery) QueryNotificationRolePermissions() *Noti
 			sqlgraph.To(notificationrolepermission.Table, notificationrolepermission.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, true, notificationpermission.NotificationRolePermissionsTable, notificationpermission.NotificationRolePermissionsColumn),
 		)
-		fromU = sqlgraph.SetNeighbors(npq.driver.Dialect(), step)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
 	}
 	return query
@@ -110,8 +111,8 @@ func (npq *NotificationPermissionQuery) QueryNotificationRolePermissions() *Noti
 
 // First returns the first NotificationPermission entity from the query.
 // Returns a *NotFoundError when no NotificationPermission was found.
-func (npq *NotificationPermissionQuery) First(ctx context.Context) (*NotificationPermission, error) {
-	nodes, err := npq.Limit(1).All(setContextOp(ctx, npq.ctx, "First"))
+func (_q *NotificationPermissionQuery) First(ctx context.Context) (*NotificationPermission, error) {
+	nodes, err := _q.Limit(1).All(setContextOp(ctx, _q.ctx, ent.OpQueryFirst))
 	if err != nil {
 		return nil, err
 	}
@@ -122,8 +123,8 @@ func (npq *NotificationPermissionQuery) First(ctx context.Context) (*Notificatio
 }
 
 // FirstX is like First, but panics if an error occurs.
-func (npq *NotificationPermissionQuery) FirstX(ctx context.Context) *NotificationPermission {
-	node, err := npq.First(ctx)
+func (_q *NotificationPermissionQuery) FirstX(ctx context.Context) *NotificationPermission {
+	node, err := _q.First(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
 	}
@@ -132,9 +133,9 @@ func (npq *NotificationPermissionQuery) FirstX(ctx context.Context) *Notificatio
 
 // FirstID returns the first NotificationPermission ID from the query.
 // Returns a *NotFoundError when no NotificationPermission ID was found.
-func (npq *NotificationPermissionQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
+func (_q *NotificationPermissionQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
-	if ids, err = npq.Limit(1).IDs(setContextOp(ctx, npq.ctx, "FirstID")); err != nil {
+	if ids, err = _q.Limit(1).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
 	if len(ids) == 0 {
@@ -145,8 +146,8 @@ func (npq *NotificationPermissionQuery) FirstID(ctx context.Context) (id uuid.UU
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (npq *NotificationPermissionQuery) FirstIDX(ctx context.Context) uuid.UUID {
-	id, err := npq.FirstID(ctx)
+func (_q *NotificationPermissionQuery) FirstIDX(ctx context.Context) uuid.UUID {
+	id, err := _q.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
 	}
@@ -156,8 +157,8 @@ func (npq *NotificationPermissionQuery) FirstIDX(ctx context.Context) uuid.UUID 
 // Only returns a single NotificationPermission entity found by the query, ensuring it only returns one.
 // Returns a *NotSingularError when more than one NotificationPermission entity is found.
 // Returns a *NotFoundError when no NotificationPermission entities are found.
-func (npq *NotificationPermissionQuery) Only(ctx context.Context) (*NotificationPermission, error) {
-	nodes, err := npq.Limit(2).All(setContextOp(ctx, npq.ctx, "Only"))
+func (_q *NotificationPermissionQuery) Only(ctx context.Context) (*NotificationPermission, error) {
+	nodes, err := _q.Limit(2).All(setContextOp(ctx, _q.ctx, ent.OpQueryOnly))
 	if err != nil {
 		return nil, err
 	}
@@ -172,8 +173,8 @@ func (npq *NotificationPermissionQuery) Only(ctx context.Context) (*Notification
 }
 
 // OnlyX is like Only, but panics if an error occurs.
-func (npq *NotificationPermissionQuery) OnlyX(ctx context.Context) *NotificationPermission {
-	node, err := npq.Only(ctx)
+func (_q *NotificationPermissionQuery) OnlyX(ctx context.Context) *NotificationPermission {
+	node, err := _q.Only(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -183,9 +184,9 @@ func (npq *NotificationPermissionQuery) OnlyX(ctx context.Context) *Notification
 // OnlyID is like Only, but returns the only NotificationPermission ID in the query.
 // Returns a *NotSingularError when more than one NotificationPermission ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (npq *NotificationPermissionQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
+func (_q *NotificationPermissionQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
-	if ids, err = npq.Limit(2).IDs(setContextOp(ctx, npq.ctx, "OnlyID")); err != nil {
+	if ids, err = _q.Limit(2).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
 	}
 	switch len(ids) {
@@ -200,8 +201,8 @@ func (npq *NotificationPermissionQuery) OnlyID(ctx context.Context) (id uuid.UUI
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (npq *NotificationPermissionQuery) OnlyIDX(ctx context.Context) uuid.UUID {
-	id, err := npq.OnlyID(ctx)
+func (_q *NotificationPermissionQuery) OnlyIDX(ctx context.Context) uuid.UUID {
+	id, err := _q.OnlyID(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -209,18 +210,18 @@ func (npq *NotificationPermissionQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 }
 
 // All executes the query and returns a list of NotificationPermissions.
-func (npq *NotificationPermissionQuery) All(ctx context.Context) ([]*NotificationPermission, error) {
-	ctx = setContextOp(ctx, npq.ctx, "All")
-	if err := npq.prepareQuery(ctx); err != nil {
+func (_q *NotificationPermissionQuery) All(ctx context.Context) ([]*NotificationPermission, error) {
+	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryAll)
+	if err := _q.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
 	qr := querierAll[[]*NotificationPermission, *NotificationPermissionQuery]()
-	return withInterceptors[[]*NotificationPermission](ctx, npq, qr, npq.inters)
+	return withInterceptors[[]*NotificationPermission](ctx, _q, qr, _q.inters)
 }
 
 // AllX is like All, but panics if an error occurs.
-func (npq *NotificationPermissionQuery) AllX(ctx context.Context) []*NotificationPermission {
-	nodes, err := npq.All(ctx)
+func (_q *NotificationPermissionQuery) AllX(ctx context.Context) []*NotificationPermission {
+	nodes, err := _q.All(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -228,20 +229,20 @@ func (npq *NotificationPermissionQuery) AllX(ctx context.Context) []*Notificatio
 }
 
 // IDs executes the query and returns a list of NotificationPermission IDs.
-func (npq *NotificationPermissionQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
-	if npq.ctx.Unique == nil && npq.path != nil {
-		npq.Unique(true)
+func (_q *NotificationPermissionQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
+	if _q.ctx.Unique == nil && _q.path != nil {
+		_q.Unique(true)
 	}
-	ctx = setContextOp(ctx, npq.ctx, "IDs")
-	if err = npq.Select(notificationpermission.FieldID).Scan(ctx, &ids); err != nil {
+	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryIDs)
+	if err = _q.Select(notificationpermission.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (npq *NotificationPermissionQuery) IDsX(ctx context.Context) []uuid.UUID {
-	ids, err := npq.IDs(ctx)
+func (_q *NotificationPermissionQuery) IDsX(ctx context.Context) []uuid.UUID {
+	ids, err := _q.IDs(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -249,17 +250,17 @@ func (npq *NotificationPermissionQuery) IDsX(ctx context.Context) []uuid.UUID {
 }
 
 // Count returns the count of the given query.
-func (npq *NotificationPermissionQuery) Count(ctx context.Context) (int, error) {
-	ctx = setContextOp(ctx, npq.ctx, "Count")
-	if err := npq.prepareQuery(ctx); err != nil {
+func (_q *NotificationPermissionQuery) Count(ctx context.Context) (int, error) {
+	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryCount)
+	if err := _q.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
-	return withInterceptors[int](ctx, npq, querierCount[*NotificationPermissionQuery](), npq.inters)
+	return withInterceptors[int](ctx, _q, querierCount[*NotificationPermissionQuery](), _q.inters)
 }
 
 // CountX is like Count, but panics if an error occurs.
-func (npq *NotificationPermissionQuery) CountX(ctx context.Context) int {
-	count, err := npq.Count(ctx)
+func (_q *NotificationPermissionQuery) CountX(ctx context.Context) int {
+	count, err := _q.Count(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -267,9 +268,9 @@ func (npq *NotificationPermissionQuery) CountX(ctx context.Context) int {
 }
 
 // Exist returns true if the query has elements in the graph.
-func (npq *NotificationPermissionQuery) Exist(ctx context.Context) (bool, error) {
-	ctx = setContextOp(ctx, npq.ctx, "Exist")
-	switch _, err := npq.FirstID(ctx); {
+func (_q *NotificationPermissionQuery) Exist(ctx context.Context) (bool, error) {
+	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryExist)
+	switch _, err := _q.FirstID(ctx); {
 	case IsNotFound(err):
 		return false, nil
 	case err != nil:
@@ -280,8 +281,8 @@ func (npq *NotificationPermissionQuery) Exist(ctx context.Context) (bool, error)
 }
 
 // ExistX is like Exist, but panics if an error occurs.
-func (npq *NotificationPermissionQuery) ExistX(ctx context.Context) bool {
-	exist, err := npq.Exist(ctx)
+func (_q *NotificationPermissionQuery) ExistX(ctx context.Context) bool {
+	exist, err := _q.Exist(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -290,44 +291,45 @@ func (npq *NotificationPermissionQuery) ExistX(ctx context.Context) bool {
 
 // Clone returns a duplicate of the NotificationPermissionQuery builder, including all associated steps. It can be
 // used to prepare common query builders and use them differently after the clone is made.
-func (npq *NotificationPermissionQuery) Clone() *NotificationPermissionQuery {
-	if npq == nil {
+func (_q *NotificationPermissionQuery) Clone() *NotificationPermissionQuery {
+	if _q == nil {
 		return nil
 	}
 	return &NotificationPermissionQuery{
-		config:                          npq.config,
-		ctx:                             npq.ctx.Clone(),
-		order:                           append([]notificationpermission.OrderOption{}, npq.order...),
-		inters:                          append([]Interceptor{}, npq.inters...),
-		predicates:                      append([]predicate.NotificationPermission{}, npq.predicates...),
-		withRoles:                       npq.withRoles.Clone(),
-		withNotificationRolePermissions: npq.withNotificationRolePermissions.Clone(),
+		config:                          _q.config,
+		ctx:                             _q.ctx.Clone(),
+		order:                           append([]notificationpermission.OrderOption{}, _q.order...),
+		inters:                          append([]Interceptor{}, _q.inters...),
+		predicates:                      append([]predicate.NotificationPermission{}, _q.predicates...),
+		withRoles:                       _q.withRoles.Clone(),
+		withNotificationRolePermissions: _q.withNotificationRolePermissions.Clone(),
 		// clone intermediate query.
-		sql:  npq.sql.Clone(),
-		path: npq.path,
+		sql:       _q.sql.Clone(),
+		path:      _q.path,
+		modifiers: append([]func(*sql.Selector){}, _q.modifiers...),
 	}
 }
 
 // WithRoles tells the query-builder to eager-load the nodes that are connected to
 // the "roles" edge. The optional arguments are used to configure the query builder of the edge.
-func (npq *NotificationPermissionQuery) WithRoles(opts ...func(*NotificationRoleQuery)) *NotificationPermissionQuery {
-	query := (&NotificationRoleClient{config: npq.config}).Query()
+func (_q *NotificationPermissionQuery) WithRoles(opts ...func(*NotificationRoleQuery)) *NotificationPermissionQuery {
+	query := (&NotificationRoleClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	npq.withRoles = query
-	return npq
+	_q.withRoles = query
+	return _q
 }
 
 // WithNotificationRolePermissions tells the query-builder to eager-load the nodes that are connected to
 // the "notification_role_permissions" edge. The optional arguments are used to configure the query builder of the edge.
-func (npq *NotificationPermissionQuery) WithNotificationRolePermissions(opts ...func(*NotificationRolePermissionQuery)) *NotificationPermissionQuery {
-	query := (&NotificationRolePermissionClient{config: npq.config}).Query()
+func (_q *NotificationPermissionQuery) WithNotificationRolePermissions(opts ...func(*NotificationRolePermissionQuery)) *NotificationPermissionQuery {
+	query := (&NotificationRolePermissionClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	npq.withNotificationRolePermissions = query
-	return npq
+	_q.withNotificationRolePermissions = query
+	return _q
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
@@ -344,10 +346,10 @@ func (npq *NotificationPermissionQuery) WithNotificationRolePermissions(opts ...
 //		GroupBy(notificationpermission.FieldPermissionCode).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-func (npq *NotificationPermissionQuery) GroupBy(field string, fields ...string) *NotificationPermissionGroupBy {
-	npq.ctx.Fields = append([]string{field}, fields...)
-	grbuild := &NotificationPermissionGroupBy{build: npq}
-	grbuild.flds = &npq.ctx.Fields
+func (_q *NotificationPermissionQuery) GroupBy(field string, fields ...string) *NotificationPermissionGroupBy {
+	_q.ctx.Fields = append([]string{field}, fields...)
+	grbuild := &NotificationPermissionGroupBy{build: _q}
+	grbuild.flds = &_q.ctx.Fields
 	grbuild.label = notificationpermission.Label
 	grbuild.scan = grbuild.Scan
 	return grbuild
@@ -365,84 +367,84 @@ func (npq *NotificationPermissionQuery) GroupBy(field string, fields ...string) 
 //	client.NotificationPermission.Query().
 //		Select(notificationpermission.FieldPermissionCode).
 //		Scan(ctx, &v)
-func (npq *NotificationPermissionQuery) Select(fields ...string) *NotificationPermissionSelect {
-	npq.ctx.Fields = append(npq.ctx.Fields, fields...)
-	sbuild := &NotificationPermissionSelect{NotificationPermissionQuery: npq}
+func (_q *NotificationPermissionQuery) Select(fields ...string) *NotificationPermissionSelect {
+	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
+	sbuild := &NotificationPermissionSelect{NotificationPermissionQuery: _q}
 	sbuild.label = notificationpermission.Label
-	sbuild.flds, sbuild.scan = &npq.ctx.Fields, sbuild.Scan
+	sbuild.flds, sbuild.scan = &_q.ctx.Fields, sbuild.Scan
 	return sbuild
 }
 
 // Aggregate returns a NotificationPermissionSelect configured with the given aggregations.
-func (npq *NotificationPermissionQuery) Aggregate(fns ...AggregateFunc) *NotificationPermissionSelect {
-	return npq.Select().Aggregate(fns...)
+func (_q *NotificationPermissionQuery) Aggregate(fns ...AggregateFunc) *NotificationPermissionSelect {
+	return _q.Select().Aggregate(fns...)
 }
 
-func (npq *NotificationPermissionQuery) prepareQuery(ctx context.Context) error {
-	for _, inter := range npq.inters {
+func (_q *NotificationPermissionQuery) prepareQuery(ctx context.Context) error {
+	for _, inter := range _q.inters {
 		if inter == nil {
 			return fmt.Errorf("ent: uninitialized interceptor (forgotten import ent/runtime?)")
 		}
 		if trv, ok := inter.(Traverser); ok {
-			if err := trv.Traverse(ctx, npq); err != nil {
+			if err := trv.Traverse(ctx, _q); err != nil {
 				return err
 			}
 		}
 	}
-	for _, f := range npq.ctx.Fields {
+	for _, f := range _q.ctx.Fields {
 		if !notificationpermission.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
 	}
-	if npq.path != nil {
-		prev, err := npq.path(ctx)
+	if _q.path != nil {
+		prev, err := _q.path(ctx)
 		if err != nil {
 			return err
 		}
-		npq.sql = prev
+		_q.sql = prev
 	}
 	return nil
 }
 
-func (npq *NotificationPermissionQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*NotificationPermission, error) {
+func (_q *NotificationPermissionQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*NotificationPermission, error) {
 	var (
 		nodes       = []*NotificationPermission{}
-		_spec       = npq.querySpec()
+		_spec       = _q.querySpec()
 		loadedTypes = [2]bool{
-			npq.withRoles != nil,
-			npq.withNotificationRolePermissions != nil,
+			_q.withRoles != nil,
+			_q.withNotificationRolePermissions != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*NotificationPermission).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []any) error {
-		node := &NotificationPermission{config: npq.config}
+		node := &NotificationPermission{config: _q.config}
 		nodes = append(nodes, node)
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
-	if len(npq.modifiers) > 0 {
-		_spec.Modifiers = npq.modifiers
+	if len(_q.modifiers) > 0 {
+		_spec.Modifiers = _q.modifiers
 	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
-	if err := sqlgraph.QueryNodes(ctx, npq.driver, _spec); err != nil {
+	if err := sqlgraph.QueryNodes(ctx, _q.driver, _spec); err != nil {
 		return nil, err
 	}
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := npq.withRoles; query != nil {
-		if err := npq.loadRoles(ctx, query, nodes,
+	if query := _q.withRoles; query != nil {
+		if err := _q.loadRoles(ctx, query, nodes,
 			func(n *NotificationPermission) { n.Edges.Roles = []*NotificationRole{} },
 			func(n *NotificationPermission, e *NotificationRole) { n.Edges.Roles = append(n.Edges.Roles, e) }); err != nil {
 			return nil, err
 		}
 	}
-	if query := npq.withNotificationRolePermissions; query != nil {
-		if err := npq.loadNotificationRolePermissions(ctx, query, nodes,
+	if query := _q.withNotificationRolePermissions; query != nil {
+		if err := _q.loadNotificationRolePermissions(ctx, query, nodes,
 			func(n *NotificationPermission) { n.Edges.NotificationRolePermissions = []*NotificationRolePermission{} },
 			func(n *NotificationPermission, e *NotificationRolePermission) {
 				n.Edges.NotificationRolePermissions = append(n.Edges.NotificationRolePermissions, e)
@@ -453,7 +455,7 @@ func (npq *NotificationPermissionQuery) sqlAll(ctx context.Context, hooks ...que
 	return nodes, nil
 }
 
-func (npq *NotificationPermissionQuery) loadRoles(ctx context.Context, query *NotificationRoleQuery, nodes []*NotificationPermission, init func(*NotificationPermission), assign func(*NotificationPermission, *NotificationRole)) error {
+func (_q *NotificationPermissionQuery) loadRoles(ctx context.Context, query *NotificationRoleQuery, nodes []*NotificationPermission, init func(*NotificationPermission), assign func(*NotificationPermission, *NotificationRole)) error {
 	edgeIDs := make([]driver.Value, len(nodes))
 	byID := make(map[uuid.UUID]*NotificationPermission)
 	nids := make(map[uuid.UUID]map[*NotificationPermission]struct{})
@@ -514,7 +516,7 @@ func (npq *NotificationPermissionQuery) loadRoles(ctx context.Context, query *No
 	}
 	return nil
 }
-func (npq *NotificationPermissionQuery) loadNotificationRolePermissions(ctx context.Context, query *NotificationRolePermissionQuery, nodes []*NotificationPermission, init func(*NotificationPermission), assign func(*NotificationPermission, *NotificationRolePermission)) error {
+func (_q *NotificationPermissionQuery) loadNotificationRolePermissions(ctx context.Context, query *NotificationRolePermissionQuery, nodes []*NotificationPermission, init func(*NotificationPermission), assign func(*NotificationPermission, *NotificationRolePermission)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[uuid.UUID]*NotificationPermission)
 	for i := range nodes {
@@ -545,27 +547,27 @@ func (npq *NotificationPermissionQuery) loadNotificationRolePermissions(ctx cont
 	return nil
 }
 
-func (npq *NotificationPermissionQuery) sqlCount(ctx context.Context) (int, error) {
-	_spec := npq.querySpec()
-	if len(npq.modifiers) > 0 {
-		_spec.Modifiers = npq.modifiers
+func (_q *NotificationPermissionQuery) sqlCount(ctx context.Context) (int, error) {
+	_spec := _q.querySpec()
+	if len(_q.modifiers) > 0 {
+		_spec.Modifiers = _q.modifiers
 	}
-	_spec.Node.Columns = npq.ctx.Fields
-	if len(npq.ctx.Fields) > 0 {
-		_spec.Unique = npq.ctx.Unique != nil && *npq.ctx.Unique
+	_spec.Node.Columns = _q.ctx.Fields
+	if len(_q.ctx.Fields) > 0 {
+		_spec.Unique = _q.ctx.Unique != nil && *_q.ctx.Unique
 	}
-	return sqlgraph.CountNodes(ctx, npq.driver, _spec)
+	return sqlgraph.CountNodes(ctx, _q.driver, _spec)
 }
 
-func (npq *NotificationPermissionQuery) querySpec() *sqlgraph.QuerySpec {
+func (_q *NotificationPermissionQuery) querySpec() *sqlgraph.QuerySpec {
 	_spec := sqlgraph.NewQuerySpec(notificationpermission.Table, notificationpermission.Columns, sqlgraph.NewFieldSpec(notificationpermission.FieldID, field.TypeUUID))
-	_spec.From = npq.sql
-	if unique := npq.ctx.Unique; unique != nil {
+	_spec.From = _q.sql
+	if unique := _q.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
-	} else if npq.path != nil {
+	} else if _q.path != nil {
 		_spec.Unique = true
 	}
-	if fields := npq.ctx.Fields; len(fields) > 0 {
+	if fields := _q.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		_spec.Node.Columns = append(_spec.Node.Columns, notificationpermission.FieldID)
 		for i := range fields {
@@ -574,20 +576,20 @@ func (npq *NotificationPermissionQuery) querySpec() *sqlgraph.QuerySpec {
 			}
 		}
 	}
-	if ps := npq.predicates; len(ps) > 0 {
+	if ps := _q.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if limit := npq.ctx.Limit; limit != nil {
+	if limit := _q.ctx.Limit; limit != nil {
 		_spec.Limit = *limit
 	}
-	if offset := npq.ctx.Offset; offset != nil {
+	if offset := _q.ctx.Offset; offset != nil {
 		_spec.Offset = *offset
 	}
-	if ps := npq.order; len(ps) > 0 {
+	if ps := _q.order; len(ps) > 0 {
 		_spec.Order = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
@@ -597,45 +599,45 @@ func (npq *NotificationPermissionQuery) querySpec() *sqlgraph.QuerySpec {
 	return _spec
 }
 
-func (npq *NotificationPermissionQuery) sqlQuery(ctx context.Context) *sql.Selector {
-	builder := sql.Dialect(npq.driver.Dialect())
+func (_q *NotificationPermissionQuery) sqlQuery(ctx context.Context) *sql.Selector {
+	builder := sql.Dialect(_q.driver.Dialect())
 	t1 := builder.Table(notificationpermission.Table)
-	columns := npq.ctx.Fields
+	columns := _q.ctx.Fields
 	if len(columns) == 0 {
 		columns = notificationpermission.Columns
 	}
 	selector := builder.Select(t1.Columns(columns...)...).From(t1)
-	if npq.sql != nil {
-		selector = npq.sql
+	if _q.sql != nil {
+		selector = _q.sql
 		selector.Select(selector.Columns(columns...)...)
 	}
-	if npq.ctx.Unique != nil && *npq.ctx.Unique {
+	if _q.ctx.Unique != nil && *_q.ctx.Unique {
 		selector.Distinct()
 	}
-	for _, m := range npq.modifiers {
+	for _, m := range _q.modifiers {
 		m(selector)
 	}
-	for _, p := range npq.predicates {
+	for _, p := range _q.predicates {
 		p(selector)
 	}
-	for _, p := range npq.order {
+	for _, p := range _q.order {
 		p(selector)
 	}
-	if offset := npq.ctx.Offset; offset != nil {
+	if offset := _q.ctx.Offset; offset != nil {
 		// limit is mandatory for offset clause. We start
 		// with default value, and override it below if needed.
 		selector.Offset(*offset).Limit(math.MaxInt32)
 	}
-	if limit := npq.ctx.Limit; limit != nil {
+	if limit := _q.ctx.Limit; limit != nil {
 		selector.Limit(*limit)
 	}
 	return selector
 }
 
 // Modify adds a query modifier for attaching custom logic to queries.
-func (npq *NotificationPermissionQuery) Modify(modifiers ...func(s *sql.Selector)) *NotificationPermissionSelect {
-	npq.modifiers = append(npq.modifiers, modifiers...)
-	return npq.Select()
+func (_q *NotificationPermissionQuery) Modify(modifiers ...func(s *sql.Selector)) *NotificationPermissionSelect {
+	_q.modifiers = append(_q.modifiers, modifiers...)
+	return _q.Select()
 }
 
 // NotificationPermissionGroupBy is the group-by builder for NotificationPermission entities.
@@ -645,41 +647,41 @@ type NotificationPermissionGroupBy struct {
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
-func (npgb *NotificationPermissionGroupBy) Aggregate(fns ...AggregateFunc) *NotificationPermissionGroupBy {
-	npgb.fns = append(npgb.fns, fns...)
-	return npgb
+func (_g *NotificationPermissionGroupBy) Aggregate(fns ...AggregateFunc) *NotificationPermissionGroupBy {
+	_g.fns = append(_g.fns, fns...)
+	return _g
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (npgb *NotificationPermissionGroupBy) Scan(ctx context.Context, v any) error {
-	ctx = setContextOp(ctx, npgb.build.ctx, "GroupBy")
-	if err := npgb.build.prepareQuery(ctx); err != nil {
+func (_g *NotificationPermissionGroupBy) Scan(ctx context.Context, v any) error {
+	ctx = setContextOp(ctx, _g.build.ctx, ent.OpQueryGroupBy)
+	if err := _g.build.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*NotificationPermissionQuery, *NotificationPermissionGroupBy](ctx, npgb.build, npgb, npgb.build.inters, v)
+	return scanWithInterceptors[*NotificationPermissionQuery, *NotificationPermissionGroupBy](ctx, _g.build, _g, _g.build.inters, v)
 }
 
-func (npgb *NotificationPermissionGroupBy) sqlScan(ctx context.Context, root *NotificationPermissionQuery, v any) error {
+func (_g *NotificationPermissionGroupBy) sqlScan(ctx context.Context, root *NotificationPermissionQuery, v any) error {
 	selector := root.sqlQuery(ctx).Select()
-	aggregation := make([]string, 0, len(npgb.fns))
-	for _, fn := range npgb.fns {
+	aggregation := make([]string, 0, len(_g.fns))
+	for _, fn := range _g.fns {
 		aggregation = append(aggregation, fn(selector))
 	}
 	if len(selector.SelectedColumns()) == 0 {
-		columns := make([]string, 0, len(*npgb.flds)+len(npgb.fns))
-		for _, f := range *npgb.flds {
+		columns := make([]string, 0, len(*_g.flds)+len(_g.fns))
+		for _, f := range *_g.flds {
 			columns = append(columns, selector.C(f))
 		}
 		columns = append(columns, aggregation...)
 		selector.Select(columns...)
 	}
-	selector.GroupBy(selector.Columns(*npgb.flds...)...)
+	selector.GroupBy(selector.Columns(*_g.flds...)...)
 	if err := selector.Err(); err != nil {
 		return err
 	}
 	rows := &sql.Rows{}
 	query, args := selector.Query()
-	if err := npgb.build.driver.Query(ctx, query, args, rows); err != nil {
+	if err := _g.build.driver.Query(ctx, query, args, rows); err != nil {
 		return err
 	}
 	defer rows.Close()
@@ -693,27 +695,27 @@ type NotificationPermissionSelect struct {
 }
 
 // Aggregate adds the given aggregation functions to the selector query.
-func (nps *NotificationPermissionSelect) Aggregate(fns ...AggregateFunc) *NotificationPermissionSelect {
-	nps.fns = append(nps.fns, fns...)
-	return nps
+func (_s *NotificationPermissionSelect) Aggregate(fns ...AggregateFunc) *NotificationPermissionSelect {
+	_s.fns = append(_s.fns, fns...)
+	return _s
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (nps *NotificationPermissionSelect) Scan(ctx context.Context, v any) error {
-	ctx = setContextOp(ctx, nps.ctx, "Select")
-	if err := nps.prepareQuery(ctx); err != nil {
+func (_s *NotificationPermissionSelect) Scan(ctx context.Context, v any) error {
+	ctx = setContextOp(ctx, _s.ctx, ent.OpQuerySelect)
+	if err := _s.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*NotificationPermissionQuery, *NotificationPermissionSelect](ctx, nps.NotificationPermissionQuery, nps, nps.inters, v)
+	return scanWithInterceptors[*NotificationPermissionQuery, *NotificationPermissionSelect](ctx, _s.NotificationPermissionQuery, _s, _s.inters, v)
 }
 
-func (nps *NotificationPermissionSelect) sqlScan(ctx context.Context, root *NotificationPermissionQuery, v any) error {
+func (_s *NotificationPermissionSelect) sqlScan(ctx context.Context, root *NotificationPermissionQuery, v any) error {
 	selector := root.sqlQuery(ctx)
-	aggregation := make([]string, 0, len(nps.fns))
-	for _, fn := range nps.fns {
+	aggregation := make([]string, 0, len(_s.fns))
+	for _, fn := range _s.fns {
 		aggregation = append(aggregation, fn(selector))
 	}
-	switch n := len(*nps.selector.flds); {
+	switch n := len(*_s.selector.flds); {
 	case n == 0 && len(aggregation) > 0:
 		selector.Select(aggregation...)
 	case n != 0 && len(aggregation) > 0:
@@ -721,7 +723,7 @@ func (nps *NotificationPermissionSelect) sqlScan(ctx context.Context, root *Noti
 	}
 	rows := &sql.Rows{}
 	query, args := selector.Query()
-	if err := nps.driver.Query(ctx, query, args, rows); err != nil {
+	if err := _s.driver.Query(ctx, query, args, rows); err != nil {
 		return err
 	}
 	defer rows.Close()
@@ -729,7 +731,7 @@ func (nps *NotificationPermissionSelect) sqlScan(ctx context.Context, root *Noti
 }
 
 // Modify adds a query modifier for attaching custom logic to queries.
-func (nps *NotificationPermissionSelect) Modify(modifiers ...func(s *sql.Selector)) *NotificationPermissionSelect {
-	nps.modifiers = append(nps.modifiers, modifiers...)
-	return nps
+func (_s *NotificationPermissionSelect) Modify(modifiers ...func(s *sql.Selector)) *NotificationPermissionSelect {
+	_s.modifiers = append(_s.modifiers, modifiers...)
+	return _s
 }

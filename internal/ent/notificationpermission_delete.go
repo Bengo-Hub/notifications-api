@@ -20,56 +20,56 @@ type NotificationPermissionDelete struct {
 }
 
 // Where appends a list predicates to the NotificationPermissionDelete builder.
-func (npd *NotificationPermissionDelete) Where(ps ...predicate.NotificationPermission) *NotificationPermissionDelete {
-	npd.mutation.Where(ps...)
-	return npd
+func (_d *NotificationPermissionDelete) Where(ps ...predicate.NotificationPermission) *NotificationPermissionDelete {
+	_d.mutation.Where(ps...)
+	return _d
 }
 
 // Exec executes the deletion query and returns how many vertices were deleted.
-func (npd *NotificationPermissionDelete) Exec(ctx context.Context) (int, error) {
-	return withHooks(ctx, npd.sqlExec, npd.mutation, npd.hooks)
+func (_d *NotificationPermissionDelete) Exec(ctx context.Context) (int, error) {
+	return withHooks(ctx, _d.sqlExec, _d.mutation, _d.hooks)
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (npd *NotificationPermissionDelete) ExecX(ctx context.Context) int {
-	n, err := npd.Exec(ctx)
+func (_d *NotificationPermissionDelete) ExecX(ctx context.Context) int {
+	n, err := _d.Exec(ctx)
 	if err != nil {
 		panic(err)
 	}
 	return n
 }
 
-func (npd *NotificationPermissionDelete) sqlExec(ctx context.Context) (int, error) {
+func (_d *NotificationPermissionDelete) sqlExec(ctx context.Context) (int, error) {
 	_spec := sqlgraph.NewDeleteSpec(notificationpermission.Table, sqlgraph.NewFieldSpec(notificationpermission.FieldID, field.TypeUUID))
-	if ps := npd.mutation.predicates; len(ps) > 0 {
+	if ps := _d.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	affected, err := sqlgraph.DeleteNodes(ctx, npd.driver, _spec)
+	affected, err := sqlgraph.DeleteNodes(ctx, _d.driver, _spec)
 	if err != nil && sqlgraph.IsConstraintError(err) {
 		err = &ConstraintError{msg: err.Error(), wrap: err}
 	}
-	npd.mutation.done = true
+	_d.mutation.done = true
 	return affected, err
 }
 
 // NotificationPermissionDeleteOne is the builder for deleting a single NotificationPermission entity.
 type NotificationPermissionDeleteOne struct {
-	npd *NotificationPermissionDelete
+	_d *NotificationPermissionDelete
 }
 
 // Where appends a list predicates to the NotificationPermissionDelete builder.
-func (npdo *NotificationPermissionDeleteOne) Where(ps ...predicate.NotificationPermission) *NotificationPermissionDeleteOne {
-	npdo.npd.mutation.Where(ps...)
-	return npdo
+func (_d *NotificationPermissionDeleteOne) Where(ps ...predicate.NotificationPermission) *NotificationPermissionDeleteOne {
+	_d._d.mutation.Where(ps...)
+	return _d
 }
 
 // Exec executes the deletion query.
-func (npdo *NotificationPermissionDeleteOne) Exec(ctx context.Context) error {
-	n, err := npdo.npd.Exec(ctx)
+func (_d *NotificationPermissionDeleteOne) Exec(ctx context.Context) error {
+	n, err := _d._d.Exec(ctx)
 	switch {
 	case err != nil:
 		return err
@@ -81,8 +81,8 @@ func (npdo *NotificationPermissionDeleteOne) Exec(ctx context.Context) error {
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (npdo *NotificationPermissionDeleteOne) ExecX(ctx context.Context) {
-	if err := npdo.Exec(ctx); err != nil {
+func (_d *NotificationPermissionDeleteOne) ExecX(ctx context.Context) {
+	if err := _d.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

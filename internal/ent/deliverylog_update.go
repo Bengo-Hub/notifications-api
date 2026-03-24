@@ -23,94 +23,94 @@ type DeliveryLogUpdate struct {
 }
 
 // Where appends a list predicates to the DeliveryLogUpdate builder.
-func (dlu *DeliveryLogUpdate) Where(ps ...predicate.DeliveryLog) *DeliveryLogUpdate {
-	dlu.mutation.Where(ps...)
-	return dlu
+func (_u *DeliveryLogUpdate) Where(ps ...predicate.DeliveryLog) *DeliveryLogUpdate {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // SetTenantID sets the "tenant_id" field.
-func (dlu *DeliveryLogUpdate) SetTenantID(s string) *DeliveryLogUpdate {
-	dlu.mutation.SetTenantID(s)
-	return dlu
+func (_u *DeliveryLogUpdate) SetTenantID(v string) *DeliveryLogUpdate {
+	_u.mutation.SetTenantID(v)
+	return _u
 }
 
 // SetNillableTenantID sets the "tenant_id" field if the given value is not nil.
-func (dlu *DeliveryLogUpdate) SetNillableTenantID(s *string) *DeliveryLogUpdate {
-	if s != nil {
-		dlu.SetTenantID(*s)
+func (_u *DeliveryLogUpdate) SetNillableTenantID(v *string) *DeliveryLogUpdate {
+	if v != nil {
+		_u.SetTenantID(*v)
 	}
-	return dlu
+	return _u
 }
 
 // SetTemplateID sets the "template_id" field.
-func (dlu *DeliveryLogUpdate) SetTemplateID(s string) *DeliveryLogUpdate {
-	dlu.mutation.SetTemplateID(s)
-	return dlu
+func (_u *DeliveryLogUpdate) SetTemplateID(v string) *DeliveryLogUpdate {
+	_u.mutation.SetTemplateID(v)
+	return _u
 }
 
 // SetNillableTemplateID sets the "template_id" field if the given value is not nil.
-func (dlu *DeliveryLogUpdate) SetNillableTemplateID(s *string) *DeliveryLogUpdate {
-	if s != nil {
-		dlu.SetTemplateID(*s)
+func (_u *DeliveryLogUpdate) SetNillableTemplateID(v *string) *DeliveryLogUpdate {
+	if v != nil {
+		_u.SetTemplateID(*v)
 	}
-	return dlu
+	return _u
 }
 
 // SetChannel sets the "channel" field.
-func (dlu *DeliveryLogUpdate) SetChannel(s string) *DeliveryLogUpdate {
-	dlu.mutation.SetChannel(s)
-	return dlu
+func (_u *DeliveryLogUpdate) SetChannel(v string) *DeliveryLogUpdate {
+	_u.mutation.SetChannel(v)
+	return _u
 }
 
 // SetNillableChannel sets the "channel" field if the given value is not nil.
-func (dlu *DeliveryLogUpdate) SetNillableChannel(s *string) *DeliveryLogUpdate {
-	if s != nil {
-		dlu.SetChannel(*s)
+func (_u *DeliveryLogUpdate) SetNillableChannel(v *string) *DeliveryLogUpdate {
+	if v != nil {
+		_u.SetChannel(*v)
 	}
-	return dlu
+	return _u
 }
 
 // SetRecipient sets the "recipient" field.
-func (dlu *DeliveryLogUpdate) SetRecipient(s string) *DeliveryLogUpdate {
-	dlu.mutation.SetRecipient(s)
-	return dlu
+func (_u *DeliveryLogUpdate) SetRecipient(v string) *DeliveryLogUpdate {
+	_u.mutation.SetRecipient(v)
+	return _u
 }
 
 // SetNillableRecipient sets the "recipient" field if the given value is not nil.
-func (dlu *DeliveryLogUpdate) SetNillableRecipient(s *string) *DeliveryLogUpdate {
-	if s != nil {
-		dlu.SetRecipient(*s)
+func (_u *DeliveryLogUpdate) SetNillableRecipient(v *string) *DeliveryLogUpdate {
+	if v != nil {
+		_u.SetRecipient(*v)
 	}
-	return dlu
+	return _u
 }
 
 // SetStatus sets the "status" field.
-func (dlu *DeliveryLogUpdate) SetStatus(s string) *DeliveryLogUpdate {
-	dlu.mutation.SetStatus(s)
-	return dlu
+func (_u *DeliveryLogUpdate) SetStatus(v string) *DeliveryLogUpdate {
+	_u.mutation.SetStatus(v)
+	return _u
 }
 
 // SetNillableStatus sets the "status" field if the given value is not nil.
-func (dlu *DeliveryLogUpdate) SetNillableStatus(s *string) *DeliveryLogUpdate {
-	if s != nil {
-		dlu.SetStatus(*s)
+func (_u *DeliveryLogUpdate) SetNillableStatus(v *string) *DeliveryLogUpdate {
+	if v != nil {
+		_u.SetStatus(*v)
 	}
-	return dlu
+	return _u
 }
 
 // Mutation returns the DeliveryLogMutation object of the builder.
-func (dlu *DeliveryLogUpdate) Mutation() *DeliveryLogMutation {
-	return dlu.mutation
+func (_u *DeliveryLogUpdate) Mutation() *DeliveryLogMutation {
+	return _u.mutation
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
-func (dlu *DeliveryLogUpdate) Save(ctx context.Context) (int, error) {
-	return withHooks(ctx, dlu.sqlSave, dlu.mutation, dlu.hooks)
+func (_u *DeliveryLogUpdate) Save(ctx context.Context) (int, error) {
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (dlu *DeliveryLogUpdate) SaveX(ctx context.Context) int {
-	affected, err := dlu.Save(ctx)
+func (_u *DeliveryLogUpdate) SaveX(ctx context.Context) int {
+	affected, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -118,36 +118,36 @@ func (dlu *DeliveryLogUpdate) SaveX(ctx context.Context) int {
 }
 
 // Exec executes the query.
-func (dlu *DeliveryLogUpdate) Exec(ctx context.Context) error {
-	_, err := dlu.Save(ctx)
+func (_u *DeliveryLogUpdate) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (dlu *DeliveryLogUpdate) ExecX(ctx context.Context) {
-	if err := dlu.Exec(ctx); err != nil {
+func (_u *DeliveryLogUpdate) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (dlu *DeliveryLogUpdate) check() error {
-	if v, ok := dlu.mutation.TenantID(); ok {
+func (_u *DeliveryLogUpdate) check() error {
+	if v, ok := _u.mutation.TenantID(); ok {
 		if err := deliverylog.TenantIDValidator(v); err != nil {
 			return &ValidationError{Name: "tenant_id", err: fmt.Errorf(`ent: validator failed for field "DeliveryLog.tenant_id": %w`, err)}
 		}
 	}
-	if v, ok := dlu.mutation.TemplateID(); ok {
+	if v, ok := _u.mutation.TemplateID(); ok {
 		if err := deliverylog.TemplateIDValidator(v); err != nil {
 			return &ValidationError{Name: "template_id", err: fmt.Errorf(`ent: validator failed for field "DeliveryLog.template_id": %w`, err)}
 		}
 	}
-	if v, ok := dlu.mutation.Channel(); ok {
+	if v, ok := _u.mutation.Channel(); ok {
 		if err := deliverylog.ChannelValidator(v); err != nil {
 			return &ValidationError{Name: "channel", err: fmt.Errorf(`ent: validator failed for field "DeliveryLog.channel": %w`, err)}
 		}
 	}
-	if v, ok := dlu.mutation.Recipient(); ok {
+	if v, ok := _u.mutation.Recipient(); ok {
 		if err := deliverylog.RecipientValidator(v); err != nil {
 			return &ValidationError{Name: "recipient", err: fmt.Errorf(`ent: validator failed for field "DeliveryLog.recipient": %w`, err)}
 		}
@@ -156,40 +156,40 @@ func (dlu *DeliveryLogUpdate) check() error {
 }
 
 // Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
-func (dlu *DeliveryLogUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *DeliveryLogUpdate {
-	dlu.modifiers = append(dlu.modifiers, modifiers...)
-	return dlu
+func (_u *DeliveryLogUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *DeliveryLogUpdate {
+	_u.modifiers = append(_u.modifiers, modifiers...)
+	return _u
 }
 
-func (dlu *DeliveryLogUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	if err := dlu.check(); err != nil {
-		return n, err
+func (_u *DeliveryLogUpdate) sqlSave(ctx context.Context) (_node int, err error) {
+	if err := _u.check(); err != nil {
+		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(deliverylog.Table, deliverylog.Columns, sqlgraph.NewFieldSpec(deliverylog.FieldID, field.TypeUUID))
-	if ps := dlu.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := dlu.mutation.TenantID(); ok {
+	if value, ok := _u.mutation.TenantID(); ok {
 		_spec.SetField(deliverylog.FieldTenantID, field.TypeString, value)
 	}
-	if value, ok := dlu.mutation.TemplateID(); ok {
+	if value, ok := _u.mutation.TemplateID(); ok {
 		_spec.SetField(deliverylog.FieldTemplateID, field.TypeString, value)
 	}
-	if value, ok := dlu.mutation.Channel(); ok {
+	if value, ok := _u.mutation.Channel(); ok {
 		_spec.SetField(deliverylog.FieldChannel, field.TypeString, value)
 	}
-	if value, ok := dlu.mutation.Recipient(); ok {
+	if value, ok := _u.mutation.Recipient(); ok {
 		_spec.SetField(deliverylog.FieldRecipient, field.TypeString, value)
 	}
-	if value, ok := dlu.mutation.Status(); ok {
+	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(deliverylog.FieldStatus, field.TypeString, value)
 	}
-	_spec.AddModifiers(dlu.modifiers...)
-	if n, err = sqlgraph.UpdateNodes(ctx, dlu.driver, _spec); err != nil {
+	_spec.AddModifiers(_u.modifiers...)
+	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{deliverylog.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -197,8 +197,8 @@ func (dlu *DeliveryLogUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		return 0, err
 	}
-	dlu.mutation.done = true
-	return n, nil
+	_u.mutation.done = true
+	return _node, nil
 }
 
 // DeliveryLogUpdateOne is the builder for updating a single DeliveryLog entity.
@@ -211,101 +211,101 @@ type DeliveryLogUpdateOne struct {
 }
 
 // SetTenantID sets the "tenant_id" field.
-func (dluo *DeliveryLogUpdateOne) SetTenantID(s string) *DeliveryLogUpdateOne {
-	dluo.mutation.SetTenantID(s)
-	return dluo
+func (_u *DeliveryLogUpdateOne) SetTenantID(v string) *DeliveryLogUpdateOne {
+	_u.mutation.SetTenantID(v)
+	return _u
 }
 
 // SetNillableTenantID sets the "tenant_id" field if the given value is not nil.
-func (dluo *DeliveryLogUpdateOne) SetNillableTenantID(s *string) *DeliveryLogUpdateOne {
-	if s != nil {
-		dluo.SetTenantID(*s)
+func (_u *DeliveryLogUpdateOne) SetNillableTenantID(v *string) *DeliveryLogUpdateOne {
+	if v != nil {
+		_u.SetTenantID(*v)
 	}
-	return dluo
+	return _u
 }
 
 // SetTemplateID sets the "template_id" field.
-func (dluo *DeliveryLogUpdateOne) SetTemplateID(s string) *DeliveryLogUpdateOne {
-	dluo.mutation.SetTemplateID(s)
-	return dluo
+func (_u *DeliveryLogUpdateOne) SetTemplateID(v string) *DeliveryLogUpdateOne {
+	_u.mutation.SetTemplateID(v)
+	return _u
 }
 
 // SetNillableTemplateID sets the "template_id" field if the given value is not nil.
-func (dluo *DeliveryLogUpdateOne) SetNillableTemplateID(s *string) *DeliveryLogUpdateOne {
-	if s != nil {
-		dluo.SetTemplateID(*s)
+func (_u *DeliveryLogUpdateOne) SetNillableTemplateID(v *string) *DeliveryLogUpdateOne {
+	if v != nil {
+		_u.SetTemplateID(*v)
 	}
-	return dluo
+	return _u
 }
 
 // SetChannel sets the "channel" field.
-func (dluo *DeliveryLogUpdateOne) SetChannel(s string) *DeliveryLogUpdateOne {
-	dluo.mutation.SetChannel(s)
-	return dluo
+func (_u *DeliveryLogUpdateOne) SetChannel(v string) *DeliveryLogUpdateOne {
+	_u.mutation.SetChannel(v)
+	return _u
 }
 
 // SetNillableChannel sets the "channel" field if the given value is not nil.
-func (dluo *DeliveryLogUpdateOne) SetNillableChannel(s *string) *DeliveryLogUpdateOne {
-	if s != nil {
-		dluo.SetChannel(*s)
+func (_u *DeliveryLogUpdateOne) SetNillableChannel(v *string) *DeliveryLogUpdateOne {
+	if v != nil {
+		_u.SetChannel(*v)
 	}
-	return dluo
+	return _u
 }
 
 // SetRecipient sets the "recipient" field.
-func (dluo *DeliveryLogUpdateOne) SetRecipient(s string) *DeliveryLogUpdateOne {
-	dluo.mutation.SetRecipient(s)
-	return dluo
+func (_u *DeliveryLogUpdateOne) SetRecipient(v string) *DeliveryLogUpdateOne {
+	_u.mutation.SetRecipient(v)
+	return _u
 }
 
 // SetNillableRecipient sets the "recipient" field if the given value is not nil.
-func (dluo *DeliveryLogUpdateOne) SetNillableRecipient(s *string) *DeliveryLogUpdateOne {
-	if s != nil {
-		dluo.SetRecipient(*s)
+func (_u *DeliveryLogUpdateOne) SetNillableRecipient(v *string) *DeliveryLogUpdateOne {
+	if v != nil {
+		_u.SetRecipient(*v)
 	}
-	return dluo
+	return _u
 }
 
 // SetStatus sets the "status" field.
-func (dluo *DeliveryLogUpdateOne) SetStatus(s string) *DeliveryLogUpdateOne {
-	dluo.mutation.SetStatus(s)
-	return dluo
+func (_u *DeliveryLogUpdateOne) SetStatus(v string) *DeliveryLogUpdateOne {
+	_u.mutation.SetStatus(v)
+	return _u
 }
 
 // SetNillableStatus sets the "status" field if the given value is not nil.
-func (dluo *DeliveryLogUpdateOne) SetNillableStatus(s *string) *DeliveryLogUpdateOne {
-	if s != nil {
-		dluo.SetStatus(*s)
+func (_u *DeliveryLogUpdateOne) SetNillableStatus(v *string) *DeliveryLogUpdateOne {
+	if v != nil {
+		_u.SetStatus(*v)
 	}
-	return dluo
+	return _u
 }
 
 // Mutation returns the DeliveryLogMutation object of the builder.
-func (dluo *DeliveryLogUpdateOne) Mutation() *DeliveryLogMutation {
-	return dluo.mutation
+func (_u *DeliveryLogUpdateOne) Mutation() *DeliveryLogMutation {
+	return _u.mutation
 }
 
 // Where appends a list predicates to the DeliveryLogUpdate builder.
-func (dluo *DeliveryLogUpdateOne) Where(ps ...predicate.DeliveryLog) *DeliveryLogUpdateOne {
-	dluo.mutation.Where(ps...)
-	return dluo
+func (_u *DeliveryLogUpdateOne) Where(ps ...predicate.DeliveryLog) *DeliveryLogUpdateOne {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
-func (dluo *DeliveryLogUpdateOne) Select(field string, fields ...string) *DeliveryLogUpdateOne {
-	dluo.fields = append([]string{field}, fields...)
-	return dluo
+func (_u *DeliveryLogUpdateOne) Select(field string, fields ...string) *DeliveryLogUpdateOne {
+	_u.fields = append([]string{field}, fields...)
+	return _u
 }
 
 // Save executes the query and returns the updated DeliveryLog entity.
-func (dluo *DeliveryLogUpdateOne) Save(ctx context.Context) (*DeliveryLog, error) {
-	return withHooks(ctx, dluo.sqlSave, dluo.mutation, dluo.hooks)
+func (_u *DeliveryLogUpdateOne) Save(ctx context.Context) (*DeliveryLog, error) {
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (dluo *DeliveryLogUpdateOne) SaveX(ctx context.Context) *DeliveryLog {
-	node, err := dluo.Save(ctx)
+func (_u *DeliveryLogUpdateOne) SaveX(ctx context.Context) *DeliveryLog {
+	node, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -313,36 +313,36 @@ func (dluo *DeliveryLogUpdateOne) SaveX(ctx context.Context) *DeliveryLog {
 }
 
 // Exec executes the query on the entity.
-func (dluo *DeliveryLogUpdateOne) Exec(ctx context.Context) error {
-	_, err := dluo.Save(ctx)
+func (_u *DeliveryLogUpdateOne) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (dluo *DeliveryLogUpdateOne) ExecX(ctx context.Context) {
-	if err := dluo.Exec(ctx); err != nil {
+func (_u *DeliveryLogUpdateOne) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (dluo *DeliveryLogUpdateOne) check() error {
-	if v, ok := dluo.mutation.TenantID(); ok {
+func (_u *DeliveryLogUpdateOne) check() error {
+	if v, ok := _u.mutation.TenantID(); ok {
 		if err := deliverylog.TenantIDValidator(v); err != nil {
 			return &ValidationError{Name: "tenant_id", err: fmt.Errorf(`ent: validator failed for field "DeliveryLog.tenant_id": %w`, err)}
 		}
 	}
-	if v, ok := dluo.mutation.TemplateID(); ok {
+	if v, ok := _u.mutation.TemplateID(); ok {
 		if err := deliverylog.TemplateIDValidator(v); err != nil {
 			return &ValidationError{Name: "template_id", err: fmt.Errorf(`ent: validator failed for field "DeliveryLog.template_id": %w`, err)}
 		}
 	}
-	if v, ok := dluo.mutation.Channel(); ok {
+	if v, ok := _u.mutation.Channel(); ok {
 		if err := deliverylog.ChannelValidator(v); err != nil {
 			return &ValidationError{Name: "channel", err: fmt.Errorf(`ent: validator failed for field "DeliveryLog.channel": %w`, err)}
 		}
 	}
-	if v, ok := dluo.mutation.Recipient(); ok {
+	if v, ok := _u.mutation.Recipient(); ok {
 		if err := deliverylog.RecipientValidator(v); err != nil {
 			return &ValidationError{Name: "recipient", err: fmt.Errorf(`ent: validator failed for field "DeliveryLog.recipient": %w`, err)}
 		}
@@ -351,22 +351,22 @@ func (dluo *DeliveryLogUpdateOne) check() error {
 }
 
 // Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
-func (dluo *DeliveryLogUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *DeliveryLogUpdateOne {
-	dluo.modifiers = append(dluo.modifiers, modifiers...)
-	return dluo
+func (_u *DeliveryLogUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *DeliveryLogUpdateOne {
+	_u.modifiers = append(_u.modifiers, modifiers...)
+	return _u
 }
 
-func (dluo *DeliveryLogUpdateOne) sqlSave(ctx context.Context) (_node *DeliveryLog, err error) {
-	if err := dluo.check(); err != nil {
+func (_u *DeliveryLogUpdateOne) sqlSave(ctx context.Context) (_node *DeliveryLog, err error) {
+	if err := _u.check(); err != nil {
 		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(deliverylog.Table, deliverylog.Columns, sqlgraph.NewFieldSpec(deliverylog.FieldID, field.TypeUUID))
-	id, ok := dluo.mutation.ID()
+	id, ok := _u.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "DeliveryLog.id" for update`)}
 	}
 	_spec.Node.ID.Value = id
-	if fields := dluo.fields; len(fields) > 0 {
+	if fields := _u.fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		_spec.Node.Columns = append(_spec.Node.Columns, deliverylog.FieldID)
 		for _, f := range fields {
@@ -378,33 +378,33 @@ func (dluo *DeliveryLogUpdateOne) sqlSave(ctx context.Context) (_node *DeliveryL
 			}
 		}
 	}
-	if ps := dluo.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := dluo.mutation.TenantID(); ok {
+	if value, ok := _u.mutation.TenantID(); ok {
 		_spec.SetField(deliverylog.FieldTenantID, field.TypeString, value)
 	}
-	if value, ok := dluo.mutation.TemplateID(); ok {
+	if value, ok := _u.mutation.TemplateID(); ok {
 		_spec.SetField(deliverylog.FieldTemplateID, field.TypeString, value)
 	}
-	if value, ok := dluo.mutation.Channel(); ok {
+	if value, ok := _u.mutation.Channel(); ok {
 		_spec.SetField(deliverylog.FieldChannel, field.TypeString, value)
 	}
-	if value, ok := dluo.mutation.Recipient(); ok {
+	if value, ok := _u.mutation.Recipient(); ok {
 		_spec.SetField(deliverylog.FieldRecipient, field.TypeString, value)
 	}
-	if value, ok := dluo.mutation.Status(); ok {
+	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(deliverylog.FieldStatus, field.TypeString, value)
 	}
-	_spec.AddModifiers(dluo.modifiers...)
-	_node = &DeliveryLog{config: dluo.config}
+	_spec.AddModifiers(_u.modifiers...)
+	_node = &DeliveryLog{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues
-	if err = sqlgraph.UpdateNode(ctx, dluo.driver, _spec); err != nil {
+	if err = sqlgraph.UpdateNode(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{deliverylog.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -412,6 +412,6 @@ func (dluo *DeliveryLogUpdateOne) sqlSave(ctx context.Context) (_node *DeliveryL
 		}
 		return nil, err
 	}
-	dluo.mutation.done = true
+	_u.mutation.done = true
 	return _node, nil
 }

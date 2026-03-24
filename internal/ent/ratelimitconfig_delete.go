@@ -20,56 +20,56 @@ type RateLimitConfigDelete struct {
 }
 
 // Where appends a list predicates to the RateLimitConfigDelete builder.
-func (rlcd *RateLimitConfigDelete) Where(ps ...predicate.RateLimitConfig) *RateLimitConfigDelete {
-	rlcd.mutation.Where(ps...)
-	return rlcd
+func (_d *RateLimitConfigDelete) Where(ps ...predicate.RateLimitConfig) *RateLimitConfigDelete {
+	_d.mutation.Where(ps...)
+	return _d
 }
 
 // Exec executes the deletion query and returns how many vertices were deleted.
-func (rlcd *RateLimitConfigDelete) Exec(ctx context.Context) (int, error) {
-	return withHooks(ctx, rlcd.sqlExec, rlcd.mutation, rlcd.hooks)
+func (_d *RateLimitConfigDelete) Exec(ctx context.Context) (int, error) {
+	return withHooks(ctx, _d.sqlExec, _d.mutation, _d.hooks)
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (rlcd *RateLimitConfigDelete) ExecX(ctx context.Context) int {
-	n, err := rlcd.Exec(ctx)
+func (_d *RateLimitConfigDelete) ExecX(ctx context.Context) int {
+	n, err := _d.Exec(ctx)
 	if err != nil {
 		panic(err)
 	}
 	return n
 }
 
-func (rlcd *RateLimitConfigDelete) sqlExec(ctx context.Context) (int, error) {
+func (_d *RateLimitConfigDelete) sqlExec(ctx context.Context) (int, error) {
 	_spec := sqlgraph.NewDeleteSpec(ratelimitconfig.Table, sqlgraph.NewFieldSpec(ratelimitconfig.FieldID, field.TypeUUID))
-	if ps := rlcd.mutation.predicates; len(ps) > 0 {
+	if ps := _d.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	affected, err := sqlgraph.DeleteNodes(ctx, rlcd.driver, _spec)
+	affected, err := sqlgraph.DeleteNodes(ctx, _d.driver, _spec)
 	if err != nil && sqlgraph.IsConstraintError(err) {
 		err = &ConstraintError{msg: err.Error(), wrap: err}
 	}
-	rlcd.mutation.done = true
+	_d.mutation.done = true
 	return affected, err
 }
 
 // RateLimitConfigDeleteOne is the builder for deleting a single RateLimitConfig entity.
 type RateLimitConfigDeleteOne struct {
-	rlcd *RateLimitConfigDelete
+	_d *RateLimitConfigDelete
 }
 
 // Where appends a list predicates to the RateLimitConfigDelete builder.
-func (rlcdo *RateLimitConfigDeleteOne) Where(ps ...predicate.RateLimitConfig) *RateLimitConfigDeleteOne {
-	rlcdo.rlcd.mutation.Where(ps...)
-	return rlcdo
+func (_d *RateLimitConfigDeleteOne) Where(ps ...predicate.RateLimitConfig) *RateLimitConfigDeleteOne {
+	_d._d.mutation.Where(ps...)
+	return _d
 }
 
 // Exec executes the deletion query.
-func (rlcdo *RateLimitConfigDeleteOne) Exec(ctx context.Context) error {
-	n, err := rlcdo.rlcd.Exec(ctx)
+func (_d *RateLimitConfigDeleteOne) Exec(ctx context.Context) error {
+	n, err := _d._d.Exec(ctx)
 	switch {
 	case err != nil:
 		return err
@@ -81,8 +81,8 @@ func (rlcdo *RateLimitConfigDeleteOne) Exec(ctx context.Context) error {
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (rlcdo *RateLimitConfigDeleteOne) ExecX(ctx context.Context) {
-	if err := rlcdo.Exec(ctx); err != nil {
+func (_d *RateLimitConfigDeleteOne) ExecX(ctx context.Context) {
+	if err := _d.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

@@ -25,101 +25,101 @@ type TenantCreditUpdate struct {
 }
 
 // Where appends a list predicates to the TenantCreditUpdate builder.
-func (tcu *TenantCreditUpdate) Where(ps ...predicate.TenantCredit) *TenantCreditUpdate {
-	tcu.mutation.Where(ps...)
-	return tcu
+func (_u *TenantCreditUpdate) Where(ps ...predicate.TenantCredit) *TenantCreditUpdate {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // SetTenantID sets the "tenant_id" field.
-func (tcu *TenantCreditUpdate) SetTenantID(u uuid.UUID) *TenantCreditUpdate {
-	tcu.mutation.SetTenantID(u)
-	return tcu
+func (_u *TenantCreditUpdate) SetTenantID(v uuid.UUID) *TenantCreditUpdate {
+	_u.mutation.SetTenantID(v)
+	return _u
 }
 
 // SetNillableTenantID sets the "tenant_id" field if the given value is not nil.
-func (tcu *TenantCreditUpdate) SetNillableTenantID(u *uuid.UUID) *TenantCreditUpdate {
-	if u != nil {
-		tcu.SetTenantID(*u)
+func (_u *TenantCreditUpdate) SetNillableTenantID(v *uuid.UUID) *TenantCreditUpdate {
+	if v != nil {
+		_u.SetTenantID(*v)
 	}
-	return tcu
+	return _u
 }
 
 // SetType sets the "type" field.
-func (tcu *TenantCreditUpdate) SetType(t tenantcredit.Type) *TenantCreditUpdate {
-	tcu.mutation.SetType(t)
-	return tcu
+func (_u *TenantCreditUpdate) SetType(v tenantcredit.Type) *TenantCreditUpdate {
+	_u.mutation.SetType(v)
+	return _u
 }
 
 // SetNillableType sets the "type" field if the given value is not nil.
-func (tcu *TenantCreditUpdate) SetNillableType(t *tenantcredit.Type) *TenantCreditUpdate {
-	if t != nil {
-		tcu.SetType(*t)
+func (_u *TenantCreditUpdate) SetNillableType(v *tenantcredit.Type) *TenantCreditUpdate {
+	if v != nil {
+		_u.SetType(*v)
 	}
-	return tcu
+	return _u
 }
 
 // SetBalance sets the "balance" field.
-func (tcu *TenantCreditUpdate) SetBalance(f float64) *TenantCreditUpdate {
-	tcu.mutation.ResetBalance()
-	tcu.mutation.SetBalance(f)
-	return tcu
+func (_u *TenantCreditUpdate) SetBalance(v float64) *TenantCreditUpdate {
+	_u.mutation.ResetBalance()
+	_u.mutation.SetBalance(v)
+	return _u
 }
 
 // SetNillableBalance sets the "balance" field if the given value is not nil.
-func (tcu *TenantCreditUpdate) SetNillableBalance(f *float64) *TenantCreditUpdate {
-	if f != nil {
-		tcu.SetBalance(*f)
+func (_u *TenantCreditUpdate) SetNillableBalance(v *float64) *TenantCreditUpdate {
+	if v != nil {
+		_u.SetBalance(*v)
 	}
-	return tcu
+	return _u
 }
 
-// AddBalance adds f to the "balance" field.
-func (tcu *TenantCreditUpdate) AddBalance(f float64) *TenantCreditUpdate {
-	tcu.mutation.AddBalance(f)
-	return tcu
+// AddBalance adds value to the "balance" field.
+func (_u *TenantCreditUpdate) AddBalance(v float64) *TenantCreditUpdate {
+	_u.mutation.AddBalance(v)
+	return _u
 }
 
 // SetRate sets the "rate" field.
-func (tcu *TenantCreditUpdate) SetRate(f float64) *TenantCreditUpdate {
-	tcu.mutation.ResetRate()
-	tcu.mutation.SetRate(f)
-	return tcu
+func (_u *TenantCreditUpdate) SetRate(v float64) *TenantCreditUpdate {
+	_u.mutation.ResetRate()
+	_u.mutation.SetRate(v)
+	return _u
 }
 
 // SetNillableRate sets the "rate" field if the given value is not nil.
-func (tcu *TenantCreditUpdate) SetNillableRate(f *float64) *TenantCreditUpdate {
-	if f != nil {
-		tcu.SetRate(*f)
+func (_u *TenantCreditUpdate) SetNillableRate(v *float64) *TenantCreditUpdate {
+	if v != nil {
+		_u.SetRate(*v)
 	}
-	return tcu
+	return _u
 }
 
-// AddRate adds f to the "rate" field.
-func (tcu *TenantCreditUpdate) AddRate(f float64) *TenantCreditUpdate {
-	tcu.mutation.AddRate(f)
-	return tcu
+// AddRate adds value to the "rate" field.
+func (_u *TenantCreditUpdate) AddRate(v float64) *TenantCreditUpdate {
+	_u.mutation.AddRate(v)
+	return _u
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (tcu *TenantCreditUpdate) SetUpdatedAt(t time.Time) *TenantCreditUpdate {
-	tcu.mutation.SetUpdatedAt(t)
-	return tcu
+func (_u *TenantCreditUpdate) SetUpdatedAt(v time.Time) *TenantCreditUpdate {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
 }
 
 // Mutation returns the TenantCreditMutation object of the builder.
-func (tcu *TenantCreditUpdate) Mutation() *TenantCreditMutation {
-	return tcu.mutation
+func (_u *TenantCreditUpdate) Mutation() *TenantCreditMutation {
+	return _u.mutation
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
-func (tcu *TenantCreditUpdate) Save(ctx context.Context) (int, error) {
-	tcu.defaults()
-	return withHooks(ctx, tcu.sqlSave, tcu.mutation, tcu.hooks)
+func (_u *TenantCreditUpdate) Save(ctx context.Context) (int, error) {
+	_u.defaults()
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (tcu *TenantCreditUpdate) SaveX(ctx context.Context) int {
-	affected, err := tcu.Save(ctx)
+func (_u *TenantCreditUpdate) SaveX(ctx context.Context) int {
+	affected, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -127,29 +127,29 @@ func (tcu *TenantCreditUpdate) SaveX(ctx context.Context) int {
 }
 
 // Exec executes the query.
-func (tcu *TenantCreditUpdate) Exec(ctx context.Context) error {
-	_, err := tcu.Save(ctx)
+func (_u *TenantCreditUpdate) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (tcu *TenantCreditUpdate) ExecX(ctx context.Context) {
-	if err := tcu.Exec(ctx); err != nil {
+func (_u *TenantCreditUpdate) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (tcu *TenantCreditUpdate) defaults() {
-	if _, ok := tcu.mutation.UpdatedAt(); !ok {
+func (_u *TenantCreditUpdate) defaults() {
+	if _, ok := _u.mutation.UpdatedAt(); !ok {
 		v := tenantcredit.UpdateDefaultUpdatedAt()
-		tcu.mutation.SetUpdatedAt(v)
+		_u.mutation.SetUpdatedAt(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (tcu *TenantCreditUpdate) check() error {
-	if v, ok := tcu.mutation.GetType(); ok {
+func (_u *TenantCreditUpdate) check() error {
+	if v, ok := _u.mutation.GetType(); ok {
 		if err := tenantcredit.TypeValidator(v); err != nil {
 			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "TenantCredit.type": %w`, err)}
 		}
@@ -158,46 +158,46 @@ func (tcu *TenantCreditUpdate) check() error {
 }
 
 // Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
-func (tcu *TenantCreditUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *TenantCreditUpdate {
-	tcu.modifiers = append(tcu.modifiers, modifiers...)
-	return tcu
+func (_u *TenantCreditUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *TenantCreditUpdate {
+	_u.modifiers = append(_u.modifiers, modifiers...)
+	return _u
 }
 
-func (tcu *TenantCreditUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	if err := tcu.check(); err != nil {
-		return n, err
+func (_u *TenantCreditUpdate) sqlSave(ctx context.Context) (_node int, err error) {
+	if err := _u.check(); err != nil {
+		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(tenantcredit.Table, tenantcredit.Columns, sqlgraph.NewFieldSpec(tenantcredit.FieldID, field.TypeUUID))
-	if ps := tcu.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := tcu.mutation.TenantID(); ok {
+	if value, ok := _u.mutation.TenantID(); ok {
 		_spec.SetField(tenantcredit.FieldTenantID, field.TypeUUID, value)
 	}
-	if value, ok := tcu.mutation.GetType(); ok {
+	if value, ok := _u.mutation.GetType(); ok {
 		_spec.SetField(tenantcredit.FieldType, field.TypeEnum, value)
 	}
-	if value, ok := tcu.mutation.Balance(); ok {
+	if value, ok := _u.mutation.Balance(); ok {
 		_spec.SetField(tenantcredit.FieldBalance, field.TypeFloat64, value)
 	}
-	if value, ok := tcu.mutation.AddedBalance(); ok {
+	if value, ok := _u.mutation.AddedBalance(); ok {
 		_spec.AddField(tenantcredit.FieldBalance, field.TypeFloat64, value)
 	}
-	if value, ok := tcu.mutation.Rate(); ok {
+	if value, ok := _u.mutation.Rate(); ok {
 		_spec.SetField(tenantcredit.FieldRate, field.TypeFloat64, value)
 	}
-	if value, ok := tcu.mutation.AddedRate(); ok {
+	if value, ok := _u.mutation.AddedRate(); ok {
 		_spec.AddField(tenantcredit.FieldRate, field.TypeFloat64, value)
 	}
-	if value, ok := tcu.mutation.UpdatedAt(); ok {
+	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(tenantcredit.FieldUpdatedAt, field.TypeTime, value)
 	}
-	_spec.AddModifiers(tcu.modifiers...)
-	if n, err = sqlgraph.UpdateNodes(ctx, tcu.driver, _spec); err != nil {
+	_spec.AddModifiers(_u.modifiers...)
+	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{tenantcredit.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -205,8 +205,8 @@ func (tcu *TenantCreditUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		return 0, err
 	}
-	tcu.mutation.done = true
-	return n, nil
+	_u.mutation.done = true
+	return _node, nil
 }
 
 // TenantCreditUpdateOne is the builder for updating a single TenantCredit entity.
@@ -219,108 +219,108 @@ type TenantCreditUpdateOne struct {
 }
 
 // SetTenantID sets the "tenant_id" field.
-func (tcuo *TenantCreditUpdateOne) SetTenantID(u uuid.UUID) *TenantCreditUpdateOne {
-	tcuo.mutation.SetTenantID(u)
-	return tcuo
+func (_u *TenantCreditUpdateOne) SetTenantID(v uuid.UUID) *TenantCreditUpdateOne {
+	_u.mutation.SetTenantID(v)
+	return _u
 }
 
 // SetNillableTenantID sets the "tenant_id" field if the given value is not nil.
-func (tcuo *TenantCreditUpdateOne) SetNillableTenantID(u *uuid.UUID) *TenantCreditUpdateOne {
-	if u != nil {
-		tcuo.SetTenantID(*u)
+func (_u *TenantCreditUpdateOne) SetNillableTenantID(v *uuid.UUID) *TenantCreditUpdateOne {
+	if v != nil {
+		_u.SetTenantID(*v)
 	}
-	return tcuo
+	return _u
 }
 
 // SetType sets the "type" field.
-func (tcuo *TenantCreditUpdateOne) SetType(t tenantcredit.Type) *TenantCreditUpdateOne {
-	tcuo.mutation.SetType(t)
-	return tcuo
+func (_u *TenantCreditUpdateOne) SetType(v tenantcredit.Type) *TenantCreditUpdateOne {
+	_u.mutation.SetType(v)
+	return _u
 }
 
 // SetNillableType sets the "type" field if the given value is not nil.
-func (tcuo *TenantCreditUpdateOne) SetNillableType(t *tenantcredit.Type) *TenantCreditUpdateOne {
-	if t != nil {
-		tcuo.SetType(*t)
+func (_u *TenantCreditUpdateOne) SetNillableType(v *tenantcredit.Type) *TenantCreditUpdateOne {
+	if v != nil {
+		_u.SetType(*v)
 	}
-	return tcuo
+	return _u
 }
 
 // SetBalance sets the "balance" field.
-func (tcuo *TenantCreditUpdateOne) SetBalance(f float64) *TenantCreditUpdateOne {
-	tcuo.mutation.ResetBalance()
-	tcuo.mutation.SetBalance(f)
-	return tcuo
+func (_u *TenantCreditUpdateOne) SetBalance(v float64) *TenantCreditUpdateOne {
+	_u.mutation.ResetBalance()
+	_u.mutation.SetBalance(v)
+	return _u
 }
 
 // SetNillableBalance sets the "balance" field if the given value is not nil.
-func (tcuo *TenantCreditUpdateOne) SetNillableBalance(f *float64) *TenantCreditUpdateOne {
-	if f != nil {
-		tcuo.SetBalance(*f)
+func (_u *TenantCreditUpdateOne) SetNillableBalance(v *float64) *TenantCreditUpdateOne {
+	if v != nil {
+		_u.SetBalance(*v)
 	}
-	return tcuo
+	return _u
 }
 
-// AddBalance adds f to the "balance" field.
-func (tcuo *TenantCreditUpdateOne) AddBalance(f float64) *TenantCreditUpdateOne {
-	tcuo.mutation.AddBalance(f)
-	return tcuo
+// AddBalance adds value to the "balance" field.
+func (_u *TenantCreditUpdateOne) AddBalance(v float64) *TenantCreditUpdateOne {
+	_u.mutation.AddBalance(v)
+	return _u
 }
 
 // SetRate sets the "rate" field.
-func (tcuo *TenantCreditUpdateOne) SetRate(f float64) *TenantCreditUpdateOne {
-	tcuo.mutation.ResetRate()
-	tcuo.mutation.SetRate(f)
-	return tcuo
+func (_u *TenantCreditUpdateOne) SetRate(v float64) *TenantCreditUpdateOne {
+	_u.mutation.ResetRate()
+	_u.mutation.SetRate(v)
+	return _u
 }
 
 // SetNillableRate sets the "rate" field if the given value is not nil.
-func (tcuo *TenantCreditUpdateOne) SetNillableRate(f *float64) *TenantCreditUpdateOne {
-	if f != nil {
-		tcuo.SetRate(*f)
+func (_u *TenantCreditUpdateOne) SetNillableRate(v *float64) *TenantCreditUpdateOne {
+	if v != nil {
+		_u.SetRate(*v)
 	}
-	return tcuo
+	return _u
 }
 
-// AddRate adds f to the "rate" field.
-func (tcuo *TenantCreditUpdateOne) AddRate(f float64) *TenantCreditUpdateOne {
-	tcuo.mutation.AddRate(f)
-	return tcuo
+// AddRate adds value to the "rate" field.
+func (_u *TenantCreditUpdateOne) AddRate(v float64) *TenantCreditUpdateOne {
+	_u.mutation.AddRate(v)
+	return _u
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (tcuo *TenantCreditUpdateOne) SetUpdatedAt(t time.Time) *TenantCreditUpdateOne {
-	tcuo.mutation.SetUpdatedAt(t)
-	return tcuo
+func (_u *TenantCreditUpdateOne) SetUpdatedAt(v time.Time) *TenantCreditUpdateOne {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
 }
 
 // Mutation returns the TenantCreditMutation object of the builder.
-func (tcuo *TenantCreditUpdateOne) Mutation() *TenantCreditMutation {
-	return tcuo.mutation
+func (_u *TenantCreditUpdateOne) Mutation() *TenantCreditMutation {
+	return _u.mutation
 }
 
 // Where appends a list predicates to the TenantCreditUpdate builder.
-func (tcuo *TenantCreditUpdateOne) Where(ps ...predicate.TenantCredit) *TenantCreditUpdateOne {
-	tcuo.mutation.Where(ps...)
-	return tcuo
+func (_u *TenantCreditUpdateOne) Where(ps ...predicate.TenantCredit) *TenantCreditUpdateOne {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
-func (tcuo *TenantCreditUpdateOne) Select(field string, fields ...string) *TenantCreditUpdateOne {
-	tcuo.fields = append([]string{field}, fields...)
-	return tcuo
+func (_u *TenantCreditUpdateOne) Select(field string, fields ...string) *TenantCreditUpdateOne {
+	_u.fields = append([]string{field}, fields...)
+	return _u
 }
 
 // Save executes the query and returns the updated TenantCredit entity.
-func (tcuo *TenantCreditUpdateOne) Save(ctx context.Context) (*TenantCredit, error) {
-	tcuo.defaults()
-	return withHooks(ctx, tcuo.sqlSave, tcuo.mutation, tcuo.hooks)
+func (_u *TenantCreditUpdateOne) Save(ctx context.Context) (*TenantCredit, error) {
+	_u.defaults()
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (tcuo *TenantCreditUpdateOne) SaveX(ctx context.Context) *TenantCredit {
-	node, err := tcuo.Save(ctx)
+func (_u *TenantCreditUpdateOne) SaveX(ctx context.Context) *TenantCredit {
+	node, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -328,29 +328,29 @@ func (tcuo *TenantCreditUpdateOne) SaveX(ctx context.Context) *TenantCredit {
 }
 
 // Exec executes the query on the entity.
-func (tcuo *TenantCreditUpdateOne) Exec(ctx context.Context) error {
-	_, err := tcuo.Save(ctx)
+func (_u *TenantCreditUpdateOne) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (tcuo *TenantCreditUpdateOne) ExecX(ctx context.Context) {
-	if err := tcuo.Exec(ctx); err != nil {
+func (_u *TenantCreditUpdateOne) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (tcuo *TenantCreditUpdateOne) defaults() {
-	if _, ok := tcuo.mutation.UpdatedAt(); !ok {
+func (_u *TenantCreditUpdateOne) defaults() {
+	if _, ok := _u.mutation.UpdatedAt(); !ok {
 		v := tenantcredit.UpdateDefaultUpdatedAt()
-		tcuo.mutation.SetUpdatedAt(v)
+		_u.mutation.SetUpdatedAt(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (tcuo *TenantCreditUpdateOne) check() error {
-	if v, ok := tcuo.mutation.GetType(); ok {
+func (_u *TenantCreditUpdateOne) check() error {
+	if v, ok := _u.mutation.GetType(); ok {
 		if err := tenantcredit.TypeValidator(v); err != nil {
 			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "TenantCredit.type": %w`, err)}
 		}
@@ -359,22 +359,22 @@ func (tcuo *TenantCreditUpdateOne) check() error {
 }
 
 // Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
-func (tcuo *TenantCreditUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *TenantCreditUpdateOne {
-	tcuo.modifiers = append(tcuo.modifiers, modifiers...)
-	return tcuo
+func (_u *TenantCreditUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *TenantCreditUpdateOne {
+	_u.modifiers = append(_u.modifiers, modifiers...)
+	return _u
 }
 
-func (tcuo *TenantCreditUpdateOne) sqlSave(ctx context.Context) (_node *TenantCredit, err error) {
-	if err := tcuo.check(); err != nil {
+func (_u *TenantCreditUpdateOne) sqlSave(ctx context.Context) (_node *TenantCredit, err error) {
+	if err := _u.check(); err != nil {
 		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(tenantcredit.Table, tenantcredit.Columns, sqlgraph.NewFieldSpec(tenantcredit.FieldID, field.TypeUUID))
-	id, ok := tcuo.mutation.ID()
+	id, ok := _u.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "TenantCredit.id" for update`)}
 	}
 	_spec.Node.ID.Value = id
-	if fields := tcuo.fields; len(fields) > 0 {
+	if fields := _u.fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		_spec.Node.Columns = append(_spec.Node.Columns, tenantcredit.FieldID)
 		for _, f := range fields {
@@ -386,39 +386,39 @@ func (tcuo *TenantCreditUpdateOne) sqlSave(ctx context.Context) (_node *TenantCr
 			}
 		}
 	}
-	if ps := tcuo.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := tcuo.mutation.TenantID(); ok {
+	if value, ok := _u.mutation.TenantID(); ok {
 		_spec.SetField(tenantcredit.FieldTenantID, field.TypeUUID, value)
 	}
-	if value, ok := tcuo.mutation.GetType(); ok {
+	if value, ok := _u.mutation.GetType(); ok {
 		_spec.SetField(tenantcredit.FieldType, field.TypeEnum, value)
 	}
-	if value, ok := tcuo.mutation.Balance(); ok {
+	if value, ok := _u.mutation.Balance(); ok {
 		_spec.SetField(tenantcredit.FieldBalance, field.TypeFloat64, value)
 	}
-	if value, ok := tcuo.mutation.AddedBalance(); ok {
+	if value, ok := _u.mutation.AddedBalance(); ok {
 		_spec.AddField(tenantcredit.FieldBalance, field.TypeFloat64, value)
 	}
-	if value, ok := tcuo.mutation.Rate(); ok {
+	if value, ok := _u.mutation.Rate(); ok {
 		_spec.SetField(tenantcredit.FieldRate, field.TypeFloat64, value)
 	}
-	if value, ok := tcuo.mutation.AddedRate(); ok {
+	if value, ok := _u.mutation.AddedRate(); ok {
 		_spec.AddField(tenantcredit.FieldRate, field.TypeFloat64, value)
 	}
-	if value, ok := tcuo.mutation.UpdatedAt(); ok {
+	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(tenantcredit.FieldUpdatedAt, field.TypeTime, value)
 	}
-	_spec.AddModifiers(tcuo.modifiers...)
-	_node = &TenantCredit{config: tcuo.config}
+	_spec.AddModifiers(_u.modifiers...)
+	_node = &TenantCredit{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues
-	if err = sqlgraph.UpdateNode(ctx, tcuo.driver, _spec); err != nil {
+	if err = sqlgraph.UpdateNode(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{tenantcredit.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -426,6 +426,6 @@ func (tcuo *TenantCreditUpdateOne) sqlSave(ctx context.Context) (_node *TenantCr
 		}
 		return nil, err
 	}
-	tcuo.mutation.done = true
+	_u.mutation.done = true
 	return _node, nil
 }

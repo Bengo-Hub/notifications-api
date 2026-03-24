@@ -58,27 +58,25 @@ type AuthUserDeactivatedEvent struct {
 }
 
 // AuthTenantCreatedEvent represents an auth.tenant.created event.
+// Branding fields (contact_email, contact_phone, metadata) are owned by auth-api
+// and not stored locally — only id, slug, name, status are persisted.
 type AuthTenantCreatedEvent struct {
-	TenantID     string                 `json:"tenant_id"`
-	Slug         string                 `json:"slug"`
-	Name         string                 `json:"name"`
-	Status       string                 `json:"status"`
-	ContactEmail string                 `json:"contact_email,omitempty"`
-	ContactPhone string                 `json:"contact_phone,omitempty"`
-	Metadata     map[string]interface{} `json:"metadata,omitempty"`
-	CreatedAt    time.Time              `json:"created_at"`
+	TenantID  string    `json:"tenant_id"`
+	Slug      string    `json:"slug"`
+	Name      string    `json:"name"`
+	Status    string    `json:"status"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 // AuthTenantUpdatedEvent represents an auth.tenant.updated event.
+// Branding fields (contact_email, contact_phone, metadata) are owned by auth-api
+// and not stored locally — only id, slug, name, status are persisted.
 type AuthTenantUpdatedEvent struct {
-	TenantID     string                 `json:"tenant_id"`
-	Slug         string                 `json:"slug,omitempty"`
-	Name         string                 `json:"name,omitempty"`
-	Status       string                 `json:"status,omitempty"`
-	ContactEmail string                 `json:"contact_email,omitempty"`
-	ContactPhone string                 `json:"contact_phone,omitempty"`
-	Metadata     map[string]interface{} `json:"metadata,omitempty"`
-	UpdatedAt    time.Time              `json:"updated_at"`
+	TenantID  string    `json:"tenant_id"`
+	Slug      string    `json:"slug,omitempty"`
+	Name      string    `json:"name,omitempty"`
+	Status    string    `json:"status,omitempty"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 // HandleAuthUserCreated handles auth.user.created events.
@@ -219,13 +217,10 @@ func (h *EventHandler) HandleAuthTenantCreated(ctx context.Context, event *AuthT
 	}
 
 	t := &Tenant{
-		ID:           tenantID,
-		Slug:         event.Slug,
-		Name:         event.Name,
-		Status:       event.Status,
-		ContactEmail: event.ContactEmail,
-		ContactPhone: event.ContactPhone,
-		Metadata:     event.Metadata,
+		ID:     tenantID,
+		Slug:   event.Slug,
+		Name:   event.Name,
+		Status: event.Status,
 	}
 
 	if t.Status == "" {
@@ -266,13 +261,10 @@ func (h *EventHandler) HandleAuthTenantUpdated(ctx context.Context, event *AuthT
 		}
 
 		t = &Tenant{
-			ID:           tenantID,
-			Slug:         event.Slug,
-			Name:         event.Name,
-			Status:       event.Status,
-			ContactEmail: event.ContactEmail,
-			ContactPhone: event.ContactPhone,
-			Metadata:     event.Metadata,
+			ID:     tenantID,
+			Slug:   event.Slug,
+			Name:   event.Name,
+			Status: event.Status,
 		}
 		if t.Status == "" {
 			t.Status = "active"
@@ -286,15 +278,6 @@ func (h *EventHandler) HandleAuthTenantUpdated(ctx context.Context, event *AuthT
 		}
 		if event.Status != "" {
 			t.Status = event.Status
-		}
-		if event.ContactEmail != "" {
-			t.ContactEmail = event.ContactEmail
-		}
-		if event.ContactPhone != "" {
-			t.ContactPhone = event.ContactPhone
-		}
-		if event.Metadata != nil {
-			t.Metadata = event.Metadata
 		}
 	}
 

@@ -67,7 +67,7 @@ func (*RateLimitConfig) scanValues(columns []string) ([]any, error) {
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the RateLimitConfig fields.
-func (rlc *RateLimitConfig) assignValues(columns []string, values []any) error {
+func (_m *RateLimitConfig) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
@@ -77,70 +77,70 @@ func (rlc *RateLimitConfig) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value != nil {
-				rlc.ID = *value
+				_m.ID = *value
 			}
 		case ratelimitconfig.FieldServiceName:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field service_name", values[i])
 			} else if value.Valid {
-				rlc.ServiceName = value.String
+				_m.ServiceName = value.String
 			}
 		case ratelimitconfig.FieldKeyType:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field key_type", values[i])
 			} else if value.Valid {
-				rlc.KeyType = value.String
+				_m.KeyType = value.String
 			}
 		case ratelimitconfig.FieldEndpointPattern:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field endpoint_pattern", values[i])
 			} else if value.Valid {
-				rlc.EndpointPattern = value.String
+				_m.EndpointPattern = value.String
 			}
 		case ratelimitconfig.FieldRequestsPerWindow:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field requests_per_window", values[i])
 			} else if value.Valid {
-				rlc.RequestsPerWindow = int(value.Int64)
+				_m.RequestsPerWindow = int(value.Int64)
 			}
 		case ratelimitconfig.FieldWindowSeconds:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field window_seconds", values[i])
 			} else if value.Valid {
-				rlc.WindowSeconds = int(value.Int64)
+				_m.WindowSeconds = int(value.Int64)
 			}
 		case ratelimitconfig.FieldBurstMultiplier:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
 				return fmt.Errorf("unexpected type %T for field burst_multiplier", values[i])
 			} else if value.Valid {
-				rlc.BurstMultiplier = value.Float64
+				_m.BurstMultiplier = value.Float64
 			}
 		case ratelimitconfig.FieldIsActive:
 			if value, ok := values[i].(*sql.NullBool); !ok {
 				return fmt.Errorf("unexpected type %T for field is_active", values[i])
 			} else if value.Valid {
-				rlc.IsActive = value.Bool
+				_m.IsActive = value.Bool
 			}
 		case ratelimitconfig.FieldDescription:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field description", values[i])
 			} else if value.Valid {
-				rlc.Description = value.String
+				_m.Description = value.String
 			}
 		case ratelimitconfig.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
 			} else if value.Valid {
-				rlc.CreatedAt = value.Time
+				_m.CreatedAt = value.Time
 			}
 		case ratelimitconfig.FieldUpdatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
-				rlc.UpdatedAt = value.Time
+				_m.UpdatedAt = value.Time
 			}
 		default:
-			rlc.selectValues.Set(columns[i], values[i])
+			_m.selectValues.Set(columns[i], values[i])
 		}
 	}
 	return nil
@@ -148,62 +148,62 @@ func (rlc *RateLimitConfig) assignValues(columns []string, values []any) error {
 
 // Value returns the ent.Value that was dynamically selected and assigned to the RateLimitConfig.
 // This includes values selected through modifiers, order, etc.
-func (rlc *RateLimitConfig) Value(name string) (ent.Value, error) {
-	return rlc.selectValues.Get(name)
+func (_m *RateLimitConfig) Value(name string) (ent.Value, error) {
+	return _m.selectValues.Get(name)
 }
 
 // Update returns a builder for updating this RateLimitConfig.
 // Note that you need to call RateLimitConfig.Unwrap() before calling this method if this RateLimitConfig
 // was returned from a transaction, and the transaction was committed or rolled back.
-func (rlc *RateLimitConfig) Update() *RateLimitConfigUpdateOne {
-	return NewRateLimitConfigClient(rlc.config).UpdateOne(rlc)
+func (_m *RateLimitConfig) Update() *RateLimitConfigUpdateOne {
+	return NewRateLimitConfigClient(_m.config).UpdateOne(_m)
 }
 
 // Unwrap unwraps the RateLimitConfig entity that was returned from a transaction after it was closed,
 // so that all future queries will be executed through the driver which created the transaction.
-func (rlc *RateLimitConfig) Unwrap() *RateLimitConfig {
-	_tx, ok := rlc.config.driver.(*txDriver)
+func (_m *RateLimitConfig) Unwrap() *RateLimitConfig {
+	_tx, ok := _m.config.driver.(*txDriver)
 	if !ok {
 		panic("ent: RateLimitConfig is not a transactional entity")
 	}
-	rlc.config.driver = _tx.drv
-	return rlc
+	_m.config.driver = _tx.drv
+	return _m
 }
 
 // String implements the fmt.Stringer.
-func (rlc *RateLimitConfig) String() string {
+func (_m *RateLimitConfig) String() string {
 	var builder strings.Builder
 	builder.WriteString("RateLimitConfig(")
-	builder.WriteString(fmt.Sprintf("id=%v, ", rlc.ID))
+	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("service_name=")
-	builder.WriteString(rlc.ServiceName)
+	builder.WriteString(_m.ServiceName)
 	builder.WriteString(", ")
 	builder.WriteString("key_type=")
-	builder.WriteString(rlc.KeyType)
+	builder.WriteString(_m.KeyType)
 	builder.WriteString(", ")
 	builder.WriteString("endpoint_pattern=")
-	builder.WriteString(rlc.EndpointPattern)
+	builder.WriteString(_m.EndpointPattern)
 	builder.WriteString(", ")
 	builder.WriteString("requests_per_window=")
-	builder.WriteString(fmt.Sprintf("%v", rlc.RequestsPerWindow))
+	builder.WriteString(fmt.Sprintf("%v", _m.RequestsPerWindow))
 	builder.WriteString(", ")
 	builder.WriteString("window_seconds=")
-	builder.WriteString(fmt.Sprintf("%v", rlc.WindowSeconds))
+	builder.WriteString(fmt.Sprintf("%v", _m.WindowSeconds))
 	builder.WriteString(", ")
 	builder.WriteString("burst_multiplier=")
-	builder.WriteString(fmt.Sprintf("%v", rlc.BurstMultiplier))
+	builder.WriteString(fmt.Sprintf("%v", _m.BurstMultiplier))
 	builder.WriteString(", ")
 	builder.WriteString("is_active=")
-	builder.WriteString(fmt.Sprintf("%v", rlc.IsActive))
+	builder.WriteString(fmt.Sprintf("%v", _m.IsActive))
 	builder.WriteString(", ")
 	builder.WriteString("description=")
-	builder.WriteString(rlc.Description)
+	builder.WriteString(_m.Description)
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
-	builder.WriteString(rlc.CreatedAt.Format(time.ANSIC))
+	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
 	builder.WriteString("updated_at=")
-	builder.WriteString(rlc.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString(_m.UpdatedAt.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()
 }

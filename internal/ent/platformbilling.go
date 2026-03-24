@@ -53,7 +53,7 @@ func (*PlatformBilling) scanValues(columns []string) ([]any, error) {
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the PlatformBilling fields.
-func (pb *PlatformBilling) assignValues(columns []string, values []any) error {
+func (_m *PlatformBilling) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
@@ -63,41 +63,41 @@ func (pb *PlatformBilling) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value != nil {
-				pb.ID = *value
+				_m.ID = *value
 			}
 		case platformbilling.FieldCostPerSms:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
 				return fmt.Errorf("unexpected type %T for field cost_per_sms", values[i])
 			} else if value.Valid {
-				pb.CostPerSms = value.Float64
+				_m.CostPerSms = value.Float64
 			}
 		case platformbilling.FieldCostPerWhatsapp:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
 				return fmt.Errorf("unexpected type %T for field cost_per_whatsapp", values[i])
 			} else if value.Valid {
-				pb.CostPerWhatsapp = value.Float64
+				_m.CostPerWhatsapp = value.Float64
 			}
 		case platformbilling.FieldMinTopupAmount:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
 				return fmt.Errorf("unexpected type %T for field min_topup_amount", values[i])
 			} else if value.Valid {
-				pb.MinTopupAmount = value.Float64
+				_m.MinTopupAmount = value.Float64
 			}
 		case platformbilling.FieldTreasuryGatewayID:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
 				return fmt.Errorf("unexpected type %T for field treasury_gateway_id", values[i])
 			} else if value.Valid {
-				pb.TreasuryGatewayID = new(uuid.UUID)
-				*pb.TreasuryGatewayID = *value.S.(*uuid.UUID)
+				_m.TreasuryGatewayID = new(uuid.UUID)
+				*_m.TreasuryGatewayID = *value.S.(*uuid.UUID)
 			}
 		case platformbilling.FieldUpdatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
-				pb.UpdatedAt = value.Time
+				_m.UpdatedAt = value.Time
 			}
 		default:
-			pb.selectValues.Set(columns[i], values[i])
+			_m.selectValues.Set(columns[i], values[i])
 		}
 	}
 	return nil
@@ -105,49 +105,49 @@ func (pb *PlatformBilling) assignValues(columns []string, values []any) error {
 
 // Value returns the ent.Value that was dynamically selected and assigned to the PlatformBilling.
 // This includes values selected through modifiers, order, etc.
-func (pb *PlatformBilling) Value(name string) (ent.Value, error) {
-	return pb.selectValues.Get(name)
+func (_m *PlatformBilling) Value(name string) (ent.Value, error) {
+	return _m.selectValues.Get(name)
 }
 
 // Update returns a builder for updating this PlatformBilling.
 // Note that you need to call PlatformBilling.Unwrap() before calling this method if this PlatformBilling
 // was returned from a transaction, and the transaction was committed or rolled back.
-func (pb *PlatformBilling) Update() *PlatformBillingUpdateOne {
-	return NewPlatformBillingClient(pb.config).UpdateOne(pb)
+func (_m *PlatformBilling) Update() *PlatformBillingUpdateOne {
+	return NewPlatformBillingClient(_m.config).UpdateOne(_m)
 }
 
 // Unwrap unwraps the PlatformBilling entity that was returned from a transaction after it was closed,
 // so that all future queries will be executed through the driver which created the transaction.
-func (pb *PlatformBilling) Unwrap() *PlatformBilling {
-	_tx, ok := pb.config.driver.(*txDriver)
+func (_m *PlatformBilling) Unwrap() *PlatformBilling {
+	_tx, ok := _m.config.driver.(*txDriver)
 	if !ok {
 		panic("ent: PlatformBilling is not a transactional entity")
 	}
-	pb.config.driver = _tx.drv
-	return pb
+	_m.config.driver = _tx.drv
+	return _m
 }
 
 // String implements the fmt.Stringer.
-func (pb *PlatformBilling) String() string {
+func (_m *PlatformBilling) String() string {
 	var builder strings.Builder
 	builder.WriteString("PlatformBilling(")
-	builder.WriteString(fmt.Sprintf("id=%v, ", pb.ID))
+	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("cost_per_sms=")
-	builder.WriteString(fmt.Sprintf("%v", pb.CostPerSms))
+	builder.WriteString(fmt.Sprintf("%v", _m.CostPerSms))
 	builder.WriteString(", ")
 	builder.WriteString("cost_per_whatsapp=")
-	builder.WriteString(fmt.Sprintf("%v", pb.CostPerWhatsapp))
+	builder.WriteString(fmt.Sprintf("%v", _m.CostPerWhatsapp))
 	builder.WriteString(", ")
 	builder.WriteString("min_topup_amount=")
-	builder.WriteString(fmt.Sprintf("%v", pb.MinTopupAmount))
+	builder.WriteString(fmt.Sprintf("%v", _m.MinTopupAmount))
 	builder.WriteString(", ")
-	if v := pb.TreasuryGatewayID; v != nil {
+	if v := _m.TreasuryGatewayID; v != nil {
 		builder.WriteString("treasury_gateway_id=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
 	builder.WriteString(", ")
 	builder.WriteString("updated_at=")
-	builder.WriteString(pb.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString(_m.UpdatedAt.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()
 }

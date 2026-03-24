@@ -25,114 +25,114 @@ type PlatformBillingUpdate struct {
 }
 
 // Where appends a list predicates to the PlatformBillingUpdate builder.
-func (pbu *PlatformBillingUpdate) Where(ps ...predicate.PlatformBilling) *PlatformBillingUpdate {
-	pbu.mutation.Where(ps...)
-	return pbu
+func (_u *PlatformBillingUpdate) Where(ps ...predicate.PlatformBilling) *PlatformBillingUpdate {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // SetCostPerSms sets the "cost_per_sms" field.
-func (pbu *PlatformBillingUpdate) SetCostPerSms(f float64) *PlatformBillingUpdate {
-	pbu.mutation.ResetCostPerSms()
-	pbu.mutation.SetCostPerSms(f)
-	return pbu
+func (_u *PlatformBillingUpdate) SetCostPerSms(v float64) *PlatformBillingUpdate {
+	_u.mutation.ResetCostPerSms()
+	_u.mutation.SetCostPerSms(v)
+	return _u
 }
 
 // SetNillableCostPerSms sets the "cost_per_sms" field if the given value is not nil.
-func (pbu *PlatformBillingUpdate) SetNillableCostPerSms(f *float64) *PlatformBillingUpdate {
-	if f != nil {
-		pbu.SetCostPerSms(*f)
+func (_u *PlatformBillingUpdate) SetNillableCostPerSms(v *float64) *PlatformBillingUpdate {
+	if v != nil {
+		_u.SetCostPerSms(*v)
 	}
-	return pbu
+	return _u
 }
 
-// AddCostPerSms adds f to the "cost_per_sms" field.
-func (pbu *PlatformBillingUpdate) AddCostPerSms(f float64) *PlatformBillingUpdate {
-	pbu.mutation.AddCostPerSms(f)
-	return pbu
+// AddCostPerSms adds value to the "cost_per_sms" field.
+func (_u *PlatformBillingUpdate) AddCostPerSms(v float64) *PlatformBillingUpdate {
+	_u.mutation.AddCostPerSms(v)
+	return _u
 }
 
 // SetCostPerWhatsapp sets the "cost_per_whatsapp" field.
-func (pbu *PlatformBillingUpdate) SetCostPerWhatsapp(f float64) *PlatformBillingUpdate {
-	pbu.mutation.ResetCostPerWhatsapp()
-	pbu.mutation.SetCostPerWhatsapp(f)
-	return pbu
+func (_u *PlatformBillingUpdate) SetCostPerWhatsapp(v float64) *PlatformBillingUpdate {
+	_u.mutation.ResetCostPerWhatsapp()
+	_u.mutation.SetCostPerWhatsapp(v)
+	return _u
 }
 
 // SetNillableCostPerWhatsapp sets the "cost_per_whatsapp" field if the given value is not nil.
-func (pbu *PlatformBillingUpdate) SetNillableCostPerWhatsapp(f *float64) *PlatformBillingUpdate {
-	if f != nil {
-		pbu.SetCostPerWhatsapp(*f)
+func (_u *PlatformBillingUpdate) SetNillableCostPerWhatsapp(v *float64) *PlatformBillingUpdate {
+	if v != nil {
+		_u.SetCostPerWhatsapp(*v)
 	}
-	return pbu
+	return _u
 }
 
-// AddCostPerWhatsapp adds f to the "cost_per_whatsapp" field.
-func (pbu *PlatformBillingUpdate) AddCostPerWhatsapp(f float64) *PlatformBillingUpdate {
-	pbu.mutation.AddCostPerWhatsapp(f)
-	return pbu
+// AddCostPerWhatsapp adds value to the "cost_per_whatsapp" field.
+func (_u *PlatformBillingUpdate) AddCostPerWhatsapp(v float64) *PlatformBillingUpdate {
+	_u.mutation.AddCostPerWhatsapp(v)
+	return _u
 }
 
 // SetMinTopupAmount sets the "min_topup_amount" field.
-func (pbu *PlatformBillingUpdate) SetMinTopupAmount(f float64) *PlatformBillingUpdate {
-	pbu.mutation.ResetMinTopupAmount()
-	pbu.mutation.SetMinTopupAmount(f)
-	return pbu
+func (_u *PlatformBillingUpdate) SetMinTopupAmount(v float64) *PlatformBillingUpdate {
+	_u.mutation.ResetMinTopupAmount()
+	_u.mutation.SetMinTopupAmount(v)
+	return _u
 }
 
 // SetNillableMinTopupAmount sets the "min_topup_amount" field if the given value is not nil.
-func (pbu *PlatformBillingUpdate) SetNillableMinTopupAmount(f *float64) *PlatformBillingUpdate {
-	if f != nil {
-		pbu.SetMinTopupAmount(*f)
+func (_u *PlatformBillingUpdate) SetNillableMinTopupAmount(v *float64) *PlatformBillingUpdate {
+	if v != nil {
+		_u.SetMinTopupAmount(*v)
 	}
-	return pbu
+	return _u
 }
 
-// AddMinTopupAmount adds f to the "min_topup_amount" field.
-func (pbu *PlatformBillingUpdate) AddMinTopupAmount(f float64) *PlatformBillingUpdate {
-	pbu.mutation.AddMinTopupAmount(f)
-	return pbu
+// AddMinTopupAmount adds value to the "min_topup_amount" field.
+func (_u *PlatformBillingUpdate) AddMinTopupAmount(v float64) *PlatformBillingUpdate {
+	_u.mutation.AddMinTopupAmount(v)
+	return _u
 }
 
 // SetTreasuryGatewayID sets the "treasury_gateway_id" field.
-func (pbu *PlatformBillingUpdate) SetTreasuryGatewayID(u uuid.UUID) *PlatformBillingUpdate {
-	pbu.mutation.SetTreasuryGatewayID(u)
-	return pbu
+func (_u *PlatformBillingUpdate) SetTreasuryGatewayID(v uuid.UUID) *PlatformBillingUpdate {
+	_u.mutation.SetTreasuryGatewayID(v)
+	return _u
 }
 
 // SetNillableTreasuryGatewayID sets the "treasury_gateway_id" field if the given value is not nil.
-func (pbu *PlatformBillingUpdate) SetNillableTreasuryGatewayID(u *uuid.UUID) *PlatformBillingUpdate {
-	if u != nil {
-		pbu.SetTreasuryGatewayID(*u)
+func (_u *PlatformBillingUpdate) SetNillableTreasuryGatewayID(v *uuid.UUID) *PlatformBillingUpdate {
+	if v != nil {
+		_u.SetTreasuryGatewayID(*v)
 	}
-	return pbu
+	return _u
 }
 
 // ClearTreasuryGatewayID clears the value of the "treasury_gateway_id" field.
-func (pbu *PlatformBillingUpdate) ClearTreasuryGatewayID() *PlatformBillingUpdate {
-	pbu.mutation.ClearTreasuryGatewayID()
-	return pbu
+func (_u *PlatformBillingUpdate) ClearTreasuryGatewayID() *PlatformBillingUpdate {
+	_u.mutation.ClearTreasuryGatewayID()
+	return _u
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (pbu *PlatformBillingUpdate) SetUpdatedAt(t time.Time) *PlatformBillingUpdate {
-	pbu.mutation.SetUpdatedAt(t)
-	return pbu
+func (_u *PlatformBillingUpdate) SetUpdatedAt(v time.Time) *PlatformBillingUpdate {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
 }
 
 // Mutation returns the PlatformBillingMutation object of the builder.
-func (pbu *PlatformBillingUpdate) Mutation() *PlatformBillingMutation {
-	return pbu.mutation
+func (_u *PlatformBillingUpdate) Mutation() *PlatformBillingMutation {
+	return _u.mutation
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
-func (pbu *PlatformBillingUpdate) Save(ctx context.Context) (int, error) {
-	pbu.defaults()
-	return withHooks(ctx, pbu.sqlSave, pbu.mutation, pbu.hooks)
+func (_u *PlatformBillingUpdate) Save(ctx context.Context) (int, error) {
+	_u.defaults()
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (pbu *PlatformBillingUpdate) SaveX(ctx context.Context) int {
-	affected, err := pbu.Save(ctx)
+func (_u *PlatformBillingUpdate) SaveX(ctx context.Context) int {
+	affected, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -140,70 +140,70 @@ func (pbu *PlatformBillingUpdate) SaveX(ctx context.Context) int {
 }
 
 // Exec executes the query.
-func (pbu *PlatformBillingUpdate) Exec(ctx context.Context) error {
-	_, err := pbu.Save(ctx)
+func (_u *PlatformBillingUpdate) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (pbu *PlatformBillingUpdate) ExecX(ctx context.Context) {
-	if err := pbu.Exec(ctx); err != nil {
+func (_u *PlatformBillingUpdate) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (pbu *PlatformBillingUpdate) defaults() {
-	if _, ok := pbu.mutation.UpdatedAt(); !ok {
+func (_u *PlatformBillingUpdate) defaults() {
+	if _, ok := _u.mutation.UpdatedAt(); !ok {
 		v := platformbilling.UpdateDefaultUpdatedAt()
-		pbu.mutation.SetUpdatedAt(v)
+		_u.mutation.SetUpdatedAt(v)
 	}
 }
 
 // Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
-func (pbu *PlatformBillingUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *PlatformBillingUpdate {
-	pbu.modifiers = append(pbu.modifiers, modifiers...)
-	return pbu
+func (_u *PlatformBillingUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *PlatformBillingUpdate {
+	_u.modifiers = append(_u.modifiers, modifiers...)
+	return _u
 }
 
-func (pbu *PlatformBillingUpdate) sqlSave(ctx context.Context) (n int, err error) {
+func (_u *PlatformBillingUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	_spec := sqlgraph.NewUpdateSpec(platformbilling.Table, platformbilling.Columns, sqlgraph.NewFieldSpec(platformbilling.FieldID, field.TypeUUID))
-	if ps := pbu.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := pbu.mutation.CostPerSms(); ok {
+	if value, ok := _u.mutation.CostPerSms(); ok {
 		_spec.SetField(platformbilling.FieldCostPerSms, field.TypeFloat64, value)
 	}
-	if value, ok := pbu.mutation.AddedCostPerSms(); ok {
+	if value, ok := _u.mutation.AddedCostPerSms(); ok {
 		_spec.AddField(platformbilling.FieldCostPerSms, field.TypeFloat64, value)
 	}
-	if value, ok := pbu.mutation.CostPerWhatsapp(); ok {
+	if value, ok := _u.mutation.CostPerWhatsapp(); ok {
 		_spec.SetField(platformbilling.FieldCostPerWhatsapp, field.TypeFloat64, value)
 	}
-	if value, ok := pbu.mutation.AddedCostPerWhatsapp(); ok {
+	if value, ok := _u.mutation.AddedCostPerWhatsapp(); ok {
 		_spec.AddField(platformbilling.FieldCostPerWhatsapp, field.TypeFloat64, value)
 	}
-	if value, ok := pbu.mutation.MinTopupAmount(); ok {
+	if value, ok := _u.mutation.MinTopupAmount(); ok {
 		_spec.SetField(platformbilling.FieldMinTopupAmount, field.TypeFloat64, value)
 	}
-	if value, ok := pbu.mutation.AddedMinTopupAmount(); ok {
+	if value, ok := _u.mutation.AddedMinTopupAmount(); ok {
 		_spec.AddField(platformbilling.FieldMinTopupAmount, field.TypeFloat64, value)
 	}
-	if value, ok := pbu.mutation.TreasuryGatewayID(); ok {
+	if value, ok := _u.mutation.TreasuryGatewayID(); ok {
 		_spec.SetField(platformbilling.FieldTreasuryGatewayID, field.TypeUUID, value)
 	}
-	if pbu.mutation.TreasuryGatewayIDCleared() {
+	if _u.mutation.TreasuryGatewayIDCleared() {
 		_spec.ClearField(platformbilling.FieldTreasuryGatewayID, field.TypeUUID)
 	}
-	if value, ok := pbu.mutation.UpdatedAt(); ok {
+	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(platformbilling.FieldUpdatedAt, field.TypeTime, value)
 	}
-	_spec.AddModifiers(pbu.modifiers...)
-	if n, err = sqlgraph.UpdateNodes(ctx, pbu.driver, _spec); err != nil {
+	_spec.AddModifiers(_u.modifiers...)
+	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{platformbilling.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -211,8 +211,8 @@ func (pbu *PlatformBillingUpdate) sqlSave(ctx context.Context) (n int, err error
 		}
 		return 0, err
 	}
-	pbu.mutation.done = true
-	return n, nil
+	_u.mutation.done = true
+	return _node, nil
 }
 
 // PlatformBillingUpdateOne is the builder for updating a single PlatformBilling entity.
@@ -225,121 +225,121 @@ type PlatformBillingUpdateOne struct {
 }
 
 // SetCostPerSms sets the "cost_per_sms" field.
-func (pbuo *PlatformBillingUpdateOne) SetCostPerSms(f float64) *PlatformBillingUpdateOne {
-	pbuo.mutation.ResetCostPerSms()
-	pbuo.mutation.SetCostPerSms(f)
-	return pbuo
+func (_u *PlatformBillingUpdateOne) SetCostPerSms(v float64) *PlatformBillingUpdateOne {
+	_u.mutation.ResetCostPerSms()
+	_u.mutation.SetCostPerSms(v)
+	return _u
 }
 
 // SetNillableCostPerSms sets the "cost_per_sms" field if the given value is not nil.
-func (pbuo *PlatformBillingUpdateOne) SetNillableCostPerSms(f *float64) *PlatformBillingUpdateOne {
-	if f != nil {
-		pbuo.SetCostPerSms(*f)
+func (_u *PlatformBillingUpdateOne) SetNillableCostPerSms(v *float64) *PlatformBillingUpdateOne {
+	if v != nil {
+		_u.SetCostPerSms(*v)
 	}
-	return pbuo
+	return _u
 }
 
-// AddCostPerSms adds f to the "cost_per_sms" field.
-func (pbuo *PlatformBillingUpdateOne) AddCostPerSms(f float64) *PlatformBillingUpdateOne {
-	pbuo.mutation.AddCostPerSms(f)
-	return pbuo
+// AddCostPerSms adds value to the "cost_per_sms" field.
+func (_u *PlatformBillingUpdateOne) AddCostPerSms(v float64) *PlatformBillingUpdateOne {
+	_u.mutation.AddCostPerSms(v)
+	return _u
 }
 
 // SetCostPerWhatsapp sets the "cost_per_whatsapp" field.
-func (pbuo *PlatformBillingUpdateOne) SetCostPerWhatsapp(f float64) *PlatformBillingUpdateOne {
-	pbuo.mutation.ResetCostPerWhatsapp()
-	pbuo.mutation.SetCostPerWhatsapp(f)
-	return pbuo
+func (_u *PlatformBillingUpdateOne) SetCostPerWhatsapp(v float64) *PlatformBillingUpdateOne {
+	_u.mutation.ResetCostPerWhatsapp()
+	_u.mutation.SetCostPerWhatsapp(v)
+	return _u
 }
 
 // SetNillableCostPerWhatsapp sets the "cost_per_whatsapp" field if the given value is not nil.
-func (pbuo *PlatformBillingUpdateOne) SetNillableCostPerWhatsapp(f *float64) *PlatformBillingUpdateOne {
-	if f != nil {
-		pbuo.SetCostPerWhatsapp(*f)
+func (_u *PlatformBillingUpdateOne) SetNillableCostPerWhatsapp(v *float64) *PlatformBillingUpdateOne {
+	if v != nil {
+		_u.SetCostPerWhatsapp(*v)
 	}
-	return pbuo
+	return _u
 }
 
-// AddCostPerWhatsapp adds f to the "cost_per_whatsapp" field.
-func (pbuo *PlatformBillingUpdateOne) AddCostPerWhatsapp(f float64) *PlatformBillingUpdateOne {
-	pbuo.mutation.AddCostPerWhatsapp(f)
-	return pbuo
+// AddCostPerWhatsapp adds value to the "cost_per_whatsapp" field.
+func (_u *PlatformBillingUpdateOne) AddCostPerWhatsapp(v float64) *PlatformBillingUpdateOne {
+	_u.mutation.AddCostPerWhatsapp(v)
+	return _u
 }
 
 // SetMinTopupAmount sets the "min_topup_amount" field.
-func (pbuo *PlatformBillingUpdateOne) SetMinTopupAmount(f float64) *PlatformBillingUpdateOne {
-	pbuo.mutation.ResetMinTopupAmount()
-	pbuo.mutation.SetMinTopupAmount(f)
-	return pbuo
+func (_u *PlatformBillingUpdateOne) SetMinTopupAmount(v float64) *PlatformBillingUpdateOne {
+	_u.mutation.ResetMinTopupAmount()
+	_u.mutation.SetMinTopupAmount(v)
+	return _u
 }
 
 // SetNillableMinTopupAmount sets the "min_topup_amount" field if the given value is not nil.
-func (pbuo *PlatformBillingUpdateOne) SetNillableMinTopupAmount(f *float64) *PlatformBillingUpdateOne {
-	if f != nil {
-		pbuo.SetMinTopupAmount(*f)
+func (_u *PlatformBillingUpdateOne) SetNillableMinTopupAmount(v *float64) *PlatformBillingUpdateOne {
+	if v != nil {
+		_u.SetMinTopupAmount(*v)
 	}
-	return pbuo
+	return _u
 }
 
-// AddMinTopupAmount adds f to the "min_topup_amount" field.
-func (pbuo *PlatformBillingUpdateOne) AddMinTopupAmount(f float64) *PlatformBillingUpdateOne {
-	pbuo.mutation.AddMinTopupAmount(f)
-	return pbuo
+// AddMinTopupAmount adds value to the "min_topup_amount" field.
+func (_u *PlatformBillingUpdateOne) AddMinTopupAmount(v float64) *PlatformBillingUpdateOne {
+	_u.mutation.AddMinTopupAmount(v)
+	return _u
 }
 
 // SetTreasuryGatewayID sets the "treasury_gateway_id" field.
-func (pbuo *PlatformBillingUpdateOne) SetTreasuryGatewayID(u uuid.UUID) *PlatformBillingUpdateOne {
-	pbuo.mutation.SetTreasuryGatewayID(u)
-	return pbuo
+func (_u *PlatformBillingUpdateOne) SetTreasuryGatewayID(v uuid.UUID) *PlatformBillingUpdateOne {
+	_u.mutation.SetTreasuryGatewayID(v)
+	return _u
 }
 
 // SetNillableTreasuryGatewayID sets the "treasury_gateway_id" field if the given value is not nil.
-func (pbuo *PlatformBillingUpdateOne) SetNillableTreasuryGatewayID(u *uuid.UUID) *PlatformBillingUpdateOne {
-	if u != nil {
-		pbuo.SetTreasuryGatewayID(*u)
+func (_u *PlatformBillingUpdateOne) SetNillableTreasuryGatewayID(v *uuid.UUID) *PlatformBillingUpdateOne {
+	if v != nil {
+		_u.SetTreasuryGatewayID(*v)
 	}
-	return pbuo
+	return _u
 }
 
 // ClearTreasuryGatewayID clears the value of the "treasury_gateway_id" field.
-func (pbuo *PlatformBillingUpdateOne) ClearTreasuryGatewayID() *PlatformBillingUpdateOne {
-	pbuo.mutation.ClearTreasuryGatewayID()
-	return pbuo
+func (_u *PlatformBillingUpdateOne) ClearTreasuryGatewayID() *PlatformBillingUpdateOne {
+	_u.mutation.ClearTreasuryGatewayID()
+	return _u
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (pbuo *PlatformBillingUpdateOne) SetUpdatedAt(t time.Time) *PlatformBillingUpdateOne {
-	pbuo.mutation.SetUpdatedAt(t)
-	return pbuo
+func (_u *PlatformBillingUpdateOne) SetUpdatedAt(v time.Time) *PlatformBillingUpdateOne {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
 }
 
 // Mutation returns the PlatformBillingMutation object of the builder.
-func (pbuo *PlatformBillingUpdateOne) Mutation() *PlatformBillingMutation {
-	return pbuo.mutation
+func (_u *PlatformBillingUpdateOne) Mutation() *PlatformBillingMutation {
+	return _u.mutation
 }
 
 // Where appends a list predicates to the PlatformBillingUpdate builder.
-func (pbuo *PlatformBillingUpdateOne) Where(ps ...predicate.PlatformBilling) *PlatformBillingUpdateOne {
-	pbuo.mutation.Where(ps...)
-	return pbuo
+func (_u *PlatformBillingUpdateOne) Where(ps ...predicate.PlatformBilling) *PlatformBillingUpdateOne {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
-func (pbuo *PlatformBillingUpdateOne) Select(field string, fields ...string) *PlatformBillingUpdateOne {
-	pbuo.fields = append([]string{field}, fields...)
-	return pbuo
+func (_u *PlatformBillingUpdateOne) Select(field string, fields ...string) *PlatformBillingUpdateOne {
+	_u.fields = append([]string{field}, fields...)
+	return _u
 }
 
 // Save executes the query and returns the updated PlatformBilling entity.
-func (pbuo *PlatformBillingUpdateOne) Save(ctx context.Context) (*PlatformBilling, error) {
-	pbuo.defaults()
-	return withHooks(ctx, pbuo.sqlSave, pbuo.mutation, pbuo.hooks)
+func (_u *PlatformBillingUpdateOne) Save(ctx context.Context) (*PlatformBilling, error) {
+	_u.defaults()
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (pbuo *PlatformBillingUpdateOne) SaveX(ctx context.Context) *PlatformBilling {
-	node, err := pbuo.Save(ctx)
+func (_u *PlatformBillingUpdateOne) SaveX(ctx context.Context) *PlatformBilling {
+	node, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -347,40 +347,40 @@ func (pbuo *PlatformBillingUpdateOne) SaveX(ctx context.Context) *PlatformBillin
 }
 
 // Exec executes the query on the entity.
-func (pbuo *PlatformBillingUpdateOne) Exec(ctx context.Context) error {
-	_, err := pbuo.Save(ctx)
+func (_u *PlatformBillingUpdateOne) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (pbuo *PlatformBillingUpdateOne) ExecX(ctx context.Context) {
-	if err := pbuo.Exec(ctx); err != nil {
+func (_u *PlatformBillingUpdateOne) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (pbuo *PlatformBillingUpdateOne) defaults() {
-	if _, ok := pbuo.mutation.UpdatedAt(); !ok {
+func (_u *PlatformBillingUpdateOne) defaults() {
+	if _, ok := _u.mutation.UpdatedAt(); !ok {
 		v := platformbilling.UpdateDefaultUpdatedAt()
-		pbuo.mutation.SetUpdatedAt(v)
+		_u.mutation.SetUpdatedAt(v)
 	}
 }
 
 // Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
-func (pbuo *PlatformBillingUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *PlatformBillingUpdateOne {
-	pbuo.modifiers = append(pbuo.modifiers, modifiers...)
-	return pbuo
+func (_u *PlatformBillingUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *PlatformBillingUpdateOne {
+	_u.modifiers = append(_u.modifiers, modifiers...)
+	return _u
 }
 
-func (pbuo *PlatformBillingUpdateOne) sqlSave(ctx context.Context) (_node *PlatformBilling, err error) {
+func (_u *PlatformBillingUpdateOne) sqlSave(ctx context.Context) (_node *PlatformBilling, err error) {
 	_spec := sqlgraph.NewUpdateSpec(platformbilling.Table, platformbilling.Columns, sqlgraph.NewFieldSpec(platformbilling.FieldID, field.TypeUUID))
-	id, ok := pbuo.mutation.ID()
+	id, ok := _u.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "PlatformBilling.id" for update`)}
 	}
 	_spec.Node.ID.Value = id
-	if fields := pbuo.fields; len(fields) > 0 {
+	if fields := _u.fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		_spec.Node.Columns = append(_spec.Node.Columns, platformbilling.FieldID)
 		for _, f := range fields {
@@ -392,45 +392,45 @@ func (pbuo *PlatformBillingUpdateOne) sqlSave(ctx context.Context) (_node *Platf
 			}
 		}
 	}
-	if ps := pbuo.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := pbuo.mutation.CostPerSms(); ok {
+	if value, ok := _u.mutation.CostPerSms(); ok {
 		_spec.SetField(platformbilling.FieldCostPerSms, field.TypeFloat64, value)
 	}
-	if value, ok := pbuo.mutation.AddedCostPerSms(); ok {
+	if value, ok := _u.mutation.AddedCostPerSms(); ok {
 		_spec.AddField(platformbilling.FieldCostPerSms, field.TypeFloat64, value)
 	}
-	if value, ok := pbuo.mutation.CostPerWhatsapp(); ok {
+	if value, ok := _u.mutation.CostPerWhatsapp(); ok {
 		_spec.SetField(platformbilling.FieldCostPerWhatsapp, field.TypeFloat64, value)
 	}
-	if value, ok := pbuo.mutation.AddedCostPerWhatsapp(); ok {
+	if value, ok := _u.mutation.AddedCostPerWhatsapp(); ok {
 		_spec.AddField(platformbilling.FieldCostPerWhatsapp, field.TypeFloat64, value)
 	}
-	if value, ok := pbuo.mutation.MinTopupAmount(); ok {
+	if value, ok := _u.mutation.MinTopupAmount(); ok {
 		_spec.SetField(platformbilling.FieldMinTopupAmount, field.TypeFloat64, value)
 	}
-	if value, ok := pbuo.mutation.AddedMinTopupAmount(); ok {
+	if value, ok := _u.mutation.AddedMinTopupAmount(); ok {
 		_spec.AddField(platformbilling.FieldMinTopupAmount, field.TypeFloat64, value)
 	}
-	if value, ok := pbuo.mutation.TreasuryGatewayID(); ok {
+	if value, ok := _u.mutation.TreasuryGatewayID(); ok {
 		_spec.SetField(platformbilling.FieldTreasuryGatewayID, field.TypeUUID, value)
 	}
-	if pbuo.mutation.TreasuryGatewayIDCleared() {
+	if _u.mutation.TreasuryGatewayIDCleared() {
 		_spec.ClearField(platformbilling.FieldTreasuryGatewayID, field.TypeUUID)
 	}
-	if value, ok := pbuo.mutation.UpdatedAt(); ok {
+	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(platformbilling.FieldUpdatedAt, field.TypeTime, value)
 	}
-	_spec.AddModifiers(pbuo.modifiers...)
-	_node = &PlatformBilling{config: pbuo.config}
+	_spec.AddModifiers(_u.modifiers...)
+	_node = &PlatformBilling{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues
-	if err = sqlgraph.UpdateNode(ctx, pbuo.driver, _spec); err != nil {
+	if err = sqlgraph.UpdateNode(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{platformbilling.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -438,6 +438,6 @@ func (pbuo *PlatformBillingUpdateOne) sqlSave(ctx context.Context) (_node *Platf
 		}
 		return nil, err
 	}
-	pbuo.mutation.done = true
+	_u.mutation.done = true
 	return _node, nil
 }
