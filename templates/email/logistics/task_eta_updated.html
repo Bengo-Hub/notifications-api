@@ -1,0 +1,18 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <h2>Delivery Update</h2>
+  <p>Your delivery is on its way!</p>
+
+  <div style="background:#f3f4f6; padding:16px; border-radius:6px; margin:16px 0;">
+    <strong>Estimated Arrival:</strong> {{ .eta_minutes }} minutes<br/>
+    {{ if .distance_km }}<strong>Distance:</strong> {{ .distance_km }} km<br/>{{ end }}
+    {{ if .tracking_code }}<strong>Tracking Code:</strong> {{ .tracking_code }}<br/>{{ end }}
+  </div>
+
+  {{ if .tracking_link }}
+  <p>
+    <a class="button" href="{{ .tracking_link }}">Track Delivery</a>
+  </p>
+  {{ end }}
+  <p class="muted">This is a real-time delivery update.</p>
+{{ end }}

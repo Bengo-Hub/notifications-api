@@ -108,12 +108,20 @@ func startDeliveryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStream
 
 		taskID, _ := evt.Data["task_id"].(string)
 
+		// Use customer email from event if available, fallback to tenant contact
+		recipientEmail := ti.ContactEmail
+		if ce, ok := evt.Data["customer_email"].(string); ok && ce != "" {
+			recipientEmail = ce
+		}
+
 		msg := messaging.Message{
-			TenantID:   evt.TenantID,
-			Channel:    "email",
-			TemplateID: mapping.TemplateID,
-			To:         []string{ti.ContactEmail},
-			Data:       mapping.DataBuilder(evt.Data, tenantWebsite),
+			TenantID:    evt.TenantID,
+			Channel:     "email",
+			TemplateID:  mapping.TemplateID,
+			SenderScope: messaging.SenderScopeTenant,
+			Target:      messaging.TargetCustomer,
+			To:          []string{recipientEmail},
+			Data:        mapping.DataBuilder(evt.Data, tenantWebsite),
 			Metadata: map[string]interface{}{
 				"subject": mapping.EmailSubject,
 			},

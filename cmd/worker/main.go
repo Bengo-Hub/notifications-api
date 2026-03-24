@@ -205,6 +205,14 @@ func main() {
 	// Start POS event consumer (pos-service → order/payment notifications)
 	startPosConsumer(ctx, nc, js, cfg, tr, logg)
 
+	// Start scheduled plan expiry warning notifier
+	if cfg.Services.SubscriptionsAPI != "" {
+		subsCfg := serviceclient.DefaultConfig(cfg.Services.SubscriptionsAPI, "subscriptions-api", logg)
+		subsClient := serviceclient.New(subsCfg)
+		scheduledNotifier := NewScheduledNotifier(logg, subsClient, nc, cfg, tr)
+		scheduledNotifier.Start(ctx)
+	}
+
 	// Start ticketing event consumer (ticketing-service → ticket notifications)
 	startTicketingConsumer(ctx, nc, js, cfg, tr, logg)
 
@@ -309,13 +317,20 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, bil
 		preferred = p
 	}
 
+	// Determine which tenant ID to use for provider resolution based on sender scope.
+	// Platform scope uses platform provider; tenant scope uses tenant's own provider.
+	providerTenantID := msg.TenantID
+	if msg.EffectiveSenderScope() == messaging.SenderScopePlatform {
+		providerTenantID = pm.PlatformID
+	}
+
 	switch channel {
 	case "email":
 		subject := "Notification"
 		if s, ok := msg.Metadata["subject"].(string); ok && s != "" {
 			subject = s
 		}
-		emailProv, _ := pm.GetEmailProvider(ctx, msg.TenantID, preferred)
+		emailProv, _ := pm.GetEmailProvider(ctx, providerTenantID, preferred)
 		// Pass empty from — let the provider use its configured from address (tenant or platform fallback)
 		if err := emailProv.SendEmail(ctx, "", msg.To, subject, rendered, ""); err != nil {
 			return err
@@ -329,7 +344,7 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, bil
 			return fmt.Errorf("billing: %w", err)
 		}
 
-		smsProv, _ := pm.GetSMSProvider(ctx, msg.TenantID, preferred)
+		smsProv, _ := pm.GetSMSProvider(ctx, providerTenantID, preferred)
 		if err := smsProv.SendSMS(ctx, cfg.Providers.DefaultSMSSender, msg.To, rendered); err != nil {
 			return err
 		}
@@ -341,7 +356,7 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, bil
 			return fmt.Errorf("billing: %w", err)
 		}
 
-		waProv, err := pm.GetWhatsAppProvider(ctx, msg.TenantID, preferred)
+		waProv, err := pm.GetWhatsAppProvider(ctx, providerTenantID, preferred)
 		if err != nil {
 			return err
 		}

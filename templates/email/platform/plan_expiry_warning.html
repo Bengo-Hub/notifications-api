@@ -1,0 +1,20 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <h2 style="color: #d97706;">Subscription Expiring Soon</h2>
+  <p>Your <strong>{{ .plan_name }}</strong> subscription expires in <strong>{{ .days_remaining }} days</strong> ({{ .expiry_date }}).</p>
+
+  <div style="background:#fef3c7; padding:16px; border-radius:6px; margin:16px 0; border-left:4px solid #d97706;">
+    <strong>Plan:</strong> {{ .plan_name }}<br/>
+    <strong>Expiry Date:</strong> {{ .expiry_date }}<br/>
+    <strong>Days Remaining:</strong> {{ .days_remaining }}
+  </div>
+
+  <p>Renew now to keep your services running without interruption.</p>
+
+  {{ if .action_link }}
+  <p>
+    <a class="button" href="{{ .action_link }}">Renew Subscription</a>
+  </p>
+  {{ end }}
+  <p class="muted">If you've already renewed, please disregard this notice.</p>
+{{ end }}

@@ -134,11 +134,13 @@ func startOrderConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 		orderID, _ := evt.Data["order_id"].(string)
 
 		msg := messaging.Message{
-			TenantID:   evt.TenantID,
-			Channel:    "email",
-			TemplateID: mapping.TemplateID,
-			To:         []string{email},
-			Data:       mapping.DataBuilder(evt.Data, tenantWebsite),
+			TenantID:    evt.TenantID,
+			Channel:     "email",
+			TemplateID:  mapping.TemplateID,
+			SenderScope: messaging.SenderScopeTenant,
+			Target:      messaging.TargetCustomer,
+			To:          []string{email},
+			Data:        mapping.DataBuilder(evt.Data, tenantWebsite),
 			Metadata: map[string]interface{}{
 				"subject": mapping.EmailSubject,
 			},

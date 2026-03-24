@@ -65,10 +65,12 @@ func startAuthNotificationConsumer(ctx context.Context, nc *nats.Conn, cfg *conf
 		}
 
 		msg := messaging.Message{
-			TenantID:   evt.TenantID,
-			Channel:    "email",
-			TemplateID: "auth/welcome",
-			To:         []string{evt.Email},
+			TenantID:    evt.TenantID,
+			Channel:     "email",
+			TemplateID:  "auth/welcome",
+			SenderScope: messaging.SenderScopePlatform,
+			Target:      messaging.TargetCustomer,
+			To:          []string{evt.Email},
 			Data: map[string]any{
 				"name":                 name,
 				"getting_started_link": fmt.Sprintf("%s/dashboard", tenantWebsite),
@@ -139,10 +141,12 @@ func startAuthNotificationConsumer(ctx context.Context, nc *nats.Conn, cfg *conf
 		tenantID, _ := payload["tenant_id"].(string)
 
 		msg := messaging.Message{
-			TenantID:   tenantID,
-			Channel:    "email",
-			TemplateID: "auth/password_reset",
-			To:         []string{email},
+			TenantID:    tenantID,
+			Channel:     "email",
+			TemplateID:  "auth/password_reset",
+			SenderScope: messaging.SenderScopePlatform,
+			Target:      messaging.TargetCustomer,
+			To:          []string{email},
 			Data: map[string]any{
 				"name":       name,
 				"reset_link": resetLink,

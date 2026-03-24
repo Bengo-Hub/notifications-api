@@ -1,0 +1,20 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <h2 style="color: #059669;">Refund Processed</h2>
+  <p>Your refund for order <strong>{{ .order_number }}</strong> has been processed.</p>
+
+  <div style="background:#f3f4f6; padding:16px; border-radius:6px; margin:16px 0;">
+    <strong>Order:</strong> {{ .order_number }}<br/>
+    <strong>Refund Amount:</strong> {{ .currency }} {{ .amount }}<br/>
+    {{ if .reason }}<strong>Reason:</strong> {{ .reason }}<br/>{{ end }}
+  </div>
+
+  <p>The refund will appear in your account within 3-5 business days.</p>
+
+  {{ if .order_link }}
+  <p>
+    <a class="button" href="{{ .order_link }}">View Order</a>
+  </p>
+  {{ end }}
+  <p class="muted">If you have any questions about this refund, please contact support.</p>
+{{ end }}

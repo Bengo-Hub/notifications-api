@@ -100,11 +100,13 @@ func startInventoryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStrea
 		sku, _ := evt.Data["sku"].(string)
 
 		msg := messaging.Message{
-			TenantID:   evt.TenantID,
-			Channel:    "email",
-			TemplateID: mapping.TemplateID,
-			To:         []string{ti.ContactEmail},
-			Data:       mapping.DataBuilder(evt.Data, ti.Website),
+			TenantID:    evt.TenantID,
+			Channel:     "email",
+			TemplateID:  mapping.TemplateID,
+			SenderScope: messaging.SenderScopeTenant,
+			Target:      messaging.TargetStaff,
+			To:          []string{ti.ContactEmail},
+			Data:        mapping.DataBuilder(evt.Data, ti.Website),
 			Metadata: map[string]interface{}{
 				"subject": mapping.EmailSubject,
 			},

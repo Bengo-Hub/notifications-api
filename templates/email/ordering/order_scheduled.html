@@ -1,0 +1,20 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <h2>Order Scheduled</h2>
+  <p>Your order <strong>{{ .order_number }}</strong> has been scheduled.</p>
+
+  <div style="background:#f3f4f6; padding:16px; border-radius:6px; margin:16px 0;">
+    <strong>Order:</strong> {{ .order_number }}<br/>
+    <strong>Scheduled For:</strong> {{ .scheduled_for }}<br/>
+    {{ if .total_amount }}<strong>Total:</strong> {{ .currency }} {{ .total_amount }}<br/>{{ end }}
+  </div>
+
+  <p>We'll start preparing your order on time.</p>
+
+  {{ if .order_link }}
+  <p>
+    <a class="button" href="{{ .order_link }}">Track Order</a>
+  </p>
+  {{ end }}
+  <p class="muted">We'll notify you when your order is ready.</p>
+{{ end }}

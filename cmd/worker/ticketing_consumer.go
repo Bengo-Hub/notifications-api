@@ -105,12 +105,20 @@ func startTicketingConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStrea
 			return
 		}
 
+		// Use agent email from event payload if available, fallback to tenant contact
+		recipientEmail := ti.ContactEmail
+		if agentEmail, ok := evt.Payload["agent_email"].(string); ok && agentEmail != "" {
+			recipientEmail = agentEmail
+		}
+
 		msg := messaging.Message{
-			TenantID:   tenantID,
-			Channel:    "email",
-			TemplateID: mapping.TemplateID,
-			To:         []string{ti.ContactEmail},
-			Data:       mapping.DataBuilder(evt.Payload, ti.Website),
+			TenantID:    tenantID,
+			Channel:     "email",
+			TemplateID:  mapping.TemplateID,
+			SenderScope: messaging.SenderScopeTenant,
+			Target:      messaging.TargetStaff,
+			To:          []string{recipientEmail},
+			Data:        mapping.DataBuilder(evt.Payload, ti.Website),
 			Metadata: map[string]any{
 				"subject": mapping.EmailSubject,
 			},

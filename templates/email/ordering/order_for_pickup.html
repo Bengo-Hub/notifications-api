@@ -1,0 +1,20 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <h2 style="color: #059669;">Order Ready for Pickup</h2>
+  <p>Your order <strong>{{ .order_number }}</strong> is ready for pickup.</p>
+
+  <div style="background:#f3f4f6; padding:16px; border-radius:6px; margin:16px 0;">
+    <strong>Order:</strong> {{ .order_number }}<br/>
+    {{ if .outlet_name }}<strong>Pickup Location:</strong> {{ .outlet_name }}<br/>{{ end }}
+    {{ if .pickup_time }}<strong>Pickup Time:</strong> {{ .pickup_time }}<br/>{{ end }}
+  </div>
+
+  <p>Please pick up your order at your earliest convenience.</p>
+
+  {{ if .order_link }}
+  <p>
+    <a class="button" href="{{ .order_link }}">View Order</a>
+  </p>
+  {{ end }}
+  <p class="muted">Thank you for your order!</p>
+{{ end }}

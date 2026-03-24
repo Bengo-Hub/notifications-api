@@ -30,6 +30,7 @@ type Config struct {
 type ServicesConfig struct {
 	AuthAPI          string `envconfig:"SERVICES_AUTH_API_URL" default:"https://sso.codevertexitsolutions.com"`
 	TreasuryAPI      string `envconfig:"SERVICES_TREASURY_API_URL" default:"https://booksapi.codevertexitsolutions.com"`
+	SubscriptionsAPI string `envconfig:"SERVICES_SUBSCRIPTIONS_API_URL" default:"https://pricingapi.codevertexitsolutions.com"`
 	SubscriptionsURL string `envconfig:"SERVICES_SUBSCRIPTIONS_UPGRADE_URL" default:"https://pricingapi.codevertexitsolutions.com/upgrade"`
 }
 

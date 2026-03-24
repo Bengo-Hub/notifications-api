@@ -163,12 +163,23 @@ func startTreasuryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStream
 			tenantWebsite = ti.Website
 		}
 
+		// Determine sender scope and target based on event type:
+		// - Payments: tenant sends to customer
+		// - Payouts: tenant sends to tenant admin
+		senderScope := messaging.SenderScopeTenant
+		target := messaging.TargetCustomer
+		if eventType == "payout.completed" {
+			target = messaging.TargetTenantAdmin
+		}
+
 		msg := messaging.Message{
-			TenantID:   tenantID,
-			Channel:    "email",
-			TemplateID: mapping.TemplateID,
-			To:         []string{customerEmail},
-			Data:       mapping.DataBuilder(payload, tenantWebsite),
+			TenantID:    tenantID,
+			Channel:     "email",
+			TemplateID:  mapping.TemplateID,
+			SenderScope: senderScope,
+			Target:      target,
+			To:          []string{customerEmail},
+			Data:        mapping.DataBuilder(payload, tenantWebsite),
 			Metadata: map[string]any{
 				"subject": mapping.EmailSubject,
 			},

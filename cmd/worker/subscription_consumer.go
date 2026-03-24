@@ -167,12 +167,22 @@ func startSubscriptionConsumer(ctx context.Context, nc *nats.Conn, js nats.JetSt
 			tenantWebsite = "https://pricing.codevertexitsolutions.com"
 		}
 
+		// Check for explicit recipient in event payload notification block
+		recipientEmail := ti.ContactEmail
+		if notif, ok := evt.Payload["notification"].(map[string]any); ok {
+			if re, ok := notif["recipient_email"].(string); ok && re != "" {
+				recipientEmail = re
+			}
+		}
+
 		msg := messaging.Message{
-			TenantID:   tenantID,
-			Channel:    "email",
-			TemplateID: mapping.TemplateID,
-			To:         []string{ti.ContactEmail},
-			Data:       mapping.DataBuilder(evt.Payload, tenantWebsite),
+			TenantID:    tenantID,
+			Channel:     "email",
+			TemplateID:  mapping.TemplateID,
+			SenderScope: messaging.SenderScopePlatform,
+			Target:      messaging.TargetTenantAdmin,
+			To:          []string{recipientEmail},
+			Data:        mapping.DataBuilder(evt.Payload, tenantWebsite),
 			Metadata: map[string]any{
 				"subject": mapping.EmailSubject,
 			},

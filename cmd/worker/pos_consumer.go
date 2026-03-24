@@ -112,11 +112,13 @@ func startPosConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamConte
 		}
 
 		msg := messaging.Message{
-			TenantID:   tenantID,
-			Channel:    "email",
-			TemplateID: mapping.TemplateID,
-			To:         []string{ti.ContactEmail},
-			Data:       mapping.DataBuilder(evt.Payload, ti.Website),
+			TenantID:    tenantID,
+			Channel:     "email",
+			TemplateID:  mapping.TemplateID,
+			SenderScope: messaging.SenderScopeTenant,
+			Target:      messaging.TargetTenantAdmin,
+			To:          []string{ti.ContactEmail},
+			Data:        mapping.DataBuilder(evt.Payload, ti.Website),
 			Metadata: map[string]any{
 				"subject": mapping.EmailSubject,
 			},

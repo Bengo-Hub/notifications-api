@@ -1,0 +1,18 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <h2 style="color: #059669;">Wallet Credited</h2>
+  <p>Your wallet has been credited.</p>
+
+  <div style="background:#f3f4f6; padding:16px; border-radius:6px; margin:16px 0;">
+    <strong>Amount Credited:</strong> {{ .currency }} {{ .amount }}<br/>
+    {{ if .balance }}<strong>New Balance:</strong> {{ .currency }} {{ .balance }}<br/>{{ end }}
+    {{ if .reference }}<strong>Reference:</strong> {{ .reference }}<br/>{{ end }}
+  </div>
+
+  {{ if .wallet_link }}
+  <p>
+    <a class="button" href="{{ .wallet_link }}">View Wallet</a>
+  </p>
+  {{ end }}
+  <p class="muted">This is an automated notification from your account.</p>
+{{ end }}

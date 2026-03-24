@@ -1,0 +1,10 @@
+{{ define "content" }}
+  {{ if .title }}<h2>{{ .title }}</h2>{{ end }}
+  <p>{{ .body }}</p>
+
+  {{ if .action_link }}
+  <p>
+    <a class="button" href="{{ .action_link }}">{{ if .action_text }}{{ .action_text }}{{ else }}Learn More{{ end }}</a>
+  </p>
+  {{ end }}
+{{ end }}

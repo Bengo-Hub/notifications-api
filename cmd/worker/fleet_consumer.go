@@ -105,11 +105,13 @@ func startFleetConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 
 		// Build notification message
 		msg := messaging.Message{
-			TenantID:   evt.TenantID,
-			Channel:    "email",
-			TemplateID: mapping.TemplateID,
-			To:         []string{email},
-			Data:       mapping.DataBuilder(evt.Data, tenantWebsite),
+			TenantID:    evt.TenantID,
+			Channel:     "email",
+			TemplateID:  mapping.TemplateID,
+			SenderScope: messaging.SenderScopeTenant,
+			Target:      messaging.TargetRider,
+			To:          []string{email},
+			Data:        mapping.DataBuilder(evt.Data, tenantWebsite),
 			Metadata: map[string]interface{}{
 				"subject": mapping.EmailSubject,
 			},
