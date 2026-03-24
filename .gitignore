@@ -25,3 +25,4 @@ config/certs/*.key
 .idea/
 .DS_Store
 .env.docker
+config/fcm_json/

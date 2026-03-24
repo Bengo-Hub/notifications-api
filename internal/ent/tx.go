@@ -16,6 +16,8 @@ type Tx struct {
 	CreditTransaction *CreditTransactionClient
 	// DeliveryLog is the client for interacting with the DeliveryLog builders.
 	DeliveryLog *DeliveryLogClient
+	// DeviceToken is the client for interacting with the DeviceToken builders.
+	DeviceToken *DeviceTokenClient
 	// NotificationPermission is the client for interacting with the NotificationPermission builders.
 	NotificationPermission *NotificationPermissionClient
 	// NotificationRole is the client for interacting with the NotificationRole builders.
@@ -179,6 +181,7 @@ func (tx *Tx) Client() *Client {
 func (tx *Tx) init() {
 	tx.CreditTransaction = NewCreditTransactionClient(tx.config)
 	tx.DeliveryLog = NewDeliveryLogClient(tx.config)
+	tx.DeviceToken = NewDeviceTokenClient(tx.config)
 	tx.NotificationPermission = NewNotificationPermissionClient(tx.config)
 	tx.NotificationRole = NewNotificationRoleClient(tx.config)
 	tx.NotificationRolePermission = NewNotificationRolePermissionClient(tx.config)

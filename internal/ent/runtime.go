@@ -7,6 +7,7 @@ import (
 
 	"github.com/bengobox/notifications-api/internal/ent/credittransaction"
 	"github.com/bengobox/notifications-api/internal/ent/deliverylog"
+	"github.com/bengobox/notifications-api/internal/ent/devicetoken"
 	"github.com/bengobox/notifications-api/internal/ent/notificationpermission"
 	"github.com/bengobox/notifications-api/internal/ent/notificationrole"
 	"github.com/bengobox/notifications-api/internal/ent/outboxevent"
@@ -73,6 +74,38 @@ func init() {
 	deliverylogDescID := deliverylogFields[0].Descriptor()
 	// deliverylog.DefaultID holds the default value on creation for the id field.
 	deliverylog.DefaultID = deliverylogDescID.Default.(func() uuid.UUID)
+	devicetokenFields := schema.DeviceToken{}.Fields()
+	_ = devicetokenFields
+	// devicetokenDescToken is the schema descriptor for token field.
+	devicetokenDescToken := devicetokenFields[3].Descriptor()
+	// devicetoken.TokenValidator is a validator for the "token" field. It is called by the builders before save.
+	devicetoken.TokenValidator = devicetokenDescToken.Validators[0].(func(string) error)
+	// devicetokenDescPlatform is the schema descriptor for platform field.
+	devicetokenDescPlatform := devicetokenFields[4].Descriptor()
+	// devicetoken.DefaultPlatform holds the default value on creation for the platform field.
+	devicetoken.DefaultPlatform = devicetokenDescPlatform.Default.(string)
+	// devicetokenDescProvider is the schema descriptor for provider field.
+	devicetokenDescProvider := devicetokenFields[5].Descriptor()
+	// devicetoken.DefaultProvider holds the default value on creation for the provider field.
+	devicetoken.DefaultProvider = devicetokenDescProvider.Default.(string)
+	// devicetokenDescIsActive is the schema descriptor for is_active field.
+	devicetokenDescIsActive := devicetokenFields[6].Descriptor()
+	// devicetoken.DefaultIsActive holds the default value on creation for the is_active field.
+	devicetoken.DefaultIsActive = devicetokenDescIsActive.Default.(bool)
+	// devicetokenDescCreatedAt is the schema descriptor for created_at field.
+	devicetokenDescCreatedAt := devicetokenFields[8].Descriptor()
+	// devicetoken.DefaultCreatedAt holds the default value on creation for the created_at field.
+	devicetoken.DefaultCreatedAt = devicetokenDescCreatedAt.Default.(func() time.Time)
+	// devicetokenDescUpdatedAt is the schema descriptor for updated_at field.
+	devicetokenDescUpdatedAt := devicetokenFields[9].Descriptor()
+	// devicetoken.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	devicetoken.DefaultUpdatedAt = devicetokenDescUpdatedAt.Default.(func() time.Time)
+	// devicetoken.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	devicetoken.UpdateDefaultUpdatedAt = devicetokenDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// devicetokenDescID is the schema descriptor for id field.
+	devicetokenDescID := devicetokenFields[0].Descriptor()
+	// devicetoken.DefaultID holds the default value on creation for the id field.
+	devicetoken.DefaultID = devicetokenDescID.Default.(func() uuid.UUID)
 	notificationpermissionFields := schema.NotificationPermission{}.Fields()
 	_ = notificationpermissionFields
 	// notificationpermissionDescPermissionCode is the schema descriptor for permission_code field.

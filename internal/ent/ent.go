@@ -14,6 +14,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/bengobox/notifications-api/internal/ent/credittransaction"
 	"github.com/bengobox/notifications-api/internal/ent/deliverylog"
+	"github.com/bengobox/notifications-api/internal/ent/devicetoken"
 	"github.com/bengobox/notifications-api/internal/ent/notificationpermission"
 	"github.com/bengobox/notifications-api/internal/ent/notificationrole"
 	"github.com/bengobox/notifications-api/internal/ent/notificationrolepermission"
@@ -91,6 +92,7 @@ func checkColumn(t, c string) error {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
 			credittransaction.Table:          credittransaction.ValidColumn,
 			deliverylog.Table:                deliverylog.ValidColumn,
+			devicetoken.Table:                devicetoken.ValidColumn,
 			notificationpermission.Table:     notificationpermission.ValidColumn,
 			notificationrole.Table:           notificationrole.ValidColumn,
 			notificationrolepermission.Table: notificationrolepermission.ValidColumn,

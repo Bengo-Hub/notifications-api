@@ -78,6 +78,42 @@ var (
 			},
 		},
 	}
+	// DeviceTokensColumns holds the columns for the "device_tokens" table.
+	DeviceTokensColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "tenant_id", Type: field.TypeUUID},
+		{Name: "user_id", Type: field.TypeUUID},
+		{Name: "token", Type: field.TypeString, Size: 2147483647},
+		{Name: "platform", Type: field.TypeString, Default: "android"},
+		{Name: "provider", Type: field.TypeString, Default: "fcm"},
+		{Name: "is_active", Type: field.TypeBool, Default: true},
+		{Name: "last_used_at", Type: field.TypeTime, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// DeviceTokensTable holds the schema information for the "device_tokens" table.
+	DeviceTokensTable = &schema.Table{
+		Name:       "device_tokens",
+		Columns:    DeviceTokensColumns,
+		PrimaryKey: []*schema.Column{DeviceTokensColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "devicetoken_tenant_id_user_id",
+				Unique:  false,
+				Columns: []*schema.Column{DeviceTokensColumns[1], DeviceTokensColumns[2]},
+			},
+			{
+				Name:    "devicetoken_token",
+				Unique:  true,
+				Columns: []*schema.Column{DeviceTokensColumns[3]},
+			},
+			{
+				Name:    "devicetoken_is_active",
+				Unique:  false,
+				Columns: []*schema.Column{DeviceTokensColumns[6]},
+			},
+		},
+	}
 	// NotificationPermissionsColumns holds the columns for the "notification_permissions" table.
 	NotificationPermissionsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -668,6 +704,7 @@ var (
 	Tables = []*schema.Table{
 		CreditTransactionsTable,
 		DeliveryLogsTable,
+		DeviceTokensTable,
 		NotificationPermissionsTable,
 		NotificationRolesTable,
 		NotificationRolePermissionsTable,

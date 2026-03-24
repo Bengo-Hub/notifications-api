@@ -12,6 +12,9 @@ type CreditTransaction func(*sql.Selector)
 // DeliveryLog is the predicate function for deliverylog builders.
 type DeliveryLog func(*sql.Selector)
 
+// DeviceToken is the predicate function for devicetoken builders.
+type DeviceToken func(*sql.Selector)
+
 // NotificationPermission is the predicate function for notificationpermission builders.
 type NotificationPermission func(*sql.Selector)
 
