@@ -189,6 +189,15 @@ func New(ctx context.Context) (*App, error) {
 		}
 	}
 
+	// Ensure JetStream stream for notifications events
+	if natsConn != nil {
+		if err := events.EnsureStream(ctx, natsConn, cfg.Events); err != nil {
+			log.Warn("failed to ensure notifications JetStream stream (non-fatal)", zap.Error(err))
+		} else {
+			log.Info("notifications JetStream stream ensured", zap.String("stream", cfg.Events.StreamName))
+		}
+	}
+
 	// Initialize outbox publisher
 	var outboxPublisher *eventslib.Publisher
 	if natsConn != nil && dbPool != nil {
