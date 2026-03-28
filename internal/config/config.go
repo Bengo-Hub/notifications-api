@@ -115,6 +115,8 @@ type SecurityConfig struct {
 	Audience   string `envconfig:"SECURITY_JWT_AUDIENCE" default:"codevertex"`
 	// API key validation database URL (optional, enables API key authentication)
 	APIKeyDBURL string `envconfig:"SECURITY_API_KEY_DB_URL"`
+	// Enable API key authentication as fallback when JWT is not provided (default: true)
+	EnableAPIKeyAuth bool `envconfig:"SECURITY_ENABLE_API_KEY_AUTH" default:"true"`
 	// Encryption key for provider secrets at rest (32 bytes, base64). If empty, secrets are stored plain.
 	EncryptionKey string `envconfig:"SECURITY_ENCRYPTION_KEY"`
 }

@@ -13,6 +13,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 - Per-route permission enforcement on all protected endpoints (platform, analytics, templates, billing, settings, notifications)
 - Seed command extended to bootstrap roles, permissions, and role-permission mappings
 - Atlas versioned migration `add_identity_rbac` for users, roles, permissions, and junction tables
+- API Key Authentication fallback when JWT tokens are not provided (via `SECURITY_ENABLE_API_KEY_AUTH`)
+- Swagger UI Bearer prefix auto-add for JWT tokens
 
 ### Changed
 - Bumped shared-auth-client from v0.4.0 to v0.4.1 (adds Permissions field to JWT Claims)

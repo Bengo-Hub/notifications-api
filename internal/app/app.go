@@ -148,15 +148,17 @@ func New(ctx context.Context) (*App, error) {
 		)
 		// For local Docker development, skip TLS verification when connecting to auth-service
 		// This allows mkcert certificates to work from inside containers
+		var httpClient *http.Client
 		if strings.Contains(cfg.Security.JWKSURL, "auth.codevertex.local") ||
 			strings.Contains(cfg.Security.JWKSURL, "host.docker.internal") {
 			tr := &http.Transport{
 				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 			}
-			authConfig.HTTPClient = &http.Client{
+			httpClient = &http.Client{
 				Timeout:   10 * time.Second,
 				Transport: tr,
 			}
+			authConfig.HTTPClient = httpClient
 		}
 		validator, err := authclient.NewValidator(authConfig)
 		if err != nil {
@@ -166,9 +168,8 @@ func New(ctx context.Context) (*App, error) {
 		// Create identity authenticator with RBAC middleware
 		authenticator = identityhandler.NewAuthenticator(log, identityService, validator)
 
-		// Add API key validator if database URL is provided
-		var apiKeyValidator *authclient.APIKeyValidator
-		if cfg.Security.APIKeyDBURL != "" {
+		// Add API key validator if enabled and database URL is provided
+		if cfg.Security.EnableAPIKeyAuth && cfg.Security.APIKeyDBURL != "" {
 			// Create HTTP client for API key validation
 			apiKeyHTTPClient := &http.Client{Timeout: 10 * time.Second}
 			// For local Docker development, skip TLS verification when connecting to auth-service
@@ -182,7 +183,7 @@ func New(ctx context.Context) (*App, error) {
 					Transport: tr,
 				}
 			}
-			apiKeyValidator = authclient.NewAPIKeyValidator(cfg.Security.APIKeyDBURL, apiKeyHTTPClient)
+			apiKeyValidator := authclient.NewAPIKeyValidator(cfg.Security.APIKeyDBURL, apiKeyHTTPClient)
 			authMiddleware = authclient.NewAuthMiddlewareWithAPIKey(validator, apiKeyValidator)
 		} else {
 			authMiddleware = authclient.NewAuthMiddleware(validator)
