@@ -26,3 +26,12 @@ config/certs/*.key
 .DS_Store
 .env.docker
 config/fcm_json/
+
+# Security hardening
+.env.*
+!.env.example
+!app.env.example
+*.pem
+*-key.pem
+KubeSecrets/
+kubeSecrets/
