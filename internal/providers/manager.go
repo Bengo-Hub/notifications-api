@@ -77,13 +77,35 @@ func (m *Manager) GetEmailProvider(ctx context.Context, tenantID string, preferr
 			if loadErr != nil {
 				fmt.Printf("[DEBUG] LoadTenantProviderSettings error for tenant %s: %v\n", tenantID, loadErr)
 			}
-			fmt.Printf("[DEBUG] SMTP settings for tenant %s: %+v (env=%s, cfgHost=%s)\n", tenantID, s, m.env, m.cfg.SMTPHost)
-			host := firstNonEmpty(s["host"], m.cfg.SMTPHost)
+
+			// In non-development environments, treat localhost/loopback SMTP hosts
+			// from tenant config as unconfigured so we fall through to platform config.
+			tenantHost := s["host"]
+			if m.env != "development" && isLocalhost(tenantHost) {
+				tenantHost = ""
+				// Also clear other tenant SMTP fields so platform config is used entirely
+				delete(s, "host")
+				delete(s, "port")
+				delete(s, "username")
+				delete(s, "password")
+				delete(s, "from")
+				delete(s, "start_tls")
+			}
+
+			host := firstNonEmpty(tenantHost, m.cfg.SMTPHost)
 			port := parseInt(firstNonEmpty(s["port"], strconv.Itoa(m.cfg.SMTPPort)))
 			user := firstNonEmpty(s["username"], m.cfg.SMTPUsername)
 			pass := firstNonEmpty(s["password"], m.cfg.SMTPPassword)
 			from := firstNonEmpty(s["from"], m.cfg.SMTPFrom)
 			startTLS := parseBool(firstNonEmpty(s["start_tls"], boolToStr(m.cfg.SMTPStartTLS)))
+
+			// If the resolved host is still localhost in production, skip SMTP
+			// and try the next provider (sendgrid, brevo, etc.)
+			if m.env != "development" && isLocalhost(host) {
+				fmt.Printf("[DEBUG] SMTP host is localhost in %s env for tenant %s, trying next provider\n", m.env, tenantID)
+				continue
+			}
+
 			return email.NewSMTPProvider(email.SMTPConfig{
 				Host:     host,
 				Port:     port,
@@ -217,6 +239,13 @@ func boolToStr(b bool) string {
 		return "true"
 	}
 	return "false"
+}
+
+// isLocalhost returns true if the host is a loopback/localhost address
+// that would only work in a local development environment.
+func isLocalhost(host string) bool {
+	h := strings.TrimSpace(strings.ToLower(host))
+	return h == "localhost" || h == "127.0.0.1" || h == "::1" || h == "[::1]" || h == "0.0.0.0"
 }
 
 func dedup(in []string) []string {

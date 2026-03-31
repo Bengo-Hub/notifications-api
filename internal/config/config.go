@@ -86,8 +86,8 @@ type ProviderConfig struct {
 	VonageAPISecret        string `envconfig:"PROVIDERS_VONAGE_API_SECRET"`
 	PlivoAuthID            string `envconfig:"PROVIDERS_PLIVO_AUTH_ID"`
 	PlivoAuthToken         string `envconfig:"PROVIDERS_PLIVO_AUTH_TOKEN"`
-	SMTPHost               string `envconfig:"PROVIDERS_SMTP_HOST" default:"localhost"`
-	SMTPPort               int    `envconfig:"PROVIDERS_SMTP_PORT" default:"1025"`
+	SMTPHost               string `envconfig:"PROVIDERS_SMTP_HOST"`
+	SMTPPort               int    `envconfig:"PROVIDERS_SMTP_PORT" default:"587"`
 	SMTPUsername           string `envconfig:"PROVIDERS_SMTP_USERNAME"`
 	SMTPPassword           string `envconfig:"PROVIDERS_SMTP_PASSWORD"`
 	SMTPFrom               string `envconfig:"PROVIDERS_SMTP_FROM" default:"no-reply@bengobox.com"`
@@ -96,7 +96,7 @@ type ProviderConfig struct {
 	APNSCert               string `envconfig:"PROVIDERS_APNS_CERT"`
 	APNSKey                string `envconfig:"PROVIDERS_APNS_KEY"`
 	DefaultEmailSender     string `envconfig:"PROVIDERS_DEFAULT_EMAIL_SENDER" default:"Urban Cafe <hello@bengobox.com>"`
-	DefaultSMSSender       string `envconfig:"PROVIDERS_DEFAULT_SMS_SENDER" default:"BengoBox"`
+	DefaultSMSSender       string `envconfig:"PROVIDERS_DEFAULT_SMS_SENDER" default:codevertex`
 	DefaultPushTopic       string `envconfig:"PROVIDERS_DEFAULT_PUSH_TOPIC" default:"general"`
 }
 
