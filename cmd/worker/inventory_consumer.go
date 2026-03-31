@@ -32,7 +32,7 @@ type inventoryNotificationMapping struct {
 
 var inventoryMappings = map[string]inventoryNotificationMapping{
 	"inventory.stock.low": {
-		TemplateID:   "email/inventory/low_stock_alert",
+		TemplateID:   "inventory/low_stock_alert",
 		EmailSubject: "Low Stock Alert",
 		DataBuilder: func(data map[string]interface{}, tenantWebsite string) map[string]interface{} {
 			return map[string]interface{}{
@@ -48,7 +48,7 @@ var inventoryMappings = map[string]inventoryNotificationMapping{
 		},
 	},
 	"inventory.stock.out": {
-		TemplateID:   "email/inventory/stock_out",
+		TemplateID:   "inventory/stock_out",
 		EmailSubject: "URGENT: Stock Out Alert",
 		DataBuilder: func(data map[string]interface{}, tenantWebsite string) map[string]interface{} {
 			return map[string]interface{}{

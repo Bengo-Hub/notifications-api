@@ -37,7 +37,7 @@ type fleetNotificationMapping struct {
 
 var fleetMappings = map[string]fleetNotificationMapping{
 	"logistics.fleet.member_invited": {
-		TemplateID:   "email/logistics/rider_invite",
+		TemplateID:   "logistics/rider_invite",
 		EmailSubject: "You've been invited to join the fleet",
 		DataBuilder: func(data map[string]interface{}, tenantWebsite string) map[string]interface{} {
 			return map[string]interface{}{
@@ -47,7 +47,7 @@ var fleetMappings = map[string]fleetNotificationMapping{
 		},
 	},
 	"logistics.fleet.member_approved": {
-		TemplateID:   "email/logistics/rider_onboarding_approved",
+		TemplateID:   "logistics/rider_onboarding_approved",
 		EmailSubject: "Your rider application has been approved",
 		DataBuilder: func(data map[string]interface{}, tenantWebsite string) map[string]interface{} {
 			return map[string]interface{}{
@@ -57,7 +57,7 @@ var fleetMappings = map[string]fleetNotificationMapping{
 		},
 	},
 	"logistics.fleet.member_suspended": {
-		TemplateID:   "email/logistics/rider_suspended",
+		TemplateID:   "logistics/rider_suspended",
 		EmailSubject: "Your fleet membership has been suspended",
 		DataBuilder: func(data map[string]interface{}, tenantWebsite string) map[string]interface{} {
 			return map[string]interface{}{

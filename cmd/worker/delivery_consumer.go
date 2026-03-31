@@ -32,7 +32,7 @@ type deliveryNotificationMapping struct {
 
 var deliveryMappings = map[string]deliveryNotificationMapping{
 	"logistics.task.assigned": {
-		TemplateID:   "email/logistics/delivery_assigned",
+		TemplateID:   "logistics/delivery_assigned",
 		EmailSubject: "Your delivery has been assigned",
 		DataBuilder: func(data map[string]interface{}, tenantWebsite string) map[string]interface{} {
 			trackingCode, _ := data["tracking_code"].(string)
@@ -45,7 +45,7 @@ var deliveryMappings = map[string]deliveryNotificationMapping{
 		},
 	},
 	"logistics.task.delivered": {
-		TemplateID:   "email/logistics/delivery_completed",
+		TemplateID:   "logistics/delivery_completed",
 		EmailSubject: "Your delivery has been completed",
 		DataBuilder: func(data map[string]interface{}, tenantWebsite string) map[string]interface{} {
 			return map[string]interface{}{
@@ -56,7 +56,7 @@ var deliveryMappings = map[string]deliveryNotificationMapping{
 		},
 	},
 	"logistics.task.failed": {
-		TemplateID:   "email/logistics/delivery_failed",
+		TemplateID:   "logistics/delivery_failed",
 		EmailSubject: "Delivery attempt failed",
 		DataBuilder: func(data map[string]interface{}, tenantWebsite string) map[string]interface{} {
 			return map[string]interface{}{
