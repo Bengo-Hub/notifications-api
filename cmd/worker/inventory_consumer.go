@@ -17,9 +17,10 @@ import (
 // inventoryEvent is the CloudEvents envelope from inventory-service.
 type inventoryEvent struct {
 	ID       string                 `json:"id"`
-	Type     string                 `json:"type"`
-	TenantID string                 `json:"tenantId"`
-	Data     map[string]interface{} `json:"data"`
+	EventType     string                 `json:"event_type"`
+	AggregateType string                 `json:"aggregate_type"`
+	TenantID      string                 `json:"tenant_id"`
+	Payload       map[string]interface{} `json:"payload"`
 }
 
 // inventoryNotificationMapping maps event types to notification details.
@@ -77,9 +78,9 @@ func startInventoryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStrea
 			return
 		}
 
-		mapping, ok := inventoryMappings[evt.Type]
+		mapping, ok := inventoryMappings[evt.AggregateType + "." + evt.EventType]
 		if !ok {
-			logg.Debug("inventory event: unhandled type, skipping", zap.String("type", evt.Type))
+			logg.Debug("inventory event: unhandled type, skipping", zap.String("type", evt.EventType))
 			_ = m.Ack()
 			return
 		}
@@ -97,7 +98,7 @@ func startInventoryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStrea
 			return
 		}
 
-		sku, _ := evt.Data["sku"].(string)
+		sku, _ := evt.Payload["sku"].(string)
 
 		msg := messaging.Message{
 			TenantID:    evt.TenantID,
@@ -106,18 +107,18 @@ func startInventoryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStrea
 			SenderScope: messaging.SenderScopeTenant,
 			Target:      messaging.TargetStaff,
 			To:          []string{ti.ContactEmail},
-			Data:        mapping.DataBuilder(evt.Data, ti.Website),
+			Data:        mapping.DataBuilder(evt.Payload, ti.Website),
 			Metadata: map[string]interface{}{
 				"subject": mapping.EmailSubject,
 			},
 			RequestID:      uuid.New().String(),
-			IdempotencyKey: fmt.Sprintf("inventory-%s-%s-%s", evt.Type, sku, evt.ID),
+			IdempotencyKey: fmt.Sprintf("inventory-%s-%s-%s", evt.EventType, sku, evt.ID),
 			QueuedAt:       time.Now(),
 		}
 
 		if _, err := messaging.Publish(ctx, nc, cfg.Events, msg); err != nil {
 			logg.Error("inventory event: failed to dispatch notification",
-				zap.String("type", evt.Type),
+				zap.String("type", evt.EventType),
 				zap.String("sku", sku),
 				zap.Error(err),
 			)
@@ -126,7 +127,7 @@ func startInventoryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStrea
 		}
 
 		logg.Info("inventory notification dispatched",
-			zap.String("type", evt.Type),
+			zap.String("type", evt.EventType),
 			zap.String("template", mapping.TemplateID),
 			zap.String("sku", sku),
 		)

@@ -14,12 +14,18 @@ import (
 	"github.com/bengobox/notifications-api/internal/messaging"
 )
 
-// fleetEvent is the CloudEvents envelope from logistics-service.
+// fleetEvent matches the shared-events Event struct JSON schema.
 type fleetEvent struct {
-	ID       string                 `json:"id"`
-	Type     string                 `json:"type"`
-	TenantID string                 `json:"tenantId"`
-	Data     map[string]interface{} `json:"data"`
+	ID            string                 `json:"id"`
+	EventType     string                 `json:"event_type"`
+	AggregateType string                 `json:"aggregate_type"`
+	TenantID      string                 `json:"tenant_id"`
+	Payload       map[string]interface{} `json:"payload"`
+}
+
+// Subject reconstructs the NATS subject: {aggregate_type}.{event_type}
+func (e fleetEvent) Subject() string {
+	return e.AggregateType + "." + e.EventType
 }
 
 // fleetNotificationMapping maps event types to notification details.
@@ -78,17 +84,17 @@ func startFleetConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 			return
 		}
 
-		mapping, ok := fleetMappings[evt.Type]
+		mapping, ok := fleetMappings[evt.Subject()]
 		if !ok {
-			logg.Debug("fleet event: unhandled type, skipping", zap.String("type", evt.Type))
+			logg.Debug("fleet event: unhandled type, skipping", zap.String("type", evt.Subject()))
 			_ = m.Ack()
 			return
 		}
 
 		// Extract recipient email from event data
-		email, _ := evt.Data["user_email"].(string)
+		email, _ := evt.Payload["user_email"].(string)
 		if email == "" {
-			logg.Warn("fleet event: no user_email in data, skipping", zap.String("type", evt.Type))
+			logg.Warn("fleet event: no user_email in data, skipping", zap.String("type", evt.Subject()))
 			_ = m.Ack()
 			return
 		}
@@ -101,7 +107,7 @@ func startFleetConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 			logg.Warn("fleet event: could not resolve tenant, using empty website", zap.String("tenant_id", evt.TenantID), zap.Error(err))
 		}
 
-		memberID, _ := evt.Data["member_id"].(string)
+		memberID, _ := evt.Payload["member_id"].(string)
 
 		// Build notification message
 		msg := messaging.Message{
@@ -111,19 +117,19 @@ func startFleetConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 			SenderScope: messaging.SenderScopeTenant,
 			Target:      messaging.TargetRider,
 			To:          []string{email},
-			Data:        mapping.DataBuilder(evt.Data, tenantWebsite),
+			Data:        mapping.DataBuilder(evt.Payload, tenantWebsite),
 			Metadata: map[string]interface{}{
 				"subject": mapping.EmailSubject,
 			},
 			RequestID:      uuid.New().String(),
-			IdempotencyKey: fmt.Sprintf("fleet-%s-%s", evt.Type, memberID),
+			IdempotencyKey: fmt.Sprintf("fleet-%s-%s", evt.Subject(), memberID),
 			QueuedAt:       time.Now(),
 		}
 
 		// Publish to notifications stream for the existing worker to process
 		if _, err := messaging.Publish(ctx, nc, cfg.Events, msg); err != nil {
 			logg.Error("fleet event: failed to dispatch notification",
-				zap.String("type", evt.Type),
+				zap.String("type", evt.Subject()),
 				zap.String("email", email),
 				zap.Error(err),
 			)
@@ -132,7 +138,7 @@ func startFleetConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 		}
 
 		logg.Info("fleet notification dispatched",
-			zap.String("type", evt.Type),
+			zap.String("type", evt.Subject()),
 			zap.String("template", mapping.TemplateID),
 			zap.String("to", email),
 		)

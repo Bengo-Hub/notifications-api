@@ -17,9 +17,10 @@ import (
 // deliveryEvent is the CloudEvents envelope from logistics-service task events.
 type deliveryEvent struct {
 	ID       string                 `json:"id"`
-	Type     string                 `json:"type"`
-	TenantID string                 `json:"tenantId"`
-	Data     map[string]interface{} `json:"data"`
+	EventType     string                 `json:"event_type"`
+	AggregateType string                 `json:"aggregate_type"`
+	TenantID      string                 `json:"tenant_id"`
+	Payload       map[string]interface{} `json:"payload"`
 }
 
 // deliveryNotificationMapping maps task event types to notification details.
@@ -84,9 +85,9 @@ func startDeliveryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStream
 			return
 		}
 
-		mapping, ok := deliveryMappings[evt.Type]
+		mapping, ok := deliveryMappings[evt.AggregateType + "." + evt.EventType]
 		if !ok {
-			logg.Debug("delivery event: unhandled type, skipping", zap.String("type", evt.Type))
+			logg.Debug("delivery event: unhandled type, skipping", zap.String("type", evt.EventType))
 			_ = m.Ack()
 			return
 		}
@@ -106,11 +107,11 @@ func startDeliveryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStream
 
 		tenantWebsite := ti.Website
 
-		taskID, _ := evt.Data["task_id"].(string)
+		taskID, _ := evt.Payload["task_id"].(string)
 
 		// Use customer email from event if available, fallback to tenant contact
 		recipientEmail := ti.ContactEmail
-		if ce, ok := evt.Data["customer_email"].(string); ok && ce != "" {
+		if ce, ok := evt.Payload["customer_email"].(string); ok && ce != "" {
 			recipientEmail = ce
 		}
 
@@ -121,18 +122,18 @@ func startDeliveryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStream
 			SenderScope: messaging.SenderScopeTenant,
 			Target:      messaging.TargetCustomer,
 			To:          []string{recipientEmail},
-			Data:        mapping.DataBuilder(evt.Data, tenantWebsite),
+			Data:        mapping.DataBuilder(evt.Payload, tenantWebsite),
 			Metadata: map[string]interface{}{
 				"subject": mapping.EmailSubject,
 			},
 			RequestID:      uuid.New().String(),
-			IdempotencyKey: fmt.Sprintf("delivery-%s-%s", evt.Type, taskID),
+			IdempotencyKey: fmt.Sprintf("delivery-%s-%s", evt.EventType, taskID),
 			QueuedAt:       time.Now(),
 		}
 
 		if _, err := messaging.Publish(ctx, nc, cfg.Events, msg); err != nil {
 			logg.Error("delivery event: failed to dispatch notification",
-				zap.String("type", evt.Type),
+				zap.String("type", evt.EventType),
 				zap.String("task_id", taskID),
 				zap.Error(err),
 			)
@@ -141,7 +142,7 @@ func startDeliveryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStream
 		}
 
 		logg.Info("delivery notification dispatched",
-			zap.String("type", evt.Type),
+			zap.String("type", evt.EventType),
 			zap.String("template", mapping.TemplateID),
 			zap.String("task_id", taskID),
 		)

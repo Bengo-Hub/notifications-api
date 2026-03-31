@@ -17,9 +17,10 @@ import (
 // orderEvent is the CloudEvents envelope from ordering-service.
 type orderEvent struct {
 	ID       string                 `json:"id"`
-	Type     string                 `json:"type"`
-	TenantID string                 `json:"tenantId"`
-	Data     map[string]interface{} `json:"data"`
+	EventType     string                 `json:"event_type"`
+	AggregateType string                 `json:"aggregate_type"`
+	TenantID      string                 `json:"tenant_id"`
+	Payload       map[string]interface{} `json:"payload"`
 }
 
 // orderNotificationMapping maps event types to notification details.
@@ -149,17 +150,17 @@ func startOrderConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 			return
 		}
 
-		mapping, ok := orderMappings[evt.Type]
+		mapping, ok := orderMappings[evt.AggregateType + "." + evt.EventType]
 		if !ok {
-			logg.Debug("order event: unhandled type, skipping", zap.String("type", evt.Type))
+			logg.Debug("order event: unhandled type, skipping", zap.String("type", evt.EventType))
 			_ = m.Ack()
 			return
 		}
 
 		// Extract customer email from event data
-		email, _ := evt.Data["customer_email"].(string)
+		email, _ := evt.Payload["customer_email"].(string)
 		if email == "" {
-			logg.Warn("order event: no customer_email in data, skipping", zap.String("type", evt.Type))
+			logg.Warn("order event: no customer_email in data, skipping", zap.String("type", evt.EventType))
 			_ = m.Ack()
 			return
 		}
@@ -172,7 +173,7 @@ func startOrderConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 			logg.Warn("order event: could not resolve tenant, using empty website", zap.String("tenant_id", evt.TenantID), zap.Error(err))
 		}
 
-		orderID, _ := evt.Data["order_id"].(string)
+		orderID, _ := evt.Payload["order_id"].(string)
 
 		msg := messaging.Message{
 			TenantID:    evt.TenantID,
@@ -181,18 +182,18 @@ func startOrderConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 			SenderScope: messaging.SenderScopeTenant,
 			Target:      messaging.TargetCustomer,
 			To:          []string{email},
-			Data:        mapping.DataBuilder(evt.Data, tenantWebsite),
+			Data:        mapping.DataBuilder(evt.Payload, tenantWebsite),
 			Metadata: map[string]interface{}{
 				"subject": mapping.EmailSubject,
 			},
 			RequestID:      uuid.New().String(),
-			IdempotencyKey: fmt.Sprintf("order-%s-%s", evt.Type, orderID),
+			IdempotencyKey: fmt.Sprintf("order-%s-%s", evt.EventType, orderID),
 			QueuedAt:       time.Now(),
 		}
 
 		if _, err := messaging.Publish(ctx, nc, cfg.Events, msg); err != nil {
 			logg.Error("order event: failed to dispatch notification",
-				zap.String("type", evt.Type),
+				zap.String("type", evt.EventType),
 				zap.String("order_id", orderID),
 				zap.Error(err),
 			)
@@ -201,7 +202,7 @@ func startOrderConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 		}
 
 		logg.Info("order notification dispatched",
-			zap.String("type", evt.Type),
+			zap.String("type", evt.EventType),
 			zap.String("template", mapping.TemplateID),
 			zap.String("order_id", orderID),
 			zap.String("to", email),

@@ -34,6 +34,14 @@ echo "=========================================="
 
 echo ""
 echo "=========================================="
+echo "Starting Notifications Worker (background)"
+echo "=========================================="
+/usr/local/bin/notifications-worker &
+WORKER_PID=$!
+echo "Worker started (PID: $WORKER_PID)"
+
+echo ""
+echo "=========================================="
 echo "Starting Notifications-API server"
 echo "=========================================="
 echo ""
