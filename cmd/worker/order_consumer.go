@@ -15,12 +15,45 @@ import (
 )
 
 // orderEvent is the CloudEvents envelope from ordering-service.
+// Ordering-backend publishes CloudEvents with "type"/"tenantId"/"data" fields
+// (not shared-events "event_type"/"aggregate_type"/"tenant_id"/"payload").
 type orderEvent struct {
-	ID       string                 `json:"id"`
+	ID            string                 `json:"id"`
+	Type          string                 `json:"type"`
+	TenantID      string                 `json:"tenantId"`
+	Data          map[string]interface{} `json:"data"`
+	// shared-events fallback fields (for forward compatibility)
 	EventType     string                 `json:"event_type"`
 	AggregateType string                 `json:"aggregate_type"`
-	TenantID      string                 `json:"tenant_id"`
+	FallbackTID   string                 `json:"tenant_id"`
 	Payload       map[string]interface{} `json:"payload"`
+}
+
+// resolvedType returns the event type, preferring CloudEvents "type" over shared-events "event_type".
+func (e *orderEvent) resolvedType() string {
+	if e.Type != "" {
+		return e.Type
+	}
+	if e.AggregateType != "" && e.EventType != "" {
+		return e.AggregateType + "." + e.EventType
+	}
+	return e.EventType
+}
+
+// resolvedTenantID returns the tenant ID from whichever field is populated.
+func (e *orderEvent) resolvedTenantID() string {
+	if e.TenantID != "" {
+		return e.TenantID
+	}
+	return e.FallbackTID
+}
+
+// resolvedData returns the event data from whichever field is populated.
+func (e *orderEvent) resolvedData() map[string]interface{} {
+	if e.Data != nil {
+		return e.Data
+	}
+	return e.Payload
 }
 
 // orderNotificationMapping maps event types to notification details.
@@ -150,50 +183,54 @@ func startOrderConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 			return
 		}
 
-		mapping, ok := orderMappings[evt.AggregateType + "." + evt.EventType]
+		evtType := evt.resolvedType()
+		evtTenantID := evt.resolvedTenantID()
+		evtData := evt.resolvedData()
+
+		mapping, ok := orderMappings[evtType]
 		if !ok {
-			logg.Debug("order event: unhandled type, skipping", zap.String("type", evt.EventType))
+			logg.Debug("order event: unhandled type, skipping", zap.String("type", evtType))
 			_ = m.Ack()
 			return
 		}
 
 		// Extract customer email from event data
-		email, _ := evt.Payload["customer_email"].(string)
+		email, _ := evtData["customer_email"].(string)
 		if email == "" {
-			logg.Warn("order event: no customer_email in data, skipping", zap.String("type", evt.EventType))
+			logg.Warn("order event: no customer_email in data, skipping", zap.String("type", evtType))
 			_ = m.Ack()
 			return
 		}
 
 		// Resolve tenant website for building order links
 		tenantWebsite := ""
-		if ti, err := tr.resolve(ctx, evt.TenantID); err == nil {
+		if ti, err := tr.resolve(ctx, evtTenantID); err == nil {
 			tenantWebsite = ti.Website
 		} else {
-			logg.Warn("order event: could not resolve tenant, using empty website", zap.String("tenant_id", evt.TenantID), zap.Error(err))
+			logg.Warn("order event: could not resolve tenant, using empty website", zap.String("tenant_id", evtTenantID), zap.Error(err))
 		}
 
-		orderID, _ := evt.Payload["order_id"].(string)
+		orderID, _ := evtData["order_id"].(string)
 
 		msg := messaging.Message{
-			TenantID:    evt.TenantID,
+			TenantID:    evtTenantID,
 			Channel:     "email",
 			TemplateID:  mapping.TemplateID,
 			SenderScope: messaging.SenderScopeTenant,
 			Target:      messaging.TargetCustomer,
 			To:          []string{email},
-			Data:        mapping.DataBuilder(evt.Payload, tenantWebsite),
+			Data:        mapping.DataBuilder(evtData, tenantWebsite),
 			Metadata: map[string]interface{}{
 				"subject": mapping.EmailSubject,
 			},
 			RequestID:      uuid.New().String(),
-			IdempotencyKey: fmt.Sprintf("order-%s-%s", evt.EventType, orderID),
+			IdempotencyKey: fmt.Sprintf("order-%s-%s", evtType, orderID),
 			QueuedAt:       time.Now(),
 		}
 
 		if _, err := messaging.Publish(ctx, nc, cfg.Events, msg); err != nil {
 			logg.Error("order event: failed to dispatch notification",
-				zap.String("type", evt.EventType),
+				zap.String("type", evtType),
 				zap.String("order_id", orderID),
 				zap.Error(err),
 			)
@@ -202,7 +239,7 @@ func startOrderConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 		}
 
 		logg.Info("order notification dispatched",
-			zap.String("type", evt.EventType),
+			zap.String("type", evtType),
 			zap.String("template", mapping.TemplateID),
 			zap.String("order_id", orderID),
 			zap.String("to", email),

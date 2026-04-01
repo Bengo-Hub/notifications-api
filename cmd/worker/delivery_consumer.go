@@ -44,7 +44,7 @@ var deliveryMappings = map[string]deliveryNotificationMapping{
 			}
 		},
 	},
-	"logistics.task.delivered": {
+	"logistics.task.completed": {
 		TemplateID:   "logistics/delivery_completed",
 		EmailSubject: "Your delivery has been completed",
 		DataBuilder: func(data map[string]interface{}, tenantWebsite string) map[string]interface{} {
@@ -52,6 +52,18 @@ var deliveryMappings = map[string]deliveryNotificationMapping{
 				"name":       "Customer",
 				"order_id":   data["external_reference"],
 				"order_link": fmt.Sprintf("%s/orders", tenantWebsite),
+			}
+		},
+	},
+	"logistics.task.en_route": {
+		TemplateID:   "logistics/delivery_en_route",
+		EmailSubject: "Your order is on its way",
+		DataBuilder: func(data map[string]interface{}, tenantWebsite string) map[string]interface{} {
+			trackingCode, _ := data["tracking_code"].(string)
+			return map[string]interface{}{
+				"name":          "Customer",
+				"order_id":      data["external_reference"],
+				"tracking_link": fmt.Sprintf("%s/track/%s", tenantWebsite, trackingCode),
 			}
 		},
 	},
