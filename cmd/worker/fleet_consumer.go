@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/google/uuid"
@@ -32,37 +33,84 @@ func (e fleetEvent) Subject() string {
 type fleetNotificationMapping struct {
 	TemplateID   string
 	EmailSubject string
-	DataBuilder  func(data map[string]interface{}, tenantWebsite string) map[string]interface{}
+	DataBuilder  func(data map[string]interface{}, tenantWebsite, riderAppURL string) map[string]interface{}
+}
+
+// riderAppBaseURL returns the rider app base URL from env, defaulting to the production URL.
+func riderAppBaseURL() string {
+	if u := os.Getenv("NOTIFICATIONS_RIDER_APP_URL"); u != "" {
+		return u
+	}
+	return "https://riderapp.codevertexitsolutions.com"
 }
 
 var fleetMappings = map[string]fleetNotificationMapping{
 	"logistics.fleet.member_invited": {
 		TemplateID:   "logistics/rider_invite",
 		EmailSubject: "You've been invited to join the fleet",
-		DataBuilder: func(data map[string]interface{}, tenantWebsite string) map[string]interface{} {
+		DataBuilder: func(data map[string]interface{}, tenantWebsite, riderAppURL string) map[string]interface{} {
+			tenantSlug, _ := data["tenant_slug"].(string)
+			inviteCode, _ := data["invite_code"].(string)
+			joinURL := fmt.Sprintf("%s/join?org=%s", riderAppURL, tenantSlug)
+			if inviteCode != "" {
+				joinURL += "&invite_code=" + inviteCode
+			}
 			return map[string]interface{}{
-				"RiderName":    data["user_name"],
-				"DashboardUrl": fmt.Sprintf("%s/dashboard", tenantWebsite),
+				"RiderName": data["user_name"],
+				"JoinUrl":   joinURL,
 			}
 		},
 	},
 	"logistics.fleet.member_approved": {
 		TemplateID:   "logistics/rider_onboarding_approved",
 		EmailSubject: "Your rider application has been approved",
-		DataBuilder: func(data map[string]interface{}, tenantWebsite string) map[string]interface{} {
+		DataBuilder: func(data map[string]interface{}, tenantWebsite, riderAppURL string) map[string]interface{} {
+			tenantSlug, _ := data["tenant_slug"].(string)
 			return map[string]interface{}{
 				"RiderName":    data["user_name"],
-				"DashboardUrl": fmt.Sprintf("%s/dashboard", tenantWebsite),
+				"DashboardUrl": fmt.Sprintf("%s/%s", riderAppURL, tenantSlug),
 			}
 		},
 	},
 	"logistics.fleet.member_suspended": {
 		TemplateID:   "logistics/rider_suspended",
 		EmailSubject: "Your fleet membership has been suspended",
-		DataBuilder: func(data map[string]interface{}, tenantWebsite string) map[string]interface{} {
+		DataBuilder: func(data map[string]interface{}, tenantWebsite, riderAppURL string) map[string]interface{} {
 			return map[string]interface{}{
 				"RiderName":  data["user_name"],
 				"SupportUrl": fmt.Sprintf("%s/support", tenantWebsite),
+			}
+		},
+	},
+	"logistics.fleet.member_kyc_submitted": {
+		TemplateID:   "logistics/rider_kyc_submitted",
+		EmailSubject: "New rider KYC submission awaiting review",
+		DataBuilder: func(data map[string]interface{}, tenantWebsite, riderAppURL string) map[string]interface{} {
+			return map[string]interface{}{
+				"RiderName":  data["user_name"],
+				"RiderEmail": data["user_email"],
+				"ReviewUrl":  fmt.Sprintf("%s/dashboard/riders", tenantWebsite),
+			}
+		},
+	},
+	"logistics.fleet.member_rejected": {
+		TemplateID:   "logistics/rider_rejected",
+		EmailSubject: "Your rider application update",
+		DataBuilder: func(data map[string]interface{}, tenantWebsite, riderAppURL string) map[string]interface{} {
+			return map[string]interface{}{
+				"RiderName":  data["user_name"],
+				"SupportUrl": fmt.Sprintf("%s/support", tenantWebsite),
+			}
+		},
+	},
+	"logistics.fleet.member_expired": {
+		TemplateID:   "logistics/rider_expired",
+		EmailSubject: "Your rider application has expired",
+		DataBuilder: func(data map[string]interface{}, tenantWebsite, riderAppURL string) map[string]interface{} {
+			tenantSlug, _ := data["tenant_slug"].(string)
+			return map[string]interface{}{
+				"RiderName": data["user_name"],
+				"SignupUrl": fmt.Sprintf("%s/join?org=%s", riderAppURL, tenantSlug),
 			}
 		},
 	},
@@ -117,7 +165,7 @@ func startFleetConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 			SenderScope: messaging.SenderScopeTenant,
 			Target:      messaging.TargetRider,
 			To:          []string{email},
-			Data:        mapping.DataBuilder(evt.Payload, tenantWebsite),
+			Data:        mapping.DataBuilder(evt.Payload, tenantWebsite, riderAppBaseURL()),
 			Metadata: map[string]interface{}{
 				"subject": mapping.EmailSubject,
 			},

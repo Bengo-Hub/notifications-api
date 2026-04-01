@@ -9,6 +9,7 @@
         .content { margin-bottom: 30px; }
         .button { display: inline-block; padding: 12px 24px; background-color: #E91E63; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; }
         .footer { font-size: 12px; color: #888; text-align: center; }
+        .highlight { background: #FFF3E0; padding: 12px 16px; border-radius: 8px; border-left: 4px solid #FF9800; margin: 16px 0; }
     </style>
 </head>
 <body>
@@ -17,14 +18,14 @@
             <div class="logo">Codevertex Logistics</div>
         </div>
         <div class="content">
-            <h2>You've Been Invited, {{.RiderName}}!</h2>
-            <p>You have been invited to join the delivery fleet on the Codevertex platform. As a fleet member, you'll be able to accept delivery tasks, manage your schedule, and track your earnings.</p>
-            <p>To get started, click the button below to create your account and complete your rider profile.</p>
-            <div style="text-align: center; margin: 30px 0;">
-                <a href="{{.JoinUrl}}" class="button">Accept Invitation &amp; Sign Up</a>
+            <h2>New Rider KYC Submission</h2>
+            <div class="highlight">
+                <strong>{{.RiderName}}</strong> ({{.RiderEmail}}) has submitted their KYC documents and is awaiting your review.
             </div>
-            <p>If you did not expect this invitation, you can safely ignore this email.</p>
-            <p>Welcome aboard!</p>
+            <p>Please review the submitted documents and approve or reject the rider application from your dashboard.</p>
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{{.ReviewUrl}}" class="button">Review Application</a>
+            </div>
         </div>
         <div class="footer">
             &copy; 2026 Codevertex IT Solutions. All rights reserved.
