@@ -1,13 +1,13 @@
 module github.com/bengobox/notifications-api
 
-go 1.24.0
+go 1.24.11
 
 // Local development: replace with local path (remove when repo is created and tagged)
 // Map module path to correct GitHub repository
 replace github.com/Bengo-Hub/shared-auth-client => github.com/Bengo-Hub/auth-client v0.5.0
 
 require (
-	ariga.io/atlas v0.32.1-0.20250325101103-175b25e1c1b9
+	ariga.io/atlas v1.1.0
 	entgo.io/ent v0.14.5
 	github.com/Bengo-Hub/cache v0.2.0
 	github.com/Bengo-Hub/httpware v0.3.0
@@ -67,7 +67,6 @@ require (
 	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
-	github.com/lib/pq v1.12.0 // indirect
 	github.com/mailru/easyjson v0.7.6 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
@@ -104,4 +103,5 @@ require (
 	golang.org/x/tools v0.35.0 // indirect
 	google.golang.org/protobuf v1.36.9 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
