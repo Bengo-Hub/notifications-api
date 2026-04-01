@@ -44,20 +44,28 @@ func riderAppBaseURL() string {
 	return "https://riderapp.codevertexitsolutions.com"
 }
 
+// ssoBaseURL returns the SSO/auth-ui base URL for user registration.
+func ssoBaseURL() string {
+	if u := os.Getenv("NOTIFICATIONS_SSO_UI_URL"); u != "" {
+		return u
+	}
+	return "https://accounts.codevertexitsolutions.com"
+}
+
 var fleetMappings = map[string]fleetNotificationMapping{
 	"logistics.fleet.member_invited": {
 		TemplateID:   "logistics/rider_invite",
 		EmailSubject: "You've been invited to join the fleet",
 		DataBuilder: func(data map[string]interface{}, tenantWebsite, riderAppURL string) map[string]interface{} {
 			tenantSlug, _ := data["tenant_slug"].(string)
-			inviteCode, _ := data["invite_code"].(string)
-			joinURL := fmt.Sprintf("%s/join?org=%s", riderAppURL, tenantSlug)
-			if inviteCode != "" {
-				joinURL += "&invite_code=" + inviteCode
-			}
+			// Link to SSO signup page with tenant context — rider creates their
+			// password at SSO, then gets redirected to rider-app KYC page on login.
+			// The auth-ui Step 2 auto-selects the org when tenant query param is set.
+			returnTo := fmt.Sprintf("%s/%s/profile", riderAppURL, tenantSlug)
+			signupURL := fmt.Sprintf("%s/signup?tenant=%s&return_to=%s", ssoBaseURL(), tenantSlug, returnTo)
 			return map[string]interface{}{
 				"RiderName": data["user_name"],
-				"JoinUrl":   joinURL,
+				"JoinUrl":   signupURL,
 			}
 		},
 	},
