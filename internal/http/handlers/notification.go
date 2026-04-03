@@ -13,8 +13,8 @@ import (
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 
-	authclient "github.com/Bengo-Hub/shared-auth-client"
 	httpware "github.com/Bengo-Hub/httpware"
+	authclient "github.com/Bengo-Hub/shared-auth-client"
 
 	"github.com/bengobox/notifications-api/internal/config"
 	"github.com/bengobox/notifications-api/internal/ent"
@@ -34,7 +34,7 @@ type NotificationHandler struct {
 
 type CreateMessageRequest struct {
 	Channel  string         `json:"channel" binding:"required" example:"email"`
-	Tenant   string         `json:"tenant" binding:"required" example:"bengobox"`
+	Tenant   string         `json:"tenant" binding:"required" example:codevertex`
 	Template string         `json:"template" binding:"required" example:"invoice_due"`
 	Data     map[string]any `json:"data" binding:"required" swaggertype:"object" example:"{\"name\":\"Jane\",\"invoice_number\":\"INV-1001\",\"amount\":\"KES 1,200\",\"due_date\":\"2025-11-30\",\"payment_link\":\"https://pay.example.com/invoices/INV-1001\",\"brand_name\":\"BengoBox\"}"`
 	To       []string       `json:"to" binding:"required,min=1" example:"customer@example.com"`
@@ -93,7 +93,7 @@ type errorResponse struct {
 //
 //	{
 //	  "channel": "email",
-//	  "tenant": "bengobox",
+//	  "tenant": codevertex,
 //	  "template": "invoice_due",
 //	  "to": ["customer@example.com"],
 //	  "data": {
@@ -102,7 +102,7 @@ type errorResponse struct {
 //	    "amount": "KES 1,200",
 //	    "due_date": "2025-11-30",
 //	    "payment_link": "https://pay.example.com/invoices/INV-1001",
-//	    "brand_name": "BengoBox"
+//	    "brand_name": codevertex
 //	  },
 //	  "metadata": { "subject": "Invoice INV-1001 is due", "provider": "smtp" }
 //	}

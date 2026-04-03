@@ -1,1 +1,1 @@
-{{ or .brand_name "BengoBox" }}: Order {{ .order_id }} confirmed! Total: {{ .amount }}. {{ if .estimated_delivery }}Estimated delivery: {{ .estimated_delivery }}{{ end }}. Track: {{ .tracking_link }}
+{{ or .brand_name codevertex }}: Order {{ .order_id }} confirmed! Total: {{ .amount }}. {{ if .estimated_delivery }}Estimated delivery: {{ .estimated_delivery }}{{ end }}. Track: {{ .tracking_link }}

@@ -1,2 +1,2 @@
-{{ or .brand_name "BengoBox" }}: ETA updated for order {{ .order_id }}. New arrival: {{ .new_eta }}. Track: {{ .tracking_link }}
+{{ or .brand_name codevertex }}: ETA updated for order {{ .order_id }}. New arrival: {{ .new_eta }}. Track: {{ .tracking_link }}
 

@@ -1,2 +1,2 @@
-{{ or .brand_name "BengoBox" }}: Your order {{ .order_id }} is ready!{{ if .pickup_location }} Pickup at {{ .pickup_location }}.{{ end }} View: {{ .order_link }}
+{{ or .brand_name codevertex }}: Your order {{ .order_id }} is ready!{{ if .pickup_location }} Pickup at {{ .pickup_location }}.{{ end }} View: {{ .order_link }}
 

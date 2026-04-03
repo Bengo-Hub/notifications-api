@@ -52,10 +52,10 @@ curl -s -X POST http://localhost:4002/v1/bengobox/notifications/messages \
   -H "X-Tenant-ID: bengobox" \
   -d '{
         "channel":"email",
-        "tenant":"bengobox",
+        "tenant":"codevertex",
         "template":"payment_success",
         "to":["dev@bengobox.com"],
-        "data":{"name":"Jane","amount":"KES 1,200","order_id":"ORD-101","order_link":"https://example.com/orders/ORD-101","brand_name":"BengoBox"},
+        "data":{"name":"Jane","amount":"KES 1,200","order_id":"ORD-101","order_link":"https://example.com/orders/ORD-101","brand_name":codevertex},
         "metadata":{"subject":"Payment Received"}
       }'
 ```
@@ -78,10 +78,10 @@ curl -s -X POST http://localhost:4002/v1/bengobox/notifications/messages \
   -H "X-Tenant-ID: bengobox" \
   -d '{
         "channel":"email",
-        "tenant":"bengobox",
+        "tenant":codevertex,
         "template":"payment_success",
         "to":["dev@bengobox.com"],
-        "data":{"name":"Jane","amount":"KES 1,200","order_id":"ORD-101","order_link":"https://example.com/orders/ORD-101","brand_name":"BengoBox"},
+        "data":{"name":"Jane","amount":"KES 1,200","order_id":"ORD-101","order_link":"https://example.com/orders/ORD-101","brand_name":codevertex},
         "metadata":{"subject":"Payment Received"}
       }'
 

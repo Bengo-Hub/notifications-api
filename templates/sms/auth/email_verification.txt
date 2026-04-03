@@ -1,2 +1,2 @@
-{{ or .brand_name "BengoBox" }}: Verify your email. Code: {{ .verification_code }}. Expires in {{ .ttl_minutes }} minutes.
+{{ or .brand_name codevertex }}: Verify your email. Code: {{ .verification_code }}. Expires in {{ .ttl_minutes }} minutes.
 

@@ -1,2 +1,2 @@
-{{ or .brand_name "BengoBox" }}: {{ if .title }}{{ .title }}. {{ end }}{{ .message }}{{ if .action_link }} View: {{ .action_link }}{{ end }}
+{{ or .brand_name codevertex }}: {{ if .title }}{{ .title }}. {{ end }}{{ .message }}{{ if .action_link }} View: {{ .action_link }}{{ end }}
 

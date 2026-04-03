@@ -15,7 +15,7 @@
 ```json
 {
   "channel": "email",
-  "tenant": "bengobox",
+  "tenant": codevertex,
   "template": "invoice_due",
   "to": ["customer@example.com"],
   "data": {
@@ -24,7 +24,7 @@
     "amount": "KES 1,200",
     "due_date": "2025-11-30",
     "payment_link": "https://pay.example.com/invoices/INV-1001",
-    "brand_name": "BengoBox",             // optional overrides; if absent, defaults from DB or tenant slug
+    "brand_name": codevertex,             // optional overrides; if absent, defaults from DB or tenant slug
     "brand_email": "hello@bengobox.com",  // optional
     "brand_phone": "+254700000000",       // optional
     "brand_logo_url": "https://cdn.example.com/logo.png" // optional
@@ -39,10 +39,10 @@
 ```json
 {
   "channel": "sms",
-  "tenant": "bengobox",
+  "tenant": codevertex,
   "template": "otp",
   "to": ["+254700000000"],
-  "data": { "otp": "123456", "ttl_minutes": 5, "brand_name": "BengoBox" },
+  "data": { "otp": "123456", "ttl_minutes": 5, "brand_name": codevertex },
   "metadata": { "provider": "africastalking" }
 }
 ```

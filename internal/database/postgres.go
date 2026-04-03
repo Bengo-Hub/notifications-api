@@ -25,6 +25,7 @@ func NewClient(ctx context.Context, cfg config.PostgresConfig) (*ent.Client, err
 	db.SetMaxOpenConns(cfg.MaxOpenConns)
 	db.SetMaxIdleConns(cfg.MaxIdleConns)
 	db.SetConnMaxLifetime(cfg.ConnMaxLifetime)
+	db.SetConnMaxIdleTime(1 * time.Minute)
 
 	if err := db.PingContext(ctx); err != nil {
 		return nil, fmt.Errorf("ping postgres: %w", err)

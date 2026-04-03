@@ -1,2 +1,2 @@
-{{ or .brand_name "BengoBox" }}: Your driver is arriving! Order {{ .order_id }}. ETA: {{ .estimated_arrival }}. Track: {{ .tracking_link }}
+{{ or .brand_name codevertex }}: Your driver is arriving! Order {{ .order_id }}. ETA: {{ .estimated_arrival }}. Track: {{ .tracking_link }}
 

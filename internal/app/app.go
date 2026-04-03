@@ -209,6 +209,10 @@ func New(ctx context.Context) (*App, error) {
 			// Get underlying sql.DB for outbox repository
 			sqlDB, err := sql.Open("pgx", cfg.Postgres.URL)
 			if err == nil {
+				sqlDB.SetMaxOpenConns(2)
+				sqlDB.SetMaxIdleConns(1)
+				sqlDB.SetConnMaxLifetime(5 * time.Minute)
+				sqlDB.SetConnMaxIdleTime(1 * time.Minute)
 				outboxRepo := outbox.NewRepository(sqlDB)
 				pubCfg := eventslib.DefaultPublisherConfig(js, outboxRepo, log)
 				outboxPublisher = eventslib.NewPublisher(pubCfg)

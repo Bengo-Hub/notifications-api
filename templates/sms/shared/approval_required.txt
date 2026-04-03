@@ -1,2 +1,2 @@
-{{ or .brand_name "BengoBox" }}: Approval required for {{ .request_type }} {{ .request_id }}. Review: {{ .approval_link }}
+{{ or .brand_name codevertex }}: Approval required for {{ .request_type }} {{ .request_id }}. Review: {{ .approval_link }}
 

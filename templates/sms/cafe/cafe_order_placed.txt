@@ -1,2 +1,2 @@
-{{ or .brand_name "BengoBox" }}: Order {{ .order_id }} confirmed! Total: {{ .total_amount }}. Track: {{ .order_link }}
+{{ or .brand_name codevertex }}: Order {{ .order_id }} confirmed! Total: {{ .total_amount }}. Track: {{ .order_link }}
 
