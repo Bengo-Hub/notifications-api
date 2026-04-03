@@ -147,17 +147,19 @@ func startFleetConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 			return
 		}
 
-		// Extract recipient email from event data
-		email, _ := evt.Payload["user_email"].(string)
-		if email == "" {
+		// Extract rider email from event data
+		riderEmail, _ := evt.Payload["user_email"].(string)
+		if riderEmail == "" {
 			logg.Warn("fleet event: no user_email in data, skipping", zap.String("type", evt.Subject()))
 			_ = m.Ack()
 			return
 		}
 
-		// Resolve tenant website for building dashboard/support links
+		// Resolve tenant info for building dashboard/support links and determining recipient
+		var ti *tenantInfo
 		tenantWebsite := ""
-		if ti, err := tr.resolve(ctx, evt.TenantID); err == nil {
+		if resolved, err := tr.resolve(ctx, evt.TenantID); err == nil {
+			ti = resolved
 			tenantWebsite = ti.Website
 		} else {
 			logg.Warn("fleet event: could not resolve tenant, using empty website", zap.String("tenant_id", evt.TenantID), zap.Error(err))
@@ -165,14 +167,28 @@ func startFleetConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 
 		memberID, _ := evt.Payload["member_id"].(string)
 
+		// Determine recipient and target based on event type.
+		// Admin-targeted events (KYC submitted) go to tenant contact email.
+		// Rider-targeted events go to the rider's email.
+		recipientEmail := riderEmail
+		target := messaging.TargetRider
+		if evt.Subject() == "logistics.fleet.member_kyc_submitted" {
+			target = messaging.TargetTenantAdmin
+			if ti != nil && ti.ContactEmail != "" {
+				recipientEmail = ti.ContactEmail
+			} else {
+				logg.Warn("fleet event: tenant has no contact_email for KYC review notification, falling back to rider email", zap.String("tenant_id", evt.TenantID))
+			}
+		}
+
 		// Build notification message
 		msg := messaging.Message{
 			TenantID:    evt.TenantID,
 			Channel:     "email",
 			TemplateID:  mapping.TemplateID,
 			SenderScope: messaging.SenderScopeTenant,
-			Target:      messaging.TargetRider,
-			To:          []string{email},
+			Target:      target,
+			To:          []string{recipientEmail},
 			Data:        mapping.DataBuilder(evt.Payload, tenantWebsite, riderAppBaseURL()),
 			Metadata: map[string]interface{}{
 				"subject": mapping.EmailSubject,
@@ -186,7 +202,7 @@ func startFleetConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 		if _, err := messaging.Publish(ctx, nc, cfg.Events, msg); err != nil {
 			logg.Error("fleet event: failed to dispatch notification",
 				zap.String("type", evt.Subject()),
-				zap.String("email", email),
+				zap.String("email", recipientEmail),
 				zap.Error(err),
 			)
 			_ = m.Nak() // retry
@@ -196,7 +212,7 @@ func startFleetConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 		logg.Info("fleet notification dispatched",
 			zap.String("type", evt.Subject()),
 			zap.String("template", mapping.TemplateID),
-			zap.String("to", email),
+			zap.String("to", recipientEmail),
 		)
 		_ = m.Ack()
 	}

@@ -37,11 +37,15 @@ var posMappings = map[string]posNotificationMapping{
 		TemplateID:   "pos/pos_order_ready",
 		EmailSubject: "Your POS order is ready",
 		DataBuilder: func(payload map[string]any, tenantWebsite string) map[string]any {
+			name := "Customer"
+			if n, ok := payload["customer_name"].(string); ok && n != "" {
+				name = n
+			}
 			return map[string]any{
-				"name":       "Customer",
-				"order_id":   payload["order_number"],
-				"outlet_name": "",
-				"order_link": fmt.Sprintf("%s/orders", tenantWebsite),
+				"name":        name,
+				"order_id":    payload["order_number"],
+				"outlet_name": payload["outlet_name"],
+				"order_link":  fmt.Sprintf("%s/orders", tenantWebsite),
 			}
 		},
 	},
@@ -49,8 +53,12 @@ var posMappings = map[string]posNotificationMapping{
 		TemplateID:   "pos/pos_payment_receipt",
 		EmailSubject: "Payment receipt",
 		DataBuilder: func(payload map[string]any, tenantWebsite string) map[string]any {
+			name := "Customer"
+			if n, ok := payload["customer_name"].(string); ok && n != "" {
+				name = n
+			}
 			return map[string]any{
-				"name":           "Customer",
+				"name":           name,
 				"receipt_number": payload["payment_id"],
 				"order_id":       payload["order_number"],
 				"total_amount":   payload["amount"],
@@ -105,8 +113,17 @@ func startPosConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamConte
 			_ = m.Nak()
 			return
 		}
-		if ti.ContactEmail == "" {
-			logg.Warn("pos event: tenant has no contact_email, skipping")
+
+		// POS order/payment notifications are customer-facing.
+		// Extract customer email from event payload; fall back to tenant contact.
+		recipientEmail := ""
+		if ce, ok := evt.Payload["customer_email"].(string); ok && ce != "" {
+			recipientEmail = ce
+		} else if ti.ContactEmail != "" {
+			recipientEmail = ti.ContactEmail
+		}
+		if recipientEmail == "" {
+			logg.Warn("pos event: no customer_email in payload and no tenant contact_email, skipping")
 			_ = m.Ack()
 			return
 		}
@@ -116,8 +133,8 @@ func startPosConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamConte
 			Channel:     "email",
 			TemplateID:  mapping.TemplateID,
 			SenderScope: messaging.SenderScopeTenant,
-			Target:      messaging.TargetTenantAdmin,
-			To:          []string{ti.ContactEmail},
+			Target:      messaging.TargetCustomer,
+			To:          []string{recipientEmail},
 			Data:        mapping.DataBuilder(evt.Payload, ti.Website),
 			Metadata: map[string]any{
 				"subject": mapping.EmailSubject,

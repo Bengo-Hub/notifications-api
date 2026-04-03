@@ -105,10 +105,20 @@ func startTicketingConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStrea
 			return
 		}
 
-		// Use agent email from event payload if available, fallback to tenant contact
+		// Determine recipient and target based on event type.
+		// ticket.assigned → agent/staff; ticket.resolved → customer.
 		recipientEmail := ti.ContactEmail
-		if agentEmail, ok := evt.Payload["agent_email"].(string); ok && agentEmail != "" {
-			recipientEmail = agentEmail
+		target := messaging.TargetStaff
+		switch evt.EventType {
+		case "ticket.assigned":
+			if agentEmail, ok := evt.Payload["agent_email"].(string); ok && agentEmail != "" {
+				recipientEmail = agentEmail
+			}
+		case "ticket.resolved":
+			target = messaging.TargetCustomer
+			if custEmail, ok := evt.Payload["customer_email"].(string); ok && custEmail != "" {
+				recipientEmail = custEmail
+			}
 		}
 
 		msg := messaging.Message{
@@ -116,7 +126,7 @@ func startTicketingConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStrea
 			Channel:     "email",
 			TemplateID:  mapping.TemplateID,
 			SenderScope: messaging.SenderScopeTenant,
-			Target:      messaging.TargetStaff,
+			Target:      target,
 			To:          []string{recipientEmail},
 			Data:        mapping.DataBuilder(evt.Payload, ti.Website),
 			Metadata: map[string]any{

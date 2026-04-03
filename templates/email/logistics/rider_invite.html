@@ -1,34 +1,10 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px; }
-        .header { text-align: center; margin-bottom: 30px; }
-        .logo { font-size: 24px; font-weight: bold; color: #E91E63; }
-        .content { margin-bottom: 30px; }
-        .button { display: inline-block; padding: 12px 24px; background-color: #E91E63; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; }
-        .footer { font-size: 12px; color: #888; text-align: center; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <div class="logo">Codevertex Logistics</div>
-        </div>
-        <div class="content">
-            <h2>You've Been Invited, {{.RiderName}}!</h2>
-            <p>You have been invited to join the delivery fleet on the Codevertex platform. As a fleet member, you'll be able to accept delivery tasks, manage your schedule, and track your earnings.</p>
-            <p>To get started, click the button below to create your account. After signing up, you'll be redirected to complete your rider profile and upload verification documents.</p>
-            <div style="text-align: center; margin: 30px 0;">
-                <a href="{{.JoinUrl}}" class="button">Create Account &amp; Get Started</a>
-            </div>
-            <p>If you did not expect this invitation, you can safely ignore this email.</p>
-            <p>Welcome aboard!</p>
-        </div>
-        <div class="footer">
-            &copy; 2026 Codevertex IT Solutions. All rights reserved.
-        </div>
-    </div>
-</body>
-</html>
+{{ define "content" }}
+  <h2 style="margin:0 0 16px;font-size:20px;color:#111827;">You've Been Invited, {{.RiderName}}!</h2>
+  <p style="margin:16px 0;color:#374151;">You have been invited to join the delivery fleet. As a fleet member, you'll be able to accept delivery tasks, manage your schedule, and track your earnings.</p>
+  <p style="margin:16px 0;color:#374151;">To get started, click the button below to create your account. After signing up, you'll be redirected to complete your rider profile and upload verification documents.</p>
+  <div style="text-align:center;margin:24px 0;">
+    <a href="{{.JoinUrl}}" style="display:inline-block;padding:12px 24px;background:{{ or .brand_primary_color "#0F766E" }};color:#ffffff;text-decoration:none;border-radius:6px;font-weight:bold;">Create Account &amp; Get Started</a>
+  </div>
+  <p style="margin:16px 0;color:#6b7280;font-size:14px;">If you did not expect this invitation, you can safely ignore this email.</p>
+  <p style="margin:16px 0;color:#374151;">Welcome aboard!</p>
+{{ end }}
