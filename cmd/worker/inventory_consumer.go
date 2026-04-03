@@ -134,17 +134,13 @@ func startInventoryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStrea
 		_ = m.Ack()
 	}
 
-	_, err := js.Subscribe("inventory.>", handler,
-		nats.BindStream("inventory"),
-		nats.Durable("notifications-inventory-stock"),
-		nats.ManualAck(),
-		nats.AckWait(30*time.Second),
-		nats.MaxDeliver(3),
-	)
-	if err != nil {
-		logg.Warn("inventory consumer subscription failed (inventory stream may not exist yet)", zap.Error(err))
-		return
-	}
-
-	logg.Info("inventory consumer started", zap.String("subject", "inventory.>"))
+	subscribeWithRetry(ctx, js, logg, "inventory consumer", true, func() (*nats.Subscription, error) {
+		return js.Subscribe("inventory.>", handler,
+			nats.BindStream("inventory"),
+			nats.Durable("notifications-inventory-stock"),
+			nats.ManualAck(),
+			nats.AckWait(30*time.Second),
+			nats.MaxDeliver(3),
+		)
+	})
 }

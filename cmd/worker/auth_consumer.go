@@ -36,7 +36,7 @@ func startAuthNotificationConsumer(ctx context.Context, nc *nats.Conn, cfg *conf
 	}
 
 	// Welcome email on user registration
-	_, err := nc.Subscribe("auth.user.created", func(m *nats.Msg) {
+	welcomeHandler := func(m *nats.Msg) {
 		var evt authUserEvent
 		if err := json.Unmarshal(m.Data, &evt); err != nil {
 			logg.Error("auth user created: unmarshal failed", zap.Error(err))
@@ -96,17 +96,15 @@ func startAuthNotificationConsumer(ctx context.Context, nc *nats.Conn, cfg *conf
 			zap.String("user_id", evt.UserID),
 			zap.String("to", evt.Email),
 		)
-	})
-	if err != nil {
-		logg.Warn("auth notification consumer subscription failed", zap.Error(err))
-		return
 	}
 
-	logg.Info("auth notification consumer started", zap.String("subject", "auth.user.created"))
+	subscribeWithRetry(ctx, nil, logg, "auth notification consumer", true, func() (*nats.Subscription, error) {
+		return nc.Subscribe("auth.user.created", welcomeHandler)
+	})
 
 	// Password reset email on reset request
 	// Auth-api publishes auth.user.password_reset.requested via plain NATS (outbox → conn.Publish)
-	_, err = nc.Subscribe("auth.user.password_reset.requested", func(m *nats.Msg) {
+	resetHandler := func(m *nats.Msg) {
 		// Auth outbox publishes shared-events.Event envelope
 		var envelope struct {
 			Payload map[string]any `json:"payload"`
@@ -165,8 +163,9 @@ func startAuthNotificationConsumer(ctx context.Context, nc *nats.Conn, cfg *conf
 		}
 
 		logg.Info("password reset email dispatched", zap.String("to", email))
-	})
-	if err != nil {
-		logg.Warn("auth password reset consumer subscription failed", zap.Error(err))
 	}
+
+	subscribeWithRetry(ctx, nil, logg, "auth password reset consumer", true, func() (*nats.Subscription, error) {
+		return nc.Subscribe("auth.user.password_reset.requested", resetHandler)
+	})
 }

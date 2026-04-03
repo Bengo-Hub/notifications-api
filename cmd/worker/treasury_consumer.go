@@ -220,17 +220,13 @@ func startTreasuryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStream
 		_ = m.Ack()
 	}
 
-	_, err := js.Subscribe("treasury.>", handler,
-		nats.BindStream("treasury"),
-		nats.Durable("notifications-treasury-payments"),
-		nats.ManualAck(),
-		nats.AckWait(30*time.Second),
-		nats.MaxDeliver(3),
-	)
-	if err != nil {
-		logg.Warn("treasury consumer subscription failed (treasury stream may not exist yet)", zap.Error(err))
-		return
-	}
-
-	logg.Info("treasury consumer started", zap.String("subject", "treasury.>"))
+	subscribeWithRetry(ctx, js, logg, "treasury consumer", true, func() (*nats.Subscription, error) {
+		return js.Subscribe("treasury.>", handler,
+			nats.BindStream("treasury"),
+			nats.Durable("notifications-treasury-payments"),
+			nats.ManualAck(),
+			nats.AckWait(30*time.Second),
+			nats.MaxDeliver(3),
+		)
+	})
 }

@@ -147,17 +147,13 @@ func startTicketingConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStrea
 		_ = m.Ack()
 	}
 
-	_, err := js.Subscribe("ticketing.>", handler,
-		nats.BindStream("ticketing"),
-		nats.Durable("notifications-ticketing"),
-		nats.ManualAck(),
-		nats.AckWait(30*time.Second),
-		nats.MaxDeliver(3),
-	)
-	if err != nil {
-		logg.Warn("ticketing consumer subscription failed (ticketing stream may not exist yet)", zap.Error(err))
-		return
-	}
-
-	logg.Info("ticketing consumer started", zap.String("subject", "ticketing.>"))
+	subscribeWithRetry(ctx, js, logg, "ticketing consumer", true, func() (*nats.Subscription, error) {
+		return js.Subscribe("ticketing.>", handler,
+			nats.BindStream("ticketing"),
+			nats.Durable("notifications-ticketing"),
+			nats.ManualAck(),
+			nats.AckWait(30*time.Second),
+			nats.MaxDeliver(3),
+		)
+	})
 }

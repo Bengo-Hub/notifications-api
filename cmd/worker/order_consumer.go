@@ -247,17 +247,13 @@ func startOrderConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 		_ = m.Ack()
 	}
 
-	_, err := js.Subscribe("ordering.order.>", handler,
-		nats.BindStream("ordering"),
-		nats.Durable("notifications-ordering-status"),
-		nats.ManualAck(),
-		nats.AckWait(30*time.Second),
-		nats.MaxDeliver(3),
-	)
-	if err != nil {
-		logg.Warn("order consumer subscription failed (ordering stream may not exist yet)", zap.Error(err))
-		return
-	}
-
-	logg.Info("order consumer started", zap.String("subject", "ordering.order.>"))
+	subscribeWithRetry(ctx, js, logg, "order consumer", true, func() (*nats.Subscription, error) {
+		return js.Subscribe("ordering.order.>", handler,
+			nats.BindStream("ordering"),
+			nats.Durable("notifications-ordering-status"),
+			nats.ManualAck(),
+			nats.AckWait(30*time.Second),
+			nats.MaxDeliver(3),
+		)
+	})
 }

@@ -217,18 +217,13 @@ func startFleetConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 		_ = m.Ack()
 	}
 
-	_, err := js.Subscribe("logistics.fleet.>", handler,
-		nats.BindStream("logistics"),
-		nats.Durable("notifications-logistics-fleet"),
-		nats.ManualAck(),
-		nats.AckWait(30*time.Second),
-		nats.MaxDeliver(3),
-	)
-	if err != nil {
-		// Non-fatal: logistics stream may not exist yet if logistics-api hasn't started
-		logg.Warn("fleet consumer subscription failed (logistics stream may not exist yet)", zap.Error(err))
-		return
-	}
-
-	logg.Info("fleet consumer started", zap.String("subject", "logistics.fleet.>"))
+	subscribeWithRetry(ctx, js, logg, "fleet consumer", true, func() (*nats.Subscription, error) {
+		return js.Subscribe("logistics.fleet.>", handler,
+			nats.BindStream("logistics"),
+			nats.Durable("notifications-logistics-fleet"),
+			nats.ManualAck(),
+			nats.AckWait(30*time.Second),
+			nats.MaxDeliver(3),
+		)
+	})
 }

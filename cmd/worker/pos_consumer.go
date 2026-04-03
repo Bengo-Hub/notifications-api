@@ -154,17 +154,13 @@ func startPosConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamConte
 		_ = m.Ack()
 	}
 
-	_, err := js.Subscribe("pos.>", handler,
-		nats.BindStream("pos"),
-		nats.Durable("notifications-pos-orders"),
-		nats.ManualAck(),
-		nats.AckWait(30*time.Second),
-		nats.MaxDeliver(3),
-	)
-	if err != nil {
-		logg.Warn("pos consumer subscription failed (pos stream may not exist yet)", zap.Error(err))
-		return
-	}
-
-	logg.Info("pos consumer started", zap.String("subject", "pos.>"))
+	subscribeWithRetry(ctx, js, logg, "pos consumer", true, func() (*nats.Subscription, error) {
+		return js.Subscribe("pos.>", handler,
+			nats.BindStream("pos"),
+			nats.Durable("notifications-pos-orders"),
+			nats.ManualAck(),
+			nats.AckWait(30*time.Second),
+			nats.MaxDeliver(3),
+		)
+	})
 }

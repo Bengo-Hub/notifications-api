@@ -38,6 +38,39 @@ import (
 
 const maxRetries = 3
 
+// subscribeWithRetry attempts a JetStream subscription with exponential backoff.
+// After a pod restart, NATS may still consider the previous durable consumer
+// binding active until its heartbeat expires. This retries until it succeeds.
+// If background is true, runs the retry loop in a goroutine and returns immediately.
+func subscribeWithRetry(ctx context.Context, js nats.JetStreamContext, logg *zap.Logger, name string, background bool, subscribeFn func() (*nats.Subscription, error)) {
+	const maxAttempts = 12
+	doSubscribe := func() {
+		for attempt := 1; attempt <= maxAttempts; attempt++ {
+			_, err := subscribeFn()
+			if err == nil {
+				logg.Info(name+" subscription established")
+				return
+			}
+			if attempt == maxAttempts {
+				logg.Error(name+" subscription failed after retries", zap.Int("attempts", maxAttempts), zap.Error(err))
+				return
+			}
+			backoff := time.Duration(attempt) * 5 * time.Second
+			logg.Warn(name+" subscription failed, retrying", zap.Int("attempt", attempt), zap.Duration("backoff", backoff), zap.Error(err))
+			select {
+			case <-time.After(backoff):
+			case <-ctx.Done():
+				return
+			}
+		}
+	}
+	if background {
+		go doSubscribe()
+	} else {
+		doSubscribe()
+	}
+}
+
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
@@ -119,7 +152,7 @@ func main() {
 	// Tenant resolver for event consumers and template branding
 	tr := newTenantResolver(client, tenantCache, cfg.Services.AuthAPI)
 
-	_, err = js.Subscribe(subject, func(m *nats.Msg) {
+	msgHandler := func(m *nats.Msg) {
 		var msg messaging.Message
 		if err := json.Unmarshal(m.Data, &msg); err != nil {
 			logg.Error("invalid message, dropping", zap.Error(err))
@@ -176,10 +209,11 @@ func main() {
 			zap.Uint64("attempt", attempt),
 		)
 		_ = m.Ack()
-	}, nats.Durable(durable), nats.ManualAck(), nats.AckWait(30*time.Second), nats.MaxDeliver(maxRetries))
-	if err != nil {
-		logg.Fatal("subscription failed", zap.Error(err))
 	}
+
+	subscribeWithRetry(ctx, js, logg, "notifications worker", false, func() (*nats.Subscription, error) {
+		return js.Subscribe(subject, msgHandler, nats.Durable(durable), nats.ManualAck(), nats.AckWait(30*time.Second), nats.MaxDeliver(maxRetries))
+	})
 
 	// Start fleet lifecycle event consumer (logistics-service → email notifications)
 	startFleetConsumer(ctx, nc, js, cfg, tr, logg)

@@ -118,17 +118,13 @@ func startProjectsConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStream
 	}
 
 	// Projects-api stream name — check what's configured
-	_, err := js.Subscribe("project.>", handler,
-		nats.BindStream("projects"),
-		nats.Durable("notifications-projects"),
-		nats.ManualAck(),
-		nats.AckWait(30*time.Second),
-		nats.MaxDeliver(3),
-	)
-	if err != nil {
-		logg.Warn("projects consumer subscription failed (projects stream may not exist yet)", zap.Error(err))
-		return
-	}
-
-	logg.Info("projects consumer started", zap.String("subject", "project.>"))
+	subscribeWithRetry(ctx, js, logg, "projects consumer", true, func() (*nats.Subscription, error) {
+		return js.Subscribe("project.>", handler,
+			nats.BindStream("projects"),
+			nats.Durable("notifications-projects"),
+			nats.ManualAck(),
+			nats.AckWait(30*time.Second),
+			nats.MaxDeliver(3),
+		)
+	})
 }

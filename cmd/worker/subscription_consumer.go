@@ -208,17 +208,13 @@ func startSubscriptionConsumer(ctx context.Context, nc *nats.Conn, js nats.JetSt
 		_ = m.Ack()
 	}
 
-	_, err := js.Subscribe("subscription.>", handler,
-		nats.BindStream("subscription"),
-		nats.Durable("notifications-subscription-lifecycle"),
-		nats.ManualAck(),
-		nats.AckWait(30*time.Second),
-		nats.MaxDeliver(3),
-	)
-	if err != nil {
-		logg.Warn("subscription consumer subscription failed (subscription stream may not exist yet)", zap.Error(err))
-		return
-	}
-
-	logg.Info("subscription consumer started", zap.String("subject", "subscription.>"))
+	subscribeWithRetry(ctx, js, logg, "subscription consumer", true, func() (*nats.Subscription, error) {
+		return js.Subscribe("subscription.>", handler,
+			nats.BindStream("subscription"),
+			nats.Durable("notifications-subscription-lifecycle"),
+			nats.ManualAck(),
+			nats.AckWait(30*time.Second),
+			nats.MaxDeliver(3),
+		)
+	})
 }
