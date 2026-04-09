@@ -107,6 +107,35 @@ func (h *PlatformProviders) ConfigureProvider(w http.ResponseWriter, r *http.Req
 	}
 
 	ctx := r.Context()
+
+	// Fetch existing settings before delete so we can preserve values not supplied or sent empty
+	existingRows, _ := h.client.ProviderSetting.Query().
+		Where(
+			providersetting.TenantID(platformTenantID),
+			providersetting.IsPlatform(true),
+			providersetting.EnvironmentEQ(req.Environment),
+			providersetting.ProviderType(req.ProviderType),
+			providersetting.ProviderName(req.ProviderName),
+			providersetting.KeyNEQ("_config"),
+		).
+		All(ctx)
+
+	type existingVal struct {
+		Value       string
+		IsEncrypted bool
+		IsSecret    bool
+		IsManaged   bool
+	}
+	existing := make(map[string]existingVal, len(existingRows))
+	for _, row := range existingRows {
+		existing[row.Key] = existingVal{
+			Value:       row.Value,
+			IsEncrypted: row.IsEncrypted,
+			IsSecret:    row.IsSecret,
+			IsManaged:   row.IsPlatformManaged,
+		}
+	}
+
 	// Delete existing settings for this provider + environment
 	_, _ = h.client.ProviderSetting.Delete().
 		Where(
@@ -143,22 +172,42 @@ func (h *PlatformProviders) ConfigureProvider(w http.ResponseWriter, r *http.Req
 	for _, k := range req.PlatformManagedKeys {
 		isManaged[k] = true
 	}
-	isSecret := make(map[string]bool)
+	isSecretMap := make(map[string]bool)
 	for _, k := range req.SecretKeys {
-		isSecret[k] = true
+		isSecretMap[k] = true
 	}
+
+	// Track which keys we've processed from the request
+	processed := make(map[string]bool, len(req.Settings))
 
 	// Create individual setting rows; encrypt secret keys when encryption key is set
 	for k, v := range req.Settings {
+		processed[k] = true
 		value := v
 		isEncrypted := false
-		secret := isSecret[k] || encryption.IsSecret(k)
-		if secret && len(h.encryptionKey) == 32 && v != "" {
+		secret := isSecretMap[k] || encryption.IsSecret(k)
+
+		// For empty or masked values, preserve existing DB value
+		if v == "" || v == "••••••••" {
+			if old, ok := existing[k]; ok && old.Value != "" {
+				value = old.Value
+				isEncrypted = old.IsEncrypted
+				secret = secret || old.IsSecret
+			} else {
+				continue
+			}
+		} else if secret && len(h.encryptionKey) == 32 {
 			if enc, err := encryption.Encrypt(v, h.encryptionKey); err == nil {
 				value = enc
 				isEncrypted = true
 			}
 		}
+
+		managed := isManaged[k]
+		if old, ok := existing[k]; ok {
+			managed = managed || old.IsManaged
+		}
+
 		_, err := h.client.ProviderSetting.Create().
 			SetTenantID(platformTenantID).
 			SetChannel(req.ProviderType).
@@ -170,13 +219,42 @@ func (h *PlatformProviders) ConfigureProvider(w http.ResponseWriter, r *http.Req
 			SetValue(value).
 			SetIsEncrypted(isEncrypted).
 			SetIsPlatform(true).
-			SetIsPlatformManaged(isManaged[k]).
+			SetIsPlatformManaged(managed).
 			SetIsSecret(secret).
 			SetIsActive(true).
 			SetStatus("active").
 			Save(ctx)
 		if err != nil {
 			h.logger.Error("failed to save provider setting",
+				zap.String("key", k),
+				zap.Error(err),
+			)
+		}
+	}
+
+	// Re-create existing settings that were not in the request (preserve untouched keys)
+	for k, old := range existing {
+		if processed[k] || old.Value == "" {
+			continue
+		}
+		_, err := h.client.ProviderSetting.Create().
+			SetTenantID(platformTenantID).
+			SetChannel(req.ProviderType).
+			SetProvider(req.ProviderName).
+			SetProviderType(req.ProviderType).
+			SetProviderName(req.ProviderName).
+			SetEnvironment(req.Environment).
+			SetKey(k).
+			SetValue(old.Value).
+			SetIsEncrypted(old.IsEncrypted).
+			SetIsPlatform(true).
+			SetIsPlatformManaged(old.IsManaged).
+			SetIsSecret(old.IsSecret).
+			SetIsActive(true).
+			SetStatus("active").
+			Save(ctx)
+		if err != nil {
+			h.logger.Error("failed to re-create existing setting",
 				zap.String("key", k),
 				zap.Error(err),
 			)

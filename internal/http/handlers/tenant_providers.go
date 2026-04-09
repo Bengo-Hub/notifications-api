@@ -343,6 +343,26 @@ func (h *TenantProviders) SaveProviderSettings(w http.ResponseWriter, r *http.Re
 		return
 	}
 
+	// Fetch existing settings before delete so we can preserve values not supplied in the request
+	existingRows, _ := h.client.ProviderSetting.Query().
+		Where(
+			providersetting.TenantID(tenantID),
+			providersetting.ProviderType(req.ProviderType),
+			providersetting.ProviderName(req.ProviderName),
+			providersetting.KeyNEQ("_config"),
+			providersetting.KeyNEQ("_preferred"),
+		).
+		All(ctx)
+
+	type existingVal struct {
+		Value    string
+		IsSecret bool
+	}
+	existing := make(map[string]existingVal, len(existingRows))
+	for _, row := range existingRows {
+		existing[row.Key] = existingVal{Value: row.Value, IsSecret: row.IsSecret}
+	}
+
 	_, _ = h.client.ProviderSetting.Delete().
 		Where(
 			providersetting.TenantID(tenantID),
@@ -355,9 +375,22 @@ func (h *TenantProviders) SaveProviderSettings(w http.ResponseWriter, r *http.Re
 
 	secretKeys := map[string]bool{"password": true, "api_key": true, "auth_token": true, "api_secret": true}
 
+	// Track which keys we've processed from the request
+	processed := make(map[string]bool, len(req.Settings))
+
 	for k, v := range req.Settings {
+		processed[k] = true
+		// For empty or masked values, preserve existing DB value
 		if v == "" || v == "••••••••" {
-			continue
+			if old, ok := existing[k]; ok && old.Value != "" {
+				v = old.Value
+			} else {
+				continue
+			}
+		}
+		isSecret := secretKeys[k]
+		if old, ok := existing[k]; ok {
+			isSecret = isSecret || old.IsSecret
 		}
 		_, err := h.client.ProviderSetting.Create().
 			SetTenantID(tenantID).
@@ -368,7 +401,7 @@ func (h *TenantProviders) SaveProviderSettings(w http.ResponseWriter, r *http.Re
 			SetEnvironment("production").
 			SetKey(k).
 			SetValue(v).
-			SetIsSecret(secretKeys[k]).
+			SetIsSecret(isSecret).
 			SetIsPlatform(false).
 			SetIsActive(true).
 			SetStatus("active").
@@ -377,6 +410,30 @@ func (h *TenantProviders) SaveProviderSettings(w http.ResponseWriter, r *http.Re
 			h.logger.Error("failed to save provider setting", zap.String("key", k), zap.Error(err))
 			jsonError(w, http.StatusInternalServerError, "failed to save settings")
 			return
+		}
+	}
+
+	// Re-create existing settings that were not in the request (preserve untouched keys)
+	for k, old := range existing {
+		if processed[k] || old.Value == "" {
+			continue
+		}
+		_, err := h.client.ProviderSetting.Create().
+			SetTenantID(tenantID).
+			SetChannel(req.ProviderType).
+			SetProvider(req.ProviderName).
+			SetProviderType(req.ProviderType).
+			SetProviderName(req.ProviderName).
+			SetEnvironment("production").
+			SetKey(k).
+			SetValue(old.Value).
+			SetIsSecret(old.IsSecret).
+			SetIsPlatform(false).
+			SetIsActive(true).
+			SetStatus("active").
+			Save(ctx)
+		if err != nil {
+			h.logger.Error("failed to re-create existing setting", zap.String("key", k), zap.Error(err))
 		}
 	}
 
