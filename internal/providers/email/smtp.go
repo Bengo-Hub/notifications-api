@@ -42,6 +42,9 @@ func extractEmail(s string) string {
 func (p *SMTPProvider) SendEmail(ctx context.Context, from string, to []string, subject string, htmlBody string, textBody string) error {
 	if from == "" {
 		from = p.cfg.From
+	} else if !strings.Contains(from, "@") && p.cfg.From != "" {
+		// "from" is just a display name (e.g. "Urban Loft Cafe") — wrap with configured email
+		from = fmt.Sprintf("%s <%s>", from, extractEmail(p.cfg.From))
 	}
 	if p.cfg.Host == "" || p.cfg.Port == 0 {
 		return fmt.Errorf("smtp not configured")

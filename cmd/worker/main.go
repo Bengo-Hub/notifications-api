@@ -364,8 +364,13 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, bil
 		if s, ok := msg.Metadata["subject"].(string); ok && s != "" {
 			subject = s
 		}
+		// Compose "from" with tenant brand name for display (e.g., "Urban Loft Cafe <info@...>")
+		fromOverride := ""
+		if brandName, ok := msg.Data["brand_name"].(string); ok && brandName != "" {
+			fromOverride = brandName // Provider will wrap as "BrandName <configured-email>"
+		}
 		emailProv, _ := pm.GetEmailProvider(ctx, providerTenantID, preferred)
-		err := emailProv.SendEmail(ctx, "", msg.To, subject, rendered, "")
+		err := emailProv.SendEmail(ctx, fromOverride, msg.To, subject, rendered, "")
 		if err != nil {
 			logg.Warn("tenant email delivery failed, trying platform fallback",
 				zap.String("tenant_id", msg.TenantID),
@@ -376,7 +381,7 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, bil
 			if providerTenantID != pm.PlatformID {
 				platformProv, pErr := pm.GetEmailProvider(ctx, pm.PlatformID, "")
 				if pErr == nil {
-					if fbErr := platformProv.SendEmail(ctx, "", msg.To, subject, rendered, ""); fbErr == nil {
+					if fbErr := platformProv.SendEmail(ctx, fromOverride, msg.To, subject, rendered, ""); fbErr == nil {
 						logg.Info("email sent via platform fallback",
 							zap.String("provider", platformProv.Name()),
 							zap.String("template", msg.TemplateID),
