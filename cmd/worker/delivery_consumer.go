@@ -40,7 +40,7 @@ var deliveryMappings = map[string]deliveryNotificationMapping{
 				"name":          "Customer",
 				"order_id":      data["external_reference"],
 				"driver_name":   data["fleet_member_id"],
-				"tracking_link": fmt.Sprintf("%s/track/%s", tenantWebsite, trackingCode),
+				"tracking_link": fmt.Sprintf("%s/track/%s", serviceURL("NOTIFICATIONS_ORDERING_APP_URL", tenantWebsite), trackingCode),
 			}
 		},
 	},
@@ -51,7 +51,7 @@ var deliveryMappings = map[string]deliveryNotificationMapping{
 			return map[string]interface{}{
 				"name":       "Customer",
 				"order_id":   data["external_reference"],
-				"order_link": fmt.Sprintf("%s/orders", tenantWebsite),
+				"order_link": fmt.Sprintf("%s/orders", serviceURL("NOTIFICATIONS_ORDERING_APP_URL", tenantWebsite)),
 			}
 		},
 	},
@@ -63,7 +63,7 @@ var deliveryMappings = map[string]deliveryNotificationMapping{
 			return map[string]interface{}{
 				"name":          "Customer",
 				"order_id":      data["external_reference"],
-				"tracking_link": fmt.Sprintf("%s/track/%s", tenantWebsite, trackingCode),
+				"tracking_link": fmt.Sprintf("%s/track/%s", serviceURL("NOTIFICATIONS_ORDERING_APP_URL", tenantWebsite), trackingCode),
 			}
 		},
 	},
@@ -74,7 +74,7 @@ var deliveryMappings = map[string]deliveryNotificationMapping{
 			return map[string]interface{}{
 				"name":       "Customer",
 				"order_id":   data["external_reference"],
-				"order_link": fmt.Sprintf("%s/orders", tenantWebsite),
+				"order_link": fmt.Sprintf("%s/orders", serviceURL("NOTIFICATIONS_ORDERING_APP_URL", tenantWebsite)),
 			}
 		},
 	},

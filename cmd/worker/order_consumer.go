@@ -60,108 +60,121 @@ func (e *orderEvent) resolvedData() map[string]interface{} {
 type orderNotificationMapping struct {
 	TemplateID   string
 	EmailSubject string
-	DataBuilder  func(data map[string]interface{}, tenantWebsite string) map[string]interface{}
+	DataBuilder  func(data map[string]interface{}, orderAppURL string) map[string]interface{}
+}
+
+// orderAppBaseURL returns the ordering app URL for building "View Order" links.
+func orderAppBaseURL(tenantSlug, tenantWebsite string) string {
+	return serviceURLWithSlug("NOTIFICATIONS_ORDERING_APP_URL", tenantSlug, tenantWebsite)
+}
+
+// orderLink builds the "View Order" URL for customer emails.
+// For guest orders (no customer_id), returns a Google Maps link to the outlet.
+// For authenticated orders, returns a link to the ordering app order page.
+func orderLink(data map[string]interface{}, orderAppURL string) string {
+	orderID, _ := data["order_id"].(string)
+	return fmt.Sprintf("%s/orders/%s", orderAppURL, orderID)
 }
 
 var orderMappings = map[string]orderNotificationMapping{
 	"ordering.order.confirmed": {
 		TemplateID:   "ordering/order_placed",
 		EmailSubject: "Your order has been confirmed",
-		DataBuilder: func(data map[string]interface{}, tenantWebsite string) map[string]interface{} {
+		DataBuilder: func(data map[string]interface{}, orderAppURL string) map[string]interface{} {
 			return map[string]interface{}{
 				"name":                data["customer_name"],
 				"order_id":            data["order_id"],
 				"total_amount":        data["total_amount"],
 				"estimated_prep_time": data["estimated_prep_time"],
 				"delivery_address":    data["delivery_address"],
-				"order_link":          fmt.Sprintf("%s/orders/%s", tenantWebsite, data["order_id"]),
+				"order_link":          orderLink(data, orderAppURL),
 			}
 		},
 	},
 	"ordering.order.ready": {
 		TemplateID:   "ordering/order_ready",
 		EmailSubject: "Your order is ready",
-		DataBuilder: func(data map[string]interface{}, tenantWebsite string) map[string]interface{} {
+		DataBuilder: func(data map[string]interface{}, orderAppURL string) map[string]interface{} {
 			return map[string]interface{}{
 				"name":       data["customer_name"],
 				"order_id":   data["order_id"],
-				"order_link": fmt.Sprintf("%s/orders/%s", tenantWebsite, data["order_id"]),
+				"order_link": orderLink(data, orderAppURL),
 			}
 		},
 	},
 	"ordering.order.out_for_delivery": {
 		TemplateID:   "ordering/order_out_for_delivery",
 		EmailSubject: "Your order is out for delivery",
-		DataBuilder: func(data map[string]interface{}, tenantWebsite string) map[string]interface{} {
+		DataBuilder: func(data map[string]interface{}, orderAppURL string) map[string]interface{} {
 			return map[string]interface{}{
 				"name":       data["customer_name"],
 				"order_id":   data["order_id"],
 				"rider_name": data["rider_name"],
-				"order_link": fmt.Sprintf("%s/orders/%s", tenantWebsite, data["order_id"]),
+				"order_link": orderLink(data, orderAppURL),
 			}
 		},
 	},
 	"ordering.order.completed": {
 		TemplateID:   "ordering/order_delivered",
 		EmailSubject: "Your order has been delivered",
-		DataBuilder: func(data map[string]interface{}, tenantWebsite string) map[string]interface{} {
+		DataBuilder: func(data map[string]interface{}, orderAppURL string) map[string]interface{} {
 			return map[string]interface{}{
 				"name":       data["customer_name"],
 				"order_id":   data["order_id"],
-				"order_link": fmt.Sprintf("%s/orders/%s", tenantWebsite, data["order_id"]),
+				"order_link": orderLink(data, orderAppURL),
 			}
 		},
 	},
 	"ordering.order.cancelled": {
 		TemplateID:   "ordering/order_cancelled",
 		EmailSubject: "Your order has been cancelled",
-		DataBuilder: func(data map[string]interface{}, tenantWebsite string) map[string]interface{} {
+		DataBuilder: func(data map[string]interface{}, orderAppURL string) map[string]interface{} {
 			return map[string]interface{}{
 				"name":          data["customer_name"],
 				"order_id":      data["order_id"],
 				"cancel_reason": data["cancel_reason"],
-				"order_link":    fmt.Sprintf("%s/orders/%s", tenantWebsite, data["order_id"]),
+				"order_link":    orderLink(data, orderAppURL),
 			}
 		},
 	},
 	"ordering.order.refunded": {
 		TemplateID:   "ordering/order_refunded",
 		EmailSubject: "Your refund has been processed",
-		DataBuilder: func(data map[string]interface{}, tenantWebsite string) map[string]interface{} {
+		DataBuilder: func(data map[string]interface{}, orderAppURL string) map[string]interface{} {
 			return map[string]interface{}{
 				"name":         data["customer_name"],
 				"order_number": data["order_number"],
 				"amount":       data["total_amount"],
 				"currency":     data["currency"],
 				"reason":       data["reason"],
-				"order_link":   fmt.Sprintf("%s/orders/%s", tenantWebsite, data["order_id"]),
+				"order_link":   orderLink(data, orderAppURL),
 			}
 		},
 	},
 	"ordering.order.scheduled": {
 		TemplateID:   "ordering/order_scheduled",
 		EmailSubject: "Your order has been scheduled",
-		DataBuilder: func(data map[string]interface{}, tenantWebsite string) map[string]interface{} {
+		DataBuilder: func(data map[string]interface{}, orderAppURL string) map[string]interface{} {
 			return map[string]interface{}{
 				"name":          data["customer_name"],
 				"order_number":  data["order_number"],
 				"scheduled_for": data["scheduled_for"],
 				"total_amount":  data["total_amount"],
 				"currency":      data["currency"],
-				"order_link":    fmt.Sprintf("%s/orders/%s", tenantWebsite, data["order_id"]),
+				"order_link":    orderLink(data, orderAppURL),
 			}
 		},
 	},
 	"ordering.order.for_pickup": {
 		TemplateID:   "ordering/order_for_pickup",
 		EmailSubject: "Your order is ready for pickup",
-		DataBuilder: func(data map[string]interface{}, tenantWebsite string) map[string]interface{} {
+		DataBuilder: func(data map[string]interface{}, orderAppURL string) map[string]interface{} {
 			return map[string]interface{}{
 				"name":         data["customer_name"],
 				"order_number": data["order_number"],
 				"outlet_name":  data["outlet_name"],
 				"pickup_time":  data["pickup_time"],
-				"order_link":   fmt.Sprintf("%s/orders/%s", tenantWebsite, data["order_id"]),
+				"order_link":   orderLink(data, orderAppURL),
 			}
 		},
 	},
@@ -202,13 +215,18 @@ func startOrderConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 			return
 		}
 
-		// Resolve tenant website for building order links
+		// Resolve tenant info for building order links
 		tenantWebsite := ""
+		tenantSlug := ""
 		if ti, err := tr.resolve(ctx, evtTenantID); err == nil {
 			tenantWebsite = ti.Website
+			tenantSlug = ti.Slug
 		} else {
 			logg.Warn("order event: could not resolve tenant, using empty website", zap.String("tenant_id", evtTenantID), zap.Error(err))
 		}
+
+		// Use ordering app URL for "View Order" links instead of tenant website
+		appURL := orderAppBaseURL(tenantSlug, tenantWebsite)
 
 		orderID, _ := evtData["order_id"].(string)
 
@@ -219,7 +237,7 @@ func startOrderConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 			SenderScope: messaging.SenderScopeTenant,
 			Target:      messaging.TargetCustomer,
 			To:          []string{email},
-			Data:        mapping.DataBuilder(evtData, tenantWebsite),
+			Data:        mapping.DataBuilder(evtData, appURL),
 			Metadata: map[string]interface{}{
 				"subject": mapping.EmailSubject,
 			},

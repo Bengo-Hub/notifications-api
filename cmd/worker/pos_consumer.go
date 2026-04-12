@@ -45,7 +45,7 @@ var posMappings = map[string]posNotificationMapping{
 				"name":        name,
 				"order_id":    payload["order_number"],
 				"outlet_name": payload["outlet_name"],
-				"order_link":  fmt.Sprintf("%s/orders", tenantWebsite),
+				"order_link":  fmt.Sprintf("%s/orders", serviceURL("NOTIFICATIONS_POS_APP_URL", tenantWebsite)),
 			}
 		},
 	},
@@ -63,7 +63,7 @@ var posMappings = map[string]posNotificationMapping{
 				"order_id":       payload["order_number"],
 				"total_amount":   payload["amount"],
 				"payment_method": payload["payment_method"],
-				"receipt_link":   fmt.Sprintf("%s/receipts", tenantWebsite),
+				"receipt_link":   fmt.Sprintf("%s/receipts", serviceURL("NOTIFICATIONS_POS_APP_URL", tenantWebsite)),
 			}
 		},
 	},

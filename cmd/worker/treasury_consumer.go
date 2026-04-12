@@ -44,7 +44,7 @@ var treasuryMappings = map[string]treasuryNotificationMapping{
 				"name":       "Customer",
 				"amount":     fmt.Sprintf("%s %s", payload["amount"], payload["currency"]),
 				"order_id":   payload["reference_id"],
-				"order_link": fmt.Sprintf("%s/orders/%s", tenantWebsite, payload["reference_id"]),
+				"order_link": fmt.Sprintf("%s/orders/%s", serviceURL("NOTIFICATIONS_ORDERING_APP_URL", tenantWebsite), payload["reference_id"]),
 			}
 		},
 	},
@@ -55,7 +55,7 @@ var treasuryMappings = map[string]treasuryNotificationMapping{
 			return map[string]any{
 				"name":       "Customer",
 				"order_id":   payload["reference_id"],
-				"retry_link": fmt.Sprintf("%s/orders/%s/pay", tenantWebsite, payload["reference_id"]),
+				"retry_link": fmt.Sprintf("%s/orders/%s/pay", serviceURL("NOTIFICATIONS_ORDERING_APP_URL", tenantWebsite), payload["reference_id"]),
 			}
 		},
 	},
@@ -68,7 +68,7 @@ var treasuryMappings = map[string]treasuryNotificationMapping{
 				"amount":         fmt.Sprintf("%s %s", payload["amount"], payload["currency"]),
 				"transaction_id": payload["intent_id"],
 				"payment_method": payload["payment_method"],
-				"receipt_link":   fmt.Sprintf("%s/payments", tenantWebsite),
+				"receipt_link":   fmt.Sprintf("%s/payments", serviceURL("NOTIFICATIONS_TREASURY_APP_URL", tenantWebsite)),
 			}
 		},
 	},
@@ -82,7 +82,7 @@ var treasuryMappings = map[string]treasuryNotificationMapping{
 				"payout_id":        payload["reference"],
 				"payout_method":    "Bank Transfer",
 				"reference_number": payload["transfer_code"],
-				"payout_link":      fmt.Sprintf("%s/dashboard/settlements", tenantWebsite),
+				"payout_link":      fmt.Sprintf("%s/dashboard/settlements", serviceURL("NOTIFICATIONS_TREASURY_APP_URL", tenantWebsite)),
 			}
 		},
 	},
@@ -97,7 +97,7 @@ var treasuryMappings = map[string]treasuryNotificationMapping{
 				"reference_type": payload["reference_type"],
 				"reference_id":   payload["reference_id"],
 				"reason":         payload["reason"],
-				"action_link":    fmt.Sprintf("%s/payments", tenantWebsite),
+				"action_link":    fmt.Sprintf("%s/payments", serviceURL("NOTIFICATIONS_TREASURY_APP_URL", tenantWebsite)),
 			}
 		},
 	},
