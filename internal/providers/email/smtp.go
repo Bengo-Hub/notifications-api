@@ -84,10 +84,20 @@ func (p *SMTPProvider) SendEmail(ctx context.Context, from string, to []string, 
 
 	domain := p.cfg.Host
 
-	// Always use manual SMTP client to control EHLO hostname (smtp.SendMail uses "localhost" which Gmail rejects)
-	conn, err := net.Dial("tcp", addr)
-	if err != nil {
-		return fmt.Errorf("smtp dial: %w", err)
+	// Port 465 uses implicit TLS (SSL); other ports use STARTTLS upgrade.
+	var conn net.Conn
+	if p.cfg.Port == 465 {
+		tlsConn, tlsErr := tls.Dial("tcp", addr, &tls.Config{ServerName: domain})
+		if tlsErr != nil {
+			return fmt.Errorf("smtp dial: %w", tlsErr)
+		}
+		conn = tlsConn
+	} else {
+		plainConn, plainErr := net.Dial("tcp", addr)
+		if plainErr != nil {
+			return fmt.Errorf("smtp dial: %w", plainErr)
+		}
+		conn = plainConn
 	}
 	c, err := smtp.NewClient(conn, domain)
 	if err != nil {
@@ -99,9 +109,12 @@ func (p *SMTPProvider) SendEmail(ctx context.Context, from string, to []string, 
 		return fmt.Errorf("smtp hello: %w", err)
 	}
 
-	if ok, _ := c.Extension("STARTTLS"); ok {
-		if err = c.StartTLS(&tls.Config{ServerName: domain}); err != nil {
-			return fmt.Errorf("smtp starttls: %w", err)
+	// STARTTLS only needed for non-SSL ports (587, 25)
+	if p.cfg.Port != 465 {
+		if ok, _ := c.Extension("STARTTLS"); ok {
+			if err = c.StartTLS(&tls.Config{ServerName: domain}); err != nil {
+				return fmt.Errorf("smtp starttls: %w", err)
+			}
 		}
 	}
 
