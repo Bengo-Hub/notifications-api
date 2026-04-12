@@ -16,6 +16,7 @@ type SMTPConfig struct {
 	Password string
 	From     string
 	StartTLS bool
+	SSL      bool // implicit TLS (port 465) — mutually exclusive with StartTLS
 }
 
 type SMTPProvider struct {
@@ -84,9 +85,10 @@ func (p *SMTPProvider) SendEmail(ctx context.Context, from string, to []string, 
 
 	domain := p.cfg.Host
 
-	// Port 465 uses implicit TLS (SSL); other ports use STARTTLS upgrade.
+	// Implicit TLS (SSL) when port is 465 or SSL flag is set; otherwise plain + STARTTLS.
+	useSSL := p.cfg.SSL || p.cfg.Port == 465
 	var conn net.Conn
-	if p.cfg.Port == 465 {
+	if useSSL {
 		tlsConn, tlsErr := tls.Dial("tcp", addr, &tls.Config{ServerName: domain})
 		if tlsErr != nil {
 			return fmt.Errorf("smtp dial: %w", tlsErr)
@@ -109,8 +111,8 @@ func (p *SMTPProvider) SendEmail(ctx context.Context, from string, to []string, 
 		return fmt.Errorf("smtp hello: %w", err)
 	}
 
-	// STARTTLS only needed for non-SSL ports (587, 25)
-	if p.cfg.Port != 465 {
+	// STARTTLS only needed for non-SSL connections (ports 587, 25)
+	if !useSSL {
 		if ok, _ := c.Extension("STARTTLS"); ok {
 			if err = c.StartTLS(&tls.Config{ServerName: domain}); err != nil {
 				return fmt.Errorf("smtp starttls: %w", err)

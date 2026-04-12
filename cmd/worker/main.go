@@ -365,8 +365,27 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, bil
 			subject = s
 		}
 		emailProv, _ := pm.GetEmailProvider(ctx, providerTenantID, preferred)
-		// Pass empty from — let the provider use its configured from address (tenant or platform fallback)
-		if err := emailProv.SendEmail(ctx, "", msg.To, subject, rendered, ""); err != nil {
+		err := emailProv.SendEmail(ctx, "", msg.To, subject, rendered, "")
+		if err != nil {
+			logg.Warn("tenant email delivery failed, trying platform fallback",
+				zap.String("tenant_id", msg.TenantID),
+				zap.String("provider", emailProv.Name()),
+				zap.Error(err),
+			)
+			// Fallback to platform provider if tenant provider fails
+			if providerTenantID != pm.PlatformID {
+				platformProv, pErr := pm.GetEmailProvider(ctx, pm.PlatformID, "")
+				if pErr == nil {
+					if fbErr := platformProv.SendEmail(ctx, "", msg.To, subject, rendered, ""); fbErr == nil {
+						logg.Info("email sent via platform fallback",
+							zap.String("provider", platformProv.Name()),
+							zap.String("template", msg.TemplateID),
+							zap.Strings("to", msg.To),
+						)
+						return nil
+					}
+				}
+			}
 			return err
 		}
 		logg.Info("email sent", zap.String("provider", emailProv.Name()), zap.String("template", msg.TemplateID), zap.Strings("to", msg.To))

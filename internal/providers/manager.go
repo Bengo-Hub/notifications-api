@@ -98,6 +98,7 @@ func (m *Manager) GetEmailProvider(ctx context.Context, tenantID string, preferr
 			pass := firstNonEmpty(s["password"], m.cfg.SMTPPassword)
 			from := firstNonEmpty(s["from"], m.cfg.SMTPFrom)
 			startTLS := parseBool(firstNonEmpty(s["start_tls"], boolToStr(m.cfg.SMTPStartTLS)))
+			ssl := parseBool(s["ssl"]) || port == 465
 
 			// If the resolved host is still localhost in production, skip SMTP
 			// and try the next provider (sendgrid, brevo, etc.)
@@ -113,6 +114,7 @@ func (m *Manager) GetEmailProvider(ctx context.Context, tenantID string, preferr
 				Password: pass,
 				From:     from,
 				StartTLS: startTLS,
+				SSL:      ssl,
 			}), nil
 		case "sendgrid":
 			// Load settings with hierarchy
