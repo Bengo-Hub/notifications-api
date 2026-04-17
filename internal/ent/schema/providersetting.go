@@ -61,7 +61,8 @@ func (ProviderSetting) Edges() []ent.Edge {
 // Indexes of the ProviderSetting.
 func (ProviderSetting) Indexes() []ent.Index {
 	return []ent.Index{
-		index.Fields("tenant_id", "environment", "provider_type", "provider_name", "key"),
+		index.Fields("tenant_id", "environment", "provider_type", "provider_name", "key").
+			Unique(),
 		index.Fields("tenant_id", "environment", "provider_type"),
 	}
 }

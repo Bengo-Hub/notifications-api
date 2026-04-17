@@ -335,7 +335,7 @@ var (
 		Indexes: []*schema.Index{
 			{
 				Name:    "providersetting_tenant_id_environment_provider_type_provider_name_key",
-				Unique:  false,
+				Unique:  true,
 				Columns: []*schema.Column{ProviderSettingsColumns[1], ProviderSettingsColumns[12], ProviderSettingsColumns[4], ProviderSettingsColumns[5], ProviderSettingsColumns[6]},
 			},
 			{
