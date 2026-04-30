@@ -106,8 +106,8 @@ type TemplateConfig struct {
 }
 
 type SecurityConfig struct {
-	// Optional shared API key for protecting /v1 endpoints. If empty, endpoints are open.
-	APIKey string `envconfig:"SECURITY_API_KEY"`
+	// Shared internal service key for S2S calls (same key across all services).
+	APIKey string `envconfig:"INTERNAL_SERVICE_KEY"`
 	// Auth Service SSO (JWT) integration
 	RequireJWT bool   `envconfig:"SECURITY_REQUIRE_JWT" default:"true"`
 	JWKSURL    string `envconfig:"SECURITY_JWKS_URL" default:"https://sso.codevertexitsolutions.com/api/v1/.well-known/jwks.json"`
