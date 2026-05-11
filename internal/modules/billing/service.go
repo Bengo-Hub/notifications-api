@@ -50,6 +50,7 @@ type TopUpResult struct {
 	Amount           decimal.Decimal `json:"amount"`
 	Currency         string          `json:"currency"`
 	AuthorizationURL *string         `json:"authorization_url,omitempty"`
+	InitiateURL      string          `json:"initiate_url,omitempty"`
 }
 
 // InitiateTopUp creates a payment intent in Treasury for buying credits.
@@ -88,6 +89,7 @@ func (s *Service) InitiateTopUp(ctx context.Context, in TopUpInput) (*TopUpResul
 		Amount           decimal.Decimal `json:"amount"`
 		Currency         string          `json:"currency"`
 		AuthorizationURL *string         `json:"authorization_url,omitempty"`
+		InitiateURL      string          `json:"initiate_url,omitempty"`
 	}
 	if err := resp.DecodeJSON(&treasuryResp); err != nil {
 		return nil, fmt.Errorf("decode treasury response: %w", err)
@@ -99,6 +101,7 @@ func (s *Service) InitiateTopUp(ctx context.Context, in TopUpInput) (*TopUpResul
 		Amount:           treasuryResp.Amount,
 		Currency:         treasuryResp.Currency,
 		AuthorizationURL: treasuryResp.AuthorizationURL,
+		InitiateURL:      treasuryResp.InitiateURL,
 	}, nil
 }
 
