@@ -253,6 +253,22 @@ func main() {
 	// Start projects event consumer (projects-service → milestone notifications)
 	startProjectsConsumer(ctx, nc, js, cfg, tr, logg)
 
+	// Ensure digitika JetStream stream exists (published by codevertex-website)
+	if _, streamErr := js.StreamInfo("digitika"); streamErr != nil {
+		if _, streamErr = js.AddStream(&nats.StreamConfig{
+			Name:      "digitika",
+			Subjects:  []string{"digitika.>"},
+			Retention: nats.LimitsPolicy,
+			Storage:   nats.FileStorage,
+			MaxAge:    7 * 24 * time.Hour,
+		}); streamErr != nil {
+			logg.Warn("digitika stream ensure failed (non-fatal)", zap.Error(streamErr))
+		}
+	}
+
+	// Start digitika event consumer (codevertex-website → enrollment/payment notifications)
+	startDigitikaConsumer(ctx, nc, js, cfg, tr, logg)
+
 	<-ctx.Done()
 	_ = nc.Drain()
 }

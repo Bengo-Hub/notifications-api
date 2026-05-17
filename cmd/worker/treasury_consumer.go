@@ -141,6 +141,16 @@ func startTreasuryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStream
 			aggregateID, _ = payload["aggregate_id"].(string)
 		}
 
+		// Digitika enrollment payments are handled by codevertex-website's treasury
+		// webhook which sends enriched emails (student name, course, portal link).
+		// Skip here to avoid duplicate generic payment emails.
+		referenceType, _ := payload["reference_type"].(string)
+		if referenceType == "digitika_enrollment" {
+			logg.Debug("treasury event: digitika_enrollment handled by codevertex-website webhook, skipping", zap.String("type", eventType))
+			_ = m.Ack()
+			return
+		}
+
 		mapping, ok := treasuryMappings[eventType]
 		if !ok {
 			logg.Debug("treasury event: unhandled type, skipping", zap.String("type", eventType))

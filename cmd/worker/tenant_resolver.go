@@ -38,6 +38,27 @@ func newTenantResolver(client *ent.Client, c *cache.Aside, authURL string) *tena
 	return &tenantResolver{client: client, cache: c, authURL: authURL}
 }
 
+// resolveBySlug looks up a tenant by its slug and returns basic info + cached branding.
+// Used by consumers that receive slug-based tenant identifiers (e.g. codevertex-website events).
+func (r *tenantResolver) resolveBySlug(ctx context.Context, slug string) (*tenantInfo, error) {
+	t, err := r.client.Tenant.Query().
+		Where(enttenant.SlugEQ(slug)).
+		Only(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("tenant_resolver: tenant with slug %q not found: %w", slug, err)
+	}
+
+	info := &tenantInfo{
+		ID:   t.ID,
+		Name: t.Name,
+		Slug: t.Slug,
+	}
+
+	r.enrichFromCache(ctx, info)
+
+	return info, nil
+}
+
 // resolve looks up tenant by ID string and returns basic info + cached branding.
 func (r *tenantResolver) resolve(ctx context.Context, tenantID string) (*tenantInfo, error) {
 	id, err := uuid.Parse(tenantID)
