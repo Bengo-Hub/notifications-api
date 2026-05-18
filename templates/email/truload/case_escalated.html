@@ -1,0 +1,44 @@
+{{ define "content" }}
+<p>Hello {{ .name }},</p>
+<p>Case <strong>{{ .case_no }}</strong> has been escalated and assigned to you for prosecution proceedings.</p>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e5e7eb;border-radius:6px;margin:16px 0;">
+  <tr style="background:#faf5ff;">
+    <td colspan="2" style="padding:10px 14px;font-weight:700;color:#6b21a8;font-size:13px;">Escalation Details</td>
+  </tr>
+  <tr style="border-top:1px solid #e5e7eb;">
+    <td style="padding:8px 14px;color:#6b7280;font-size:13px;width:40%;">Case No</td>
+    <td style="padding:8px 14px;font-weight:700;font-size:13px;">{{ .case_no }}</td>
+  </tr>
+  <tr style="background:#f9fafb;border-top:1px solid #e5e7eb;">
+    <td style="padding:8px 14px;color:#6b7280;font-size:13px;">Vehicle Reg</td>
+    <td style="padding:8px 14px;font-size:13px;">{{ .vehicle_reg }}</td>
+  </tr>
+  <tr style="border-top:1px solid #e5e7eb;">
+    <td style="padding:8px 14px;color:#6b7280;font-size:13px;">Escalation Type</td>
+    <td style="padding:8px 14px;font-weight:600;font-size:13px;">{{ .escalation_type }}</td>
+  </tr>
+  <tr style="background:#f9fafb;border-top:1px solid #e5e7eb;">
+    <td style="padding:8px 14px;color:#6b7280;font-size:13px;">Escalated By</td>
+    <td style="padding:8px 14px;font-size:13px;">{{ .escalated_by }}</td>
+  </tr>
+  <tr style="border-top:1px solid #e5e7eb;">
+    <td style="padding:8px 14px;color:#6b7280;font-size:13px;">Escalated At</td>
+    <td style="padding:8px 14px;font-size:13px;">{{ .escalated_at }}</td>
+  </tr>
+  {{ if .notes }}
+  <tr style="background:#f9fafb;border-top:1px solid #e5e7eb;">
+    <td style="padding:8px 14px;color:#6b7280;font-size:13px;">Notes</td>
+    <td style="padding:8px 14px;font-size:13px;">{{ .notes }}</td>
+  </tr>
+  {{ end }}
+</table>
+
+{{ if .case_link }}
+<p style="text-align:center;margin:20px 0;">
+  <a href="{{ .case_link }}" style="display:inline-block;background:#7c3aed;color:#ffffff;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:600;font-size:14px;">Review Case</a>
+</p>
+{{ end }}
+
+<p style="color:#6b7280;font-size:12px;margin-top:20px;">Please review and initiate prosecution proceedings as per the enforcement procedures.</p>
+{{ end }}

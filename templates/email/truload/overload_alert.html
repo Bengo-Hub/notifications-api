@@ -1,0 +1,48 @@
+{{ define "content" }}
+<p>Hello {{ .officer_name }},</p>
+<p>An overload violation has been detected at <strong>{{ .station_name }}</strong>.</p>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e5e7eb;border-radius:6px;margin:16px 0;">
+  <tr style="background:#fef2f2;">
+    <td colspan="2" style="padding:10px 14px;font-weight:700;color:#991b1b;font-size:13px;">Overload Details</td>
+  </tr>
+  <tr style="border-top:1px solid #e5e7eb;">
+    <td style="padding:8px 14px;color:#6b7280;font-size:13px;width:40%;">Vehicle Reg</td>
+    <td style="padding:8px 14px;font-weight:600;font-size:13px;">{{ .vehicle_reg }}</td>
+  </tr>
+  <tr style="background:#f9fafb;border-top:1px solid #e5e7eb;">
+    <td style="padding:8px 14px;color:#6b7280;font-size:13px;">Ticket No</td>
+    <td style="padding:8px 14px;font-weight:600;font-size:13px;">{{ .ticket_no }}</td>
+  </tr>
+  <tr style="border-top:1px solid #e5e7eb;">
+    <td style="padding:8px 14px;color:#6b7280;font-size:13px;">GVW Measured</td>
+    <td style="padding:8px 14px;font-weight:600;font-size:13px;color:#dc2626;">{{ .gvw_measured }} kg</td>
+  </tr>
+  <tr style="background:#f9fafb;border-top:1px solid #e5e7eb;">
+    <td style="padding:8px 14px;color:#6b7280;font-size:13px;">GVW Permissible</td>
+    <td style="padding:8px 14px;font-weight:600;font-size:13px;">{{ .gvw_permissible }} kg</td>
+  </tr>
+  <tr style="border-top:1px solid #e5e7eb;">
+    <td style="padding:8px 14px;color:#6b7280;font-size:13px;">Overload Amount</td>
+    <td style="padding:8px 14px;font-weight:700;font-size:13px;color:#dc2626;">{{ .overload_kg }} kg</td>
+  </tr>
+  {{ if .case_no }}
+  <tr style="background:#f9fafb;border-top:1px solid #e5e7eb;">
+    <td style="padding:8px 14px;color:#6b7280;font-size:13px;">Case No</td>
+    <td style="padding:8px 14px;font-weight:600;font-size:13px;">{{ .case_no }}</td>
+  </tr>
+  {{ end }}
+  <tr style="border-top:1px solid #e5e7eb;">
+    <td style="padding:8px 14px;color:#6b7280;font-size:13px;">Date / Time</td>
+    <td style="padding:8px 14px;font-size:13px;">{{ .weighed_at }}</td>
+  </tr>
+</table>
+
+{{ if .case_link }}
+<p style="text-align:center;">
+  <a href="{{ .case_link }}" style="display:inline-block;background:#dc2626;color:#ffffff;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:600;font-size:14px;">View Case</a>
+</p>
+{{ end }}
+
+<p style="color:#6b7280;font-size:12px;margin-top:20px;">This alert was generated automatically by {{ .brand_name }}. Vehicle has been directed to the holding yard.</p>
+{{ end }}

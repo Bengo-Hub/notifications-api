@@ -1,0 +1,42 @@
+{{ define "content" }}
+<p>Hello {{ .name }},</p>
+<p>The weighing transaction for vehicle <strong>{{ .vehicle_reg }}</strong> has been completed at <strong>{{ .station_name }}</strong>.</p>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e5e7eb;border-radius:6px;margin:16px 0;">
+  <tr style="background:{{ if eq .status "Compliant" }}#f0fdf4{{ else if eq .status "Overloaded" }}#fef2f2{{ else }}#fffbeb{{ end }};">
+    <td colspan="2" style="padding:10px 14px;font-weight:700;font-size:13px;color:{{ if eq .status "Compliant" }}#166534{{ else if eq .status "Overloaded" }}#991b1b{{ else }}#92400e{{ end }};">
+      Status: {{ .status }}
+    </td>
+  </tr>
+  <tr style="border-top:1px solid #e5e7eb;">
+    <td style="padding:8px 14px;color:#6b7280;font-size:13px;width:40%;">Ticket No</td>
+    <td style="padding:8px 14px;font-weight:600;font-size:13px;">{{ .ticket_no }}</td>
+  </tr>
+  <tr style="background:#f9fafb;border-top:1px solid #e5e7eb;">
+    <td style="padding:8px 14px;color:#6b7280;font-size:13px;">Vehicle Reg</td>
+    <td style="padding:8px 14px;font-size:13px;">{{ .vehicle_reg }}</td>
+  </tr>
+  <tr style="border-top:1px solid #e5e7eb;">
+    <td style="padding:8px 14px;color:#6b7280;font-size:13px;">GVW Measured</td>
+    <td style="padding:8px 14px;font-weight:600;font-size:13px;">{{ .gvw_measured }} kg</td>
+  </tr>
+  <tr style="background:#f9fafb;border-top:1px solid #e5e7eb;">
+    <td style="padding:8px 14px;color:#6b7280;font-size:13px;">GVW Permissible</td>
+    <td style="padding:8px 14px;font-size:13px;">{{ .gvw_permissible }} kg</td>
+  </tr>
+  <tr style="border-top:1px solid #e5e7eb;">
+    <td style="padding:8px 14px;color:#6b7280;font-size:13px;">Station</td>
+    <td style="padding:8px 14px;font-size:13px;">{{ .station_name }}</td>
+  </tr>
+  <tr style="background:#f9fafb;border-top:1px solid #e5e7eb;">
+    <td style="padding:8px 14px;color:#6b7280;font-size:13px;">Weighed At</td>
+    <td style="padding:8px 14px;font-size:13px;">{{ .weighed_at }}</td>
+  </tr>
+</table>
+
+{{ if .ticket_link }}
+<p style="text-align:center;margin:20px 0;">
+  <a href="{{ .ticket_link }}" style="display:inline-block;background:#0f766e;color:#ffffff;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:600;font-size:14px;">View Weight Ticket</a>
+</p>
+{{ end }}
+{{ end }}
