@@ -69,8 +69,17 @@ func claimsHasAllPermissions(claims *authclient.Claims, perms []identity.Permiss
 
 // RequireAuth enforces presence of a valid access token.
 // Uses auth-service JWT validation, loads/JIT-provisions user into context.
+// Bypass: if an API key already placed superuser/admin claims in context (S2S calls),
+// skip the JWT+local-user requirement since permissions are checked downstream.
 func (a *Authenticator) RequireAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if existingClaims, ok := authclient.ClaimsFromContext(r.Context()); ok && existingClaims != nil {
+			if IsSuperuser(existingClaims) || IsAdmin(existingClaims) {
+				next.ServeHTTP(w, r)
+				return
+			}
+		}
+
 		token := bearerToken(r.Header.Get("Authorization"))
 		if token == "" {
 			handlers.RespondError(w, http.StatusUnauthorized, "missing authorization header")
