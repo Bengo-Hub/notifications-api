@@ -19,7 +19,7 @@ import (
 	ratelimitmw "github.com/bengobox/notifications-api/internal/shared/middleware"
 )
 
-func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handlers.NotificationHandler, templates *handlers.TemplateHandler, platformProviders *handlers.PlatformProviders, tenantProviders *handlers.TenantProviders, analytics *handlers.AnalyticsHandler, billing *handlers.BillingHandler, platformBilling *handlers.PlatformBilling, settings *handlers.SettingsHandler, rbacHandler *handlers.RBACHandler, authMeHandler *handlers.AuthMeHandler, deviceTokens *handlers.DeviceTokenHandler, apiKey string, authMiddleware *authclient.AuthMiddleware, authenticator *identityhandler.Authenticator, allowedOrigins []string, tenantSyncer *tenant.Syncer, rateLimiter *ratelimitmw.RateLimiter) http.Handler {
+func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handlers.NotificationHandler, templates *handlers.TemplateHandler, platformProviders *handlers.PlatformProviders, tenantProviders *handlers.TenantProviders, analytics *handlers.AnalyticsHandler, billing *handlers.BillingHandler, platformBilling *handlers.PlatformBilling, settings *handlers.SettingsHandler, rbacHandler *handlers.RBACHandler, authMeHandler *handlers.AuthMeHandler, deviceTokens *handlers.DeviceTokenHandler, apiKey string, authMiddleware *authclient.AuthMiddleware, authenticator *identityhandler.Authenticator, allowedOrigins []string, tenantSyncer *tenant.Syncer, rateLimiter *ratelimitmw.RateLimiter, serviceConfig *handlers.ServiceConfigHandler) http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RealIP)
@@ -92,6 +92,10 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 					platform.Use(authenticator.RequireRoles(identity.RoleSuperAdmin))
 				}
 				platformProviders.RegisterPlatformProviderRoutes(platform)
+				if serviceConfig != nil {
+					serviceConfig.RegisterPlatformRoutes(platform)
+					serviceConfig.RegisterTenantConfigRoutes(platform)
+				}
 				platform.Route("/billing", func(pb chi.Router) {
 					if authenticator != nil {
 						pb.Use(authenticator.RequirePermissions(identity.PermPlatformBilling))
