@@ -61,6 +61,11 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 			tmpl.Put("/*", templates.Update)
 		})
 
+		// WhatsApp plans — public, no auth needed (pricing discovery)
+		if whatsappSubs != nil {
+			api.Get("/billing/whatsapp/plans", whatsappSubs.ListPlans)
+		}
+
 		// Protected routes - require authentication
 		// NOTE: Notifications is a core service included in all subscription plans for free.
 		// No RequireActiveSubscription — subscription enforcement is NOT applied.
