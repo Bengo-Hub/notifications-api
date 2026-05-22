@@ -106,8 +106,9 @@ var treasuryMappings = map[string]treasuryNotificationMapping{
 
 // startTreasuryConsumer subscribes to treasury.> events from the treasury-api
 // JetStream stream and dispatches payment notification emails. It also handles
-// credit top-up completion when reference_type=topup.
-func startTreasuryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamContext, cfg *config.Config, tr *tenantResolver, billingSvc *billing.Service, logg *zap.Logger) {
+// credit top-up (reference_type=topup) and WhatsApp subscription activation
+// (reference_type=whatsapp_subscription).
+func startTreasuryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamContext, cfg *config.Config, tr *tenantResolver, billingSvc *billing.Service, whatsappSubsSvc *billing.WhatsAppSubscriptionService, logg *zap.Logger) {
 	if nc == nil || js == nil {
 		logg.Warn("skipping treasury consumer: NATS not available")
 		return
@@ -211,6 +212,51 @@ func startTreasuryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStream
 			} else {
 				logg.Warn("treasury topup: zero or missing amount in payload", zap.String("tenant_id", tenantID))
 			}
+			_ = m.Ack()
+			return
+		}
+
+		// Handle WhatsApp subscription activation payment
+		if eventType == "payment.succeeded" && referenceType == "whatsapp_subscription" && whatsappSubsSvc != nil {
+			if tenantID == "" {
+				logg.Warn("treasury whatsapp_subscription: no tenant_id, skipping")
+				_ = m.Ack()
+				return
+			}
+			tid, tidErr := uuid.Parse(tenantID)
+			if tidErr != nil {
+				logg.Warn("treasury whatsapp_subscription: invalid tenant_id", zap.String("tenant_id", tenantID))
+				_ = m.Ack()
+				return
+			}
+
+			meta, _ := payload["metadata"].(map[string]any)
+			planIDStr, _ := meta["plan_id"].(string)
+			planID, planIDErr := uuid.Parse(planIDStr)
+			if planIDErr != nil {
+				logg.Error("treasury whatsapp_subscription: invalid plan_id in metadata", zap.String("plan_id", planIDStr))
+				_ = m.Ack()
+				return
+			}
+
+			referenceID, _ := payload["intent_id"].(string)
+			if referenceID == "" {
+				referenceID = aggregateID
+			}
+
+			if activateErr := whatsappSubsSvc.ActivateSubscription(ctx, tid, planID, referenceID); activateErr != nil {
+				logg.Error("treasury whatsapp_subscription: failed to activate",
+					zap.String("tenant_id", tenantID),
+					zap.String("plan_id", planIDStr),
+					zap.Error(activateErr),
+				)
+				_ = m.Nak()
+				return
+			}
+			logg.Info("whatsapp subscription activated via treasury payment",
+				zap.String("tenant_id", tenantID),
+				zap.String("plan_id", planIDStr),
+			)
 			_ = m.Ack()
 			return
 		}

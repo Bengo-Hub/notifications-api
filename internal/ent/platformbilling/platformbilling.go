@@ -18,6 +18,12 @@ const (
 	FieldCostPerSms = "cost_per_sms"
 	// FieldCostPerWhatsapp holds the string denoting the cost_per_whatsapp field in the database.
 	FieldCostPerWhatsapp = "cost_per_whatsapp"
+	// FieldProviderCostPerSms holds the string denoting the provider_cost_per_sms field in the database.
+	FieldProviderCostPerSms = "provider_cost_per_sms"
+	// FieldProviderCostPerWhatsapp holds the string denoting the provider_cost_per_whatsapp field in the database.
+	FieldProviderCostPerWhatsapp = "provider_cost_per_whatsapp"
+	// FieldMinMarkupPercentage holds the string denoting the min_markup_percentage field in the database.
+	FieldMinMarkupPercentage = "min_markup_percentage"
 	// FieldMinTopupAmount holds the string denoting the min_topup_amount field in the database.
 	FieldMinTopupAmount = "min_topup_amount"
 	// FieldTreasuryGatewayID holds the string denoting the treasury_gateway_id field in the database.
@@ -33,6 +39,9 @@ var Columns = []string{
 	FieldID,
 	FieldCostPerSms,
 	FieldCostPerWhatsapp,
+	FieldProviderCostPerSms,
+	FieldProviderCostPerWhatsapp,
+	FieldMinMarkupPercentage,
 	FieldMinTopupAmount,
 	FieldTreasuryGatewayID,
 	FieldUpdatedAt,
@@ -53,6 +62,12 @@ var (
 	DefaultCostPerSms float64
 	// DefaultCostPerWhatsapp holds the default value on creation for the "cost_per_whatsapp" field.
 	DefaultCostPerWhatsapp float64
+	// DefaultProviderCostPerSms holds the default value on creation for the "provider_cost_per_sms" field.
+	DefaultProviderCostPerSms float64
+	// DefaultProviderCostPerWhatsapp holds the default value on creation for the "provider_cost_per_whatsapp" field.
+	DefaultProviderCostPerWhatsapp float64
+	// DefaultMinMarkupPercentage holds the default value on creation for the "min_markup_percentage" field.
+	DefaultMinMarkupPercentage float64
 	// DefaultMinTopupAmount holds the default value on creation for the "min_topup_amount" field.
 	DefaultMinTopupAmount float64
 	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
@@ -79,6 +94,21 @@ func ByCostPerSms(opts ...sql.OrderTermOption) OrderOption {
 // ByCostPerWhatsapp orders the results by the cost_per_whatsapp field.
 func ByCostPerWhatsapp(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCostPerWhatsapp, opts...).ToFunc()
+}
+
+// ByProviderCostPerSms orders the results by the provider_cost_per_sms field.
+func ByProviderCostPerSms(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldProviderCostPerSms, opts...).ToFunc()
+}
+
+// ByProviderCostPerWhatsapp orders the results by the provider_cost_per_whatsapp field.
+func ByProviderCostPerWhatsapp(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldProviderCostPerWhatsapp, opts...).ToFunc()
+}
+
+// ByMinMarkupPercentage orders the results by the min_markup_percentage field.
+func ByMinMarkupPercentage(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMinMarkupPercentage, opts...).ToFunc()
 }
 
 // ByMinTopupAmount orders the results by the min_topup_amount field.

@@ -65,6 +65,21 @@ func CostPerWhatsapp(v float64) predicate.PlatformBilling {
 	return predicate.PlatformBilling(sql.FieldEQ(FieldCostPerWhatsapp, v))
 }
 
+// ProviderCostPerSms applies equality check predicate on the "provider_cost_per_sms" field. It's identical to ProviderCostPerSmsEQ.
+func ProviderCostPerSms(v float64) predicate.PlatformBilling {
+	return predicate.PlatformBilling(sql.FieldEQ(FieldProviderCostPerSms, v))
+}
+
+// ProviderCostPerWhatsapp applies equality check predicate on the "provider_cost_per_whatsapp" field. It's identical to ProviderCostPerWhatsappEQ.
+func ProviderCostPerWhatsapp(v float64) predicate.PlatformBilling {
+	return predicate.PlatformBilling(sql.FieldEQ(FieldProviderCostPerWhatsapp, v))
+}
+
+// MinMarkupPercentage applies equality check predicate on the "min_markup_percentage" field. It's identical to MinMarkupPercentageEQ.
+func MinMarkupPercentage(v float64) predicate.PlatformBilling {
+	return predicate.PlatformBilling(sql.FieldEQ(FieldMinMarkupPercentage, v))
+}
+
 // MinTopupAmount applies equality check predicate on the "min_topup_amount" field. It's identical to MinTopupAmountEQ.
 func MinTopupAmount(v float64) predicate.PlatformBilling {
 	return predicate.PlatformBilling(sql.FieldEQ(FieldMinTopupAmount, v))
@@ -158,6 +173,126 @@ func CostPerWhatsappLT(v float64) predicate.PlatformBilling {
 // CostPerWhatsappLTE applies the LTE predicate on the "cost_per_whatsapp" field.
 func CostPerWhatsappLTE(v float64) predicate.PlatformBilling {
 	return predicate.PlatformBilling(sql.FieldLTE(FieldCostPerWhatsapp, v))
+}
+
+// ProviderCostPerSmsEQ applies the EQ predicate on the "provider_cost_per_sms" field.
+func ProviderCostPerSmsEQ(v float64) predicate.PlatformBilling {
+	return predicate.PlatformBilling(sql.FieldEQ(FieldProviderCostPerSms, v))
+}
+
+// ProviderCostPerSmsNEQ applies the NEQ predicate on the "provider_cost_per_sms" field.
+func ProviderCostPerSmsNEQ(v float64) predicate.PlatformBilling {
+	return predicate.PlatformBilling(sql.FieldNEQ(FieldProviderCostPerSms, v))
+}
+
+// ProviderCostPerSmsIn applies the In predicate on the "provider_cost_per_sms" field.
+func ProviderCostPerSmsIn(vs ...float64) predicate.PlatformBilling {
+	return predicate.PlatformBilling(sql.FieldIn(FieldProviderCostPerSms, vs...))
+}
+
+// ProviderCostPerSmsNotIn applies the NotIn predicate on the "provider_cost_per_sms" field.
+func ProviderCostPerSmsNotIn(vs ...float64) predicate.PlatformBilling {
+	return predicate.PlatformBilling(sql.FieldNotIn(FieldProviderCostPerSms, vs...))
+}
+
+// ProviderCostPerSmsGT applies the GT predicate on the "provider_cost_per_sms" field.
+func ProviderCostPerSmsGT(v float64) predicate.PlatformBilling {
+	return predicate.PlatformBilling(sql.FieldGT(FieldProviderCostPerSms, v))
+}
+
+// ProviderCostPerSmsGTE applies the GTE predicate on the "provider_cost_per_sms" field.
+func ProviderCostPerSmsGTE(v float64) predicate.PlatformBilling {
+	return predicate.PlatformBilling(sql.FieldGTE(FieldProviderCostPerSms, v))
+}
+
+// ProviderCostPerSmsLT applies the LT predicate on the "provider_cost_per_sms" field.
+func ProviderCostPerSmsLT(v float64) predicate.PlatformBilling {
+	return predicate.PlatformBilling(sql.FieldLT(FieldProviderCostPerSms, v))
+}
+
+// ProviderCostPerSmsLTE applies the LTE predicate on the "provider_cost_per_sms" field.
+func ProviderCostPerSmsLTE(v float64) predicate.PlatformBilling {
+	return predicate.PlatformBilling(sql.FieldLTE(FieldProviderCostPerSms, v))
+}
+
+// ProviderCostPerWhatsappEQ applies the EQ predicate on the "provider_cost_per_whatsapp" field.
+func ProviderCostPerWhatsappEQ(v float64) predicate.PlatformBilling {
+	return predicate.PlatformBilling(sql.FieldEQ(FieldProviderCostPerWhatsapp, v))
+}
+
+// ProviderCostPerWhatsappNEQ applies the NEQ predicate on the "provider_cost_per_whatsapp" field.
+func ProviderCostPerWhatsappNEQ(v float64) predicate.PlatformBilling {
+	return predicate.PlatformBilling(sql.FieldNEQ(FieldProviderCostPerWhatsapp, v))
+}
+
+// ProviderCostPerWhatsappIn applies the In predicate on the "provider_cost_per_whatsapp" field.
+func ProviderCostPerWhatsappIn(vs ...float64) predicate.PlatformBilling {
+	return predicate.PlatformBilling(sql.FieldIn(FieldProviderCostPerWhatsapp, vs...))
+}
+
+// ProviderCostPerWhatsappNotIn applies the NotIn predicate on the "provider_cost_per_whatsapp" field.
+func ProviderCostPerWhatsappNotIn(vs ...float64) predicate.PlatformBilling {
+	return predicate.PlatformBilling(sql.FieldNotIn(FieldProviderCostPerWhatsapp, vs...))
+}
+
+// ProviderCostPerWhatsappGT applies the GT predicate on the "provider_cost_per_whatsapp" field.
+func ProviderCostPerWhatsappGT(v float64) predicate.PlatformBilling {
+	return predicate.PlatformBilling(sql.FieldGT(FieldProviderCostPerWhatsapp, v))
+}
+
+// ProviderCostPerWhatsappGTE applies the GTE predicate on the "provider_cost_per_whatsapp" field.
+func ProviderCostPerWhatsappGTE(v float64) predicate.PlatformBilling {
+	return predicate.PlatformBilling(sql.FieldGTE(FieldProviderCostPerWhatsapp, v))
+}
+
+// ProviderCostPerWhatsappLT applies the LT predicate on the "provider_cost_per_whatsapp" field.
+func ProviderCostPerWhatsappLT(v float64) predicate.PlatformBilling {
+	return predicate.PlatformBilling(sql.FieldLT(FieldProviderCostPerWhatsapp, v))
+}
+
+// ProviderCostPerWhatsappLTE applies the LTE predicate on the "provider_cost_per_whatsapp" field.
+func ProviderCostPerWhatsappLTE(v float64) predicate.PlatformBilling {
+	return predicate.PlatformBilling(sql.FieldLTE(FieldProviderCostPerWhatsapp, v))
+}
+
+// MinMarkupPercentageEQ applies the EQ predicate on the "min_markup_percentage" field.
+func MinMarkupPercentageEQ(v float64) predicate.PlatformBilling {
+	return predicate.PlatformBilling(sql.FieldEQ(FieldMinMarkupPercentage, v))
+}
+
+// MinMarkupPercentageNEQ applies the NEQ predicate on the "min_markup_percentage" field.
+func MinMarkupPercentageNEQ(v float64) predicate.PlatformBilling {
+	return predicate.PlatformBilling(sql.FieldNEQ(FieldMinMarkupPercentage, v))
+}
+
+// MinMarkupPercentageIn applies the In predicate on the "min_markup_percentage" field.
+func MinMarkupPercentageIn(vs ...float64) predicate.PlatformBilling {
+	return predicate.PlatformBilling(sql.FieldIn(FieldMinMarkupPercentage, vs...))
+}
+
+// MinMarkupPercentageNotIn applies the NotIn predicate on the "min_markup_percentage" field.
+func MinMarkupPercentageNotIn(vs ...float64) predicate.PlatformBilling {
+	return predicate.PlatformBilling(sql.FieldNotIn(FieldMinMarkupPercentage, vs...))
+}
+
+// MinMarkupPercentageGT applies the GT predicate on the "min_markup_percentage" field.
+func MinMarkupPercentageGT(v float64) predicate.PlatformBilling {
+	return predicate.PlatformBilling(sql.FieldGT(FieldMinMarkupPercentage, v))
+}
+
+// MinMarkupPercentageGTE applies the GTE predicate on the "min_markup_percentage" field.
+func MinMarkupPercentageGTE(v float64) predicate.PlatformBilling {
+	return predicate.PlatformBilling(sql.FieldGTE(FieldMinMarkupPercentage, v))
+}
+
+// MinMarkupPercentageLT applies the LT predicate on the "min_markup_percentage" field.
+func MinMarkupPercentageLT(v float64) predicate.PlatformBilling {
+	return predicate.PlatformBilling(sql.FieldLT(FieldMinMarkupPercentage, v))
+}
+
+// MinMarkupPercentageLTE applies the LTE predicate on the "min_markup_percentage" field.
+func MinMarkupPercentageLTE(v float64) predicate.PlatformBilling {
+	return predicate.PlatformBilling(sql.FieldLTE(FieldMinMarkupPercentage, v))
 }
 
 // MinTopupAmountEQ applies the EQ predicate on the "min_topup_amount" field.

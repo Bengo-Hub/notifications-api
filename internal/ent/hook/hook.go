@@ -201,6 +201,18 @@ func (f TenantCreditFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TenantCreditMutation", m)
 }
 
+// The TenantWhatsAppSubscriptionFunc type is an adapter to allow the use of ordinary
+// function as TenantWhatsAppSubscription mutator.
+type TenantWhatsAppSubscriptionFunc func(context.Context, *ent.TenantWhatsAppSubscriptionMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f TenantWhatsAppSubscriptionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.TenantWhatsAppSubscriptionMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TenantWhatsAppSubscriptionMutation", m)
+}
+
 // The UserFunc type is an adapter to allow the use of ordinary
 // function as User mutator.
 type UserFunc func(context.Context, *ent.UserMutation) (ent.Value, error)
@@ -223,6 +235,18 @@ func (f UserRoleAssignmentFunc) Mutate(ctx context.Context, m ent.Mutation) (ent
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.UserRoleAssignmentMutation", m)
+}
+
+// The WhatsAppPlanFunc type is an adapter to allow the use of ordinary
+// function as WhatsAppPlan mutator.
+type WhatsAppPlanFunc func(context.Context, *ent.WhatsAppPlanMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f WhatsAppPlanFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.WhatsAppPlanMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WhatsAppPlanMutation", m)
 }
 
 // Condition is a hook condition function.

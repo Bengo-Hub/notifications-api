@@ -19,7 +19,7 @@ import (
 	ratelimitmw "github.com/bengobox/notifications-api/internal/shared/middleware"
 )
 
-func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handlers.NotificationHandler, templates *handlers.TemplateHandler, platformProviders *handlers.PlatformProviders, tenantProviders *handlers.TenantProviders, analytics *handlers.AnalyticsHandler, billing *handlers.BillingHandler, platformBilling *handlers.PlatformBilling, settings *handlers.SettingsHandler, rbacHandler *handlers.RBACHandler, authMeHandler *handlers.AuthMeHandler, deviceTokens *handlers.DeviceTokenHandler, apiKey string, authMiddleware *authclient.AuthMiddleware, authenticator *identityhandler.Authenticator, allowedOrigins []string, tenantSyncer *tenant.Syncer, rateLimiter *ratelimitmw.RateLimiter, serviceConfig *handlers.ServiceConfigHandler) http.Handler {
+func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handlers.NotificationHandler, templates *handlers.TemplateHandler, platformProviders *handlers.PlatformProviders, tenantProviders *handlers.TenantProviders, analytics *handlers.AnalyticsHandler, billing *handlers.BillingHandler, platformBilling *handlers.PlatformBilling, settings *handlers.SettingsHandler, rbacHandler *handlers.RBACHandler, authMeHandler *handlers.AuthMeHandler, deviceTokens *handlers.DeviceTokenHandler, apiKey string, authMiddleware *authclient.AuthMiddleware, authenticator *identityhandler.Authenticator, allowedOrigins []string, tenantSyncer *tenant.Syncer, rateLimiter *ratelimitmw.RateLimiter, serviceConfig *handlers.ServiceConfigHandler, whatsappSubs *handlers.WhatsAppSubscriptionHandler) http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RealIP)
@@ -180,6 +180,27 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 						write.Post("/topup", billing.TopUp)
 						write.Post("/initiate", billing.Initiate)
 					})
+
+					// WhatsApp subscription routes (under /billing/whatsapp)
+					if whatsappSubs != nil {
+						b.Route("/whatsapp", func(wa chi.Router) {
+							// Public plan listing (no auth required inside the protected group context)
+							wa.Get("/plans", whatsappSubs.ListPlans)
+							wa.Group(func(read chi.Router) {
+								if authenticator != nil {
+									read.Use(authenticator.RequirePermissions(identity.PermBillingRead))
+								}
+								read.Get("/subscription", whatsappSubs.GetSubscription)
+							})
+							wa.Group(func(write chi.Router) {
+								if authenticator != nil {
+									write.Use(authenticator.RequirePermissions(identity.PermBillingManage))
+								}
+								write.Post("/subscribe", whatsappSubs.Subscribe)
+								write.Post("/cancel", whatsappSubs.Cancel)
+							})
+						})
+					}
 				})
 
 				// Settings routes

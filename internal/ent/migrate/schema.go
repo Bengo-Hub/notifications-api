@@ -17,6 +17,8 @@ var (
 		{Name: "action", Type: field.TypeEnum, Enums: []string{"TOPUP", "DEDUCTION", "REFUND", "ADJUSTMENT"}},
 		{Name: "amount", Type: field.TypeFloat64},
 		{Name: "new_balance", Type: field.TypeFloat64},
+		{Name: "provider_cost", Type: field.TypeFloat64, Default: 0},
+		{Name: "platform_fee", Type: field.TypeFloat64, Default: 0},
 		{Name: "reference_id", Type: field.TypeString, Nullable: true},
 		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "metadata", Type: field.TypeJSON},
@@ -41,7 +43,7 @@ var (
 			{
 				Name:    "credittransaction_reference_id",
 				Unique:  false,
-				Columns: []*schema.Column{CreditTransactionsColumns[6]},
+				Columns: []*schema.Column{CreditTransactionsColumns[8]},
 			},
 		},
 	}
@@ -298,6 +300,9 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "cost_per_sms", Type: field.TypeFloat64, Default: 1},
 		{Name: "cost_per_whatsapp", Type: field.TypeFloat64, Default: 2},
+		{Name: "provider_cost_per_sms", Type: field.TypeFloat64, Default: 0.5},
+		{Name: "provider_cost_per_whatsapp", Type: field.TypeFloat64, Default: 0.8},
+		{Name: "min_markup_percentage", Type: field.TypeFloat64, Default: 40},
 		{Name: "min_topup_amount", Type: field.TypeFloat64, Default: 500},
 		{Name: "treasury_gateway_id", Type: field.TypeUUID, Nullable: true},
 		{Name: "updated_at", Type: field.TypeTime},
@@ -517,6 +522,46 @@ var (
 			},
 		},
 	}
+	// TenantWhatsAppSubscriptionsColumns holds the columns for the "tenant_whats_app_subscriptions" table.
+	TenantWhatsAppSubscriptionsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "tenant_id", Type: field.TypeUUID},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"active", "cancelled", "expired", "trial"}, Default: "trial"},
+		{Name: "started_at", Type: field.TypeTime},
+		{Name: "expires_at", Type: field.TypeTime},
+		{Name: "payment_reference", Type: field.TypeString, Nullable: true},
+		{Name: "auto_renew", Type: field.TypeBool, Default: true},
+		{Name: "messages_used", Type: field.TypeInt, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "plan_id", Type: field.TypeUUID},
+	}
+	// TenantWhatsAppSubscriptionsTable holds the schema information for the "tenant_whats_app_subscriptions" table.
+	TenantWhatsAppSubscriptionsTable = &schema.Table{
+		Name:       "tenant_whats_app_subscriptions",
+		Columns:    TenantWhatsAppSubscriptionsColumns,
+		PrimaryKey: []*schema.Column{TenantWhatsAppSubscriptionsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "tenant_whats_app_subscriptions_whats_app_plans_plan",
+				Columns:    []*schema.Column{TenantWhatsAppSubscriptionsColumns[10]},
+				RefColumns: []*schema.Column{WhatsAppPlansColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "tenantwhatsappsubscription_tenant_id",
+				Unique:  false,
+				Columns: []*schema.Column{TenantWhatsAppSubscriptionsColumns[1]},
+			},
+			{
+				Name:    "tenantwhatsappsubscription_tenant_id_status",
+				Unique:  false,
+				Columns: []*schema.Column{TenantWhatsAppSubscriptionsColumns[1], TenantWhatsAppSubscriptionsColumns[2]},
+			},
+		},
+	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -650,6 +695,23 @@ var (
 			},
 		},
 	}
+	// WhatsAppPlansColumns holds the columns for the "whats_app_plans" table.
+	WhatsAppPlansColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "name", Type: field.TypeString},
+		{Name: "slug", Type: field.TypeString, Unique: true},
+		{Name: "price_monthly", Type: field.TypeFloat64},
+		{Name: "provider_cost", Type: field.TypeFloat64, Default: 0},
+		{Name: "messages_per_month", Type: field.TypeInt, Default: 0},
+		{Name: "is_active", Type: field.TypeBool, Default: true},
+		{Name: "created_at", Type: field.TypeTime},
+	}
+	// WhatsAppPlansTable holds the schema information for the "whats_app_plans" table.
+	WhatsAppPlansTable = &schema.Table{
+		Name:       "whats_app_plans",
+		Columns:    WhatsAppPlansColumns,
+		PrimaryKey: []*schema.Column{WhatsAppPlansColumns[0]},
+	}
 	// RolePermissionsColumns holds the columns for the "role_permissions" table.
 	RolePermissionsColumns = []*schema.Column{
 		{Name: "role_id", Type: field.TypeString},
@@ -718,8 +780,10 @@ var (
 		TemplatesTable,
 		TenantsTable,
 		TenantCreditsTable,
+		TenantWhatsAppSubscriptionsTable,
 		UsersTable,
 		UserRoleAssignmentsTable,
+		WhatsAppPlansTable,
 		RolePermissionsTable,
 		UserRolesTable,
 	}
@@ -728,6 +792,7 @@ var (
 func init() {
 	NotificationRolePermissionsTable.ForeignKeys[0].RefTable = NotificationRolesTable
 	NotificationRolePermissionsTable.ForeignKeys[1].RefTable = NotificationPermissionsTable
+	TenantWhatsAppSubscriptionsTable.ForeignKeys[0].RefTable = WhatsAppPlansTable
 	UsersTable.ForeignKeys[0].RefTable = TenantsTable
 	UserRoleAssignmentsTable.ForeignKeys[0].RefTable = NotificationRolesTable
 	UserRoleAssignmentsTable.ForeignKeys[1].RefTable = UsersTable

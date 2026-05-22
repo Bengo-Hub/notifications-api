@@ -25,6 +25,10 @@ const (
 	FieldAmount = "amount"
 	// FieldNewBalance holds the string denoting the new_balance field in the database.
 	FieldNewBalance = "new_balance"
+	// FieldProviderCost holds the string denoting the provider_cost field in the database.
+	FieldProviderCost = "provider_cost"
+	// FieldPlatformFee holds the string denoting the platform_fee field in the database.
+	FieldPlatformFee = "platform_fee"
 	// FieldReferenceID holds the string denoting the reference_id field in the database.
 	FieldReferenceID = "reference_id"
 	// FieldDescription holds the string denoting the description field in the database.
@@ -45,6 +49,8 @@ var Columns = []string{
 	FieldAction,
 	FieldAmount,
 	FieldNewBalance,
+	FieldProviderCost,
+	FieldPlatformFee,
 	FieldReferenceID,
 	FieldDescription,
 	FieldMetadata,
@@ -62,6 +68,10 @@ func ValidColumn(column string) bool {
 }
 
 var (
+	// DefaultProviderCost holds the default value on creation for the "provider_cost" field.
+	DefaultProviderCost float64
+	// DefaultPlatformFee holds the default value on creation for the "platform_fee" field.
+	DefaultPlatformFee float64
 	// DefaultMetadata holds the default value on creation for the "metadata" field.
 	DefaultMetadata map[string]interface{}
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
@@ -149,6 +159,16 @@ func ByAmount(opts ...sql.OrderTermOption) OrderOption {
 // ByNewBalance orders the results by the new_balance field.
 func ByNewBalance(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldNewBalance, opts...).ToFunc()
+}
+
+// ByProviderCost orders the results by the provider_cost field.
+func ByProviderCost(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldProviderCost, opts...).ToFunc()
+}
+
+// ByPlatformFee orders the results by the platform_fee field.
+func ByPlatformFee(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPlatformFee, opts...).ToFunc()
 }
 
 // ByReferenceID orders the results by the reference_id field.

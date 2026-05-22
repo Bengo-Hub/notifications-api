@@ -18,10 +18,16 @@ type PlatformBilling struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID uuid.UUID `json:"id,omitempty"`
-	// Default cost per SMS segment
+	// Tenant-facing rate per SMS segment (KES)
 	CostPerSms float64 `json:"cost_per_sms,omitempty"`
-	// Default cost per WhatsApp conversation/message
+	// Base WhatsApp monthly subscription rate (KES) — used when no plan is set
 	CostPerWhatsapp float64 `json:"cost_per_whatsapp,omitempty"`
+	// Actual provider (AT) cost per SMS segment — platform profit = cost_per_sms - provider_cost_per_sms
+	ProviderCostPerSms float64 `json:"provider_cost_per_sms,omitempty"`
+	// Estimated provider cost per WhatsApp message — for internal profit tracking
+	ProviderCostPerWhatsapp float64 `json:"provider_cost_per_whatsapp,omitempty"`
+	// Minimum required markup percentage above provider cost (e.g. 40 = 40%)
+	MinMarkupPercentage float64 `json:"min_markup_percentage,omitempty"`
 	// Minimum allowed top-up amount in base currency
 	MinTopupAmount float64 `json:"min_topup_amount,omitempty"`
 	// The gateway ID in Treasury service to use for top-ups
@@ -38,7 +44,7 @@ func (*PlatformBilling) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case platformbilling.FieldTreasuryGatewayID:
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
-		case platformbilling.FieldCostPerSms, platformbilling.FieldCostPerWhatsapp, platformbilling.FieldMinTopupAmount:
+		case platformbilling.FieldCostPerSms, platformbilling.FieldCostPerWhatsapp, platformbilling.FieldProviderCostPerSms, platformbilling.FieldProviderCostPerWhatsapp, platformbilling.FieldMinMarkupPercentage, platformbilling.FieldMinTopupAmount:
 			values[i] = new(sql.NullFloat64)
 		case platformbilling.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -76,6 +82,24 @@ func (_m *PlatformBilling) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field cost_per_whatsapp", values[i])
 			} else if value.Valid {
 				_m.CostPerWhatsapp = value.Float64
+			}
+		case platformbilling.FieldProviderCostPerSms:
+			if value, ok := values[i].(*sql.NullFloat64); !ok {
+				return fmt.Errorf("unexpected type %T for field provider_cost_per_sms", values[i])
+			} else if value.Valid {
+				_m.ProviderCostPerSms = value.Float64
+			}
+		case platformbilling.FieldProviderCostPerWhatsapp:
+			if value, ok := values[i].(*sql.NullFloat64); !ok {
+				return fmt.Errorf("unexpected type %T for field provider_cost_per_whatsapp", values[i])
+			} else if value.Valid {
+				_m.ProviderCostPerWhatsapp = value.Float64
+			}
+		case platformbilling.FieldMinMarkupPercentage:
+			if value, ok := values[i].(*sql.NullFloat64); !ok {
+				return fmt.Errorf("unexpected type %T for field min_markup_percentage", values[i])
+			} else if value.Valid {
+				_m.MinMarkupPercentage = value.Float64
 			}
 		case platformbilling.FieldMinTopupAmount:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
@@ -137,6 +161,15 @@ func (_m *PlatformBilling) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("cost_per_whatsapp=")
 	builder.WriteString(fmt.Sprintf("%v", _m.CostPerWhatsapp))
+	builder.WriteString(", ")
+	builder.WriteString("provider_cost_per_sms=")
+	builder.WriteString(fmt.Sprintf("%v", _m.ProviderCostPerSms))
+	builder.WriteString(", ")
+	builder.WriteString("provider_cost_per_whatsapp=")
+	builder.WriteString(fmt.Sprintf("%v", _m.ProviderCostPerWhatsapp))
+	builder.WriteString(", ")
+	builder.WriteString("min_markup_percentage=")
+	builder.WriteString(fmt.Sprintf("%v", _m.MinMarkupPercentage))
 	builder.WriteString(", ")
 	builder.WriteString("min_topup_amount=")
 	builder.WriteString(fmt.Sprintf("%v", _m.MinTopupAmount))

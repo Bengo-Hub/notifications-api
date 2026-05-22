@@ -105,9 +105,15 @@ func (s *Service) InitiateTopUp(ctx context.Context, in TopUpInput) (*TopUpResul
 	}, nil
 }
 
-// getRate resolves the rate for a channel, checking tenant override then platform default.
-func (s *Service) getRate(ctx context.Context, tenantID uuid.UUID, creditType string) (float64, error) {
-	// 1. Try tenant-specific rate
+// rateInfo holds both tenant-facing rate and underlying provider cost.
+type rateInfo struct {
+	Rate         float64
+	ProviderCost float64
+}
+
+// getRateInfo resolves rate + provider cost for a channel.
+func (s *Service) getRateInfo(ctx context.Context, tenantID uuid.UUID, creditType string) (rateInfo, error) {
+	// Try tenant-specific rate first
 	tc, err := s.client.TenantCredit.Query().
 		Where(
 			tenantcredit.TenantIDEQ(tenantID),
@@ -115,63 +121,78 @@ func (s *Service) getRate(ctx context.Context, tenantID uuid.UUID, creditType st
 		).
 		Only(ctx)
 	if err == nil && tc.Rate > 0 {
-		return tc.Rate, nil
+		// Tenant override — provider cost unknown; use platform default
+		pb, _ := s.client.PlatformBilling.Query().First(ctx)
+		var provCost float64
+		if pb != nil {
+			if creditType == "SMS" {
+				provCost = pb.ProviderCostPerSms
+			} else {
+				provCost = pb.ProviderCostPerWhatsapp
+			}
+		}
+		return rateInfo{Rate: tc.Rate, ProviderCost: provCost}, nil
 	}
 
-	// 2. Try platform default
+	// Platform default
 	pb, err := s.client.PlatformBilling.Query().First(ctx)
 	if err != nil {
-		// Hardcoded fallbacks if DB is empty
 		if creditType == "SMS" {
-			return 1.0, nil
+			return rateInfo{Rate: 1.0, ProviderCost: 0.5}, nil
 		}
-		return 2.0, nil
+		return rateInfo{Rate: 2.0, ProviderCost: 0.8}, nil
 	}
 
 	if creditType == "SMS" {
-		return pb.CostPerSms, nil
+		return rateInfo{Rate: pb.CostPerSms, ProviderCost: pb.ProviderCostPerSms}, nil
 	}
-	return pb.CostPerWhatsapp, nil
+	return rateInfo{Rate: pb.CostPerWhatsapp, ProviderCost: pb.ProviderCostPerWhatsapp}, nil
 }
 
 // DeductSMSCredits calculates segments and deducts credits for SMS delivery using resolved rates.
 func (s *Service) DeductSMSCredits(ctx context.Context, tenantID uuid.UUID, body string, recipientCount int, description string) error {
 	segments := s.segment.CountSMSSegments(body)
-	rate, err := s.getRate(ctx, tenantID, "SMS")
+	ri, err := s.getRateInfo(ctx, tenantID, "SMS")
 	if err != nil {
 		return fmt.Errorf("resolve rate: %w", err)
 	}
 
-	totalAmount := rate * float64(segments*recipientCount)
-	
-	s.log.Debug("deducting sms credits", 
+	units := float64(segments * recipientCount)
+	totalAmount := ri.Rate * units
+	providerCost := ri.ProviderCost * units
+
+	s.log.Debug("deducting sms credits",
 		zap.String("tenant_id", tenantID.String()),
 		zap.Int("segments", segments),
 		zap.Int("recipients", recipientCount),
-		zap.Float64("rate", rate),
+		zap.Float64("rate", ri.Rate),
 		zap.Float64("total_amount", totalAmount),
+		zap.Float64("provider_cost", providerCost),
 	)
 
-	return s.DeductCredits(ctx, tenantID, "SMS", totalAmount, description)
+	return s.deductCreditsWithCost(ctx, tenantID, "SMS", totalAmount, providerCost, description)
 }
 
 // DeductWhatsAppCredits deducts credits for WhatsApp delivery using resolved rates.
 func (s *Service) DeductWhatsAppCredits(ctx context.Context, tenantID uuid.UUID, recipientCount int, description string) error {
-	rate, err := s.getRate(ctx, tenantID, "WHATSAPP")
+	ri, err := s.getRateInfo(ctx, tenantID, "WHATSAPP")
 	if err != nil {
 		return fmt.Errorf("resolve rate: %w", err)
 	}
 
-	totalAmount := rate * float64(recipientCount)
-	
-	s.log.Debug("deducting whatsapp credits", 
+	units := float64(recipientCount)
+	totalAmount := ri.Rate * units
+	providerCost := ri.ProviderCost * units
+
+	s.log.Debug("deducting whatsapp credits",
 		zap.String("tenant_id", tenantID.String()),
 		zap.Int("recipients", recipientCount),
-		zap.Float64("rate", rate),
+		zap.Float64("rate", ri.Rate),
 		zap.Float64("total_amount", totalAmount),
+		zap.Float64("provider_cost", providerCost),
 	)
 
-	return s.DeductCredits(ctx, tenantID, "WHATSAPP", totalAmount, description)
+	return s.deductCreditsWithCost(ctx, tenantID, "WHATSAPP", totalAmount, providerCost, description)
 }
 
 // GetBalance retrieves the balance for a tenant and credit type.
@@ -191,8 +212,13 @@ func (s *Service) GetBalance(ctx context.Context, tenantID uuid.UUID, creditType
 	return tc.Balance, nil
 }
 
-// DeductCredits subtracts a fixed amount from a tenant's balance atomically.
+// DeductCredits subtracts a fixed amount from a tenant's balance atomically (no provider cost tracking).
 func (s *Service) DeductCredits(ctx context.Context, tenantID uuid.UUID, creditType string, amount float64, description string) error {
+	return s.deductCreditsWithCost(ctx, tenantID, creditType, amount, 0, description)
+}
+
+// deductCreditsWithCost subtracts credits and logs provider cost + platform fee.
+func (s *Service) deductCreditsWithCost(ctx context.Context, tenantID uuid.UUID, creditType string, amount, providerCost float64, description string) error {
 	tx, err := s.client.Tx(ctx)
 	if err != nil {
 		return fmt.Errorf("start transaction: %w", err)
@@ -232,12 +258,19 @@ func (s *Service) DeductCredits(ctx context.Context, tenantID uuid.UUID, creditT
 		return fmt.Errorf("update balance: %w", err)
 	}
 
+	platformFee := amount - providerCost
+	if platformFee < 0 {
+		platformFee = 0
+	}
+
 	_, err = tx.CreditTransaction.Create().
 		SetTenantID(tenantID).
 		SetType(credittransaction.Type(creditType)).
 		SetAction(credittransaction.ActionDEDUCTION).
 		SetAmount(amount).
 		SetNewBalance(newBalance).
+		SetProviderCost(providerCost).
+		SetPlatformFee(platformFee).
 		SetDescription(description).
 		Save(ctx)
 	if err != nil {

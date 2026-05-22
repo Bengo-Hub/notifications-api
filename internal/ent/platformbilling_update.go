@@ -72,6 +72,69 @@ func (_u *PlatformBillingUpdate) AddCostPerWhatsapp(v float64) *PlatformBillingU
 	return _u
 }
 
+// SetProviderCostPerSms sets the "provider_cost_per_sms" field.
+func (_u *PlatformBillingUpdate) SetProviderCostPerSms(v float64) *PlatformBillingUpdate {
+	_u.mutation.ResetProviderCostPerSms()
+	_u.mutation.SetProviderCostPerSms(v)
+	return _u
+}
+
+// SetNillableProviderCostPerSms sets the "provider_cost_per_sms" field if the given value is not nil.
+func (_u *PlatformBillingUpdate) SetNillableProviderCostPerSms(v *float64) *PlatformBillingUpdate {
+	if v != nil {
+		_u.SetProviderCostPerSms(*v)
+	}
+	return _u
+}
+
+// AddProviderCostPerSms adds value to the "provider_cost_per_sms" field.
+func (_u *PlatformBillingUpdate) AddProviderCostPerSms(v float64) *PlatformBillingUpdate {
+	_u.mutation.AddProviderCostPerSms(v)
+	return _u
+}
+
+// SetProviderCostPerWhatsapp sets the "provider_cost_per_whatsapp" field.
+func (_u *PlatformBillingUpdate) SetProviderCostPerWhatsapp(v float64) *PlatformBillingUpdate {
+	_u.mutation.ResetProviderCostPerWhatsapp()
+	_u.mutation.SetProviderCostPerWhatsapp(v)
+	return _u
+}
+
+// SetNillableProviderCostPerWhatsapp sets the "provider_cost_per_whatsapp" field if the given value is not nil.
+func (_u *PlatformBillingUpdate) SetNillableProviderCostPerWhatsapp(v *float64) *PlatformBillingUpdate {
+	if v != nil {
+		_u.SetProviderCostPerWhatsapp(*v)
+	}
+	return _u
+}
+
+// AddProviderCostPerWhatsapp adds value to the "provider_cost_per_whatsapp" field.
+func (_u *PlatformBillingUpdate) AddProviderCostPerWhatsapp(v float64) *PlatformBillingUpdate {
+	_u.mutation.AddProviderCostPerWhatsapp(v)
+	return _u
+}
+
+// SetMinMarkupPercentage sets the "min_markup_percentage" field.
+func (_u *PlatformBillingUpdate) SetMinMarkupPercentage(v float64) *PlatformBillingUpdate {
+	_u.mutation.ResetMinMarkupPercentage()
+	_u.mutation.SetMinMarkupPercentage(v)
+	return _u
+}
+
+// SetNillableMinMarkupPercentage sets the "min_markup_percentage" field if the given value is not nil.
+func (_u *PlatformBillingUpdate) SetNillableMinMarkupPercentage(v *float64) *PlatformBillingUpdate {
+	if v != nil {
+		_u.SetMinMarkupPercentage(*v)
+	}
+	return _u
+}
+
+// AddMinMarkupPercentage adds value to the "min_markup_percentage" field.
+func (_u *PlatformBillingUpdate) AddMinMarkupPercentage(v float64) *PlatformBillingUpdate {
+	_u.mutation.AddMinMarkupPercentage(v)
+	return _u
+}
+
 // SetMinTopupAmount sets the "min_topup_amount" field.
 func (_u *PlatformBillingUpdate) SetMinTopupAmount(v float64) *PlatformBillingUpdate {
 	_u.mutation.ResetMinTopupAmount()
@@ -187,6 +250,24 @@ func (_u *PlatformBillingUpdate) sqlSave(ctx context.Context) (_node int, err er
 	if value, ok := _u.mutation.AddedCostPerWhatsapp(); ok {
 		_spec.AddField(platformbilling.FieldCostPerWhatsapp, field.TypeFloat64, value)
 	}
+	if value, ok := _u.mutation.ProviderCostPerSms(); ok {
+		_spec.SetField(platformbilling.FieldProviderCostPerSms, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedProviderCostPerSms(); ok {
+		_spec.AddField(platformbilling.FieldProviderCostPerSms, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.ProviderCostPerWhatsapp(); ok {
+		_spec.SetField(platformbilling.FieldProviderCostPerWhatsapp, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedProviderCostPerWhatsapp(); ok {
+		_spec.AddField(platformbilling.FieldProviderCostPerWhatsapp, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.MinMarkupPercentage(); ok {
+		_spec.SetField(platformbilling.FieldMinMarkupPercentage, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedMinMarkupPercentage(); ok {
+		_spec.AddField(platformbilling.FieldMinMarkupPercentage, field.TypeFloat64, value)
+	}
 	if value, ok := _u.mutation.MinTopupAmount(); ok {
 		_spec.SetField(platformbilling.FieldMinTopupAmount, field.TypeFloat64, value)
 	}
@@ -263,6 +344,69 @@ func (_u *PlatformBillingUpdateOne) SetNillableCostPerWhatsapp(v *float64) *Plat
 // AddCostPerWhatsapp adds value to the "cost_per_whatsapp" field.
 func (_u *PlatformBillingUpdateOne) AddCostPerWhatsapp(v float64) *PlatformBillingUpdateOne {
 	_u.mutation.AddCostPerWhatsapp(v)
+	return _u
+}
+
+// SetProviderCostPerSms sets the "provider_cost_per_sms" field.
+func (_u *PlatformBillingUpdateOne) SetProviderCostPerSms(v float64) *PlatformBillingUpdateOne {
+	_u.mutation.ResetProviderCostPerSms()
+	_u.mutation.SetProviderCostPerSms(v)
+	return _u
+}
+
+// SetNillableProviderCostPerSms sets the "provider_cost_per_sms" field if the given value is not nil.
+func (_u *PlatformBillingUpdateOne) SetNillableProviderCostPerSms(v *float64) *PlatformBillingUpdateOne {
+	if v != nil {
+		_u.SetProviderCostPerSms(*v)
+	}
+	return _u
+}
+
+// AddProviderCostPerSms adds value to the "provider_cost_per_sms" field.
+func (_u *PlatformBillingUpdateOne) AddProviderCostPerSms(v float64) *PlatformBillingUpdateOne {
+	_u.mutation.AddProviderCostPerSms(v)
+	return _u
+}
+
+// SetProviderCostPerWhatsapp sets the "provider_cost_per_whatsapp" field.
+func (_u *PlatformBillingUpdateOne) SetProviderCostPerWhatsapp(v float64) *PlatformBillingUpdateOne {
+	_u.mutation.ResetProviderCostPerWhatsapp()
+	_u.mutation.SetProviderCostPerWhatsapp(v)
+	return _u
+}
+
+// SetNillableProviderCostPerWhatsapp sets the "provider_cost_per_whatsapp" field if the given value is not nil.
+func (_u *PlatformBillingUpdateOne) SetNillableProviderCostPerWhatsapp(v *float64) *PlatformBillingUpdateOne {
+	if v != nil {
+		_u.SetProviderCostPerWhatsapp(*v)
+	}
+	return _u
+}
+
+// AddProviderCostPerWhatsapp adds value to the "provider_cost_per_whatsapp" field.
+func (_u *PlatformBillingUpdateOne) AddProviderCostPerWhatsapp(v float64) *PlatformBillingUpdateOne {
+	_u.mutation.AddProviderCostPerWhatsapp(v)
+	return _u
+}
+
+// SetMinMarkupPercentage sets the "min_markup_percentage" field.
+func (_u *PlatformBillingUpdateOne) SetMinMarkupPercentage(v float64) *PlatformBillingUpdateOne {
+	_u.mutation.ResetMinMarkupPercentage()
+	_u.mutation.SetMinMarkupPercentage(v)
+	return _u
+}
+
+// SetNillableMinMarkupPercentage sets the "min_markup_percentage" field if the given value is not nil.
+func (_u *PlatformBillingUpdateOne) SetNillableMinMarkupPercentage(v *float64) *PlatformBillingUpdateOne {
+	if v != nil {
+		_u.SetMinMarkupPercentage(*v)
+	}
+	return _u
+}
+
+// AddMinMarkupPercentage adds value to the "min_markup_percentage" field.
+func (_u *PlatformBillingUpdateOne) AddMinMarkupPercentage(v float64) *PlatformBillingUpdateOne {
+	_u.mutation.AddMinMarkupPercentage(v)
 	return _u
 }
 
@@ -410,6 +554,24 @@ func (_u *PlatformBillingUpdateOne) sqlSave(ctx context.Context) (_node *Platfor
 	}
 	if value, ok := _u.mutation.AddedCostPerWhatsapp(); ok {
 		_spec.AddField(platformbilling.FieldCostPerWhatsapp, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.ProviderCostPerSms(); ok {
+		_spec.SetField(platformbilling.FieldProviderCostPerSms, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedProviderCostPerSms(); ok {
+		_spec.AddField(platformbilling.FieldProviderCostPerSms, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.ProviderCostPerWhatsapp(); ok {
+		_spec.SetField(platformbilling.FieldProviderCostPerWhatsapp, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedProviderCostPerWhatsapp(); ok {
+		_spec.AddField(platformbilling.FieldProviderCostPerWhatsapp, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.MinMarkupPercentage(); ok {
+		_spec.SetField(platformbilling.FieldMinMarkupPercentage, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedMinMarkupPercentage(); ok {
+		_spec.AddField(platformbilling.FieldMinMarkupPercentage, field.TypeFloat64, value)
 	}
 	if value, ok := _u.mutation.MinTopupAmount(); ok {
 		_spec.SetField(platformbilling.FieldMinTopupAmount, field.TypeFloat64, value)

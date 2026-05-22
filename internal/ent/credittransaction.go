@@ -29,6 +29,10 @@ type CreditTransaction struct {
 	Amount float64 `json:"amount,omitempty"`
 	// Balance after transaction
 	NewBalance float64 `json:"new_balance,omitempty"`
+	// Actual provider cost for this transaction (e.g. Africa's Talking rate)
+	ProviderCost float64 `json:"provider_cost,omitempty"`
+	// Platform profit margin on this transaction (amount - provider_cost)
+	PlatformFee float64 `json:"platform_fee,omitempty"`
 	// External reference (e.g. Treasury payment ID)
 	ReferenceID string `json:"reference_id,omitempty"`
 	// Transaction description
@@ -47,7 +51,7 @@ func (*CreditTransaction) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case credittransaction.FieldMetadata:
 			values[i] = new([]byte)
-		case credittransaction.FieldAmount, credittransaction.FieldNewBalance:
+		case credittransaction.FieldAmount, credittransaction.FieldNewBalance, credittransaction.FieldProviderCost, credittransaction.FieldPlatformFee:
 			values[i] = new(sql.NullFloat64)
 		case credittransaction.FieldType, credittransaction.FieldAction, credittransaction.FieldReferenceID, credittransaction.FieldDescription:
 			values[i] = new(sql.NullString)
@@ -105,6 +109,18 @@ func (_m *CreditTransaction) assignValues(columns []string, values []any) error 
 				return fmt.Errorf("unexpected type %T for field new_balance", values[i])
 			} else if value.Valid {
 				_m.NewBalance = value.Float64
+			}
+		case credittransaction.FieldProviderCost:
+			if value, ok := values[i].(*sql.NullFloat64); !ok {
+				return fmt.Errorf("unexpected type %T for field provider_cost", values[i])
+			} else if value.Valid {
+				_m.ProviderCost = value.Float64
+			}
+		case credittransaction.FieldPlatformFee:
+			if value, ok := values[i].(*sql.NullFloat64); !ok {
+				return fmt.Errorf("unexpected type %T for field platform_fee", values[i])
+			} else if value.Valid {
+				_m.PlatformFee = value.Float64
 			}
 		case credittransaction.FieldReferenceID:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -182,6 +198,12 @@ func (_m *CreditTransaction) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("new_balance=")
 	builder.WriteString(fmt.Sprintf("%v", _m.NewBalance))
+	builder.WriteString(", ")
+	builder.WriteString("provider_cost=")
+	builder.WriteString(fmt.Sprintf("%v", _m.ProviderCost))
+	builder.WriteString(", ")
+	builder.WriteString("platform_fee=")
+	builder.WriteString(fmt.Sprintf("%v", _m.PlatformFee))
 	builder.WriteString(", ")
 	builder.WriteString("reference_id=")
 	builder.WriteString(_m.ReferenceID)

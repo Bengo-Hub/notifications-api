@@ -127,6 +127,7 @@ func main() {
 	treasuryClient := serviceclient.New(treasuryCfg)
 
 	billingSvc := billing.NewService(client, logg, treasuryClient)
+	whatsappSubsSvc := billing.NewWhatsAppSubscriptionService(client, logg, treasuryClient)
 	dbPool, err := database.NewPool(ctx, cfg.Postgres)
 	if err != nil {
 		logg.Warn("postgres not available for provider overrides", zap.Error(err))
@@ -231,7 +232,7 @@ func main() {
 	startAuthNotificationConsumer(ctx, nc, cfg, tr, logg)
 
 	// Start treasury event consumer (treasury-service → payment/invoice notifications + credit top-ups)
-	startTreasuryConsumer(ctx, nc, js, cfg, tr, billingSvc, logg)
+	startTreasuryConsumer(ctx, nc, js, cfg, tr, billingSvc, whatsappSubsSvc, logg)
 
 	// Start delivery task event consumer (logistics-service → delivery status notifications)
 	startDeliveryConsumer(ctx, nc, js, cfg, tr, logg)

@@ -54,8 +54,14 @@ type Tenant func(*sql.Selector)
 // TenantCredit is the predicate function for tenantcredit builders.
 type TenantCredit func(*sql.Selector)
 
+// TenantWhatsAppSubscription is the predicate function for tenantwhatsappsubscription builders.
+type TenantWhatsAppSubscription func(*sql.Selector)
+
 // User is the predicate function for user builders.
 type User func(*sql.Selector)
 
 // UserRoleAssignment is the predicate function for userroleassignment builders.
 type UserRoleAssignment func(*sql.Selector)
+
+// WhatsAppPlan is the predicate function for whatsappplan builders.
+type WhatsAppPlan func(*sql.Selector)

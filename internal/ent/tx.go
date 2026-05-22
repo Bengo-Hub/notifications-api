@@ -44,10 +44,14 @@ type Tx struct {
 	Tenant *TenantClient
 	// TenantCredit is the client for interacting with the TenantCredit builders.
 	TenantCredit *TenantCreditClient
+	// TenantWhatsAppSubscription is the client for interacting with the TenantWhatsAppSubscription builders.
+	TenantWhatsAppSubscription *TenantWhatsAppSubscriptionClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 	// UserRoleAssignment is the client for interacting with the UserRoleAssignment builders.
 	UserRoleAssignment *UserRoleAssignmentClient
+	// WhatsAppPlan is the client for interacting with the WhatsAppPlan builders.
+	WhatsAppPlan *WhatsAppPlanClient
 
 	// lazily loaded.
 	client     *Client
@@ -195,8 +199,10 @@ func (tx *Tx) init() {
 	tx.Template = NewTemplateClient(tx.config)
 	tx.Tenant = NewTenantClient(tx.config)
 	tx.TenantCredit = NewTenantCreditClient(tx.config)
+	tx.TenantWhatsAppSubscription = NewTenantWhatsAppSubscriptionClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 	tx.UserRoleAssignment = NewUserRoleAssignmentClient(tx.config)
+	tx.WhatsAppPlan = NewWhatsAppPlanClient(tx.config)
 }
 
 // txDriver wraps the given dialect.Tx with a nop dialect.Driver implementation.

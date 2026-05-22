@@ -32,6 +32,12 @@ func (CreditTransaction) Fields() []ent.Field {
 			Comment("Amount of credits moved"),
 		field.Float("new_balance").
 			Comment("Balance after transaction"),
+		field.Float("provider_cost").
+			Default(0).
+			Comment("Actual provider cost for this transaction (e.g. Africa's Talking rate)"),
+		field.Float("platform_fee").
+			Default(0).
+			Comment("Platform profit margin on this transaction (amount - provider_cost)"),
 		field.String("reference_id").
 			Optional().
 			Comment("External reference (e.g. Treasury payment ID)"),

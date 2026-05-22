@@ -113,6 +113,48 @@ func (_u *CreditTransactionUpdate) AddNewBalance(v float64) *CreditTransactionUp
 	return _u
 }
 
+// SetProviderCost sets the "provider_cost" field.
+func (_u *CreditTransactionUpdate) SetProviderCost(v float64) *CreditTransactionUpdate {
+	_u.mutation.ResetProviderCost()
+	_u.mutation.SetProviderCost(v)
+	return _u
+}
+
+// SetNillableProviderCost sets the "provider_cost" field if the given value is not nil.
+func (_u *CreditTransactionUpdate) SetNillableProviderCost(v *float64) *CreditTransactionUpdate {
+	if v != nil {
+		_u.SetProviderCost(*v)
+	}
+	return _u
+}
+
+// AddProviderCost adds value to the "provider_cost" field.
+func (_u *CreditTransactionUpdate) AddProviderCost(v float64) *CreditTransactionUpdate {
+	_u.mutation.AddProviderCost(v)
+	return _u
+}
+
+// SetPlatformFee sets the "platform_fee" field.
+func (_u *CreditTransactionUpdate) SetPlatformFee(v float64) *CreditTransactionUpdate {
+	_u.mutation.ResetPlatformFee()
+	_u.mutation.SetPlatformFee(v)
+	return _u
+}
+
+// SetNillablePlatformFee sets the "platform_fee" field if the given value is not nil.
+func (_u *CreditTransactionUpdate) SetNillablePlatformFee(v *float64) *CreditTransactionUpdate {
+	if v != nil {
+		_u.SetPlatformFee(*v)
+	}
+	return _u
+}
+
+// AddPlatformFee adds value to the "platform_fee" field.
+func (_u *CreditTransactionUpdate) AddPlatformFee(v float64) *CreditTransactionUpdate {
+	_u.mutation.AddPlatformFee(v)
+	return _u
+}
+
 // SetReferenceID sets the "reference_id" field.
 func (_u *CreditTransactionUpdate) SetReferenceID(v string) *CreditTransactionUpdate {
 	_u.mutation.SetReferenceID(v)
@@ -245,6 +287,18 @@ func (_u *CreditTransactionUpdate) sqlSave(ctx context.Context) (_node int, err 
 	if value, ok := _u.mutation.AddedNewBalance(); ok {
 		_spec.AddField(credittransaction.FieldNewBalance, field.TypeFloat64, value)
 	}
+	if value, ok := _u.mutation.ProviderCost(); ok {
+		_spec.SetField(credittransaction.FieldProviderCost, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedProviderCost(); ok {
+		_spec.AddField(credittransaction.FieldProviderCost, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.PlatformFee(); ok {
+		_spec.SetField(credittransaction.FieldPlatformFee, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedPlatformFee(); ok {
+		_spec.AddField(credittransaction.FieldPlatformFee, field.TypeFloat64, value)
+	}
 	if value, ok := _u.mutation.ReferenceID(); ok {
 		_spec.SetField(credittransaction.FieldReferenceID, field.TypeString, value)
 	}
@@ -363,6 +417,48 @@ func (_u *CreditTransactionUpdateOne) SetNillableNewBalance(v *float64) *CreditT
 // AddNewBalance adds value to the "new_balance" field.
 func (_u *CreditTransactionUpdateOne) AddNewBalance(v float64) *CreditTransactionUpdateOne {
 	_u.mutation.AddNewBalance(v)
+	return _u
+}
+
+// SetProviderCost sets the "provider_cost" field.
+func (_u *CreditTransactionUpdateOne) SetProviderCost(v float64) *CreditTransactionUpdateOne {
+	_u.mutation.ResetProviderCost()
+	_u.mutation.SetProviderCost(v)
+	return _u
+}
+
+// SetNillableProviderCost sets the "provider_cost" field if the given value is not nil.
+func (_u *CreditTransactionUpdateOne) SetNillableProviderCost(v *float64) *CreditTransactionUpdateOne {
+	if v != nil {
+		_u.SetProviderCost(*v)
+	}
+	return _u
+}
+
+// AddProviderCost adds value to the "provider_cost" field.
+func (_u *CreditTransactionUpdateOne) AddProviderCost(v float64) *CreditTransactionUpdateOne {
+	_u.mutation.AddProviderCost(v)
+	return _u
+}
+
+// SetPlatformFee sets the "platform_fee" field.
+func (_u *CreditTransactionUpdateOne) SetPlatformFee(v float64) *CreditTransactionUpdateOne {
+	_u.mutation.ResetPlatformFee()
+	_u.mutation.SetPlatformFee(v)
+	return _u
+}
+
+// SetNillablePlatformFee sets the "platform_fee" field if the given value is not nil.
+func (_u *CreditTransactionUpdateOne) SetNillablePlatformFee(v *float64) *CreditTransactionUpdateOne {
+	if v != nil {
+		_u.SetPlatformFee(*v)
+	}
+	return _u
+}
+
+// AddPlatformFee adds value to the "platform_fee" field.
+func (_u *CreditTransactionUpdateOne) AddPlatformFee(v float64) *CreditTransactionUpdateOne {
+	_u.mutation.AddPlatformFee(v)
 	return _u
 }
 
@@ -527,6 +623,18 @@ func (_u *CreditTransactionUpdateOne) sqlSave(ctx context.Context) (_node *Credi
 	}
 	if value, ok := _u.mutation.AddedNewBalance(); ok {
 		_spec.AddField(credittransaction.FieldNewBalance, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.ProviderCost(); ok {
+		_spec.SetField(credittransaction.FieldProviderCost, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedProviderCost(); ok {
+		_spec.AddField(credittransaction.FieldProviderCost, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.PlatformFee(); ok {
+		_spec.SetField(credittransaction.FieldPlatformFee, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedPlatformFee(); ok {
+		_spec.AddField(credittransaction.FieldPlatformFee, field.TypeFloat64, value)
 	}
 	if value, ok := _u.mutation.ReferenceID(); ok {
 		_spec.SetField(credittransaction.FieldReferenceID, field.TypeString, value)

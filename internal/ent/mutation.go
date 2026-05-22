@@ -28,8 +28,10 @@ import (
 	"github.com/bengobox/notifications-api/internal/ent/template"
 	"github.com/bengobox/notifications-api/internal/ent/tenant"
 	"github.com/bengobox/notifications-api/internal/ent/tenantcredit"
+	"github.com/bengobox/notifications-api/internal/ent/tenantwhatsappsubscription"
 	"github.com/bengobox/notifications-api/internal/ent/user"
 	"github.com/bengobox/notifications-api/internal/ent/userroleassignment"
+	"github.com/bengobox/notifications-api/internal/ent/whatsappplan"
 	"github.com/google/uuid"
 )
 
@@ -58,31 +60,37 @@ const (
 	TypeTemplate                   = "Template"
 	TypeTenant                     = "Tenant"
 	TypeTenantCredit               = "TenantCredit"
+	TypeTenantWhatsAppSubscription = "TenantWhatsAppSubscription"
 	TypeUser                       = "User"
 	TypeUserRoleAssignment         = "UserRoleAssignment"
+	TypeWhatsAppPlan               = "WhatsAppPlan"
 )
 
 // CreditTransactionMutation represents an operation that mutates the CreditTransaction nodes in the graph.
 type CreditTransactionMutation struct {
 	config
-	op             Op
-	typ            string
-	id             *uuid.UUID
-	tenant_id      *uuid.UUID
-	_type          *credittransaction.Type
-	action         *credittransaction.Action
-	amount         *float64
-	addamount      *float64
-	new_balance    *float64
-	addnew_balance *float64
-	reference_id   *string
-	description    *string
-	metadata       *map[string]interface{}
-	created_at     *time.Time
-	clearedFields  map[string]struct{}
-	done           bool
-	oldValue       func(context.Context) (*CreditTransaction, error)
-	predicates     []predicate.CreditTransaction
+	op               Op
+	typ              string
+	id               *uuid.UUID
+	tenant_id        *uuid.UUID
+	_type            *credittransaction.Type
+	action           *credittransaction.Action
+	amount           *float64
+	addamount        *float64
+	new_balance      *float64
+	addnew_balance   *float64
+	provider_cost    *float64
+	addprovider_cost *float64
+	platform_fee     *float64
+	addplatform_fee  *float64
+	reference_id     *string
+	description      *string
+	metadata         *map[string]interface{}
+	created_at       *time.Time
+	clearedFields    map[string]struct{}
+	done             bool
+	oldValue         func(context.Context) (*CreditTransaction, error)
+	predicates       []predicate.CreditTransaction
 }
 
 var _ ent.Mutation = (*CreditTransactionMutation)(nil)
@@ -409,6 +417,118 @@ func (m *CreditTransactionMutation) ResetNewBalance() {
 	m.addnew_balance = nil
 }
 
+// SetProviderCost sets the "provider_cost" field.
+func (m *CreditTransactionMutation) SetProviderCost(f float64) {
+	m.provider_cost = &f
+	m.addprovider_cost = nil
+}
+
+// ProviderCost returns the value of the "provider_cost" field in the mutation.
+func (m *CreditTransactionMutation) ProviderCost() (r float64, exists bool) {
+	v := m.provider_cost
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldProviderCost returns the old "provider_cost" field's value of the CreditTransaction entity.
+// If the CreditTransaction object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CreditTransactionMutation) OldProviderCost(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldProviderCost is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldProviderCost requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldProviderCost: %w", err)
+	}
+	return oldValue.ProviderCost, nil
+}
+
+// AddProviderCost adds f to the "provider_cost" field.
+func (m *CreditTransactionMutation) AddProviderCost(f float64) {
+	if m.addprovider_cost != nil {
+		*m.addprovider_cost += f
+	} else {
+		m.addprovider_cost = &f
+	}
+}
+
+// AddedProviderCost returns the value that was added to the "provider_cost" field in this mutation.
+func (m *CreditTransactionMutation) AddedProviderCost() (r float64, exists bool) {
+	v := m.addprovider_cost
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetProviderCost resets all changes to the "provider_cost" field.
+func (m *CreditTransactionMutation) ResetProviderCost() {
+	m.provider_cost = nil
+	m.addprovider_cost = nil
+}
+
+// SetPlatformFee sets the "platform_fee" field.
+func (m *CreditTransactionMutation) SetPlatformFee(f float64) {
+	m.platform_fee = &f
+	m.addplatform_fee = nil
+}
+
+// PlatformFee returns the value of the "platform_fee" field in the mutation.
+func (m *CreditTransactionMutation) PlatformFee() (r float64, exists bool) {
+	v := m.platform_fee
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPlatformFee returns the old "platform_fee" field's value of the CreditTransaction entity.
+// If the CreditTransaction object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CreditTransactionMutation) OldPlatformFee(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPlatformFee is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPlatformFee requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPlatformFee: %w", err)
+	}
+	return oldValue.PlatformFee, nil
+}
+
+// AddPlatformFee adds f to the "platform_fee" field.
+func (m *CreditTransactionMutation) AddPlatformFee(f float64) {
+	if m.addplatform_fee != nil {
+		*m.addplatform_fee += f
+	} else {
+		m.addplatform_fee = &f
+	}
+}
+
+// AddedPlatformFee returns the value that was added to the "platform_fee" field in this mutation.
+func (m *CreditTransactionMutation) AddedPlatformFee() (r float64, exists bool) {
+	v := m.addplatform_fee
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetPlatformFee resets all changes to the "platform_fee" field.
+func (m *CreditTransactionMutation) ResetPlatformFee() {
+	m.platform_fee = nil
+	m.addplatform_fee = nil
+}
+
 // SetReferenceID sets the "reference_id" field.
 func (m *CreditTransactionMutation) SetReferenceID(s string) {
 	m.reference_id = &s
@@ -613,7 +733,7 @@ func (m *CreditTransactionMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *CreditTransactionMutation) Fields() []string {
-	fields := make([]string, 0, 9)
+	fields := make([]string, 0, 11)
 	if m.tenant_id != nil {
 		fields = append(fields, credittransaction.FieldTenantID)
 	}
@@ -628,6 +748,12 @@ func (m *CreditTransactionMutation) Fields() []string {
 	}
 	if m.new_balance != nil {
 		fields = append(fields, credittransaction.FieldNewBalance)
+	}
+	if m.provider_cost != nil {
+		fields = append(fields, credittransaction.FieldProviderCost)
+	}
+	if m.platform_fee != nil {
+		fields = append(fields, credittransaction.FieldPlatformFee)
 	}
 	if m.reference_id != nil {
 		fields = append(fields, credittransaction.FieldReferenceID)
@@ -659,6 +785,10 @@ func (m *CreditTransactionMutation) Field(name string) (ent.Value, bool) {
 		return m.Amount()
 	case credittransaction.FieldNewBalance:
 		return m.NewBalance()
+	case credittransaction.FieldProviderCost:
+		return m.ProviderCost()
+	case credittransaction.FieldPlatformFee:
+		return m.PlatformFee()
 	case credittransaction.FieldReferenceID:
 		return m.ReferenceID()
 	case credittransaction.FieldDescription:
@@ -686,6 +816,10 @@ func (m *CreditTransactionMutation) OldField(ctx context.Context, name string) (
 		return m.OldAmount(ctx)
 	case credittransaction.FieldNewBalance:
 		return m.OldNewBalance(ctx)
+	case credittransaction.FieldProviderCost:
+		return m.OldProviderCost(ctx)
+	case credittransaction.FieldPlatformFee:
+		return m.OldPlatformFee(ctx)
 	case credittransaction.FieldReferenceID:
 		return m.OldReferenceID(ctx)
 	case credittransaction.FieldDescription:
@@ -738,6 +872,20 @@ func (m *CreditTransactionMutation) SetField(name string, value ent.Value) error
 		}
 		m.SetNewBalance(v)
 		return nil
+	case credittransaction.FieldProviderCost:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetProviderCost(v)
+		return nil
+	case credittransaction.FieldPlatformFee:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPlatformFee(v)
+		return nil
 	case credittransaction.FieldReferenceID:
 		v, ok := value.(string)
 		if !ok {
@@ -780,6 +928,12 @@ func (m *CreditTransactionMutation) AddedFields() []string {
 	if m.addnew_balance != nil {
 		fields = append(fields, credittransaction.FieldNewBalance)
 	}
+	if m.addprovider_cost != nil {
+		fields = append(fields, credittransaction.FieldProviderCost)
+	}
+	if m.addplatform_fee != nil {
+		fields = append(fields, credittransaction.FieldPlatformFee)
+	}
 	return fields
 }
 
@@ -792,6 +946,10 @@ func (m *CreditTransactionMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedAmount()
 	case credittransaction.FieldNewBalance:
 		return m.AddedNewBalance()
+	case credittransaction.FieldProviderCost:
+		return m.AddedProviderCost()
+	case credittransaction.FieldPlatformFee:
+		return m.AddedPlatformFee()
 	}
 	return nil, false
 }
@@ -814,6 +972,20 @@ func (m *CreditTransactionMutation) AddField(name string, value ent.Value) error
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddNewBalance(v)
+		return nil
+	case credittransaction.FieldProviderCost:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddProviderCost(v)
+		return nil
+	case credittransaction.FieldPlatformFee:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddPlatformFee(v)
 		return nil
 	}
 	return fmt.Errorf("unknown CreditTransaction numeric field %s", name)
@@ -871,6 +1043,12 @@ func (m *CreditTransactionMutation) ResetField(name string) error {
 		return nil
 	case credittransaction.FieldNewBalance:
 		m.ResetNewBalance()
+		return nil
+	case credittransaction.FieldProviderCost:
+		m.ResetProviderCost()
+		return nil
+	case credittransaction.FieldPlatformFee:
+		m.ResetPlatformFee()
 		return nil
 	case credittransaction.FieldReferenceID:
 		m.ResetReferenceID()
@@ -6248,21 +6426,27 @@ func (m *PermissionMutation) ResetEdge(name string) error {
 // PlatformBillingMutation represents an operation that mutates the PlatformBilling nodes in the graph.
 type PlatformBillingMutation struct {
 	config
-	op                   Op
-	typ                  string
-	id                   *uuid.UUID
-	cost_per_sms         *float64
-	addcost_per_sms      *float64
-	cost_per_whatsapp    *float64
-	addcost_per_whatsapp *float64
-	min_topup_amount     *float64
-	addmin_topup_amount  *float64
-	treasury_gateway_id  *uuid.UUID
-	updated_at           *time.Time
-	clearedFields        map[string]struct{}
-	done                 bool
-	oldValue             func(context.Context) (*PlatformBilling, error)
-	predicates           []predicate.PlatformBilling
+	op                            Op
+	typ                           string
+	id                            *uuid.UUID
+	cost_per_sms                  *float64
+	addcost_per_sms               *float64
+	cost_per_whatsapp             *float64
+	addcost_per_whatsapp          *float64
+	provider_cost_per_sms         *float64
+	addprovider_cost_per_sms      *float64
+	provider_cost_per_whatsapp    *float64
+	addprovider_cost_per_whatsapp *float64
+	min_markup_percentage         *float64
+	addmin_markup_percentage      *float64
+	min_topup_amount              *float64
+	addmin_topup_amount           *float64
+	treasury_gateway_id           *uuid.UUID
+	updated_at                    *time.Time
+	clearedFields                 map[string]struct{}
+	done                          bool
+	oldValue                      func(context.Context) (*PlatformBilling, error)
+	predicates                    []predicate.PlatformBilling
 }
 
 var _ ent.Mutation = (*PlatformBillingMutation)(nil)
@@ -6481,6 +6665,174 @@ func (m *PlatformBillingMutation) ResetCostPerWhatsapp() {
 	m.addcost_per_whatsapp = nil
 }
 
+// SetProviderCostPerSms sets the "provider_cost_per_sms" field.
+func (m *PlatformBillingMutation) SetProviderCostPerSms(f float64) {
+	m.provider_cost_per_sms = &f
+	m.addprovider_cost_per_sms = nil
+}
+
+// ProviderCostPerSms returns the value of the "provider_cost_per_sms" field in the mutation.
+func (m *PlatformBillingMutation) ProviderCostPerSms() (r float64, exists bool) {
+	v := m.provider_cost_per_sms
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldProviderCostPerSms returns the old "provider_cost_per_sms" field's value of the PlatformBilling entity.
+// If the PlatformBilling object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PlatformBillingMutation) OldProviderCostPerSms(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldProviderCostPerSms is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldProviderCostPerSms requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldProviderCostPerSms: %w", err)
+	}
+	return oldValue.ProviderCostPerSms, nil
+}
+
+// AddProviderCostPerSms adds f to the "provider_cost_per_sms" field.
+func (m *PlatformBillingMutation) AddProviderCostPerSms(f float64) {
+	if m.addprovider_cost_per_sms != nil {
+		*m.addprovider_cost_per_sms += f
+	} else {
+		m.addprovider_cost_per_sms = &f
+	}
+}
+
+// AddedProviderCostPerSms returns the value that was added to the "provider_cost_per_sms" field in this mutation.
+func (m *PlatformBillingMutation) AddedProviderCostPerSms() (r float64, exists bool) {
+	v := m.addprovider_cost_per_sms
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetProviderCostPerSms resets all changes to the "provider_cost_per_sms" field.
+func (m *PlatformBillingMutation) ResetProviderCostPerSms() {
+	m.provider_cost_per_sms = nil
+	m.addprovider_cost_per_sms = nil
+}
+
+// SetProviderCostPerWhatsapp sets the "provider_cost_per_whatsapp" field.
+func (m *PlatformBillingMutation) SetProviderCostPerWhatsapp(f float64) {
+	m.provider_cost_per_whatsapp = &f
+	m.addprovider_cost_per_whatsapp = nil
+}
+
+// ProviderCostPerWhatsapp returns the value of the "provider_cost_per_whatsapp" field in the mutation.
+func (m *PlatformBillingMutation) ProviderCostPerWhatsapp() (r float64, exists bool) {
+	v := m.provider_cost_per_whatsapp
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldProviderCostPerWhatsapp returns the old "provider_cost_per_whatsapp" field's value of the PlatformBilling entity.
+// If the PlatformBilling object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PlatformBillingMutation) OldProviderCostPerWhatsapp(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldProviderCostPerWhatsapp is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldProviderCostPerWhatsapp requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldProviderCostPerWhatsapp: %w", err)
+	}
+	return oldValue.ProviderCostPerWhatsapp, nil
+}
+
+// AddProviderCostPerWhatsapp adds f to the "provider_cost_per_whatsapp" field.
+func (m *PlatformBillingMutation) AddProviderCostPerWhatsapp(f float64) {
+	if m.addprovider_cost_per_whatsapp != nil {
+		*m.addprovider_cost_per_whatsapp += f
+	} else {
+		m.addprovider_cost_per_whatsapp = &f
+	}
+}
+
+// AddedProviderCostPerWhatsapp returns the value that was added to the "provider_cost_per_whatsapp" field in this mutation.
+func (m *PlatformBillingMutation) AddedProviderCostPerWhatsapp() (r float64, exists bool) {
+	v := m.addprovider_cost_per_whatsapp
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetProviderCostPerWhatsapp resets all changes to the "provider_cost_per_whatsapp" field.
+func (m *PlatformBillingMutation) ResetProviderCostPerWhatsapp() {
+	m.provider_cost_per_whatsapp = nil
+	m.addprovider_cost_per_whatsapp = nil
+}
+
+// SetMinMarkupPercentage sets the "min_markup_percentage" field.
+func (m *PlatformBillingMutation) SetMinMarkupPercentage(f float64) {
+	m.min_markup_percentage = &f
+	m.addmin_markup_percentage = nil
+}
+
+// MinMarkupPercentage returns the value of the "min_markup_percentage" field in the mutation.
+func (m *PlatformBillingMutation) MinMarkupPercentage() (r float64, exists bool) {
+	v := m.min_markup_percentage
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMinMarkupPercentage returns the old "min_markup_percentage" field's value of the PlatformBilling entity.
+// If the PlatformBilling object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PlatformBillingMutation) OldMinMarkupPercentage(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMinMarkupPercentage is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMinMarkupPercentage requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMinMarkupPercentage: %w", err)
+	}
+	return oldValue.MinMarkupPercentage, nil
+}
+
+// AddMinMarkupPercentage adds f to the "min_markup_percentage" field.
+func (m *PlatformBillingMutation) AddMinMarkupPercentage(f float64) {
+	if m.addmin_markup_percentage != nil {
+		*m.addmin_markup_percentage += f
+	} else {
+		m.addmin_markup_percentage = &f
+	}
+}
+
+// AddedMinMarkupPercentage returns the value that was added to the "min_markup_percentage" field in this mutation.
+func (m *PlatformBillingMutation) AddedMinMarkupPercentage() (r float64, exists bool) {
+	v := m.addmin_markup_percentage
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetMinMarkupPercentage resets all changes to the "min_markup_percentage" field.
+func (m *PlatformBillingMutation) ResetMinMarkupPercentage() {
+	m.min_markup_percentage = nil
+	m.addmin_markup_percentage = nil
+}
+
 // SetMinTopupAmount sets the "min_topup_amount" field.
 func (m *PlatformBillingMutation) SetMinTopupAmount(f float64) {
 	m.min_topup_amount = &f
@@ -6656,12 +7008,21 @@ func (m *PlatformBillingMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *PlatformBillingMutation) Fields() []string {
-	fields := make([]string, 0, 5)
+	fields := make([]string, 0, 8)
 	if m.cost_per_sms != nil {
 		fields = append(fields, platformbilling.FieldCostPerSms)
 	}
 	if m.cost_per_whatsapp != nil {
 		fields = append(fields, platformbilling.FieldCostPerWhatsapp)
+	}
+	if m.provider_cost_per_sms != nil {
+		fields = append(fields, platformbilling.FieldProviderCostPerSms)
+	}
+	if m.provider_cost_per_whatsapp != nil {
+		fields = append(fields, platformbilling.FieldProviderCostPerWhatsapp)
+	}
+	if m.min_markup_percentage != nil {
+		fields = append(fields, platformbilling.FieldMinMarkupPercentage)
 	}
 	if m.min_topup_amount != nil {
 		fields = append(fields, platformbilling.FieldMinTopupAmount)
@@ -6684,6 +7045,12 @@ func (m *PlatformBillingMutation) Field(name string) (ent.Value, bool) {
 		return m.CostPerSms()
 	case platformbilling.FieldCostPerWhatsapp:
 		return m.CostPerWhatsapp()
+	case platformbilling.FieldProviderCostPerSms:
+		return m.ProviderCostPerSms()
+	case platformbilling.FieldProviderCostPerWhatsapp:
+		return m.ProviderCostPerWhatsapp()
+	case platformbilling.FieldMinMarkupPercentage:
+		return m.MinMarkupPercentage()
 	case platformbilling.FieldMinTopupAmount:
 		return m.MinTopupAmount()
 	case platformbilling.FieldTreasuryGatewayID:
@@ -6703,6 +7070,12 @@ func (m *PlatformBillingMutation) OldField(ctx context.Context, name string) (en
 		return m.OldCostPerSms(ctx)
 	case platformbilling.FieldCostPerWhatsapp:
 		return m.OldCostPerWhatsapp(ctx)
+	case platformbilling.FieldProviderCostPerSms:
+		return m.OldProviderCostPerSms(ctx)
+	case platformbilling.FieldProviderCostPerWhatsapp:
+		return m.OldProviderCostPerWhatsapp(ctx)
+	case platformbilling.FieldMinMarkupPercentage:
+		return m.OldMinMarkupPercentage(ctx)
 	case platformbilling.FieldMinTopupAmount:
 		return m.OldMinTopupAmount(ctx)
 	case platformbilling.FieldTreasuryGatewayID:
@@ -6731,6 +7104,27 @@ func (m *PlatformBillingMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetCostPerWhatsapp(v)
+		return nil
+	case platformbilling.FieldProviderCostPerSms:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetProviderCostPerSms(v)
+		return nil
+	case platformbilling.FieldProviderCostPerWhatsapp:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetProviderCostPerWhatsapp(v)
+		return nil
+	case platformbilling.FieldMinMarkupPercentage:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMinMarkupPercentage(v)
 		return nil
 	case platformbilling.FieldMinTopupAmount:
 		v, ok := value.(float64)
@@ -6767,6 +7161,15 @@ func (m *PlatformBillingMutation) AddedFields() []string {
 	if m.addcost_per_whatsapp != nil {
 		fields = append(fields, platformbilling.FieldCostPerWhatsapp)
 	}
+	if m.addprovider_cost_per_sms != nil {
+		fields = append(fields, platformbilling.FieldProviderCostPerSms)
+	}
+	if m.addprovider_cost_per_whatsapp != nil {
+		fields = append(fields, platformbilling.FieldProviderCostPerWhatsapp)
+	}
+	if m.addmin_markup_percentage != nil {
+		fields = append(fields, platformbilling.FieldMinMarkupPercentage)
+	}
 	if m.addmin_topup_amount != nil {
 		fields = append(fields, platformbilling.FieldMinTopupAmount)
 	}
@@ -6782,6 +7185,12 @@ func (m *PlatformBillingMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedCostPerSms()
 	case platformbilling.FieldCostPerWhatsapp:
 		return m.AddedCostPerWhatsapp()
+	case platformbilling.FieldProviderCostPerSms:
+		return m.AddedProviderCostPerSms()
+	case platformbilling.FieldProviderCostPerWhatsapp:
+		return m.AddedProviderCostPerWhatsapp()
+	case platformbilling.FieldMinMarkupPercentage:
+		return m.AddedMinMarkupPercentage()
 	case platformbilling.FieldMinTopupAmount:
 		return m.AddedMinTopupAmount()
 	}
@@ -6806,6 +7215,27 @@ func (m *PlatformBillingMutation) AddField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddCostPerWhatsapp(v)
+		return nil
+	case platformbilling.FieldProviderCostPerSms:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddProviderCostPerSms(v)
+		return nil
+	case platformbilling.FieldProviderCostPerWhatsapp:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddProviderCostPerWhatsapp(v)
+		return nil
+	case platformbilling.FieldMinMarkupPercentage:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddMinMarkupPercentage(v)
 		return nil
 	case platformbilling.FieldMinTopupAmount:
 		v, ok := value.(float64)
@@ -6855,6 +7285,15 @@ func (m *PlatformBillingMutation) ResetField(name string) error {
 		return nil
 	case platformbilling.FieldCostPerWhatsapp:
 		m.ResetCostPerWhatsapp()
+		return nil
+	case platformbilling.FieldProviderCostPerSms:
+		m.ResetProviderCostPerSms()
+		return nil
+	case platformbilling.FieldProviderCostPerWhatsapp:
+		m.ResetProviderCostPerWhatsapp()
+		return nil
+	case platformbilling.FieldMinMarkupPercentage:
+		m.ResetMinMarkupPercentage()
 		return nil
 	case platformbilling.FieldMinTopupAmount:
 		m.ResetMinTopupAmount()
@@ -13128,6 +13567,936 @@ func (m *TenantCreditMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown TenantCredit edge %s", name)
 }
 
+// TenantWhatsAppSubscriptionMutation represents an operation that mutates the TenantWhatsAppSubscription nodes in the graph.
+type TenantWhatsAppSubscriptionMutation struct {
+	config
+	op                Op
+	typ               string
+	id                *uuid.UUID
+	tenant_id         *uuid.UUID
+	status            *tenantwhatsappsubscription.Status
+	started_at        *time.Time
+	expires_at        *time.Time
+	payment_reference *string
+	auto_renew        *bool
+	messages_used     *int
+	addmessages_used  *int
+	created_at        *time.Time
+	updated_at        *time.Time
+	clearedFields     map[string]struct{}
+	plan              *uuid.UUID
+	clearedplan       bool
+	done              bool
+	oldValue          func(context.Context) (*TenantWhatsAppSubscription, error)
+	predicates        []predicate.TenantWhatsAppSubscription
+}
+
+var _ ent.Mutation = (*TenantWhatsAppSubscriptionMutation)(nil)
+
+// tenantwhatsappsubscriptionOption allows management of the mutation configuration using functional options.
+type tenantwhatsappsubscriptionOption func(*TenantWhatsAppSubscriptionMutation)
+
+// newTenantWhatsAppSubscriptionMutation creates new mutation for the TenantWhatsAppSubscription entity.
+func newTenantWhatsAppSubscriptionMutation(c config, op Op, opts ...tenantwhatsappsubscriptionOption) *TenantWhatsAppSubscriptionMutation {
+	m := &TenantWhatsAppSubscriptionMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeTenantWhatsAppSubscription,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withTenantWhatsAppSubscriptionID sets the ID field of the mutation.
+func withTenantWhatsAppSubscriptionID(id uuid.UUID) tenantwhatsappsubscriptionOption {
+	return func(m *TenantWhatsAppSubscriptionMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *TenantWhatsAppSubscription
+		)
+		m.oldValue = func(ctx context.Context) (*TenantWhatsAppSubscription, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().TenantWhatsAppSubscription.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withTenantWhatsAppSubscription sets the old TenantWhatsAppSubscription of the mutation.
+func withTenantWhatsAppSubscription(node *TenantWhatsAppSubscription) tenantwhatsappsubscriptionOption {
+	return func(m *TenantWhatsAppSubscriptionMutation) {
+		m.oldValue = func(context.Context) (*TenantWhatsAppSubscription, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m TenantWhatsAppSubscriptionMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m TenantWhatsAppSubscriptionMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of TenantWhatsAppSubscription entities.
+func (m *TenantWhatsAppSubscriptionMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *TenantWhatsAppSubscriptionMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *TenantWhatsAppSubscriptionMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().TenantWhatsAppSubscription.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetTenantID sets the "tenant_id" field.
+func (m *TenantWhatsAppSubscriptionMutation) SetTenantID(u uuid.UUID) {
+	m.tenant_id = &u
+}
+
+// TenantID returns the value of the "tenant_id" field in the mutation.
+func (m *TenantWhatsAppSubscriptionMutation) TenantID() (r uuid.UUID, exists bool) {
+	v := m.tenant_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTenantID returns the old "tenant_id" field's value of the TenantWhatsAppSubscription entity.
+// If the TenantWhatsAppSubscription object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TenantWhatsAppSubscriptionMutation) OldTenantID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTenantID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTenantID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTenantID: %w", err)
+	}
+	return oldValue.TenantID, nil
+}
+
+// ResetTenantID resets all changes to the "tenant_id" field.
+func (m *TenantWhatsAppSubscriptionMutation) ResetTenantID() {
+	m.tenant_id = nil
+}
+
+// SetPlanID sets the "plan_id" field.
+func (m *TenantWhatsAppSubscriptionMutation) SetPlanID(u uuid.UUID) {
+	m.plan = &u
+}
+
+// PlanID returns the value of the "plan_id" field in the mutation.
+func (m *TenantWhatsAppSubscriptionMutation) PlanID() (r uuid.UUID, exists bool) {
+	v := m.plan
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPlanID returns the old "plan_id" field's value of the TenantWhatsAppSubscription entity.
+// If the TenantWhatsAppSubscription object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TenantWhatsAppSubscriptionMutation) OldPlanID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPlanID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPlanID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPlanID: %w", err)
+	}
+	return oldValue.PlanID, nil
+}
+
+// ResetPlanID resets all changes to the "plan_id" field.
+func (m *TenantWhatsAppSubscriptionMutation) ResetPlanID() {
+	m.plan = nil
+}
+
+// SetStatus sets the "status" field.
+func (m *TenantWhatsAppSubscriptionMutation) SetStatus(t tenantwhatsappsubscription.Status) {
+	m.status = &t
+}
+
+// Status returns the value of the "status" field in the mutation.
+func (m *TenantWhatsAppSubscriptionMutation) Status() (r tenantwhatsappsubscription.Status, exists bool) {
+	v := m.status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStatus returns the old "status" field's value of the TenantWhatsAppSubscription entity.
+// If the TenantWhatsAppSubscription object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TenantWhatsAppSubscriptionMutation) OldStatus(ctx context.Context) (v tenantwhatsappsubscription.Status, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStatus: %w", err)
+	}
+	return oldValue.Status, nil
+}
+
+// ResetStatus resets all changes to the "status" field.
+func (m *TenantWhatsAppSubscriptionMutation) ResetStatus() {
+	m.status = nil
+}
+
+// SetStartedAt sets the "started_at" field.
+func (m *TenantWhatsAppSubscriptionMutation) SetStartedAt(t time.Time) {
+	m.started_at = &t
+}
+
+// StartedAt returns the value of the "started_at" field in the mutation.
+func (m *TenantWhatsAppSubscriptionMutation) StartedAt() (r time.Time, exists bool) {
+	v := m.started_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStartedAt returns the old "started_at" field's value of the TenantWhatsAppSubscription entity.
+// If the TenantWhatsAppSubscription object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TenantWhatsAppSubscriptionMutation) OldStartedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStartedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStartedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStartedAt: %w", err)
+	}
+	return oldValue.StartedAt, nil
+}
+
+// ResetStartedAt resets all changes to the "started_at" field.
+func (m *TenantWhatsAppSubscriptionMutation) ResetStartedAt() {
+	m.started_at = nil
+}
+
+// SetExpiresAt sets the "expires_at" field.
+func (m *TenantWhatsAppSubscriptionMutation) SetExpiresAt(t time.Time) {
+	m.expires_at = &t
+}
+
+// ExpiresAt returns the value of the "expires_at" field in the mutation.
+func (m *TenantWhatsAppSubscriptionMutation) ExpiresAt() (r time.Time, exists bool) {
+	v := m.expires_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldExpiresAt returns the old "expires_at" field's value of the TenantWhatsAppSubscription entity.
+// If the TenantWhatsAppSubscription object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TenantWhatsAppSubscriptionMutation) OldExpiresAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldExpiresAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldExpiresAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldExpiresAt: %w", err)
+	}
+	return oldValue.ExpiresAt, nil
+}
+
+// ResetExpiresAt resets all changes to the "expires_at" field.
+func (m *TenantWhatsAppSubscriptionMutation) ResetExpiresAt() {
+	m.expires_at = nil
+}
+
+// SetPaymentReference sets the "payment_reference" field.
+func (m *TenantWhatsAppSubscriptionMutation) SetPaymentReference(s string) {
+	m.payment_reference = &s
+}
+
+// PaymentReference returns the value of the "payment_reference" field in the mutation.
+func (m *TenantWhatsAppSubscriptionMutation) PaymentReference() (r string, exists bool) {
+	v := m.payment_reference
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPaymentReference returns the old "payment_reference" field's value of the TenantWhatsAppSubscription entity.
+// If the TenantWhatsAppSubscription object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TenantWhatsAppSubscriptionMutation) OldPaymentReference(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPaymentReference is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPaymentReference requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPaymentReference: %w", err)
+	}
+	return oldValue.PaymentReference, nil
+}
+
+// ClearPaymentReference clears the value of the "payment_reference" field.
+func (m *TenantWhatsAppSubscriptionMutation) ClearPaymentReference() {
+	m.payment_reference = nil
+	m.clearedFields[tenantwhatsappsubscription.FieldPaymentReference] = struct{}{}
+}
+
+// PaymentReferenceCleared returns if the "payment_reference" field was cleared in this mutation.
+func (m *TenantWhatsAppSubscriptionMutation) PaymentReferenceCleared() bool {
+	_, ok := m.clearedFields[tenantwhatsappsubscription.FieldPaymentReference]
+	return ok
+}
+
+// ResetPaymentReference resets all changes to the "payment_reference" field.
+func (m *TenantWhatsAppSubscriptionMutation) ResetPaymentReference() {
+	m.payment_reference = nil
+	delete(m.clearedFields, tenantwhatsappsubscription.FieldPaymentReference)
+}
+
+// SetAutoRenew sets the "auto_renew" field.
+func (m *TenantWhatsAppSubscriptionMutation) SetAutoRenew(b bool) {
+	m.auto_renew = &b
+}
+
+// AutoRenew returns the value of the "auto_renew" field in the mutation.
+func (m *TenantWhatsAppSubscriptionMutation) AutoRenew() (r bool, exists bool) {
+	v := m.auto_renew
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAutoRenew returns the old "auto_renew" field's value of the TenantWhatsAppSubscription entity.
+// If the TenantWhatsAppSubscription object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TenantWhatsAppSubscriptionMutation) OldAutoRenew(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAutoRenew is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAutoRenew requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAutoRenew: %w", err)
+	}
+	return oldValue.AutoRenew, nil
+}
+
+// ResetAutoRenew resets all changes to the "auto_renew" field.
+func (m *TenantWhatsAppSubscriptionMutation) ResetAutoRenew() {
+	m.auto_renew = nil
+}
+
+// SetMessagesUsed sets the "messages_used" field.
+func (m *TenantWhatsAppSubscriptionMutation) SetMessagesUsed(i int) {
+	m.messages_used = &i
+	m.addmessages_used = nil
+}
+
+// MessagesUsed returns the value of the "messages_used" field in the mutation.
+func (m *TenantWhatsAppSubscriptionMutation) MessagesUsed() (r int, exists bool) {
+	v := m.messages_used
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMessagesUsed returns the old "messages_used" field's value of the TenantWhatsAppSubscription entity.
+// If the TenantWhatsAppSubscription object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TenantWhatsAppSubscriptionMutation) OldMessagesUsed(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMessagesUsed is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMessagesUsed requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMessagesUsed: %w", err)
+	}
+	return oldValue.MessagesUsed, nil
+}
+
+// AddMessagesUsed adds i to the "messages_used" field.
+func (m *TenantWhatsAppSubscriptionMutation) AddMessagesUsed(i int) {
+	if m.addmessages_used != nil {
+		*m.addmessages_used += i
+	} else {
+		m.addmessages_used = &i
+	}
+}
+
+// AddedMessagesUsed returns the value that was added to the "messages_used" field in this mutation.
+func (m *TenantWhatsAppSubscriptionMutation) AddedMessagesUsed() (r int, exists bool) {
+	v := m.addmessages_used
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetMessagesUsed resets all changes to the "messages_used" field.
+func (m *TenantWhatsAppSubscriptionMutation) ResetMessagesUsed() {
+	m.messages_used = nil
+	m.addmessages_used = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *TenantWhatsAppSubscriptionMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *TenantWhatsAppSubscriptionMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the TenantWhatsAppSubscription entity.
+// If the TenantWhatsAppSubscription object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TenantWhatsAppSubscriptionMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *TenantWhatsAppSubscriptionMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *TenantWhatsAppSubscriptionMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *TenantWhatsAppSubscriptionMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the TenantWhatsAppSubscription entity.
+// If the TenantWhatsAppSubscription object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TenantWhatsAppSubscriptionMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *TenantWhatsAppSubscriptionMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// ClearPlan clears the "plan" edge to the WhatsAppPlan entity.
+func (m *TenantWhatsAppSubscriptionMutation) ClearPlan() {
+	m.clearedplan = true
+	m.clearedFields[tenantwhatsappsubscription.FieldPlanID] = struct{}{}
+}
+
+// PlanCleared reports if the "plan" edge to the WhatsAppPlan entity was cleared.
+func (m *TenantWhatsAppSubscriptionMutation) PlanCleared() bool {
+	return m.clearedplan
+}
+
+// PlanIDs returns the "plan" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// PlanID instead. It exists only for internal usage by the builders.
+func (m *TenantWhatsAppSubscriptionMutation) PlanIDs() (ids []uuid.UUID) {
+	if id := m.plan; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetPlan resets all changes to the "plan" edge.
+func (m *TenantWhatsAppSubscriptionMutation) ResetPlan() {
+	m.plan = nil
+	m.clearedplan = false
+}
+
+// Where appends a list predicates to the TenantWhatsAppSubscriptionMutation builder.
+func (m *TenantWhatsAppSubscriptionMutation) Where(ps ...predicate.TenantWhatsAppSubscription) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the TenantWhatsAppSubscriptionMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *TenantWhatsAppSubscriptionMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.TenantWhatsAppSubscription, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *TenantWhatsAppSubscriptionMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *TenantWhatsAppSubscriptionMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (TenantWhatsAppSubscription).
+func (m *TenantWhatsAppSubscriptionMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *TenantWhatsAppSubscriptionMutation) Fields() []string {
+	fields := make([]string, 0, 10)
+	if m.tenant_id != nil {
+		fields = append(fields, tenantwhatsappsubscription.FieldTenantID)
+	}
+	if m.plan != nil {
+		fields = append(fields, tenantwhatsappsubscription.FieldPlanID)
+	}
+	if m.status != nil {
+		fields = append(fields, tenantwhatsappsubscription.FieldStatus)
+	}
+	if m.started_at != nil {
+		fields = append(fields, tenantwhatsappsubscription.FieldStartedAt)
+	}
+	if m.expires_at != nil {
+		fields = append(fields, tenantwhatsappsubscription.FieldExpiresAt)
+	}
+	if m.payment_reference != nil {
+		fields = append(fields, tenantwhatsappsubscription.FieldPaymentReference)
+	}
+	if m.auto_renew != nil {
+		fields = append(fields, tenantwhatsappsubscription.FieldAutoRenew)
+	}
+	if m.messages_used != nil {
+		fields = append(fields, tenantwhatsappsubscription.FieldMessagesUsed)
+	}
+	if m.created_at != nil {
+		fields = append(fields, tenantwhatsappsubscription.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, tenantwhatsappsubscription.FieldUpdatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *TenantWhatsAppSubscriptionMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case tenantwhatsappsubscription.FieldTenantID:
+		return m.TenantID()
+	case tenantwhatsappsubscription.FieldPlanID:
+		return m.PlanID()
+	case tenantwhatsappsubscription.FieldStatus:
+		return m.Status()
+	case tenantwhatsappsubscription.FieldStartedAt:
+		return m.StartedAt()
+	case tenantwhatsappsubscription.FieldExpiresAt:
+		return m.ExpiresAt()
+	case tenantwhatsappsubscription.FieldPaymentReference:
+		return m.PaymentReference()
+	case tenantwhatsappsubscription.FieldAutoRenew:
+		return m.AutoRenew()
+	case tenantwhatsappsubscription.FieldMessagesUsed:
+		return m.MessagesUsed()
+	case tenantwhatsappsubscription.FieldCreatedAt:
+		return m.CreatedAt()
+	case tenantwhatsappsubscription.FieldUpdatedAt:
+		return m.UpdatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *TenantWhatsAppSubscriptionMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case tenantwhatsappsubscription.FieldTenantID:
+		return m.OldTenantID(ctx)
+	case tenantwhatsappsubscription.FieldPlanID:
+		return m.OldPlanID(ctx)
+	case tenantwhatsappsubscription.FieldStatus:
+		return m.OldStatus(ctx)
+	case tenantwhatsappsubscription.FieldStartedAt:
+		return m.OldStartedAt(ctx)
+	case tenantwhatsappsubscription.FieldExpiresAt:
+		return m.OldExpiresAt(ctx)
+	case tenantwhatsappsubscription.FieldPaymentReference:
+		return m.OldPaymentReference(ctx)
+	case tenantwhatsappsubscription.FieldAutoRenew:
+		return m.OldAutoRenew(ctx)
+	case tenantwhatsappsubscription.FieldMessagesUsed:
+		return m.OldMessagesUsed(ctx)
+	case tenantwhatsappsubscription.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case tenantwhatsappsubscription.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown TenantWhatsAppSubscription field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *TenantWhatsAppSubscriptionMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case tenantwhatsappsubscription.FieldTenantID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTenantID(v)
+		return nil
+	case tenantwhatsappsubscription.FieldPlanID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPlanID(v)
+		return nil
+	case tenantwhatsappsubscription.FieldStatus:
+		v, ok := value.(tenantwhatsappsubscription.Status)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStatus(v)
+		return nil
+	case tenantwhatsappsubscription.FieldStartedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStartedAt(v)
+		return nil
+	case tenantwhatsappsubscription.FieldExpiresAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetExpiresAt(v)
+		return nil
+	case tenantwhatsappsubscription.FieldPaymentReference:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPaymentReference(v)
+		return nil
+	case tenantwhatsappsubscription.FieldAutoRenew:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAutoRenew(v)
+		return nil
+	case tenantwhatsappsubscription.FieldMessagesUsed:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMessagesUsed(v)
+		return nil
+	case tenantwhatsappsubscription.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case tenantwhatsappsubscription.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown TenantWhatsAppSubscription field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *TenantWhatsAppSubscriptionMutation) AddedFields() []string {
+	var fields []string
+	if m.addmessages_used != nil {
+		fields = append(fields, tenantwhatsappsubscription.FieldMessagesUsed)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *TenantWhatsAppSubscriptionMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case tenantwhatsappsubscription.FieldMessagesUsed:
+		return m.AddedMessagesUsed()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *TenantWhatsAppSubscriptionMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case tenantwhatsappsubscription.FieldMessagesUsed:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddMessagesUsed(v)
+		return nil
+	}
+	return fmt.Errorf("unknown TenantWhatsAppSubscription numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *TenantWhatsAppSubscriptionMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(tenantwhatsappsubscription.FieldPaymentReference) {
+		fields = append(fields, tenantwhatsappsubscription.FieldPaymentReference)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *TenantWhatsAppSubscriptionMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *TenantWhatsAppSubscriptionMutation) ClearField(name string) error {
+	switch name {
+	case tenantwhatsappsubscription.FieldPaymentReference:
+		m.ClearPaymentReference()
+		return nil
+	}
+	return fmt.Errorf("unknown TenantWhatsAppSubscription nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *TenantWhatsAppSubscriptionMutation) ResetField(name string) error {
+	switch name {
+	case tenantwhatsappsubscription.FieldTenantID:
+		m.ResetTenantID()
+		return nil
+	case tenantwhatsappsubscription.FieldPlanID:
+		m.ResetPlanID()
+		return nil
+	case tenantwhatsappsubscription.FieldStatus:
+		m.ResetStatus()
+		return nil
+	case tenantwhatsappsubscription.FieldStartedAt:
+		m.ResetStartedAt()
+		return nil
+	case tenantwhatsappsubscription.FieldExpiresAt:
+		m.ResetExpiresAt()
+		return nil
+	case tenantwhatsappsubscription.FieldPaymentReference:
+		m.ResetPaymentReference()
+		return nil
+	case tenantwhatsappsubscription.FieldAutoRenew:
+		m.ResetAutoRenew()
+		return nil
+	case tenantwhatsappsubscription.FieldMessagesUsed:
+		m.ResetMessagesUsed()
+		return nil
+	case tenantwhatsappsubscription.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case tenantwhatsappsubscription.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown TenantWhatsAppSubscription field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *TenantWhatsAppSubscriptionMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.plan != nil {
+		edges = append(edges, tenantwhatsappsubscription.EdgePlan)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *TenantWhatsAppSubscriptionMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case tenantwhatsappsubscription.EdgePlan:
+		if id := m.plan; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *TenantWhatsAppSubscriptionMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *TenantWhatsAppSubscriptionMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *TenantWhatsAppSubscriptionMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedplan {
+		edges = append(edges, tenantwhatsappsubscription.EdgePlan)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *TenantWhatsAppSubscriptionMutation) EdgeCleared(name string) bool {
+	switch name {
+	case tenantwhatsappsubscription.EdgePlan:
+		return m.clearedplan
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *TenantWhatsAppSubscriptionMutation) ClearEdge(name string) error {
+	switch name {
+	case tenantwhatsappsubscription.EdgePlan:
+		m.ClearPlan()
+		return nil
+	}
+	return fmt.Errorf("unknown TenantWhatsAppSubscription unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *TenantWhatsAppSubscriptionMutation) ResetEdge(name string) error {
+	switch name {
+	case tenantwhatsappsubscription.EdgePlan:
+		m.ResetPlan()
+		return nil
+	}
+	return fmt.Errorf("unknown TenantWhatsAppSubscription edge %s", name)
+}
+
 // UserMutation represents an operation that mutates the User nodes in the graph.
 type UserMutation struct {
 	config
@@ -15121,4 +16490,855 @@ func (m *UserRoleAssignmentMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown UserRoleAssignment edge %s", name)
+}
+
+// WhatsAppPlanMutation represents an operation that mutates the WhatsAppPlan nodes in the graph.
+type WhatsAppPlanMutation struct {
+	config
+	op                    Op
+	typ                   string
+	id                    *uuid.UUID
+	name                  *string
+	slug                  *string
+	price_monthly         *float64
+	addprice_monthly      *float64
+	provider_cost         *float64
+	addprovider_cost      *float64
+	messages_per_month    *int
+	addmessages_per_month *int
+	is_active             *bool
+	created_at            *time.Time
+	clearedFields         map[string]struct{}
+	subscriptions         map[uuid.UUID]struct{}
+	removedsubscriptions  map[uuid.UUID]struct{}
+	clearedsubscriptions  bool
+	done                  bool
+	oldValue              func(context.Context) (*WhatsAppPlan, error)
+	predicates            []predicate.WhatsAppPlan
+}
+
+var _ ent.Mutation = (*WhatsAppPlanMutation)(nil)
+
+// whatsappplanOption allows management of the mutation configuration using functional options.
+type whatsappplanOption func(*WhatsAppPlanMutation)
+
+// newWhatsAppPlanMutation creates new mutation for the WhatsAppPlan entity.
+func newWhatsAppPlanMutation(c config, op Op, opts ...whatsappplanOption) *WhatsAppPlanMutation {
+	m := &WhatsAppPlanMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeWhatsAppPlan,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withWhatsAppPlanID sets the ID field of the mutation.
+func withWhatsAppPlanID(id uuid.UUID) whatsappplanOption {
+	return func(m *WhatsAppPlanMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *WhatsAppPlan
+		)
+		m.oldValue = func(ctx context.Context) (*WhatsAppPlan, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().WhatsAppPlan.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withWhatsAppPlan sets the old WhatsAppPlan of the mutation.
+func withWhatsAppPlan(node *WhatsAppPlan) whatsappplanOption {
+	return func(m *WhatsAppPlanMutation) {
+		m.oldValue = func(context.Context) (*WhatsAppPlan, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m WhatsAppPlanMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m WhatsAppPlanMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of WhatsAppPlan entities.
+func (m *WhatsAppPlanMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *WhatsAppPlanMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *WhatsAppPlanMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().WhatsAppPlan.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetName sets the "name" field.
+func (m *WhatsAppPlanMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *WhatsAppPlanMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the WhatsAppPlan entity.
+// If the WhatsAppPlan object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WhatsAppPlanMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *WhatsAppPlanMutation) ResetName() {
+	m.name = nil
+}
+
+// SetSlug sets the "slug" field.
+func (m *WhatsAppPlanMutation) SetSlug(s string) {
+	m.slug = &s
+}
+
+// Slug returns the value of the "slug" field in the mutation.
+func (m *WhatsAppPlanMutation) Slug() (r string, exists bool) {
+	v := m.slug
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSlug returns the old "slug" field's value of the WhatsAppPlan entity.
+// If the WhatsAppPlan object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WhatsAppPlanMutation) OldSlug(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSlug is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSlug requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSlug: %w", err)
+	}
+	return oldValue.Slug, nil
+}
+
+// ResetSlug resets all changes to the "slug" field.
+func (m *WhatsAppPlanMutation) ResetSlug() {
+	m.slug = nil
+}
+
+// SetPriceMonthly sets the "price_monthly" field.
+func (m *WhatsAppPlanMutation) SetPriceMonthly(f float64) {
+	m.price_monthly = &f
+	m.addprice_monthly = nil
+}
+
+// PriceMonthly returns the value of the "price_monthly" field in the mutation.
+func (m *WhatsAppPlanMutation) PriceMonthly() (r float64, exists bool) {
+	v := m.price_monthly
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPriceMonthly returns the old "price_monthly" field's value of the WhatsAppPlan entity.
+// If the WhatsAppPlan object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WhatsAppPlanMutation) OldPriceMonthly(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPriceMonthly is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPriceMonthly requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPriceMonthly: %w", err)
+	}
+	return oldValue.PriceMonthly, nil
+}
+
+// AddPriceMonthly adds f to the "price_monthly" field.
+func (m *WhatsAppPlanMutation) AddPriceMonthly(f float64) {
+	if m.addprice_monthly != nil {
+		*m.addprice_monthly += f
+	} else {
+		m.addprice_monthly = &f
+	}
+}
+
+// AddedPriceMonthly returns the value that was added to the "price_monthly" field in this mutation.
+func (m *WhatsAppPlanMutation) AddedPriceMonthly() (r float64, exists bool) {
+	v := m.addprice_monthly
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetPriceMonthly resets all changes to the "price_monthly" field.
+func (m *WhatsAppPlanMutation) ResetPriceMonthly() {
+	m.price_monthly = nil
+	m.addprice_monthly = nil
+}
+
+// SetProviderCost sets the "provider_cost" field.
+func (m *WhatsAppPlanMutation) SetProviderCost(f float64) {
+	m.provider_cost = &f
+	m.addprovider_cost = nil
+}
+
+// ProviderCost returns the value of the "provider_cost" field in the mutation.
+func (m *WhatsAppPlanMutation) ProviderCost() (r float64, exists bool) {
+	v := m.provider_cost
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldProviderCost returns the old "provider_cost" field's value of the WhatsAppPlan entity.
+// If the WhatsAppPlan object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WhatsAppPlanMutation) OldProviderCost(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldProviderCost is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldProviderCost requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldProviderCost: %w", err)
+	}
+	return oldValue.ProviderCost, nil
+}
+
+// AddProviderCost adds f to the "provider_cost" field.
+func (m *WhatsAppPlanMutation) AddProviderCost(f float64) {
+	if m.addprovider_cost != nil {
+		*m.addprovider_cost += f
+	} else {
+		m.addprovider_cost = &f
+	}
+}
+
+// AddedProviderCost returns the value that was added to the "provider_cost" field in this mutation.
+func (m *WhatsAppPlanMutation) AddedProviderCost() (r float64, exists bool) {
+	v := m.addprovider_cost
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetProviderCost resets all changes to the "provider_cost" field.
+func (m *WhatsAppPlanMutation) ResetProviderCost() {
+	m.provider_cost = nil
+	m.addprovider_cost = nil
+}
+
+// SetMessagesPerMonth sets the "messages_per_month" field.
+func (m *WhatsAppPlanMutation) SetMessagesPerMonth(i int) {
+	m.messages_per_month = &i
+	m.addmessages_per_month = nil
+}
+
+// MessagesPerMonth returns the value of the "messages_per_month" field in the mutation.
+func (m *WhatsAppPlanMutation) MessagesPerMonth() (r int, exists bool) {
+	v := m.messages_per_month
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMessagesPerMonth returns the old "messages_per_month" field's value of the WhatsAppPlan entity.
+// If the WhatsAppPlan object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WhatsAppPlanMutation) OldMessagesPerMonth(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMessagesPerMonth is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMessagesPerMonth requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMessagesPerMonth: %w", err)
+	}
+	return oldValue.MessagesPerMonth, nil
+}
+
+// AddMessagesPerMonth adds i to the "messages_per_month" field.
+func (m *WhatsAppPlanMutation) AddMessagesPerMonth(i int) {
+	if m.addmessages_per_month != nil {
+		*m.addmessages_per_month += i
+	} else {
+		m.addmessages_per_month = &i
+	}
+}
+
+// AddedMessagesPerMonth returns the value that was added to the "messages_per_month" field in this mutation.
+func (m *WhatsAppPlanMutation) AddedMessagesPerMonth() (r int, exists bool) {
+	v := m.addmessages_per_month
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetMessagesPerMonth resets all changes to the "messages_per_month" field.
+func (m *WhatsAppPlanMutation) ResetMessagesPerMonth() {
+	m.messages_per_month = nil
+	m.addmessages_per_month = nil
+}
+
+// SetIsActive sets the "is_active" field.
+func (m *WhatsAppPlanMutation) SetIsActive(b bool) {
+	m.is_active = &b
+}
+
+// IsActive returns the value of the "is_active" field in the mutation.
+func (m *WhatsAppPlanMutation) IsActive() (r bool, exists bool) {
+	v := m.is_active
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsActive returns the old "is_active" field's value of the WhatsAppPlan entity.
+// If the WhatsAppPlan object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WhatsAppPlanMutation) OldIsActive(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsActive is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsActive requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsActive: %w", err)
+	}
+	return oldValue.IsActive, nil
+}
+
+// ResetIsActive resets all changes to the "is_active" field.
+func (m *WhatsAppPlanMutation) ResetIsActive() {
+	m.is_active = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *WhatsAppPlanMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *WhatsAppPlanMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the WhatsAppPlan entity.
+// If the WhatsAppPlan object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WhatsAppPlanMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *WhatsAppPlanMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// AddSubscriptionIDs adds the "subscriptions" edge to the TenantWhatsAppSubscription entity by ids.
+func (m *WhatsAppPlanMutation) AddSubscriptionIDs(ids ...uuid.UUID) {
+	if m.subscriptions == nil {
+		m.subscriptions = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.subscriptions[ids[i]] = struct{}{}
+	}
+}
+
+// ClearSubscriptions clears the "subscriptions" edge to the TenantWhatsAppSubscription entity.
+func (m *WhatsAppPlanMutation) ClearSubscriptions() {
+	m.clearedsubscriptions = true
+}
+
+// SubscriptionsCleared reports if the "subscriptions" edge to the TenantWhatsAppSubscription entity was cleared.
+func (m *WhatsAppPlanMutation) SubscriptionsCleared() bool {
+	return m.clearedsubscriptions
+}
+
+// RemoveSubscriptionIDs removes the "subscriptions" edge to the TenantWhatsAppSubscription entity by IDs.
+func (m *WhatsAppPlanMutation) RemoveSubscriptionIDs(ids ...uuid.UUID) {
+	if m.removedsubscriptions == nil {
+		m.removedsubscriptions = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.subscriptions, ids[i])
+		m.removedsubscriptions[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedSubscriptions returns the removed IDs of the "subscriptions" edge to the TenantWhatsAppSubscription entity.
+func (m *WhatsAppPlanMutation) RemovedSubscriptionsIDs() (ids []uuid.UUID) {
+	for id := range m.removedsubscriptions {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// SubscriptionsIDs returns the "subscriptions" edge IDs in the mutation.
+func (m *WhatsAppPlanMutation) SubscriptionsIDs() (ids []uuid.UUID) {
+	for id := range m.subscriptions {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetSubscriptions resets all changes to the "subscriptions" edge.
+func (m *WhatsAppPlanMutation) ResetSubscriptions() {
+	m.subscriptions = nil
+	m.clearedsubscriptions = false
+	m.removedsubscriptions = nil
+}
+
+// Where appends a list predicates to the WhatsAppPlanMutation builder.
+func (m *WhatsAppPlanMutation) Where(ps ...predicate.WhatsAppPlan) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the WhatsAppPlanMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *WhatsAppPlanMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.WhatsAppPlan, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *WhatsAppPlanMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *WhatsAppPlanMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (WhatsAppPlan).
+func (m *WhatsAppPlanMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *WhatsAppPlanMutation) Fields() []string {
+	fields := make([]string, 0, 7)
+	if m.name != nil {
+		fields = append(fields, whatsappplan.FieldName)
+	}
+	if m.slug != nil {
+		fields = append(fields, whatsappplan.FieldSlug)
+	}
+	if m.price_monthly != nil {
+		fields = append(fields, whatsappplan.FieldPriceMonthly)
+	}
+	if m.provider_cost != nil {
+		fields = append(fields, whatsappplan.FieldProviderCost)
+	}
+	if m.messages_per_month != nil {
+		fields = append(fields, whatsappplan.FieldMessagesPerMonth)
+	}
+	if m.is_active != nil {
+		fields = append(fields, whatsappplan.FieldIsActive)
+	}
+	if m.created_at != nil {
+		fields = append(fields, whatsappplan.FieldCreatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *WhatsAppPlanMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case whatsappplan.FieldName:
+		return m.Name()
+	case whatsappplan.FieldSlug:
+		return m.Slug()
+	case whatsappplan.FieldPriceMonthly:
+		return m.PriceMonthly()
+	case whatsappplan.FieldProviderCost:
+		return m.ProviderCost()
+	case whatsappplan.FieldMessagesPerMonth:
+		return m.MessagesPerMonth()
+	case whatsappplan.FieldIsActive:
+		return m.IsActive()
+	case whatsappplan.FieldCreatedAt:
+		return m.CreatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *WhatsAppPlanMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case whatsappplan.FieldName:
+		return m.OldName(ctx)
+	case whatsappplan.FieldSlug:
+		return m.OldSlug(ctx)
+	case whatsappplan.FieldPriceMonthly:
+		return m.OldPriceMonthly(ctx)
+	case whatsappplan.FieldProviderCost:
+		return m.OldProviderCost(ctx)
+	case whatsappplan.FieldMessagesPerMonth:
+		return m.OldMessagesPerMonth(ctx)
+	case whatsappplan.FieldIsActive:
+		return m.OldIsActive(ctx)
+	case whatsappplan.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown WhatsAppPlan field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *WhatsAppPlanMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case whatsappplan.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case whatsappplan.FieldSlug:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSlug(v)
+		return nil
+	case whatsappplan.FieldPriceMonthly:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPriceMonthly(v)
+		return nil
+	case whatsappplan.FieldProviderCost:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetProviderCost(v)
+		return nil
+	case whatsappplan.FieldMessagesPerMonth:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMessagesPerMonth(v)
+		return nil
+	case whatsappplan.FieldIsActive:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsActive(v)
+		return nil
+	case whatsappplan.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown WhatsAppPlan field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *WhatsAppPlanMutation) AddedFields() []string {
+	var fields []string
+	if m.addprice_monthly != nil {
+		fields = append(fields, whatsappplan.FieldPriceMonthly)
+	}
+	if m.addprovider_cost != nil {
+		fields = append(fields, whatsappplan.FieldProviderCost)
+	}
+	if m.addmessages_per_month != nil {
+		fields = append(fields, whatsappplan.FieldMessagesPerMonth)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *WhatsAppPlanMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case whatsappplan.FieldPriceMonthly:
+		return m.AddedPriceMonthly()
+	case whatsappplan.FieldProviderCost:
+		return m.AddedProviderCost()
+	case whatsappplan.FieldMessagesPerMonth:
+		return m.AddedMessagesPerMonth()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *WhatsAppPlanMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case whatsappplan.FieldPriceMonthly:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddPriceMonthly(v)
+		return nil
+	case whatsappplan.FieldProviderCost:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddProviderCost(v)
+		return nil
+	case whatsappplan.FieldMessagesPerMonth:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddMessagesPerMonth(v)
+		return nil
+	}
+	return fmt.Errorf("unknown WhatsAppPlan numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *WhatsAppPlanMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *WhatsAppPlanMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *WhatsAppPlanMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown WhatsAppPlan nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *WhatsAppPlanMutation) ResetField(name string) error {
+	switch name {
+	case whatsappplan.FieldName:
+		m.ResetName()
+		return nil
+	case whatsappplan.FieldSlug:
+		m.ResetSlug()
+		return nil
+	case whatsappplan.FieldPriceMonthly:
+		m.ResetPriceMonthly()
+		return nil
+	case whatsappplan.FieldProviderCost:
+		m.ResetProviderCost()
+		return nil
+	case whatsappplan.FieldMessagesPerMonth:
+		m.ResetMessagesPerMonth()
+		return nil
+	case whatsappplan.FieldIsActive:
+		m.ResetIsActive()
+		return nil
+	case whatsappplan.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown WhatsAppPlan field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *WhatsAppPlanMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.subscriptions != nil {
+		edges = append(edges, whatsappplan.EdgeSubscriptions)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *WhatsAppPlanMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case whatsappplan.EdgeSubscriptions:
+		ids := make([]ent.Value, 0, len(m.subscriptions))
+		for id := range m.subscriptions {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *WhatsAppPlanMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.removedsubscriptions != nil {
+		edges = append(edges, whatsappplan.EdgeSubscriptions)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *WhatsAppPlanMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case whatsappplan.EdgeSubscriptions:
+		ids := make([]ent.Value, 0, len(m.removedsubscriptions))
+		for id := range m.removedsubscriptions {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *WhatsAppPlanMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedsubscriptions {
+		edges = append(edges, whatsappplan.EdgeSubscriptions)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *WhatsAppPlanMutation) EdgeCleared(name string) bool {
+	switch name {
+	case whatsappplan.EdgeSubscriptions:
+		return m.clearedsubscriptions
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *WhatsAppPlanMutation) ClearEdge(name string) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown WhatsAppPlan unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *WhatsAppPlanMutation) ResetEdge(name string) error {
+	switch name {
+	case whatsappplan.EdgeSubscriptions:
+		m.ResetSubscriptions()
+		return nil
+	}
+	return fmt.Errorf("unknown WhatsAppPlan edge %s", name)
 }

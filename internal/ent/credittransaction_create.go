@@ -54,6 +54,34 @@ func (_c *CreditTransactionCreate) SetNewBalance(v float64) *CreditTransactionCr
 	return _c
 }
 
+// SetProviderCost sets the "provider_cost" field.
+func (_c *CreditTransactionCreate) SetProviderCost(v float64) *CreditTransactionCreate {
+	_c.mutation.SetProviderCost(v)
+	return _c
+}
+
+// SetNillableProviderCost sets the "provider_cost" field if the given value is not nil.
+func (_c *CreditTransactionCreate) SetNillableProviderCost(v *float64) *CreditTransactionCreate {
+	if v != nil {
+		_c.SetProviderCost(*v)
+	}
+	return _c
+}
+
+// SetPlatformFee sets the "platform_fee" field.
+func (_c *CreditTransactionCreate) SetPlatformFee(v float64) *CreditTransactionCreate {
+	_c.mutation.SetPlatformFee(v)
+	return _c
+}
+
+// SetNillablePlatformFee sets the "platform_fee" field if the given value is not nil.
+func (_c *CreditTransactionCreate) SetNillablePlatformFee(v *float64) *CreditTransactionCreate {
+	if v != nil {
+		_c.SetPlatformFee(*v)
+	}
+	return _c
+}
+
 // SetReferenceID sets the "reference_id" field.
 func (_c *CreditTransactionCreate) SetReferenceID(v string) *CreditTransactionCreate {
 	_c.mutation.SetReferenceID(v)
@@ -151,6 +179,14 @@ func (_c *CreditTransactionCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (_c *CreditTransactionCreate) defaults() {
+	if _, ok := _c.mutation.ProviderCost(); !ok {
+		v := credittransaction.DefaultProviderCost
+		_c.mutation.SetProviderCost(v)
+	}
+	if _, ok := _c.mutation.PlatformFee(); !ok {
+		v := credittransaction.DefaultPlatformFee
+		_c.mutation.SetPlatformFee(v)
+	}
 	if _, ok := _c.mutation.Metadata(); !ok {
 		v := credittransaction.DefaultMetadata
 		_c.mutation.SetMetadata(v)
@@ -191,6 +227,12 @@ func (_c *CreditTransactionCreate) check() error {
 	}
 	if _, ok := _c.mutation.NewBalance(); !ok {
 		return &ValidationError{Name: "new_balance", err: errors.New(`ent: missing required field "CreditTransaction.new_balance"`)}
+	}
+	if _, ok := _c.mutation.ProviderCost(); !ok {
+		return &ValidationError{Name: "provider_cost", err: errors.New(`ent: missing required field "CreditTransaction.provider_cost"`)}
+	}
+	if _, ok := _c.mutation.PlatformFee(); !ok {
+		return &ValidationError{Name: "platform_fee", err: errors.New(`ent: missing required field "CreditTransaction.platform_fee"`)}
 	}
 	if _, ok := _c.mutation.Metadata(); !ok {
 		return &ValidationError{Name: "metadata", err: errors.New(`ent: missing required field "CreditTransaction.metadata"`)}
@@ -253,6 +295,14 @@ func (_c *CreditTransactionCreate) createSpec() (*CreditTransaction, *sqlgraph.C
 	if value, ok := _c.mutation.NewBalance(); ok {
 		_spec.SetField(credittransaction.FieldNewBalance, field.TypeFloat64, value)
 		_node.NewBalance = value
+	}
+	if value, ok := _c.mutation.ProviderCost(); ok {
+		_spec.SetField(credittransaction.FieldProviderCost, field.TypeFloat64, value)
+		_node.ProviderCost = value
+	}
+	if value, ok := _c.mutation.PlatformFee(); ok {
+		_spec.SetField(credittransaction.FieldPlatformFee, field.TypeFloat64, value)
+		_node.PlatformFee = value
 	}
 	if value, ok := _c.mutation.ReferenceID(); ok {
 		_spec.SetField(credittransaction.FieldReferenceID, field.TypeString, value)
@@ -391,6 +441,42 @@ func (u *CreditTransactionUpsert) UpdateNewBalance() *CreditTransactionUpsert {
 // AddNewBalance adds v to the "new_balance" field.
 func (u *CreditTransactionUpsert) AddNewBalance(v float64) *CreditTransactionUpsert {
 	u.Add(credittransaction.FieldNewBalance, v)
+	return u
+}
+
+// SetProviderCost sets the "provider_cost" field.
+func (u *CreditTransactionUpsert) SetProviderCost(v float64) *CreditTransactionUpsert {
+	u.Set(credittransaction.FieldProviderCost, v)
+	return u
+}
+
+// UpdateProviderCost sets the "provider_cost" field to the value that was provided on create.
+func (u *CreditTransactionUpsert) UpdateProviderCost() *CreditTransactionUpsert {
+	u.SetExcluded(credittransaction.FieldProviderCost)
+	return u
+}
+
+// AddProviderCost adds v to the "provider_cost" field.
+func (u *CreditTransactionUpsert) AddProviderCost(v float64) *CreditTransactionUpsert {
+	u.Add(credittransaction.FieldProviderCost, v)
+	return u
+}
+
+// SetPlatformFee sets the "platform_fee" field.
+func (u *CreditTransactionUpsert) SetPlatformFee(v float64) *CreditTransactionUpsert {
+	u.Set(credittransaction.FieldPlatformFee, v)
+	return u
+}
+
+// UpdatePlatformFee sets the "platform_fee" field to the value that was provided on create.
+func (u *CreditTransactionUpsert) UpdatePlatformFee() *CreditTransactionUpsert {
+	u.SetExcluded(credittransaction.FieldPlatformFee)
+	return u
+}
+
+// AddPlatformFee adds v to the "platform_fee" field.
+func (u *CreditTransactionUpsert) AddPlatformFee(v float64) *CreditTransactionUpsert {
+	u.Add(credittransaction.FieldPlatformFee, v)
 	return u
 }
 
@@ -574,6 +660,48 @@ func (u *CreditTransactionUpsertOne) AddNewBalance(v float64) *CreditTransaction
 func (u *CreditTransactionUpsertOne) UpdateNewBalance() *CreditTransactionUpsertOne {
 	return u.Update(func(s *CreditTransactionUpsert) {
 		s.UpdateNewBalance()
+	})
+}
+
+// SetProviderCost sets the "provider_cost" field.
+func (u *CreditTransactionUpsertOne) SetProviderCost(v float64) *CreditTransactionUpsertOne {
+	return u.Update(func(s *CreditTransactionUpsert) {
+		s.SetProviderCost(v)
+	})
+}
+
+// AddProviderCost adds v to the "provider_cost" field.
+func (u *CreditTransactionUpsertOne) AddProviderCost(v float64) *CreditTransactionUpsertOne {
+	return u.Update(func(s *CreditTransactionUpsert) {
+		s.AddProviderCost(v)
+	})
+}
+
+// UpdateProviderCost sets the "provider_cost" field to the value that was provided on create.
+func (u *CreditTransactionUpsertOne) UpdateProviderCost() *CreditTransactionUpsertOne {
+	return u.Update(func(s *CreditTransactionUpsert) {
+		s.UpdateProviderCost()
+	})
+}
+
+// SetPlatformFee sets the "platform_fee" field.
+func (u *CreditTransactionUpsertOne) SetPlatformFee(v float64) *CreditTransactionUpsertOne {
+	return u.Update(func(s *CreditTransactionUpsert) {
+		s.SetPlatformFee(v)
+	})
+}
+
+// AddPlatformFee adds v to the "platform_fee" field.
+func (u *CreditTransactionUpsertOne) AddPlatformFee(v float64) *CreditTransactionUpsertOne {
+	return u.Update(func(s *CreditTransactionUpsert) {
+		s.AddPlatformFee(v)
+	})
+}
+
+// UpdatePlatformFee sets the "platform_fee" field to the value that was provided on create.
+func (u *CreditTransactionUpsertOne) UpdatePlatformFee() *CreditTransactionUpsertOne {
+	return u.Update(func(s *CreditTransactionUpsert) {
+		s.UpdatePlatformFee()
 	})
 }
 
@@ -932,6 +1060,48 @@ func (u *CreditTransactionUpsertBulk) AddNewBalance(v float64) *CreditTransactio
 func (u *CreditTransactionUpsertBulk) UpdateNewBalance() *CreditTransactionUpsertBulk {
 	return u.Update(func(s *CreditTransactionUpsert) {
 		s.UpdateNewBalance()
+	})
+}
+
+// SetProviderCost sets the "provider_cost" field.
+func (u *CreditTransactionUpsertBulk) SetProviderCost(v float64) *CreditTransactionUpsertBulk {
+	return u.Update(func(s *CreditTransactionUpsert) {
+		s.SetProviderCost(v)
+	})
+}
+
+// AddProviderCost adds v to the "provider_cost" field.
+func (u *CreditTransactionUpsertBulk) AddProviderCost(v float64) *CreditTransactionUpsertBulk {
+	return u.Update(func(s *CreditTransactionUpsert) {
+		s.AddProviderCost(v)
+	})
+}
+
+// UpdateProviderCost sets the "provider_cost" field to the value that was provided on create.
+func (u *CreditTransactionUpsertBulk) UpdateProviderCost() *CreditTransactionUpsertBulk {
+	return u.Update(func(s *CreditTransactionUpsert) {
+		s.UpdateProviderCost()
+	})
+}
+
+// SetPlatformFee sets the "platform_fee" field.
+func (u *CreditTransactionUpsertBulk) SetPlatformFee(v float64) *CreditTransactionUpsertBulk {
+	return u.Update(func(s *CreditTransactionUpsert) {
+		s.SetPlatformFee(v)
+	})
+}
+
+// AddPlatformFee adds v to the "platform_fee" field.
+func (u *CreditTransactionUpsertBulk) AddPlatformFee(v float64) *CreditTransactionUpsertBulk {
+	return u.Update(func(s *CreditTransactionUpsert) {
+		s.AddPlatformFee(v)
+	})
+}
+
+// UpdatePlatformFee sets the "platform_fee" field to the value that was provided on create.
+func (u *CreditTransactionUpsertBulk) UpdatePlatformFee() *CreditTransactionUpsertBulk {
+	return u.Update(func(s *CreditTransactionUpsert) {
+		s.UpdatePlatformFee()
 	})
 }
 

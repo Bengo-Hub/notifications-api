@@ -32,8 +32,10 @@ import (
 	"github.com/bengobox/notifications-api/internal/ent/template"
 	"github.com/bengobox/notifications-api/internal/ent/tenant"
 	"github.com/bengobox/notifications-api/internal/ent/tenantcredit"
+	"github.com/bengobox/notifications-api/internal/ent/tenantwhatsappsubscription"
 	"github.com/bengobox/notifications-api/internal/ent/user"
 	"github.com/bengobox/notifications-api/internal/ent/userroleassignment"
+	"github.com/bengobox/notifications-api/internal/ent/whatsappplan"
 )
 
 // Client is the client that holds all ent builders.
@@ -73,10 +75,14 @@ type Client struct {
 	Tenant *TenantClient
 	// TenantCredit is the client for interacting with the TenantCredit builders.
 	TenantCredit *TenantCreditClient
+	// TenantWhatsAppSubscription is the client for interacting with the TenantWhatsAppSubscription builders.
+	TenantWhatsAppSubscription *TenantWhatsAppSubscriptionClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 	// UserRoleAssignment is the client for interacting with the UserRoleAssignment builders.
 	UserRoleAssignment *UserRoleAssignmentClient
+	// WhatsAppPlan is the client for interacting with the WhatsAppPlan builders.
+	WhatsAppPlan *WhatsAppPlanClient
 }
 
 // NewClient creates a new client configured with the given options.
@@ -104,8 +110,10 @@ func (c *Client) init() {
 	c.Template = NewTemplateClient(c.config)
 	c.Tenant = NewTenantClient(c.config)
 	c.TenantCredit = NewTenantCreditClient(c.config)
+	c.TenantWhatsAppSubscription = NewTenantWhatsAppSubscriptionClient(c.config)
 	c.User = NewUserClient(c.config)
 	c.UserRoleAssignment = NewUserRoleAssignmentClient(c.config)
+	c.WhatsAppPlan = NewWhatsAppPlanClient(c.config)
 }
 
 type (
@@ -214,8 +222,10 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Template:                   NewTemplateClient(cfg),
 		Tenant:                     NewTenantClient(cfg),
 		TenantCredit:               NewTenantCreditClient(cfg),
+		TenantWhatsAppSubscription: NewTenantWhatsAppSubscriptionClient(cfg),
 		User:                       NewUserClient(cfg),
 		UserRoleAssignment:         NewUserRoleAssignmentClient(cfg),
+		WhatsAppPlan:               NewWhatsAppPlanClient(cfg),
 	}, nil
 }
 
@@ -251,8 +261,10 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Template:                   NewTemplateClient(cfg),
 		Tenant:                     NewTenantClient(cfg),
 		TenantCredit:               NewTenantCreditClient(cfg),
+		TenantWhatsAppSubscription: NewTenantWhatsAppSubscriptionClient(cfg),
 		User:                       NewUserClient(cfg),
 		UserRoleAssignment:         NewUserRoleAssignmentClient(cfg),
+		WhatsAppPlan:               NewWhatsAppPlanClient(cfg),
 	}, nil
 }
 
@@ -285,8 +297,8 @@ func (c *Client) Use(hooks ...Hook) {
 		c.CreditTransaction, c.DeliveryLog, c.DeviceToken, c.NotificationPermission,
 		c.NotificationRole, c.NotificationRolePermission, c.OutboxEvent, c.Permission,
 		c.PlatformBilling, c.ProviderSetting, c.RateLimitConfig, c.Role,
-		c.ServiceConfig, c.Template, c.Tenant, c.TenantCredit, c.User,
-		c.UserRoleAssignment,
+		c.ServiceConfig, c.Template, c.Tenant, c.TenantCredit,
+		c.TenantWhatsAppSubscription, c.User, c.UserRoleAssignment, c.WhatsAppPlan,
 	} {
 		n.Use(hooks...)
 	}
@@ -299,8 +311,8 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 		c.CreditTransaction, c.DeliveryLog, c.DeviceToken, c.NotificationPermission,
 		c.NotificationRole, c.NotificationRolePermission, c.OutboxEvent, c.Permission,
 		c.PlatformBilling, c.ProviderSetting, c.RateLimitConfig, c.Role,
-		c.ServiceConfig, c.Template, c.Tenant, c.TenantCredit, c.User,
-		c.UserRoleAssignment,
+		c.ServiceConfig, c.Template, c.Tenant, c.TenantCredit,
+		c.TenantWhatsAppSubscription, c.User, c.UserRoleAssignment, c.WhatsAppPlan,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -341,10 +353,14 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Tenant.mutate(ctx, m)
 	case *TenantCreditMutation:
 		return c.TenantCredit.mutate(ctx, m)
+	case *TenantWhatsAppSubscriptionMutation:
+		return c.TenantWhatsAppSubscription.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
 	case *UserRoleAssignmentMutation:
 		return c.UserRoleAssignment.mutate(ctx, m)
+	case *WhatsAppPlanMutation:
+		return c.WhatsAppPlan.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
 	}
@@ -2654,6 +2670,155 @@ func (c *TenantCreditClient) mutate(ctx context.Context, m *TenantCreditMutation
 	}
 }
 
+// TenantWhatsAppSubscriptionClient is a client for the TenantWhatsAppSubscription schema.
+type TenantWhatsAppSubscriptionClient struct {
+	config
+}
+
+// NewTenantWhatsAppSubscriptionClient returns a client for the TenantWhatsAppSubscription from the given config.
+func NewTenantWhatsAppSubscriptionClient(c config) *TenantWhatsAppSubscriptionClient {
+	return &TenantWhatsAppSubscriptionClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `tenantwhatsappsubscription.Hooks(f(g(h())))`.
+func (c *TenantWhatsAppSubscriptionClient) Use(hooks ...Hook) {
+	c.hooks.TenantWhatsAppSubscription = append(c.hooks.TenantWhatsAppSubscription, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `tenantwhatsappsubscription.Intercept(f(g(h())))`.
+func (c *TenantWhatsAppSubscriptionClient) Intercept(interceptors ...Interceptor) {
+	c.inters.TenantWhatsAppSubscription = append(c.inters.TenantWhatsAppSubscription, interceptors...)
+}
+
+// Create returns a builder for creating a TenantWhatsAppSubscription entity.
+func (c *TenantWhatsAppSubscriptionClient) Create() *TenantWhatsAppSubscriptionCreate {
+	mutation := newTenantWhatsAppSubscriptionMutation(c.config, OpCreate)
+	return &TenantWhatsAppSubscriptionCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of TenantWhatsAppSubscription entities.
+func (c *TenantWhatsAppSubscriptionClient) CreateBulk(builders ...*TenantWhatsAppSubscriptionCreate) *TenantWhatsAppSubscriptionCreateBulk {
+	return &TenantWhatsAppSubscriptionCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *TenantWhatsAppSubscriptionClient) MapCreateBulk(slice any, setFunc func(*TenantWhatsAppSubscriptionCreate, int)) *TenantWhatsAppSubscriptionCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &TenantWhatsAppSubscriptionCreateBulk{err: fmt.Errorf("calling to TenantWhatsAppSubscriptionClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*TenantWhatsAppSubscriptionCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &TenantWhatsAppSubscriptionCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for TenantWhatsAppSubscription.
+func (c *TenantWhatsAppSubscriptionClient) Update() *TenantWhatsAppSubscriptionUpdate {
+	mutation := newTenantWhatsAppSubscriptionMutation(c.config, OpUpdate)
+	return &TenantWhatsAppSubscriptionUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *TenantWhatsAppSubscriptionClient) UpdateOne(_m *TenantWhatsAppSubscription) *TenantWhatsAppSubscriptionUpdateOne {
+	mutation := newTenantWhatsAppSubscriptionMutation(c.config, OpUpdateOne, withTenantWhatsAppSubscription(_m))
+	return &TenantWhatsAppSubscriptionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *TenantWhatsAppSubscriptionClient) UpdateOneID(id uuid.UUID) *TenantWhatsAppSubscriptionUpdateOne {
+	mutation := newTenantWhatsAppSubscriptionMutation(c.config, OpUpdateOne, withTenantWhatsAppSubscriptionID(id))
+	return &TenantWhatsAppSubscriptionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for TenantWhatsAppSubscription.
+func (c *TenantWhatsAppSubscriptionClient) Delete() *TenantWhatsAppSubscriptionDelete {
+	mutation := newTenantWhatsAppSubscriptionMutation(c.config, OpDelete)
+	return &TenantWhatsAppSubscriptionDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *TenantWhatsAppSubscriptionClient) DeleteOne(_m *TenantWhatsAppSubscription) *TenantWhatsAppSubscriptionDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *TenantWhatsAppSubscriptionClient) DeleteOneID(id uuid.UUID) *TenantWhatsAppSubscriptionDeleteOne {
+	builder := c.Delete().Where(tenantwhatsappsubscription.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &TenantWhatsAppSubscriptionDeleteOne{builder}
+}
+
+// Query returns a query builder for TenantWhatsAppSubscription.
+func (c *TenantWhatsAppSubscriptionClient) Query() *TenantWhatsAppSubscriptionQuery {
+	return &TenantWhatsAppSubscriptionQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeTenantWhatsAppSubscription},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a TenantWhatsAppSubscription entity by its id.
+func (c *TenantWhatsAppSubscriptionClient) Get(ctx context.Context, id uuid.UUID) (*TenantWhatsAppSubscription, error) {
+	return c.Query().Where(tenantwhatsappsubscription.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *TenantWhatsAppSubscriptionClient) GetX(ctx context.Context, id uuid.UUID) *TenantWhatsAppSubscription {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryPlan queries the plan edge of a TenantWhatsAppSubscription.
+func (c *TenantWhatsAppSubscriptionClient) QueryPlan(_m *TenantWhatsAppSubscription) *WhatsAppPlanQuery {
+	query := (&WhatsAppPlanClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(tenantwhatsappsubscription.Table, tenantwhatsappsubscription.FieldID, id),
+			sqlgraph.To(whatsappplan.Table, whatsappplan.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, tenantwhatsappsubscription.PlanTable, tenantwhatsappsubscription.PlanColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *TenantWhatsAppSubscriptionClient) Hooks() []Hook {
+	return c.hooks.TenantWhatsAppSubscription
+}
+
+// Interceptors returns the client interceptors.
+func (c *TenantWhatsAppSubscriptionClient) Interceptors() []Interceptor {
+	return c.inters.TenantWhatsAppSubscription
+}
+
+func (c *TenantWhatsAppSubscriptionClient) mutate(ctx context.Context, m *TenantWhatsAppSubscriptionMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&TenantWhatsAppSubscriptionCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&TenantWhatsAppSubscriptionUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&TenantWhatsAppSubscriptionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&TenantWhatsAppSubscriptionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown TenantWhatsAppSubscription mutation op: %q", m.Op())
+	}
+}
+
 // UserClient is a client for the User schema.
 type UserClient struct {
 	config
@@ -2984,18 +3149,169 @@ func (c *UserRoleAssignmentClient) mutate(ctx context.Context, m *UserRoleAssign
 	}
 }
 
+// WhatsAppPlanClient is a client for the WhatsAppPlan schema.
+type WhatsAppPlanClient struct {
+	config
+}
+
+// NewWhatsAppPlanClient returns a client for the WhatsAppPlan from the given config.
+func NewWhatsAppPlanClient(c config) *WhatsAppPlanClient {
+	return &WhatsAppPlanClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `whatsappplan.Hooks(f(g(h())))`.
+func (c *WhatsAppPlanClient) Use(hooks ...Hook) {
+	c.hooks.WhatsAppPlan = append(c.hooks.WhatsAppPlan, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `whatsappplan.Intercept(f(g(h())))`.
+func (c *WhatsAppPlanClient) Intercept(interceptors ...Interceptor) {
+	c.inters.WhatsAppPlan = append(c.inters.WhatsAppPlan, interceptors...)
+}
+
+// Create returns a builder for creating a WhatsAppPlan entity.
+func (c *WhatsAppPlanClient) Create() *WhatsAppPlanCreate {
+	mutation := newWhatsAppPlanMutation(c.config, OpCreate)
+	return &WhatsAppPlanCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of WhatsAppPlan entities.
+func (c *WhatsAppPlanClient) CreateBulk(builders ...*WhatsAppPlanCreate) *WhatsAppPlanCreateBulk {
+	return &WhatsAppPlanCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *WhatsAppPlanClient) MapCreateBulk(slice any, setFunc func(*WhatsAppPlanCreate, int)) *WhatsAppPlanCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &WhatsAppPlanCreateBulk{err: fmt.Errorf("calling to WhatsAppPlanClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*WhatsAppPlanCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &WhatsAppPlanCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for WhatsAppPlan.
+func (c *WhatsAppPlanClient) Update() *WhatsAppPlanUpdate {
+	mutation := newWhatsAppPlanMutation(c.config, OpUpdate)
+	return &WhatsAppPlanUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WhatsAppPlanClient) UpdateOne(_m *WhatsAppPlan) *WhatsAppPlanUpdateOne {
+	mutation := newWhatsAppPlanMutation(c.config, OpUpdateOne, withWhatsAppPlan(_m))
+	return &WhatsAppPlanUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *WhatsAppPlanClient) UpdateOneID(id uuid.UUID) *WhatsAppPlanUpdateOne {
+	mutation := newWhatsAppPlanMutation(c.config, OpUpdateOne, withWhatsAppPlanID(id))
+	return &WhatsAppPlanUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for WhatsAppPlan.
+func (c *WhatsAppPlanClient) Delete() *WhatsAppPlanDelete {
+	mutation := newWhatsAppPlanMutation(c.config, OpDelete)
+	return &WhatsAppPlanDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *WhatsAppPlanClient) DeleteOne(_m *WhatsAppPlan) *WhatsAppPlanDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *WhatsAppPlanClient) DeleteOneID(id uuid.UUID) *WhatsAppPlanDeleteOne {
+	builder := c.Delete().Where(whatsappplan.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &WhatsAppPlanDeleteOne{builder}
+}
+
+// Query returns a query builder for WhatsAppPlan.
+func (c *WhatsAppPlanClient) Query() *WhatsAppPlanQuery {
+	return &WhatsAppPlanQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeWhatsAppPlan},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a WhatsAppPlan entity by its id.
+func (c *WhatsAppPlanClient) Get(ctx context.Context, id uuid.UUID) (*WhatsAppPlan, error) {
+	return c.Query().Where(whatsappplan.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *WhatsAppPlanClient) GetX(ctx context.Context, id uuid.UUID) *WhatsAppPlan {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QuerySubscriptions queries the subscriptions edge of a WhatsAppPlan.
+func (c *WhatsAppPlanClient) QuerySubscriptions(_m *WhatsAppPlan) *TenantWhatsAppSubscriptionQuery {
+	query := (&TenantWhatsAppSubscriptionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(whatsappplan.Table, whatsappplan.FieldID, id),
+			sqlgraph.To(tenantwhatsappsubscription.Table, tenantwhatsappsubscription.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, whatsappplan.SubscriptionsTable, whatsappplan.SubscriptionsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *WhatsAppPlanClient) Hooks() []Hook {
+	return c.hooks.WhatsAppPlan
+}
+
+// Interceptors returns the client interceptors.
+func (c *WhatsAppPlanClient) Interceptors() []Interceptor {
+	return c.inters.WhatsAppPlan
+}
+
+func (c *WhatsAppPlanClient) mutate(ctx context.Context, m *WhatsAppPlanMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WhatsAppPlanCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WhatsAppPlanUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WhatsAppPlanUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WhatsAppPlanDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown WhatsAppPlan mutation op: %q", m.Op())
+	}
+}
+
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
 		CreditTransaction, DeliveryLog, DeviceToken, NotificationPermission,
 		NotificationRole, NotificationRolePermission, OutboxEvent, Permission,
 		PlatformBilling, ProviderSetting, RateLimitConfig, Role, ServiceConfig,
-		Template, Tenant, TenantCredit, User, UserRoleAssignment []ent.Hook
+		Template, Tenant, TenantCredit, TenantWhatsAppSubscription, User,
+		UserRoleAssignment, WhatsAppPlan []ent.Hook
 	}
 	inters struct {
 		CreditTransaction, DeliveryLog, DeviceToken, NotificationPermission,
 		NotificationRole, NotificationRolePermission, OutboxEvent, Permission,
 		PlatformBilling, ProviderSetting, RateLimitConfig, Role, ServiceConfig,
-		Template, Tenant, TenantCredit, User, UserRoleAssignment []ent.Interceptor
+		Template, Tenant, TenantCredit, TenantWhatsAppSubscription, User,
+		UserRoleAssignment, WhatsAppPlan []ent.Interceptor
 	}
 )

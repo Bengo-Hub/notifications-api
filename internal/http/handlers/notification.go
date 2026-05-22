@@ -26,14 +26,15 @@ import (
 )
 
 type NotificationHandler struct {
-	log         *zap.Logger
-	nats        *nats.Conn
-	cache       *redis.Client
-	eventsCfg   config.EventsConfig
-	entClient   *ent.Client
-	rateLimiter *appmw.RateLimiter
-	upgradeURL  string
-	billingSvc  *billing.Service
+	log            *zap.Logger
+	nats           *nats.Conn
+	cache          *redis.Client
+	eventsCfg      config.EventsConfig
+	entClient      *ent.Client
+	rateLimiter    *appmw.RateLimiter
+	upgradeURL     string
+	billingSvc     *billing.Service
+	whatsappSubSvc *billing.WhatsAppSubscriptionService
 }
 
 type CreateMessageRequest struct {
@@ -45,20 +46,21 @@ type CreateMessageRequest struct {
 	Metadata map[string]any `json:"metadata" swaggertype:"object" example:"{\"subject\":\"Invoice INV-1001 is due\",\"provider\":\"smtp\"}"`
 }
 
-func NewNotificationHandler(log *zap.Logger, natsConn *nats.Conn, cache *redis.Client, eventsCfg config.EventsConfig, entClient *ent.Client, upgradeURL string, billingSvc *billing.Service) *NotificationHandler {
+func NewNotificationHandler(log *zap.Logger, natsConn *nats.Conn, cache *redis.Client, eventsCfg config.EventsConfig, entClient *ent.Client, upgradeURL string, billingSvc *billing.Service, whatsappSubSvc *billing.WhatsAppSubscriptionService) *NotificationHandler {
 	var rl *appmw.RateLimiter
 	if cache != nil {
 		rl = appmw.NewRateLimiter(cache)
 	}
 	return &NotificationHandler{
-		log:         log,
-		nats:        natsConn,
-		cache:       cache,
-		eventsCfg:   eventsCfg,
-		entClient:   entClient,
-		rateLimiter: rl,
-		upgradeURL:  upgradeURL,
-		billingSvc:  billingSvc,
+		log:            log,
+		nats:           natsConn,
+		cache:          cache,
+		eventsCfg:      eventsCfg,
+		entClient:      entClient,
+		rateLimiter:    rl,
+		upgradeURL:     upgradeURL,
+		billingSvc:     billingSvc,
+		whatsappSubSvc: whatsappSubSvc,
 	}
 }
 
@@ -171,28 +173,45 @@ func (h *NotificationHandler) Enqueue(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Pre-send credit guard for SMS/WhatsApp — reject if balance is insufficient.
-	// Email is rate-limited by plan quota, not credits.
-	if h.billingSvc != nil && (req.Channel == "sms" || req.Channel == "whatsapp") {
-		creditType := "SMS"
-		if req.Channel == "whatsapp" {
-			creditType = "WHATSAPP"
-		}
+	// Pre-send credit guard for SMS — reject if balance is insufficient.
+	if h.billingSvc != nil && req.Channel == "sms" {
 		if tid, err := uuid.Parse(tenant); err == nil {
-			balance, balErr := h.billingSvc.GetBalance(r.Context(), tid, creditType)
+			balance, balErr := h.billingSvc.GetBalance(r.Context(), tid, "SMS")
 			if balErr != nil {
-				h.log.Warn("credit balance check failed", zap.Error(balErr), zap.String("tenant", tenant))
+				h.log.Warn("sms credit balance check failed", zap.Error(balErr), zap.String("tenant", tenant))
 			} else if balance <= 0 {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusPaymentRequired)
 				json.NewEncoder(w).Encode(map[string]any{
-					"error":       "insufficient_credits",
-					"credit_type": creditType,
-					"balance":     balance,
-					"message":     "Insufficient " + creditType + " credits. Top up your balance to continue sending.",
-					"topup_url":   h.upgradeURL,
+					"error":     "insufficient_credits",
+					"type":      "SMS",
+					"balance":   balance,
+					"message":   "Insufficient SMS credits. Top up your balance to continue sending.",
+					"topup_url": h.upgradeURL,
 				})
 				return
+			}
+		}
+	}
+
+	// Pre-send WhatsApp guard — tenant must have active subscription + quota remaining.
+	if req.Channel == "whatsapp" {
+		if tid, err := uuid.Parse(tenant); err == nil {
+			if h.whatsappSubSvc != nil {
+				if quotaErr := h.whatsappSubSvc.CheckQuota(r.Context(), tid); quotaErr != nil {
+					w.Header().Set("Content-Type", "application/json")
+					w.WriteHeader(http.StatusPaymentRequired)
+					errCode := "no_active_subscription"
+					if len(quotaErr.Error()) > 15 && quotaErr.Error()[:15] == "quota_exhausted" {
+						errCode = "quota_exhausted"
+					}
+					json.NewEncoder(w).Encode(map[string]any{
+						"error":      errCode,
+						"message":    quotaErr.Error(),
+						"topup_url":  h.upgradeURL,
+					})
+					return
+				}
 			}
 		}
 	}

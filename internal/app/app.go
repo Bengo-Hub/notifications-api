@@ -106,7 +106,15 @@ func New(ctx context.Context) (*App, error) {
 
 	healthHandler := handlers.NewHealthHandler(log, dbPool, redisClient, natsConn)
 	billingService := billing.NewService(entClient, log, treasuryClient)
-	notificationHandler := handlers.NewNotificationHandler(log, natsConn, redisClient, cfg.Events, entClient, cfg.Services.SubscriptionsURL, billingService)
+	whatsappSubsService := billing.NewWhatsAppSubscriptionService(entClient, log, treasuryClient)
+
+	// Seed default WhatsApp plans on startup
+	if seedErr := whatsappSubsService.SeedDefaultPlans(ctx); seedErr != nil {
+		log.Warn("failed to seed default whatsapp plans", zap.Error(seedErr))
+	}
+
+	whatsappSubsHandler := handlers.NewWhatsAppSubscriptionHandler(log, whatsappSubsService)
+	notificationHandler := handlers.NewNotificationHandler(log, natsConn, redisClient, cfg.Events, entClient, cfg.Services.SubscriptionsURL, billingService, whatsappSubsService)
 	// Template repository backed by DB + Redis cache (2h TTL)
 	var templateCache *sharedcache.Aside
 	if redisClient != nil {
@@ -239,7 +247,7 @@ func New(ctx context.Context) (*App, error) {
 	// Initialize service config handler for platform admin + tenant settings
 	serviceConfigHandler := handlers.NewServiceConfigHandler(entClient, log)
 
-	httpRouter := router.New(log, healthHandler, notificationHandler, templateHandler, platformProviders, tenantProviders, analyticsHandler, billingHandler, platformBilling, settingsHandler, rbacHandler, authMeHandler, deviceTokenHandler, cfg.Security.APIKey, authMiddleware, authenticator, cfg.HTTP.AllowedOrigins, tenantSyncer, rateLimiter, serviceConfigHandler)
+	httpRouter := router.New(log, healthHandler, notificationHandler, templateHandler, platformProviders, tenantProviders, analyticsHandler, billingHandler, platformBilling, settingsHandler, rbacHandler, authMeHandler, deviceTokenHandler, cfg.Security.APIKey, authMiddleware, authenticator, cfg.HTTP.AllowedOrigins, tenantSyncer, rateLimiter, serviceConfigHandler, whatsappSubsHandler)
 
 	httpServer := &http.Server{
 		Addr:              fmt.Sprintf("%s:%d", cfg.HTTP.Host, cfg.HTTP.Port),

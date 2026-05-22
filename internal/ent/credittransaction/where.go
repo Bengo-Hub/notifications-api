@@ -70,6 +70,16 @@ func NewBalance(v float64) predicate.CreditTransaction {
 	return predicate.CreditTransaction(sql.FieldEQ(FieldNewBalance, v))
 }
 
+// ProviderCost applies equality check predicate on the "provider_cost" field. It's identical to ProviderCostEQ.
+func ProviderCost(v float64) predicate.CreditTransaction {
+	return predicate.CreditTransaction(sql.FieldEQ(FieldProviderCost, v))
+}
+
+// PlatformFee applies equality check predicate on the "platform_fee" field. It's identical to PlatformFeeEQ.
+func PlatformFee(v float64) predicate.CreditTransaction {
+	return predicate.CreditTransaction(sql.FieldEQ(FieldPlatformFee, v))
+}
+
 // ReferenceID applies equality check predicate on the "reference_id" field. It's identical to ReferenceIDEQ.
 func ReferenceID(v string) predicate.CreditTransaction {
 	return predicate.CreditTransaction(sql.FieldEQ(FieldReferenceID, v))
@@ -243,6 +253,86 @@ func NewBalanceLT(v float64) predicate.CreditTransaction {
 // NewBalanceLTE applies the LTE predicate on the "new_balance" field.
 func NewBalanceLTE(v float64) predicate.CreditTransaction {
 	return predicate.CreditTransaction(sql.FieldLTE(FieldNewBalance, v))
+}
+
+// ProviderCostEQ applies the EQ predicate on the "provider_cost" field.
+func ProviderCostEQ(v float64) predicate.CreditTransaction {
+	return predicate.CreditTransaction(sql.FieldEQ(FieldProviderCost, v))
+}
+
+// ProviderCostNEQ applies the NEQ predicate on the "provider_cost" field.
+func ProviderCostNEQ(v float64) predicate.CreditTransaction {
+	return predicate.CreditTransaction(sql.FieldNEQ(FieldProviderCost, v))
+}
+
+// ProviderCostIn applies the In predicate on the "provider_cost" field.
+func ProviderCostIn(vs ...float64) predicate.CreditTransaction {
+	return predicate.CreditTransaction(sql.FieldIn(FieldProviderCost, vs...))
+}
+
+// ProviderCostNotIn applies the NotIn predicate on the "provider_cost" field.
+func ProviderCostNotIn(vs ...float64) predicate.CreditTransaction {
+	return predicate.CreditTransaction(sql.FieldNotIn(FieldProviderCost, vs...))
+}
+
+// ProviderCostGT applies the GT predicate on the "provider_cost" field.
+func ProviderCostGT(v float64) predicate.CreditTransaction {
+	return predicate.CreditTransaction(sql.FieldGT(FieldProviderCost, v))
+}
+
+// ProviderCostGTE applies the GTE predicate on the "provider_cost" field.
+func ProviderCostGTE(v float64) predicate.CreditTransaction {
+	return predicate.CreditTransaction(sql.FieldGTE(FieldProviderCost, v))
+}
+
+// ProviderCostLT applies the LT predicate on the "provider_cost" field.
+func ProviderCostLT(v float64) predicate.CreditTransaction {
+	return predicate.CreditTransaction(sql.FieldLT(FieldProviderCost, v))
+}
+
+// ProviderCostLTE applies the LTE predicate on the "provider_cost" field.
+func ProviderCostLTE(v float64) predicate.CreditTransaction {
+	return predicate.CreditTransaction(sql.FieldLTE(FieldProviderCost, v))
+}
+
+// PlatformFeeEQ applies the EQ predicate on the "platform_fee" field.
+func PlatformFeeEQ(v float64) predicate.CreditTransaction {
+	return predicate.CreditTransaction(sql.FieldEQ(FieldPlatformFee, v))
+}
+
+// PlatformFeeNEQ applies the NEQ predicate on the "platform_fee" field.
+func PlatformFeeNEQ(v float64) predicate.CreditTransaction {
+	return predicate.CreditTransaction(sql.FieldNEQ(FieldPlatformFee, v))
+}
+
+// PlatformFeeIn applies the In predicate on the "platform_fee" field.
+func PlatformFeeIn(vs ...float64) predicate.CreditTransaction {
+	return predicate.CreditTransaction(sql.FieldIn(FieldPlatformFee, vs...))
+}
+
+// PlatformFeeNotIn applies the NotIn predicate on the "platform_fee" field.
+func PlatformFeeNotIn(vs ...float64) predicate.CreditTransaction {
+	return predicate.CreditTransaction(sql.FieldNotIn(FieldPlatformFee, vs...))
+}
+
+// PlatformFeeGT applies the GT predicate on the "platform_fee" field.
+func PlatformFeeGT(v float64) predicate.CreditTransaction {
+	return predicate.CreditTransaction(sql.FieldGT(FieldPlatformFee, v))
+}
+
+// PlatformFeeGTE applies the GTE predicate on the "platform_fee" field.
+func PlatformFeeGTE(v float64) predicate.CreditTransaction {
+	return predicate.CreditTransaction(sql.FieldGTE(FieldPlatformFee, v))
+}
+
+// PlatformFeeLT applies the LT predicate on the "platform_fee" field.
+func PlatformFeeLT(v float64) predicate.CreditTransaction {
+	return predicate.CreditTransaction(sql.FieldLT(FieldPlatformFee, v))
+}
+
+// PlatformFeeLTE applies the LTE predicate on the "platform_fee" field.
+func PlatformFeeLTE(v float64) predicate.CreditTransaction {
+	return predicate.CreditTransaction(sql.FieldLTE(FieldPlatformFee, v))
 }
 
 // ReferenceIDEQ applies the EQ predicate on the "reference_id" field.

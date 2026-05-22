@@ -28,8 +28,10 @@ import (
 	"github.com/bengobox/notifications-api/internal/ent/template"
 	"github.com/bengobox/notifications-api/internal/ent/tenant"
 	"github.com/bengobox/notifications-api/internal/ent/tenantcredit"
+	"github.com/bengobox/notifications-api/internal/ent/tenantwhatsappsubscription"
 	"github.com/bengobox/notifications-api/internal/ent/user"
 	"github.com/bengobox/notifications-api/internal/ent/userroleassignment"
+	"github.com/bengobox/notifications-api/internal/ent/whatsappplan"
 )
 
 // ent aliases to avoid import conflicts in user's code.
@@ -106,8 +108,10 @@ func checkColumn(t, c string) error {
 			template.Table:                   template.ValidColumn,
 			tenant.Table:                     tenant.ValidColumn,
 			tenantcredit.Table:               tenantcredit.ValidColumn,
+			tenantwhatsappsubscription.Table: tenantwhatsappsubscription.ValidColumn,
 			user.Table:                       user.ValidColumn,
 			userroleassignment.Table:         userroleassignment.ValidColumn,
+			whatsappplan.Table:               whatsappplan.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

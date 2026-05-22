@@ -21,8 +21,10 @@ import (
 	"github.com/bengobox/notifications-api/internal/ent/template"
 	"github.com/bengobox/notifications-api/internal/ent/tenant"
 	"github.com/bengobox/notifications-api/internal/ent/tenantcredit"
+	"github.com/bengobox/notifications-api/internal/ent/tenantwhatsappsubscription"
 	"github.com/bengobox/notifications-api/internal/ent/user"
 	"github.com/bengobox/notifications-api/internal/ent/userroleassignment"
+	"github.com/bengobox/notifications-api/internal/ent/whatsappplan"
 	"github.com/google/uuid"
 )
 
@@ -32,12 +34,20 @@ import (
 func init() {
 	credittransactionFields := schema.CreditTransaction{}.Fields()
 	_ = credittransactionFields
+	// credittransactionDescProviderCost is the schema descriptor for provider_cost field.
+	credittransactionDescProviderCost := credittransactionFields[6].Descriptor()
+	// credittransaction.DefaultProviderCost holds the default value on creation for the provider_cost field.
+	credittransaction.DefaultProviderCost = credittransactionDescProviderCost.Default.(float64)
+	// credittransactionDescPlatformFee is the schema descriptor for platform_fee field.
+	credittransactionDescPlatformFee := credittransactionFields[7].Descriptor()
+	// credittransaction.DefaultPlatformFee holds the default value on creation for the platform_fee field.
+	credittransaction.DefaultPlatformFee = credittransactionDescPlatformFee.Default.(float64)
 	// credittransactionDescMetadata is the schema descriptor for metadata field.
-	credittransactionDescMetadata := credittransactionFields[8].Descriptor()
+	credittransactionDescMetadata := credittransactionFields[10].Descriptor()
 	// credittransaction.DefaultMetadata holds the default value on creation for the metadata field.
 	credittransaction.DefaultMetadata = credittransactionDescMetadata.Default.(map[string]interface{})
 	// credittransactionDescCreatedAt is the schema descriptor for created_at field.
-	credittransactionDescCreatedAt := credittransactionFields[9].Descriptor()
+	credittransactionDescCreatedAt := credittransactionFields[11].Descriptor()
 	// credittransaction.DefaultCreatedAt holds the default value on creation for the created_at field.
 	credittransaction.DefaultCreatedAt = credittransactionDescCreatedAt.Default.(func() time.Time)
 	// credittransactionDescID is the schema descriptor for id field.
@@ -220,12 +230,24 @@ func init() {
 	platformbillingDescCostPerWhatsapp := platformbillingFields[2].Descriptor()
 	// platformbilling.DefaultCostPerWhatsapp holds the default value on creation for the cost_per_whatsapp field.
 	platformbilling.DefaultCostPerWhatsapp = platformbillingDescCostPerWhatsapp.Default.(float64)
+	// platformbillingDescProviderCostPerSms is the schema descriptor for provider_cost_per_sms field.
+	platformbillingDescProviderCostPerSms := platformbillingFields[3].Descriptor()
+	// platformbilling.DefaultProviderCostPerSms holds the default value on creation for the provider_cost_per_sms field.
+	platformbilling.DefaultProviderCostPerSms = platformbillingDescProviderCostPerSms.Default.(float64)
+	// platformbillingDescProviderCostPerWhatsapp is the schema descriptor for provider_cost_per_whatsapp field.
+	platformbillingDescProviderCostPerWhatsapp := platformbillingFields[4].Descriptor()
+	// platformbilling.DefaultProviderCostPerWhatsapp holds the default value on creation for the provider_cost_per_whatsapp field.
+	platformbilling.DefaultProviderCostPerWhatsapp = platformbillingDescProviderCostPerWhatsapp.Default.(float64)
+	// platformbillingDescMinMarkupPercentage is the schema descriptor for min_markup_percentage field.
+	platformbillingDescMinMarkupPercentage := platformbillingFields[5].Descriptor()
+	// platformbilling.DefaultMinMarkupPercentage holds the default value on creation for the min_markup_percentage field.
+	platformbilling.DefaultMinMarkupPercentage = platformbillingDescMinMarkupPercentage.Default.(float64)
 	// platformbillingDescMinTopupAmount is the schema descriptor for min_topup_amount field.
-	platformbillingDescMinTopupAmount := platformbillingFields[3].Descriptor()
+	platformbillingDescMinTopupAmount := platformbillingFields[6].Descriptor()
 	// platformbilling.DefaultMinTopupAmount holds the default value on creation for the min_topup_amount field.
 	platformbilling.DefaultMinTopupAmount = platformbillingDescMinTopupAmount.Default.(float64)
 	// platformbillingDescUpdatedAt is the schema descriptor for updated_at field.
-	platformbillingDescUpdatedAt := platformbillingFields[5].Descriptor()
+	platformbillingDescUpdatedAt := platformbillingFields[8].Descriptor()
 	// platformbilling.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	platformbilling.DefaultUpdatedAt = platformbillingDescUpdatedAt.Default.(func() time.Time)
 	// platformbilling.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
@@ -474,6 +496,34 @@ func init() {
 	tenantcreditDescID := tenantcreditFields[0].Descriptor()
 	// tenantcredit.DefaultID holds the default value on creation for the id field.
 	tenantcredit.DefaultID = tenantcreditDescID.Default.(func() uuid.UUID)
+	tenantwhatsappsubscriptionFields := schema.TenantWhatsAppSubscription{}.Fields()
+	_ = tenantwhatsappsubscriptionFields
+	// tenantwhatsappsubscriptionDescStartedAt is the schema descriptor for started_at field.
+	tenantwhatsappsubscriptionDescStartedAt := tenantwhatsappsubscriptionFields[4].Descriptor()
+	// tenantwhatsappsubscription.DefaultStartedAt holds the default value on creation for the started_at field.
+	tenantwhatsappsubscription.DefaultStartedAt = tenantwhatsappsubscriptionDescStartedAt.Default.(func() time.Time)
+	// tenantwhatsappsubscriptionDescAutoRenew is the schema descriptor for auto_renew field.
+	tenantwhatsappsubscriptionDescAutoRenew := tenantwhatsappsubscriptionFields[7].Descriptor()
+	// tenantwhatsappsubscription.DefaultAutoRenew holds the default value on creation for the auto_renew field.
+	tenantwhatsappsubscription.DefaultAutoRenew = tenantwhatsappsubscriptionDescAutoRenew.Default.(bool)
+	// tenantwhatsappsubscriptionDescMessagesUsed is the schema descriptor for messages_used field.
+	tenantwhatsappsubscriptionDescMessagesUsed := tenantwhatsappsubscriptionFields[8].Descriptor()
+	// tenantwhatsappsubscription.DefaultMessagesUsed holds the default value on creation for the messages_used field.
+	tenantwhatsappsubscription.DefaultMessagesUsed = tenantwhatsappsubscriptionDescMessagesUsed.Default.(int)
+	// tenantwhatsappsubscriptionDescCreatedAt is the schema descriptor for created_at field.
+	tenantwhatsappsubscriptionDescCreatedAt := tenantwhatsappsubscriptionFields[9].Descriptor()
+	// tenantwhatsappsubscription.DefaultCreatedAt holds the default value on creation for the created_at field.
+	tenantwhatsappsubscription.DefaultCreatedAt = tenantwhatsappsubscriptionDescCreatedAt.Default.(func() time.Time)
+	// tenantwhatsappsubscriptionDescUpdatedAt is the schema descriptor for updated_at field.
+	tenantwhatsappsubscriptionDescUpdatedAt := tenantwhatsappsubscriptionFields[10].Descriptor()
+	// tenantwhatsappsubscription.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	tenantwhatsappsubscription.DefaultUpdatedAt = tenantwhatsappsubscriptionDescUpdatedAt.Default.(func() time.Time)
+	// tenantwhatsappsubscription.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	tenantwhatsappsubscription.UpdateDefaultUpdatedAt = tenantwhatsappsubscriptionDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// tenantwhatsappsubscriptionDescID is the schema descriptor for id field.
+	tenantwhatsappsubscriptionDescID := tenantwhatsappsubscriptionFields[0].Descriptor()
+	// tenantwhatsappsubscription.DefaultID holds the default value on creation for the id field.
+	tenantwhatsappsubscription.DefaultID = tenantwhatsappsubscriptionDescID.Default.(func() uuid.UUID)
 	userFields := schema.User{}.Fields()
 	_ = userFields
 	// userDescEmail is the schema descriptor for email field.
@@ -524,4 +574,34 @@ func init() {
 	userroleassignmentDescID := userroleassignmentFields[0].Descriptor()
 	// userroleassignment.DefaultID holds the default value on creation for the id field.
 	userroleassignment.DefaultID = userroleassignmentDescID.Default.(func() uuid.UUID)
+	whatsappplanFields := schema.WhatsAppPlan{}.Fields()
+	_ = whatsappplanFields
+	// whatsappplanDescName is the schema descriptor for name field.
+	whatsappplanDescName := whatsappplanFields[1].Descriptor()
+	// whatsappplan.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	whatsappplan.NameValidator = whatsappplanDescName.Validators[0].(func(string) error)
+	// whatsappplanDescSlug is the schema descriptor for slug field.
+	whatsappplanDescSlug := whatsappplanFields[2].Descriptor()
+	// whatsappplan.SlugValidator is a validator for the "slug" field. It is called by the builders before save.
+	whatsappplan.SlugValidator = whatsappplanDescSlug.Validators[0].(func(string) error)
+	// whatsappplanDescProviderCost is the schema descriptor for provider_cost field.
+	whatsappplanDescProviderCost := whatsappplanFields[4].Descriptor()
+	// whatsappplan.DefaultProviderCost holds the default value on creation for the provider_cost field.
+	whatsappplan.DefaultProviderCost = whatsappplanDescProviderCost.Default.(float64)
+	// whatsappplanDescMessagesPerMonth is the schema descriptor for messages_per_month field.
+	whatsappplanDescMessagesPerMonth := whatsappplanFields[5].Descriptor()
+	// whatsappplan.DefaultMessagesPerMonth holds the default value on creation for the messages_per_month field.
+	whatsappplan.DefaultMessagesPerMonth = whatsappplanDescMessagesPerMonth.Default.(int)
+	// whatsappplanDescIsActive is the schema descriptor for is_active field.
+	whatsappplanDescIsActive := whatsappplanFields[6].Descriptor()
+	// whatsappplan.DefaultIsActive holds the default value on creation for the is_active field.
+	whatsappplan.DefaultIsActive = whatsappplanDescIsActive.Default.(bool)
+	// whatsappplanDescCreatedAt is the schema descriptor for created_at field.
+	whatsappplanDescCreatedAt := whatsappplanFields[7].Descriptor()
+	// whatsappplan.DefaultCreatedAt holds the default value on creation for the created_at field.
+	whatsappplan.DefaultCreatedAt = whatsappplanDescCreatedAt.Default.(func() time.Time)
+	// whatsappplanDescID is the schema descriptor for id field.
+	whatsappplanDescID := whatsappplanFields[0].Descriptor()
+	// whatsappplan.DefaultID holds the default value on creation for the id field.
+	whatsappplan.DefaultID = whatsappplanDescID.Default.(func() uuid.UUID)
 }
