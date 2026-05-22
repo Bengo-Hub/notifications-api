@@ -116,11 +116,22 @@
 10. **Sprint 9 – Credit-Based Billing (New)** ✅ Completed 2026-05-22
     - [x] Schema for `TenantCredit` and `CreditTransactions` (Ent + Atlas migration)
     - [x] Treasury integration (create payment intents for credits; `payment.succeeded` consumer credits balance)
-    - [x] Pre-send guard: HTTP 402 returned when SMS/WhatsApp balance ≤ 0 (balance deduction on send TBD after delivery confirmation)
+    - [x] Pre-send guard: HTTP 402 returned when SMS balance ≤ 0
     - [x] Credit dashboard in notifications-ui (real balance + transaction history via API hooks)
+11. **Sprint 10 – WhatsApp Subscription Model + Platform Markup** ✅ Completed 2026-05-22
+    - [x] `WhatsAppPlan` + `TenantWhatsAppSubscription` Ent schemas + Atlas migration
+    - [x] `PlatformBilling` schema extended: `provider_cost_per_sms`, `provider_cost_per_whatsapp`, `min_markup_percentage`
+    - [x] `CreditTransaction` tracks `provider_cost` + `platform_fee` for profit analytics
+    - [x] `DeductCredits` now tracks platform profit; markup validation in `UpdatePlatformBilling` handler
+    - [x] WhatsApp subscription service: plans, subscribe, activate, cancel, quota check
+    - [x] Default plan seeds on startup: Basic (KES 500/100 msgs), Standard (KES 1000/500 msgs), Pro (KES 2000/unlimited)
+    - [x] Treasury consumer handles `reference_type=whatsapp_subscription` → activates subscription
+    - [x] Enqueue handler: WhatsApp uses subscription + quota check (HTTP 402); SMS uses credit balance
+    - [x] New routes: `GET /api/v1/billing/whatsapp/plans` (public), subscription CRUD (auth required)
+    - [x] notifications-ui: WhatsApp subscription page with plan comparison cards + TreasuryPaymentModal
 
 ## Backlog Ideas
-- AI-assisted template writing & subject line scoring, in-app messaging channel, WhatsApp Business integration, voice/IVR support, sentiment analysis on responses, predictive send-time optimization.
+- AI-assisted template writing & subject line scoring, in-app messaging channel, voice/IVR support, sentiment analysis on responses, predictive send-time optimization.
 
 ---
 **Next Steps:** Align with consuming teams on event schemas (especially treasury invoicing events), finalize provider credentials, and schedule integration testing windows with dependent applications across organisations and branches.
