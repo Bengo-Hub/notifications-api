@@ -12,6 +12,7 @@ import (
 
 	"github.com/bengobox/notifications-api/internal/config"
 	"github.com/bengobox/notifications-api/internal/messaging"
+	"github.com/bengobox/notifications-api/internal/modules/billing"
 )
 
 // treasuryEvent is the outbox envelope from treasury-api.
@@ -104,8 +105,9 @@ var treasuryMappings = map[string]treasuryNotificationMapping{
 }
 
 // startTreasuryConsumer subscribes to treasury.> events from the treasury-api
-// JetStream stream and dispatches payment notification emails.
-func startTreasuryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamContext, cfg *config.Config, tr *tenantResolver, logg *zap.Logger) {
+// JetStream stream and dispatches payment notification emails. It also handles
+// credit top-up completion when reference_type=topup.
+func startTreasuryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamContext, cfg *config.Config, tr *tenantResolver, billingSvc *billing.Service, logg *zap.Logger) {
 	if nc == nil || js == nil {
 		logg.Warn("skipping treasury consumer: NATS not available")
 		return
@@ -147,6 +149,68 @@ func startTreasuryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStream
 		referenceType, _ := payload["reference_type"].(string)
 		if referenceType == "digitika_enrollment" {
 			logg.Debug("treasury event: digitika_enrollment handled by codevertex-website webhook, skipping", zap.String("type", eventType))
+			_ = m.Ack()
+			return
+		}
+
+		// Handle credit top-up completion: when a tenant pays for SMS/WhatsApp credits,
+		// treasury publishes payment.succeeded with reference_type=topup.
+		// Credit the tenant balance instead of sending a generic payment email.
+		if eventType == "payment.succeeded" && referenceType == "topup" && billingSvc != nil {
+			if tenantID == "" {
+				logg.Warn("treasury topup: no tenant_id, skipping", zap.String("type", eventType))
+				_ = m.Ack()
+				return
+			}
+			tid, tidErr := uuid.Parse(tenantID)
+			if tidErr != nil {
+				logg.Warn("treasury topup: invalid tenant_id", zap.String("tenant_id", tenantID), zap.Error(tidErr))
+				_ = m.Ack()
+				return
+			}
+
+			// Extract credit_type and amount from metadata
+			meta, _ := payload["metadata"].(map[string]any)
+			creditType := "SMS"
+			if meta != nil {
+				if ct, ok := meta["credit_type"].(string); ok && ct != "" {
+					creditType = ct
+				}
+			}
+
+			var amount float64
+			switch v := payload["amount"].(type) {
+			case float64:
+				amount = v
+			case string:
+				_, _ = fmt.Sscanf(v, "%f", &amount)
+			}
+
+			referenceID, _ := payload["intent_id"].(string)
+			if referenceID == "" {
+				referenceID = aggregateID
+			}
+
+			if amount > 0 {
+				if topupErr := billingSvc.TopUpCredits(ctx, tid, creditType, amount, referenceID); topupErr != nil {
+					logg.Error("treasury topup: failed to credit balance",
+						zap.String("tenant_id", tenantID),
+						zap.String("credit_type", creditType),
+						zap.Float64("amount", amount),
+						zap.Error(topupErr),
+					)
+					_ = m.Nak()
+					return
+				}
+				logg.Info("treasury topup: credits added",
+					zap.String("tenant_id", tenantID),
+					zap.String("credit_type", creditType),
+					zap.Float64("amount", amount),
+					zap.String("reference_id", referenceID),
+				)
+			} else {
+				logg.Warn("treasury topup: zero or missing amount in payload", zap.String("tenant_id", tenantID))
+			}
 			_ = m.Ack()
 			return
 		}

@@ -3,12 +3,15 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 
-	"github.com/bengobox/notifications-api/internal/modules/billing"
 	httpware "github.com/Bengo-Hub/httpware"
+	authclient "github.com/Bengo-Hub/shared-auth-client"
+
+	"github.com/bengobox/notifications-api/internal/modules/billing"
 )
 
 // BillingHandler handles credit-related requests.
@@ -118,6 +121,62 @@ func (h *BillingHandler) Initiate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.respondWithJSON(w, http.StatusOK, result)
+}
+
+// GetTransactions returns paginated credit transaction history for a tenant.
+func (h *BillingHandler) GetTransactions(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	tenantIDStr := httpware.GetTenantID(ctx)
+
+	if httpware.IsPlatformOwner(ctx) {
+		if q := r.URL.Query().Get("tenantId"); q != "" {
+			tenantIDStr = q
+		}
+	}
+
+	if tenantIDStr == "" {
+		if claims, ok := authclient.ClaimsFromContext(ctx); ok {
+			tenantIDStr = claims.TenantID
+		}
+	}
+
+	if tenantIDStr == "" {
+		h.respondWithError(w, http.StatusBadRequest, "tenant_id required")
+		return
+	}
+
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		h.respondWithError(w, http.StatusBadRequest, "invalid tenant id")
+		return
+	}
+
+	creditType := r.URL.Query().Get("type")
+	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+	if limit <= 0 {
+		limit = 20
+	}
+	if limit > 100 {
+		limit = 100
+	}
+	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+	if offset < 0 {
+		offset = 0
+	}
+
+	entries, total, err := h.service.ListTransactions(ctx, tenantID, creditType, limit, offset)
+	if err != nil {
+		h.log.Error("failed to list transactions", zap.Error(err))
+		h.respondWithError(w, http.StatusInternalServerError, "failed to retrieve transactions")
+		return
+	}
+
+	h.respondWithJSON(w, http.StatusOK, map[string]any{
+		"data":   entries,
+		"total":  total,
+		"limit":  limit,
+		"offset": offset,
+	})
 }
 
 func (h *BillingHandler) respondWithError(w http.ResponseWriter, code int, message string) {

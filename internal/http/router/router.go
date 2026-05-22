@@ -171,6 +171,7 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 							read.Use(authenticator.RequirePermissions(identity.PermBillingRead))
 						}
 						read.Get("/balance", billing.GetBalance)
+						read.Get("/transactions", billing.GetTransactions)
 					})
 					b.Group(func(write chi.Router) {
 						if authenticator != nil {

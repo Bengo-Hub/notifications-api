@@ -201,6 +201,56 @@ func (s *Service) DeductCredits(ctx context.Context, tenantID uuid.UUID, creditT
 	return tx.Commit()
 }
 
+// CreditTransactionEntry is a summarized credit transaction for the API.
+type CreditTransactionEntry struct {
+	ID          string    `json:"id"`
+	TenantID    string    `json:"tenant_id"`
+	Type        string    `json:"type"`
+	Action      string    `json:"action"`
+	Amount      float64   `json:"amount"`
+	NewBalance  float64   `json:"new_balance"`
+	ReferenceID string    `json:"reference_id"`
+	Description string    `json:"description"`
+	CreatedAt   time.Time `json:"created_at"`
+}
+
+// ListTransactions returns paginated credit transactions for a tenant.
+func (s *Service) ListTransactions(ctx context.Context, tenantID uuid.UUID, creditType string, limit, offset int) ([]CreditTransactionEntry, int, error) {
+	q := s.client.CreditTransaction.Query().
+		Where(credittransaction.TenantIDEQ(tenantID)).
+		Order(ent.Desc(credittransaction.FieldCreatedAt))
+
+	if creditType != "" {
+		q = q.Where(credittransaction.TypeEQ(credittransaction.Type(creditType)))
+	}
+
+	total, err := q.Count(ctx)
+	if err != nil {
+		return nil, 0, fmt.Errorf("count transactions: %w", err)
+	}
+
+	rows, err := q.Offset(offset).Limit(limit).All(ctx)
+	if err != nil {
+		return nil, 0, fmt.Errorf("list transactions: %w", err)
+	}
+
+	entries := make([]CreditTransactionEntry, 0, len(rows))
+	for _, r := range rows {
+		entries = append(entries, CreditTransactionEntry{
+			ID:          r.ID.String(),
+			TenantID:    r.TenantID.String(),
+			Type:        string(r.Type),
+			Action:      string(r.Action),
+			Amount:      r.Amount,
+			NewBalance:  r.NewBalance,
+			ReferenceID: r.ReferenceID,
+			Description: r.Description,
+			CreatedAt:   r.CreatedAt,
+		})
+	}
+	return entries, total, nil
+}
+
 // TopUpCredits adds credits to a tenant's balance (triggered by payment).
 func (s *Service) TopUpCredits(ctx context.Context, tenantID uuid.UUID, creditType string, amount float64, referenceID string) error {
 	tx, err := s.client.Tx(ctx)

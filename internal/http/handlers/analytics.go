@@ -9,6 +9,9 @@ import (
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 
+	httpware "github.com/Bengo-Hub/httpware"
+	authclient "github.com/Bengo-Hub/shared-auth-client"
+
 	"github.com/bengobox/notifications-api/internal/ent"
 	"github.com/bengobox/notifications-api/internal/ent/deliverylog"
 )
@@ -52,6 +55,15 @@ type TimeSeriesPoint struct {
 // @Security     ApiKeyAuth
 func (h *AnalyticsHandler) Delivery(w http.ResponseWriter, r *http.Request) {
 	tenantID := chi.URLParam(r, "tenantId")
+	// Fall back to JWT claims or X-Tenant-ID header when no URL param (non-platform users)
+	if tenantID == "" {
+		tenantID = httpware.GetTenantID(r.Context())
+	}
+	if tenantID == "" {
+		if claims, ok := authclient.ClaimsFromContext(r.Context()); ok {
+			tenantID = claims.TenantID
+		}
+	}
 	rangeQ := r.URL.Query().Get("range")
 	if rangeQ == "" {
 		rangeQ = "24h"
@@ -160,6 +172,15 @@ type ActivityLogEntry struct {
 // @Security     ApiKeyAuth
 func (h *AnalyticsHandler) Logs(w http.ResponseWriter, r *http.Request) {
 	tenantID := chi.URLParam(r, "tenantId")
+	// Fall back to JWT claims or X-Tenant-ID header when no URL param (non-platform users)
+	if tenantID == "" {
+		tenantID = httpware.GetTenantID(r.Context())
+	}
+	if tenantID == "" {
+		if claims, ok := authclient.ClaimsFromContext(r.Context()); ok {
+			tenantID = claims.TenantID
+		}
+	}
 	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
 	if limit <= 0 {
 		limit = 20

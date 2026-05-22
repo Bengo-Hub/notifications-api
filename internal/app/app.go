@@ -105,7 +105,8 @@ func New(ctx context.Context) (*App, error) {
 	platformIDStr := platformID.String()
 
 	healthHandler := handlers.NewHealthHandler(log, dbPool, redisClient, natsConn)
-	notificationHandler := handlers.NewNotificationHandler(log, natsConn, redisClient, cfg.Events, entClient, cfg.Services.SubscriptionsURL)
+	billingService := billing.NewService(entClient, log, treasuryClient)
+	notificationHandler := handlers.NewNotificationHandler(log, natsConn, redisClient, cfg.Events, entClient, cfg.Services.SubscriptionsURL, billingService)
 	// Template repository backed by DB + Redis cache (2h TTL)
 	var templateCache *sharedcache.Aside
 	if redisClient != nil {
@@ -120,7 +121,6 @@ func New(ctx context.Context) (*App, error) {
 
 	deviceTokenHandler := handlers.NewDeviceTokenHandler(log, entClient)
 
-	billingService := billing.NewService(entClient, log, treasuryClient)
 	billingHandler := handlers.NewBillingHandler(log, billingService)
 	platformBilling := handlers.NewPlatformBilling(entClient, log)
 	settingsHandler := handlers.NewSettingsHandler(log, encryption.KeyFromEnv(cfg.Security.EncryptionKey))

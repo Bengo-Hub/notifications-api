@@ -230,8 +230,8 @@ func main() {
 	// Start auth notification consumer (auth-service → welcome emails, plain NATS)
 	startAuthNotificationConsumer(ctx, nc, cfg, tr, logg)
 
-	// Start treasury event consumer (treasury-service → payment/invoice notifications)
-	startTreasuryConsumer(ctx, nc, js, cfg, tr, logg)
+	// Start treasury event consumer (treasury-service → payment/invoice notifications + credit top-ups)
+	startTreasuryConsumer(ctx, nc, js, cfg, tr, billingSvc, logg)
 
 	// Start delivery task event consumer (logistics-service → delivery status notifications)
 	startDeliveryConsumer(ctx, nc, js, cfg, tr, logg)

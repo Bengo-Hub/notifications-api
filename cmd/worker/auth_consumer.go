@@ -168,4 +168,66 @@ func startAuthNotificationConsumer(ctx context.Context, nc *nats.Conn, cfg *conf
 	subscribeWithRetry(ctx, nil, logg, "auth password reset consumer", true, func() (*nats.Subscription, error) {
 		return nc.Subscribe("auth.user.password_reset.requested", resetHandler)
 	})
+
+	// OTP email — dispatched when user requests email verification before a helpdesk ticket
+	otpHandler := func(m *nats.Msg) {
+		var envelope struct {
+			Payload map[string]any `json:"payload"`
+		}
+		if err := json.Unmarshal(m.Data, &envelope); err != nil {
+			logg.Error("auth otp: unmarshal failed", zap.Error(err))
+			return
+		}
+
+		payload := envelope.Payload
+		if payload == nil {
+			logg.Warn("auth otp: no payload")
+			return
+		}
+
+		email, _ := payload["email"].(string)
+		if email == "" {
+			logg.Warn("auth otp: no email in payload")
+			return
+		}
+
+		otp, _ := payload["otp"].(string)
+		if otp == "" {
+			logg.Warn("auth otp: no otp in payload")
+			return
+		}
+
+		userID, _ := payload["user_id"].(string)
+		tenantID, _ := payload["tenant_id"].(string)
+
+		msg := messaging.Message{
+			TenantID:    tenantID,
+			Channel:     "email",
+			TemplateID:  "auth/otp_verification",
+			SenderScope: messaging.SenderScopePlatform,
+			Target:      messaging.TargetCustomer,
+			To:          []string{email},
+			Data: map[string]any{
+				"name": email,
+				"otp":  otp,
+			},
+			Metadata: map[string]any{
+				"subject": "Your verification code",
+			},
+			RequestID:      uuid.New().String(),
+			IdempotencyKey: fmt.Sprintf("auth-otp-%s-%d", userID, time.Now().Unix()/300),
+			QueuedAt:       time.Now(),
+		}
+
+		if _, err := messaging.Publish(ctx, nc, cfg.Events, msg); err != nil {
+			logg.Error("auth otp: failed to dispatch email", zap.String("email", email), zap.Error(err))
+			return
+		}
+
+		logg.Info("OTP email dispatched", zap.String("to", email))
+	}
+
+	subscribeWithRetry(ctx, nil, logg, "auth otp consumer", true, func() (*nats.Subscription, error) {
+		return nc.Subscribe("auth.user.otp.requested", otpHandler)
+	})
 }

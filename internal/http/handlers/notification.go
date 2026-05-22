@@ -16,9 +16,12 @@ import (
 	httpware "github.com/Bengo-Hub/httpware"
 	authclient "github.com/Bengo-Hub/shared-auth-client"
 
+	"github.com/google/uuid"
+
 	"github.com/bengobox/notifications-api/internal/config"
 	"github.com/bengobox/notifications-api/internal/ent"
 	"github.com/bengobox/notifications-api/internal/messaging"
+	"github.com/bengobox/notifications-api/internal/modules/billing"
 	appmw "github.com/bengobox/notifications-api/internal/shared/middleware"
 )
 
@@ -30,6 +33,7 @@ type NotificationHandler struct {
 	entClient   *ent.Client
 	rateLimiter *appmw.RateLimiter
 	upgradeURL  string
+	billingSvc  *billing.Service
 }
 
 type CreateMessageRequest struct {
@@ -41,7 +45,7 @@ type CreateMessageRequest struct {
 	Metadata map[string]any `json:"metadata" swaggertype:"object" example:"{\"subject\":\"Invoice INV-1001 is due\",\"provider\":\"smtp\"}"`
 }
 
-func NewNotificationHandler(log *zap.Logger, natsConn *nats.Conn, cache *redis.Client, eventsCfg config.EventsConfig, entClient *ent.Client, upgradeURL string) *NotificationHandler {
+func NewNotificationHandler(log *zap.Logger, natsConn *nats.Conn, cache *redis.Client, eventsCfg config.EventsConfig, entClient *ent.Client, upgradeURL string, billingSvc *billing.Service) *NotificationHandler {
 	var rl *appmw.RateLimiter
 	if cache != nil {
 		rl = appmw.NewRateLimiter(cache)
@@ -54,6 +58,7 @@ func NewNotificationHandler(log *zap.Logger, natsConn *nats.Conn, cache *redis.C
 		entClient:   entClient,
 		rateLimiter: rl,
 		upgradeURL:  upgradeURL,
+		billingSvc:  billingSvc,
 	}
 }
 
@@ -162,6 +167,32 @@ func (h *NotificationHandler) Enqueue(w http.ResponseWriter, r *http.Request) {
 						}
 					}
 				}
+			}
+		}
+	}
+
+	// Pre-send credit guard for SMS/WhatsApp — reject if balance is insufficient.
+	// Email is rate-limited by plan quota, not credits.
+	if h.billingSvc != nil && (req.Channel == "sms" || req.Channel == "whatsapp") {
+		creditType := "SMS"
+		if req.Channel == "whatsapp" {
+			creditType = "WHATSAPP"
+		}
+		if tid, err := uuid.Parse(tenant); err == nil {
+			balance, balErr := h.billingSvc.GetBalance(r.Context(), tid, creditType)
+			if balErr != nil {
+				h.log.Warn("credit balance check failed", zap.Error(balErr), zap.String("tenant", tenant))
+			} else if balance <= 0 {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusPaymentRequired)
+				json.NewEncoder(w).Encode(map[string]any{
+					"error":       "insufficient_credits",
+					"credit_type": creditType,
+					"balance":     balance,
+					"message":     "Insufficient " + creditType + " credits. Top up your balance to continue sending.",
+					"topup_url":   h.upgradeURL,
+				})
+				return
 			}
 		}
 	}
