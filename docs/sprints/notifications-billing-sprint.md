@@ -36,7 +36,9 @@ Implement a credit-based billing system for SMS and WhatsApp notifications. Tena
 - Tenant-specific rate overrides for high-volume users.
 
 ## Progress Tracking
-- [ ] Schema definition
-- [ ] Integration with Notification Service
-- [ ] Purchase workflow (Treasury redirect)
-- [ ] Balance dashboard in UI
+- [x] Schema definition — `TenantCredit` + `CreditTransaction` Ent schemas, Atlas migration applied
+- [x] Integration with Notification Service — pre-send credit guard in `Enqueue` handler (HTTP 402 on zero balance); `billing.Service` wired into notification handler
+- [x] Purchase workflow (Treasury redirect) — `POST /api/v1/billing/initiate` creates treasury payment intent; `treasury_consumer` handles `payment.succeeded` with `reference_type=topup` to call `TopUpCredits`; `TreasuryPaymentModal` wired in credits page
+- [x] Balance dashboard in UI — credits page uses `useCreditBalance` + `useCreditTransactions` hooks backed by `GET /api/v1/billing/balance` and `GET /api/v1/billing/transactions`
+
+## Completed: 2026-05-22

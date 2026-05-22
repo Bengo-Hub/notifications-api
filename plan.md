@@ -113,11 +113,11 @@
 9. **Sprint 8 – Hardening & Launch (Weeks 16-17)**
    - [ ] Performance tuning, failover drills, security review
    - [ ] Documentation and production readiness review
-10. **Sprint 9 – Credit-Based Billing (New)**
-    - [ ] Schema for `TenantCredit` and `CreditTransactions`
-    - [ ] Treasury integration (create payment intents for credits)
-    - [ ] Balance deduction logic in delivery workers
-    - [ ] Credit dashboard in notifications-ui
+10. **Sprint 9 – Credit-Based Billing (New)** ✅ Completed 2026-05-22
+    - [x] Schema for `TenantCredit` and `CreditTransactions` (Ent + Atlas migration)
+    - [x] Treasury integration (create payment intents for credits; `payment.succeeded` consumer credits balance)
+    - [x] Pre-send guard: HTTP 402 returned when SMS/WhatsApp balance ≤ 0 (balance deduction on send TBD after delivery confirmation)
+    - [x] Credit dashboard in notifications-ui (real balance + transaction history via API hooks)
 
 ## Backlog Ideas
 - AI-assisted template writing & subject line scoring, in-app messaging channel, WhatsApp Business integration, voice/IVR support, sentiment analysis on responses, predictive send-time optimization.

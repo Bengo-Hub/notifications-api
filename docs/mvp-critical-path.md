@@ -1,6 +1,6 @@
 # Notifications API - MVP Critical Path
 
-**Last Updated**: March 2026  
+**Last Updated**: May 2026  
 **Purpose**: Notifications-api MVP scope; aligns with [shared-docs/mvp-critical-path.md](../../../shared-docs/mvp-critical-path.md).
 
 ---
@@ -11,7 +11,7 @@
 |------|--------|
 | **Production domain** | `notificationsapi.codevertexitsolutions.com` |
 | **RBAC** | No local roles; JWT from auth-api; shared-auth-client validation |
-| **Endpoints** | Templates, platform providers, tenant branding, analytics/delivery, delivery logs, send message, template test send |
+| **Endpoints** | Templates, platform providers, tenant branding, analytics/delivery, delivery logs, send message, template test send, billing balance/transactions/topup |
 
 ---
 
@@ -27,9 +27,11 @@
 
 ### P1
 - [x] Idempotency (notification handler)
+- [x] Credit-based billing — SMS/WhatsApp pre-send guard (HTTP 402 on zero balance), treasury top-up flow, credit balance + transaction history API
+- [x] Analytics tenantID fix — handlers now extract tenantID from JWT claims when URL param is absent (fixes empty stats for non-platform users)
 - [ ] Rate limiting (documented for post-MVP)
 - [ ] Provider health and failover
-- [x] Delivery log API for UI monitoring (GET /api/v1/analytics/logs/{tenantId})
+- [x] Delivery log API for UI monitoring (GET /api/v1/analytics/logs)
 
 ---
 
