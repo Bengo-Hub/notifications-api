@@ -191,13 +191,59 @@ func (s *Service) GetBalance(ctx context.Context, tenantID uuid.UUID, creditType
 	return tc.Balance, nil
 }
 
-// DeductCredits subtracts a fixed amount from a tenant's balance.
+// DeductCredits subtracts a fixed amount from a tenant's balance atomically.
 func (s *Service) DeductCredits(ctx context.Context, tenantID uuid.UUID, creditType string, amount float64, description string) error {
 	tx, err := s.client.Tx(ctx)
 	if err != nil {
 		return fmt.Errorf("start transaction: %w", err)
 	}
-// ... (rest of the file)
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		}
+	}()
+
+	tc, err := tx.TenantCredit.Query().
+		Where(
+			tenantcredit.TenantIDEQ(tenantID),
+			tenantcredit.TypeEQ(tenantcredit.Type(creditType)),
+		).
+		Modify(func(s *sql.Selector) {
+			s.ForUpdate()
+		}).
+		Only(ctx)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return fmt.Errorf("insufficient_credits: no %s credit record for tenant", creditType)
+		}
+		return fmt.Errorf("query credit: %w", err)
+	}
+
+	if tc.Balance < amount {
+		err = fmt.Errorf("insufficient_credits: balance %.2f < required %.2f", tc.Balance, amount)
+		return err
+	}
+
+	newBalance := tc.Balance - amount
+	_, err = tx.TenantCredit.UpdateOne(tc).
+		SetBalance(newBalance).
+		Save(ctx)
+	if err != nil {
+		return fmt.Errorf("update balance: %w", err)
+	}
+
+	_, err = tx.CreditTransaction.Create().
+		SetTenantID(tenantID).
+		SetType(credittransaction.Type(creditType)).
+		SetAction(credittransaction.ActionDEDUCTION).
+		SetAmount(amount).
+		SetNewBalance(newBalance).
+		SetDescription(description).
+		Save(ctx)
+	if err != nil {
+		return fmt.Errorf("log deduction transaction: %w", err)
+	}
+
 	return tx.Commit()
 }
 
