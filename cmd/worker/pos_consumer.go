@@ -27,15 +27,33 @@ type posEvent struct {
 }
 
 type posNotificationMapping struct {
-	TemplateID   string
-	EmailSubject string
-	DataBuilder  func(payload map[string]any, tenantWebsite string) map[string]any
+	TemplateID    string
+	Channel       string // email | sms | push
+	EmailSubject  string
+	Target        string
+	RecipientFunc func(payload map[string]any, fallbackEmail string) (to string, ok bool)
+	DataBuilder   func(payload map[string]any, tenantWebsite string) map[string]any
+}
+
+// recipientFromPayload returns a string field from payload if non-empty.
+func recipientFromPayload(payload map[string]any, key string) (string, bool) {
+	v, _ := payload[key].(string)
+	return v, v != ""
 }
 
 var posMappings = map[string]posNotificationMapping{
+	// ---- Customer-facing: order ready + payment receipt ----
 	"order.status_changed": {
 		TemplateID:   "pos/pos_order_ready",
+		Channel:      "email",
 		EmailSubject: "Your POS order is ready",
+		Target:       messaging.TargetCustomer,
+		RecipientFunc: func(payload map[string]any, fallback string) (string, bool) {
+			if v, ok := recipientFromPayload(payload, "customer_email"); ok {
+				return v, true
+			}
+			return fallback, fallback != ""
+		},
 		DataBuilder: func(payload map[string]any, tenantWebsite string) map[string]any {
 			name := "Customer"
 			if n, ok := payload["customer_name"].(string); ok && n != "" {
@@ -51,7 +69,15 @@ var posMappings = map[string]posNotificationMapping{
 	},
 	"payment.recorded": {
 		TemplateID:   "pos/pos_payment_receipt",
+		Channel:      "email",
 		EmailSubject: "Payment receipt",
+		Target:       messaging.TargetCustomer,
+		RecipientFunc: func(payload map[string]any, fallback string) (string, bool) {
+			if v, ok := recipientFromPayload(payload, "customer_email"); ok {
+				return v, true
+			}
+			return fallback, fallback != ""
+		},
 		DataBuilder: func(payload map[string]any, tenantWebsite string) map[string]any {
 			name := "Customer"
 			if n, ok := payload["customer_name"].(string); ok && n != "" {
@@ -67,9 +93,104 @@ var posMappings = map[string]posNotificationMapping{
 			}
 		},
 	},
+
+	// ---- KDS: waiter called (SMS to waiter phone) ----
+	"kds.waiter_called": {
+		TemplateID:   "pos/kds_waiter_called",
+		Channel:      "sms",
+		EmailSubject: "",
+		Target:       messaging.TargetStaff,
+		RecipientFunc: func(payload map[string]any, _ string) (string, bool) {
+			return recipientFromPayload(payload, "waiter_phone")
+		},
+		DataBuilder: func(payload map[string]any, _ string) map[string]any {
+			return map[string]any{
+				"order_number": payload["order_number"],
+				"table_number": payload["table_number"],
+			}
+		},
+	},
+
+	// ---- Hotel: check-in confirmation (email to guest) ----
+	"hotel.check_in": {
+		TemplateID:   "pos/hotel_check_in",
+		Channel:      "email",
+		EmailSubject: "Welcome — your check-in is confirmed",
+		Target:       messaging.TargetCustomer,
+		RecipientFunc: func(payload map[string]any, _ string) (string, bool) {
+			return recipientFromPayload(payload, "guest_email")
+		},
+		DataBuilder: func(payload map[string]any, _ string) map[string]any {
+			return map[string]any{
+				"name":         payload["guest_name"],
+				"room_number":  payload["room_number"],
+				"nights":       payload["nights"],
+				"total_charge": payload["total_charge"],
+				"check_in":     payload["check_in_date"],
+			}
+		},
+	},
+
+	// ---- Hotel: check-out receipt (email to guest) ----
+	"hotel.check_out": {
+		TemplateID:   "pos/hotel_check_out",
+		Channel:      "email",
+		EmailSubject: "Your stay receipt",
+		Target:       messaging.TargetCustomer,
+		RecipientFunc: func(payload map[string]any, _ string) (string, bool) {
+			return recipientFromPayload(payload, "guest_email")
+		},
+		DataBuilder: func(payload map[string]any, _ string) map[string]any {
+			return map[string]any{
+				"name":        payload["guest_name"],
+				"total_folio": payload["total_folio"],
+				"checked_out": payload["checked_out_at"],
+			}
+		},
+	},
+
+	// ---- Appointments: booking confirmation (SMS to client) ----
+	"appointment.created": {
+		TemplateID:   "pos/appointment_created",
+		Channel:      "sms",
+		EmailSubject: "",
+		Target:       messaging.TargetCustomer,
+		RecipientFunc: func(payload map[string]any, _ string) (string, bool) {
+			return recipientFromPayload(payload, "client_phone")
+		},
+		DataBuilder: func(payload map[string]any, _ string) map[string]any {
+			return map[string]any{
+				"name":          payload["client_name"],
+				"service":       payload["service_name"],
+				"staff":         payload["staff_name"],
+				"date":          payload["appointment_date"],
+				"time":          payload["appointment_time"],
+				"outlet":        payload["outlet_name"],
+			}
+		},
+	},
+
+	// ---- Appointments: reminder (SMS to client) ----
+	"appointment.reminder": {
+		TemplateID:   "pos/appointment_reminder",
+		Channel:      "sms",
+		EmailSubject: "",
+		Target:       messaging.TargetCustomer,
+		RecipientFunc: func(payload map[string]any, _ string) (string, bool) {
+			return recipientFromPayload(payload, "client_phone")
+		},
+		DataBuilder: func(payload map[string]any, _ string) map[string]any {
+			return map[string]any{
+				"name":    payload["client_name"],
+				"service": payload["service_name"],
+				"time":    payload["appointment_time"],
+				"outlet":  payload["outlet_name"],
+			}
+		},
+	},
 }
 
-// startPosConsumer subscribes to pos.> events and dispatches POS notification emails.
+// startPosConsumer subscribes to pos.> events and dispatches POS notifications.
 func startPosConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamContext, cfg *config.Config, tr *tenantResolver, logg *zap.Logger) {
 	if nc == nil || js == nil {
 		logg.Warn("skipping pos consumer: NATS not available")
@@ -114,31 +235,27 @@ func startPosConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamConte
 			return
 		}
 
-		// POS order/payment notifications are customer-facing.
-		// Extract customer email from event payload; fall back to tenant contact.
-		recipientEmail := ""
-		if ce, ok := evt.Payload["customer_email"].(string); ok && ce != "" {
-			recipientEmail = ce
-		} else if ti.ContactEmail != "" {
-			recipientEmail = ti.ContactEmail
-		}
-		if recipientEmail == "" {
-			logg.Warn("pos event: no customer_email in payload and no tenant contact_email, skipping")
+		to, ok := mapping.RecipientFunc(evt.Payload, ti.ContactEmail)
+		if !ok {
+			logg.Warn("pos event: no recipient found, skipping", zap.String("type", evt.EventType))
 			_ = m.Ack()
 			return
 		}
 
+		metadata := map[string]any{}
+		if mapping.EmailSubject != "" {
+			metadata["subject"] = mapping.EmailSubject
+		}
+
 		msg := messaging.Message{
-			TenantID:    tenantID,
-			Channel:     "email",
-			TemplateID:  mapping.TemplateID,
-			SenderScope: messaging.SenderScopeTenant,
-			Target:      messaging.TargetCustomer,
-			To:          []string{recipientEmail},
-			Data:        mapping.DataBuilder(evt.Payload, ti.Website),
-			Metadata: map[string]any{
-				"subject": mapping.EmailSubject,
-			},
+			TenantID:       tenantID,
+			Channel:        mapping.Channel,
+			TemplateID:     mapping.TemplateID,
+			SenderScope:    messaging.SenderScopeTenant,
+			Target:         mapping.Target,
+			To:             []string{to},
+			Data:           mapping.DataBuilder(evt.Payload, ti.Website),
+			Metadata:       metadata,
 			RequestID:      uuid.New().String(),
 			IdempotencyKey: fmt.Sprintf("pos-%s-%s", evt.EventType, evt.AggregateID),
 			QueuedAt:       time.Now(),
