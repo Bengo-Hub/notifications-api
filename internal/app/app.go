@@ -29,6 +29,7 @@ import (
 	router "github.com/bengobox/notifications-api/internal/http/router"
 	sharedcache "github.com/Bengo-Hub/cache"
 	"github.com/bengobox/notifications-api/internal/modules/billing"
+	eventsmod "github.com/bengobox/notifications-api/internal/modules/events"
 	"github.com/bengobox/notifications-api/internal/modules/identity"
 	"github.com/bengobox/notifications-api/internal/modules/outbox"
 	"github.com/bengobox/notifications-api/internal/modules/rbac"
@@ -45,16 +46,17 @@ import (
 )
 
 type App struct {
-	cfg             *config.Config
-	log             *zap.Logger
-	httpServer      *http.Server
-	db              *pgxpool.Pool
-	entClient       *ent.Client
-	cache           *redis.Client
-	events          *nats.Conn
-	templates       *templates.Loader
-	outboxPublisher *eventslib.Publisher
-	treasuryClient  *serviceclient.Client
+	cfg                    *config.Config
+	log                    *zap.Logger
+	httpServer             *http.Server
+	db                     *pgxpool.Pool
+	entClient              *ent.Client
+	cache                  *redis.Client
+	events                 *nats.Conn
+	templates              *templates.Loader
+	outboxPublisher        *eventslib.Publisher
+	treasuryClient         *serviceclient.Client
+	crossServiceSubscriber *eventsmod.Subscriber
 }
 
 func New(ctx context.Context) (*App, error) {
@@ -258,17 +260,23 @@ func New(ctx context.Context) (*App, error) {
 		IdleTimeout:       cfg.HTTP.IdleTimeout,
 	}
 
+	var crossServiceSubscriber *eventsmod.Subscriber
+	if natsConn != nil {
+		crossServiceSubscriber = eventsmod.New(natsConn, cfg.Events, log)
+	}
+
 	return &App{
-		cfg:             cfg,
-		log:             log,
-		httpServer:      httpServer,
-		db:              dbPool,
-		entClient:       entClient,
-		cache:           redisClient,
-		events:          natsConn,
-		templates:       templateLoader,
-		outboxPublisher: outboxPublisher,
-		treasuryClient:  treasuryClient,
+		cfg:                    cfg,
+		log:                    log,
+		httpServer:             httpServer,
+		db:                     dbPool,
+		entClient:              entClient,
+		cache:                  redisClient,
+		events:                 natsConn,
+		templates:              templateLoader,
+		outboxPublisher:        outboxPublisher,
+		treasuryClient:         treasuryClient,
+		crossServiceSubscriber: crossServiceSubscriber,
 	}, nil
 }
 
@@ -281,6 +289,16 @@ func (a *App) Run(ctx context.Context) error {
 			}
 		}()
 		a.log.Info("outbox publisher started")
+	}
+
+	// Start cross-service event subscriber (inventory/KDS/payroll notifications)
+	if a.crossServiceSubscriber != nil {
+		go func() {
+			if err := a.crossServiceSubscriber.Start(ctx); err != nil {
+				a.log.Error("cross-service event subscriber stopped", zap.Error(err))
+			}
+		}()
+		a.log.Info("cross-service NATS event subscriber started")
 	}
 
 	errCh := make(chan error, 1)
