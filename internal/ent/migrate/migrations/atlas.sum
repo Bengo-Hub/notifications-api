@@ -1,4 +1,4 @@
-h1:hwQvXWPABRoNPZddtuG9s9T7Cs1guOwv2NC2doLFSFE=
+h1:xEggUAOMzVrYDkP1HGAXEpgzOnbjj9COJzGrOuDy2rg=
 20260311180156_billing_sprint_init.sql h1:gkMT+MDZoIyzvPtcnje3ig6c5LOL3+IXsC0TQ0BHbvE=
 20260311185040_consolidate_tenant_branding.sql h1:q+wkVvf0N0lQ9JPeFATkqtUX34+zeE1MkhYFOUBpXfs=
 20260322072519_add_identity_rbac.sql h1:FABNFn9pQa3FfKmO1INir0u96sdb13nAIuyMOq5uWF4=
@@ -7,3 +7,4 @@ h1:hwQvXWPABRoNPZddtuG9s9T7Cs1guOwv2NC2doLFSFE=
 20260401111951_add_device_tokens_and_cleanup.sql h1:FwL4auL4jrO9hmAGX70rVL87UlKwJIc3YUNOffNLJA0=
 20260417213839_add_provider_settings_unique_constraint.sql h1:EkoVUc6hKyJFz1/kpF7k4gqrkEHXTIGH/bb8k3yLc90=
 20260522155942_add_platform_markup_whatsapp.sql h1:skq9+uPQQ+RZzT7AyBtjAX9V+NjFQrrvja0ccXybGDA=
+20260527163108_add_template_is_active_index.sql h1:dbtqFA43Gqsm0BLFAHL7r347WmGy43rL8CNQWlNTeXM=

@@ -467,6 +467,11 @@ var (
 				Unique:  false,
 				Columns: []*schema.Column{TemplatesColumns[2], TemplatesColumns[3]},
 			},
+			{
+				Name:    "template_is_active",
+				Unique:  false,
+				Columns: []*schema.Column{TemplatesColumns[9]},
+			},
 		},
 	}
 	// TenantsColumns holds the columns for the "tenants" table.

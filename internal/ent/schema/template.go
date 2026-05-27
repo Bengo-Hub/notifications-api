@@ -66,5 +66,6 @@ func (Template) Indexes() []ent.Index {
 			Unique().
 			Annotations(entsql.IndexWhere("is_active = true")),
 		index.Fields("channel", "category"),
+		index.Fields("is_active"),
 	}
 }
