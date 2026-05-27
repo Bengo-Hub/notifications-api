@@ -77,7 +77,7 @@ func orderLink(data map[string]interface{}, orderAppURL string) string {
 }
 
 var orderMappings = map[string]orderNotificationMapping{
-	"ordering.order.confirmed": {
+	"ordering.order.created": {
 		TemplateID:   "ordering/order_placed",
 		EmailSubject: "Your order has been confirmed",
 		DataBuilder: func(data map[string]interface{}, orderAppURL string) map[string]interface{} {

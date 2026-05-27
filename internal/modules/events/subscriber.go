@@ -65,9 +65,9 @@ func (s *Subscriber) Start(ctx context.Context) error {
 	}
 
 	subs := []sub{
-		{"inventory.item.low_stock", "notif-inventory-low-stock", s.handleLowStock},
+		{"inventory.stock.low", "notif-inventory-low-stock", s.handleLowStock},
 		{"inventory.purchase_order.received", "notif-po-received", s.handlePOReceived},
-		{"pos.kds.waiter_called", "notif-kds-waiter-called", s.handleKDSWaiterCalled},
+		{"pos.kds.waiter.called", "notif-kds-waiter-called", s.handleKDSWaiterCalled},
 		{"treasury.payroll.disbursed", "notif-payroll-disbursed", s.handlePayrollDisbursed},
 	}
 

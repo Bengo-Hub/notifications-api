@@ -95,7 +95,7 @@ var posMappings = map[string]posNotificationMapping{
 	},
 
 	// ---- KDS: waiter called (SMS to waiter phone) ----
-	"kds.waiter_called": {
+	"kds.waiter.called": {
 		TemplateID:   "pos/kds_waiter_called",
 		Channel:      "sms",
 		EmailSubject: "",
