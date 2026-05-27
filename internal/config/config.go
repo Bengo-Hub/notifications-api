@@ -53,6 +53,7 @@ type HTTPConfig struct {
 
 type PostgresConfig struct {
 	URL             string        `envconfig:"POSTGRES_URL" default:"postgres://postgres:postgres@localhost:5432/notifications?sslmode=disable"`
+	MigrateURL      string        `envconfig:"POSTGRES_MIGRATE_URL"` // direct PG for migrate/seed; bypasses PgBouncer transaction mode
 	MaxOpenConns    int           `envconfig:"POSTGRES_MAX_OPEN_CONNS" default:"4"`
 	MaxIdleConns    int           `envconfig:"POSTGRES_MAX_IDLE_CONNS" default:"2"`
 	ConnMaxLifetime time.Duration `envconfig:"POSTGRES_CONN_MAX_LIFETIME" default:"5m"`

@@ -26,6 +26,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("load database config: %v", err)
 	}
+	if dbCfg.MigrateURL != "" {
+		dbCfg.URL = dbCfg.MigrateURL
+	}
 
 	log.Printf("connecting to database: %s", maskPassword(dbCfg.URL))
 
