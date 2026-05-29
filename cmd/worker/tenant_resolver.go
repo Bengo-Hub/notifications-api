@@ -60,10 +60,12 @@ func (r *tenantResolver) resolveBySlug(ctx context.Context, slug string) (*tenan
 }
 
 // resolve looks up tenant by ID string and returns basic info + cached branding.
+// Accepts either a UUID string or a slug; if tenantID is not a valid UUID, resolves by slug.
 func (r *tenantResolver) resolve(ctx context.Context, tenantID string) (*tenantInfo, error) {
 	id, err := uuid.Parse(tenantID)
 	if err != nil {
-		return nil, fmt.Errorf("tenant_resolver: invalid tenant ID %q: %w", tenantID, err)
+		// tenantID is a slug (e.g. "kura") — fall back to slug-based resolution
+		return r.resolveBySlug(ctx, tenantID)
 	}
 
 	t, err := r.client.Tenant.Query().
