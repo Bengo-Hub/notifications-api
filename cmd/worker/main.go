@@ -177,7 +177,7 @@ func main() {
 		}
 
 		// Deliver via provider
-		deliverErr := deliver(ctx, cfg, pm, billingSvc, &msg, rendered, logg)
+		deliverErr := deliver(ctx, cfg, pm, billingSvc, tr, &msg, rendered, logg)
 		if deliverErr != nil {
 			logg.Warn("delivery failed",
 				zap.String("channel", msg.Channel),
@@ -360,17 +360,31 @@ func renderMessage(ctx context.Context, cfg *config.Config, tpl *templates.Loade
 }
 
 // deliver sends the rendered message via the appropriate provider.
-func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, billingSvc *billing.Service, msg *messaging.Message, rendered string, logg *zap.Logger) error {
+func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, billingSvc *billing.Service, tr *tenantResolver, msg *messaging.Message, rendered string, logg *zap.Logger) error {
 	channel := strings.ToLower(msg.Channel)
-	tenantID, _ := uuid.Parse(msg.TenantID)
 	preferred := ""
 	if p, ok := msg.Metadata["provider"].(string); ok {
 		preferred = p
 	}
 
+	// msg.TenantID may be a slug (e.g. "kura") rather than a UUID.
+	// provider_settings rows are keyed by the notifications-api internal UUID, so
+	// resolve slug → UUID before any provider or billing lookup.
+	resolvedTenantID := msg.TenantID
+	tenantID, parseErr := uuid.Parse(msg.TenantID)
+	if parseErr != nil {
+		if t, err := tr.resolve(ctx, msg.TenantID); err == nil {
+			resolvedTenantID = t.ID.String()
+			tenantID = t.ID
+		} else {
+			logg.Warn("tenant resolve failed for provider lookup, using raw tenant id",
+				zap.String("tenant_id", msg.TenantID), zap.Error(err))
+		}
+	}
+
 	// Determine which tenant ID to use for provider resolution based on sender scope.
 	// Platform scope uses platform provider; tenant scope uses tenant's own provider.
-	providerTenantID := msg.TenantID
+	providerTenantID := resolvedTenantID
 	if msg.EffectiveSenderScope() == messaging.SenderScopePlatform {
 		providerTenantID = pm.PlatformID
 	}
