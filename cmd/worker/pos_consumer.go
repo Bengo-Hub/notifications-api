@@ -188,6 +188,111 @@ var posMappings = map[string]posNotificationMapping{
 			}
 		},
 	},
+
+	// ---- Loyalty: points earned (SMS to customer) ----
+	"loyalty.points.earned": {
+		TemplateID:   "pos/loyalty_points_earned",
+		Channel:      "sms",
+		EmailSubject: "",
+		Target:       messaging.TargetCustomer,
+		RecipientFunc: func(payload map[string]any, _ string) (string, bool) {
+			return recipientFromPayload(payload, "customer_phone")
+		},
+		DataBuilder: func(payload map[string]any, _ string) map[string]any {
+			name := "Customer"
+			if n, ok := payload["customer_name"].(string); ok && n != "" {
+				name = n
+			}
+			return map[string]any{
+				"name":           name,
+				"points_earned":  payload["points_earned"],
+				"balance":        payload["balance_after"],
+				"order_id":       payload["order_id"],
+			}
+		},
+	},
+
+	// ---- Loyalty: tier upgraded (SMS to customer) ----
+	"loyalty.tier_upgraded": {
+		TemplateID:   "pos/loyalty_tier_upgraded",
+		Channel:      "sms",
+		EmailSubject: "",
+		Target:       messaging.TargetCustomer,
+		RecipientFunc: func(payload map[string]any, _ string) (string, bool) {
+			return recipientFromPayload(payload, "customer_phone")
+		},
+		DataBuilder: func(payload map[string]any, _ string) map[string]any {
+			name := "Customer"
+			if n, ok := payload["customer_name"].(string); ok && n != "" {
+				name = n
+			}
+			return map[string]any{
+				"name":     name,
+				"new_tier": payload["new_tier"],
+			}
+		},
+	},
+
+	// ---- Returns: refund processed (SMS to customer) ----
+	"return.completed": {
+		TemplateID:   "pos/return_completed",
+		Channel:      "sms",
+		EmailSubject: "",
+		Target:       messaging.TargetCustomer,
+		RecipientFunc: func(payload map[string]any, _ string) (string, bool) {
+			return recipientFromPayload(payload, "customer_phone")
+		},
+		DataBuilder: func(payload map[string]any, _ string) map[string]any {
+			return map[string]any{
+				"refund_amount":       payload["refund_amount"],
+				"treasury_refund_ref": payload["treasury_refund_ref"],
+				"return_type":         payload["return_type"],
+			}
+		},
+	},
+
+	// ---- Layaway: payment due tomorrow (SMS to customer) ----
+	"layaway.payment_due": {
+		TemplateID:   "pos/layaway_payment_due",
+		Channel:      "sms",
+		EmailSubject: "",
+		Target:       messaging.TargetCustomer,
+		RecipientFunc: func(payload map[string]any, _ string) (string, bool) {
+			return recipientFromPayload(payload, "customer_phone")
+		},
+		DataBuilder: func(payload map[string]any, _ string) map[string]any {
+			name := "Customer"
+			if n, ok := payload["customer_name"].(string); ok && n != "" {
+				name = n
+			}
+			return map[string]any{
+				"name":        name,
+				"balance_due": payload["balance_due"],
+				"due_date":    payload["due_date"],
+			}
+		},
+	},
+
+	// ---- Stock: low-stock alert (SMS to outlet manager / admin contact) ----
+	"alert.stock_low": {
+		TemplateID:   "pos/alert_stock_low",
+		Channel:      "sms",
+		EmailSubject: "Low stock alert",
+		Target:       messaging.TargetStaff,
+		RecipientFunc: func(payload map[string]any, fallback string) (string, bool) {
+			if phone, ok := recipientFromPayload(payload, "manager_phone"); ok {
+				return phone, true
+			}
+			return fallback, fallback != ""
+		},
+		DataBuilder: func(payload map[string]any, _ string) map[string]any {
+			return map[string]any{
+				"item_name":   payload["item_name"],
+				"current_qty": payload["current_qty"],
+				"outlet_name": payload["outlet_name"],
+			}
+		},
+	},
 }
 
 // startPosConsumer subscribes to pos.> events and dispatches POS notifications.
