@@ -12,17 +12,19 @@ import (
 const sendGridEndpoint = "https://api.sendgrid.com/v3/mail/send"
 
 // SendWithSendGrid sends an email using the SendGrid v3 HTTP API.
-func SendWithSendGrid(ctx context.Context, apiKey, from string, to []string, subject, htmlBody, textBody string) error {
+func SendWithSendGrid(ctx context.Context, apiKey, from string, to []string, cc []string, subject, htmlBody, textBody string) error {
 	if apiKey == "" {
 		return fmt.Errorf("sendgrid api key not configured")
 	}
 
-	personalizations := []sgPersonalization{
-		{To: make([]sgEmail, 0, len(to))},
-	}
+	p := sgPersonalization{To: make([]sgEmail, 0, len(to))}
 	for _, addr := range to {
-		personalizations[0].To = append(personalizations[0].To, sgEmail{Email: addr})
+		p.To = append(p.To, sgEmail{Email: addr})
 	}
+	for _, addr := range cc {
+		p.Cc = append(p.Cc, sgEmail{Email: addr})
+	}
+	personalizations := []sgPersonalization{p}
 
 	content := make([]sgContent, 0, 2)
 	if textBody != "" {
@@ -76,6 +78,7 @@ type sgPayload struct {
 
 type sgPersonalization struct {
 	To []sgEmail `json:"to"`
+	Cc []sgEmail `json:"cc,omitempty"`
 }
 
 type sgEmail struct {

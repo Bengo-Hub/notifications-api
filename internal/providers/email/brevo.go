@@ -29,7 +29,7 @@ func NewBrevoProvider(cfg BrevoConfig) *BrevoProvider {
 
 func (p *BrevoProvider) Name() string { return "brevo" }
 
-func (p *BrevoProvider) SendEmail(ctx context.Context, from string, to []string, subject string, htmlBody string, textBody string) error {
+func (p *BrevoProvider) SendEmail(ctx context.Context, from string, to []string, cc []string, subject string, htmlBody string, textBody string) error {
 	if p.cfg.APIKey == "" {
 		return fmt.Errorf("brevo: api key not configured")
 	}
@@ -52,9 +52,15 @@ func (p *BrevoProvider) SendEmail(ctx context.Context, from string, to []string,
 		recipients = append(recipients, brevoRecipient{Email: addr})
 	}
 
+	var ccRecipients []brevoRecipient
+	for _, addr := range cc {
+		ccRecipients = append(ccRecipients, brevoRecipient{Email: addr})
+	}
+
 	payload := brevoPayload{
 		Sender:      brevoSender{Name: senderName, Email: senderEmail},
 		To:          recipients,
+		Cc:          ccRecipients,
 		Subject:     subject,
 		HTMLContent: htmlBody,
 	}
@@ -92,6 +98,7 @@ func (p *BrevoProvider) SendEmail(ctx context.Context, from string, to []string,
 type brevoPayload struct {
 	Sender      brevoSender      `json:"sender"`
 	To          []brevoRecipient `json:"to"`
+	Cc          []brevoRecipient `json:"cc,omitempty"`
 	Subject     string           `json:"subject"`
 	HTMLContent string           `json:"htmlContent,omitempty"`
 	TextContent string           `json:"textContent,omitempty"`

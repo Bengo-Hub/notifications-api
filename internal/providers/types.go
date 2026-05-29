@@ -4,7 +4,7 @@ import "context"
 
 // EmailProvider sends email messages.
 type EmailProvider interface {
-	SendEmail(ctx context.Context, from string, to []string, subject string, htmlBody string, textBody string) error
+	SendEmail(ctx context.Context, from string, to []string, cc []string, subject string, htmlBody string, textBody string) error
 	Name() string
 }
 

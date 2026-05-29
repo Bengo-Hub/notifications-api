@@ -39,7 +39,7 @@ func extractEmail(s string) string {
 	return strings.TrimSpace(s)
 }
 
-func (p *SMTPProvider) SendEmail(ctx context.Context, from string, to []string, subject string, htmlBody string, textBody string) error {
+func (p *SMTPProvider) SendEmail(ctx context.Context, from string, to []string, cc []string, subject string, htmlBody string, textBody string) error {
 	if from == "" {
 		from = p.cfg.From
 	} else if !strings.Contains(from, "@") && p.cfg.From != "" {
@@ -68,6 +68,9 @@ func (p *SMTPProvider) SendEmail(ctx context.Context, from string, to []string, 
 	var b strings.Builder
 	b.WriteString("From: " + from + "\r\n")
 	b.WriteString("To: " + strings.Join(to, ",") + "\r\n")
+	if len(cc) > 0 {
+		b.WriteString("Cc: " + strings.Join(cc, ",") + "\r\n")
+	}
 	b.WriteString("Subject: " + subject + "\r\n")
 	b.WriteString("MIME-Version: 1.0\r\n")
 	if htmlBody != "" && textBody != "" {
@@ -132,7 +135,8 @@ func (p *SMTPProvider) SendEmail(ctx context.Context, from string, to []string, 
 	if err := c.Mail(envelopeFrom); err != nil {
 		return fmt.Errorf("smtp mail from: %w", err)
 	}
-	for _, rcpt := range to {
+	allRcpts := append(to, cc...)
+	for _, rcpt := range allRcpts {
 		if err := c.Rcpt(rcpt); err != nil {
 			return fmt.Errorf("smtp rcpt to: %w", err)
 		}

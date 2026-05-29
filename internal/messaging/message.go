@@ -25,6 +25,7 @@ type Message struct {
 	SenderScope    string         `json:"senderScope"`   // "platform" or "tenant" (default: tenant)
 	Target         string         `json:"target"`        // recipient target type
 	To             []string       `json:"to"`
+	Cc             []string       `json:"cc,omitempty"`  // email CC recipients (email channel only)
 	Data           map[string]any `json:"data"`
 	Metadata       map[string]any `json:"metadata,omitempty"`
 	RequestID      string         `json:"requestId"`

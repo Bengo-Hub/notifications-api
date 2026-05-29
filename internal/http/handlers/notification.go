@@ -43,6 +43,7 @@ type CreateMessageRequest struct {
 	Template string         `json:"template" binding:"required" example:"invoice_due"`
 	Data     map[string]any `json:"data" binding:"required" swaggertype:"object" example:"{\"name\":\"Jane\",\"invoice_number\":\"INV-1001\",\"amount\":\"KES 1,200\",\"due_date\":\"2025-11-30\",\"payment_link\":\"https://pay.example.com/invoices/INV-1001\",\"brand_name\":\"BengoBox\"}"`
 	To       []string       `json:"to" binding:"required,min=1" example:"customer@example.com"`
+	Cc       []string       `json:"cc,omitempty" example:"manager@example.com"`
 	Metadata map[string]any `json:"metadata" swaggertype:"object" example:"{\"subject\":\"Invoice INV-1001 is due\",\"provider\":\"smtp\"}"`
 }
 
@@ -247,6 +248,7 @@ func (h *NotificationHandler) Enqueue(w http.ResponseWriter, r *http.Request) {
 		TemplateID:     req.Template,
 		Data:           req.Data,
 		To:             req.To,
+		Cc:             req.Cc,
 		Metadata:       req.Metadata,
 		RequestID:      requestID,
 		IdempotencyKey: idemp,
