@@ -126,7 +126,7 @@ func New(ctx context.Context) (*App, error) {
 	templateHandler := handlers.NewTemplateHandler(templateLoader, templateRepo, notificationHandler)
 	providerManager := providers.NewManager(dbPool, cfg.Postgres, cfg.Providers, encryption.KeyFromEnv(cfg.Security.EncryptionKey), cfg.App.Env, platformIDStr)
 	platformProviders := handlers.NewPlatformProviders(entClient, log, encryption.KeyFromEnv(cfg.Security.EncryptionKey), providerManager)
-	tenantProviders := handlers.NewTenantProviders(entClient, log, platformIDStr)
+	tenantProviders := handlers.NewTenantProviders(entClient, log, platformIDStr, encryption.KeyFromEnv(cfg.Security.EncryptionKey))
 	analyticsHandler := handlers.NewAnalyticsHandler(entClient, log)
 
 	deviceTokenHandler := handlers.NewDeviceTokenHandler(log, entClient)

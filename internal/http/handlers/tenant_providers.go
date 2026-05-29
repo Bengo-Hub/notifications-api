@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 
+	"github.com/bengobox/notifications-api/internal/encryption"
 	"github.com/bengobox/notifications-api/internal/ent"
 	"github.com/bengobox/notifications-api/internal/ent/providersetting"
 	"github.com/bengobox/notifications-api/internal/ent/tenant"
@@ -16,14 +17,16 @@ import (
 
 // TenantProviders handles tenant-level notification provider selection.
 type TenantProviders struct {
-	client     *ent.Client
-	logger     *zap.Logger
-	PlatformID string
+	client        *ent.Client
+	logger        *zap.Logger
+	PlatformID    string
+	encryptionKey []byte
 }
 
 // NewTenantProviders creates a new TenantProviders handler.
-func NewTenantProviders(client *ent.Client, logger *zap.Logger, platformID string) *TenantProviders {
-	return &TenantProviders{client: client, logger: logger, PlatformID: platformID}
+// encryptionKey is optional (32 bytes for AES-256); when set, secret values are encrypted at rest.
+func NewTenantProviders(client *ent.Client, logger *zap.Logger, platformID string, encryptionKey []byte) *TenantProviders {
+	return &TenantProviders{client: client, logger: logger, PlatformID: platformID, encryptionKey: encryptionKey}
 }
 
 type availableProviderResponse struct {
@@ -355,12 +358,13 @@ func (h *TenantProviders) SaveProviderSettings(w http.ResponseWriter, r *http.Re
 		All(ctx)
 
 	type existingVal struct {
-		Value    string
-		IsSecret bool
+		Value       string
+		IsSecret    bool
+		IsEncrypted bool
 	}
 	existing := make(map[string]existingVal, len(existingRows))
 	for _, row := range existingRows {
-		existing[row.Key] = existingVal{Value: row.Value, IsSecret: row.IsSecret}
+		existing[row.Key] = existingVal{Value: row.Value, IsSecret: row.IsSecret, IsEncrypted: row.IsEncrypted}
 	}
 
 	_, _ = h.client.ProviderSetting.Delete().
@@ -373,25 +377,34 @@ func (h *TenantProviders) SaveProviderSettings(w http.ResponseWriter, r *http.Re
 		).
 		Exec(ctx)
 
-	secretKeys := map[string]bool{"password": true, "api_key": true, "auth_token": true, "api_secret": true}
-
 	// Track which keys we've processed from the request
 	processed := make(map[string]bool, len(req.Settings))
 
 	for k, v := range req.Settings {
 		processed[k] = true
-		// For empty or masked values, preserve existing DB value
-		if v == "" || v == "••••••••" {
-			if old, ok := existing[k]; ok && old.Value != "" {
-				v = old.Value
-			} else {
-				continue
-			}
-		}
-		isSecret := secretKeys[k]
+		value := v
+		isEncrypted := false
+		isSecret := encryption.IsSecret(k)
 		if old, ok := existing[k]; ok {
 			isSecret = isSecret || old.IsSecret
 		}
+
+		// For empty or masked values, preserve existing DB value (including its encrypted state)
+		if v == "" || v == "••••••••" {
+			if old, ok := existing[k]; ok && old.Value != "" {
+				value = old.Value
+				isEncrypted = old.IsEncrypted
+			} else {
+				continue
+			}
+		} else if isSecret && len(h.encryptionKey) == 32 {
+			// Encrypt new secret values at rest
+			if enc, err := encryption.Encrypt(v, h.encryptionKey); err == nil {
+				value = enc
+				isEncrypted = true
+			}
+		}
+
 		_, err := h.client.ProviderSetting.Create().
 			SetTenantID(tenantID).
 			SetChannel(req.ProviderType).
@@ -400,8 +413,9 @@ func (h *TenantProviders) SaveProviderSettings(w http.ResponseWriter, r *http.Re
 			SetProviderName(req.ProviderName).
 			SetEnvironment("production").
 			SetKey(k).
-			SetValue(v).
+			SetValue(value).
 			SetIsSecret(isSecret).
+			SetIsEncrypted(isEncrypted).
 			SetIsPlatform(false).
 			SetIsActive(true).
 			SetStatus("active").
@@ -413,7 +427,7 @@ func (h *TenantProviders) SaveProviderSettings(w http.ResponseWriter, r *http.Re
 		}
 	}
 
-	// Re-create existing settings that were not in the request (preserve untouched keys)
+	// Re-create existing settings that were not in the request (preserve untouched keys with their encrypted state)
 	for k, old := range existing {
 		if processed[k] || old.Value == "" {
 			continue
@@ -428,6 +442,7 @@ func (h *TenantProviders) SaveProviderSettings(w http.ResponseWriter, r *http.Re
 			SetKey(k).
 			SetValue(old.Value).
 			SetIsSecret(old.IsSecret).
+			SetIsEncrypted(old.IsEncrypted).
 			SetIsPlatform(false).
 			SetIsActive(true).
 			SetStatus("active").
