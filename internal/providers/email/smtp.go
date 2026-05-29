@@ -9,6 +9,28 @@ import (
 	"strings"
 )
 
+// loginAuth implements smtp.Auth for the AUTH LOGIN mechanism, required by
+// Microsoft 365 / Outlook which does not accept AUTH PLAIN.
+type loginAuth struct{ username, password string }
+
+func (a *loginAuth) Start(_ *smtp.ServerInfo) (string, []byte, error) {
+	return "LOGIN", nil, nil
+}
+
+func (a *loginAuth) Next(fromServer []byte, more bool) ([]byte, error) {
+	if !more {
+		return nil, nil
+	}
+	switch strings.ToLower(strings.TrimRight(string(fromServer), ": ")) {
+	case "username":
+		return []byte(a.username), nil
+	case "password":
+		return []byte(a.password), nil
+	default:
+		return nil, fmt.Errorf("smtp login auth: unexpected challenge %q", fromServer)
+	}
+}
+
 type SMTPConfig struct {
 	Host     string
 	Port     int
@@ -50,7 +72,6 @@ func (p *SMTPProvider) SendEmail(ctx context.Context, from string, to []string, 
 		return fmt.Errorf("smtp not configured")
 	}
 	addr := fmt.Sprintf("%s:%d", p.cfg.Host, p.cfg.Port)
-	auth := smtp.PlainAuth("", p.cfg.Username, p.cfg.Password, p.cfg.Host)
 
 	// SMTP envelope requires bare email; headers can have display name
 	envelopeFrom := extractEmail(from)
@@ -127,6 +148,14 @@ func (p *SMTPProvider) SendEmail(ctx context.Context, from string, to []string, 
 	}
 
 	if p.cfg.Username != "" {
+		// Choose AUTH method based on what the server advertises.
+		// Microsoft 365 / Outlook only supports LOGIN; most others support both.
+		var auth smtp.Auth
+		if _, params := c.Extension("AUTH"); strings.Contains(strings.ToUpper(params), "LOGIN") {
+			auth = &loginAuth{p.cfg.Username, p.cfg.Password}
+		} else {
+			auth = smtp.PlainAuth("", p.cfg.Username, p.cfg.Password, p.cfg.Host)
+		}
 		if err := c.Auth(auth); err != nil {
 			return fmt.Errorf("smtp auth: %w", err)
 		}
