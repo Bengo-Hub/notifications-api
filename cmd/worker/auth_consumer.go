@@ -23,6 +23,10 @@ type authUserEvent struct {
 	TenantID   string `json:"tenant_id"`
 	TenantSlug string `json:"tenant_slug"`
 	Method     string `json:"method,omitempty"`
+	// ServiceID identifies which service triggered this event (e.g. "truload", "logistics").
+	// When set, the notifications-api resolves the tenant's per-service URL from service_urls
+	// metadata instead of the generic app_url, so email links point to the right service.
+	ServiceID  string `json:"service_id,omitempty"`
 }
 
 // startAuthNotificationConsumer subscribes to auth.user.created events (plain NATS,
@@ -53,7 +57,8 @@ func startAuthNotificationConsumer(ctx context.Context, nc *nats.Conn, cfg *conf
 		tenantAppURL := ""
 		if evt.TenantID != "" {
 			if ti, err := tr.resolve(ctx, evt.TenantID); err == nil {
-				tenantAppURL = ti.AppURL // per-tenant deployed app URL (e.g. https://kuraweigh.kura.go.ke)
+				// Use per-service URL when service_id is set; fall back to tenant-level app_url.
+				tenantAppURL = ti.ServiceURL(evt.ServiceID, "", ti.AppURL)
 				tenantSlug = ti.Slug
 			}
 		}
@@ -66,7 +71,7 @@ func startAuthNotificationConsumer(ctx context.Context, nc *nats.Conn, cfg *conf
 			name = evt.Email
 		}
 
-		// Build getting_started_link: use AppURL+slug if available; renderMessage will also
+		// Build getting_started_link: use resolved appURL+slug if available; renderMessage will also
 		// auto-set it, but setting it here avoids relying on that fallback.
 		gettingStartedLink := ""
 		if tenantAppURL != "" && tenantSlug != "" {
@@ -80,6 +85,11 @@ func startAuthNotificationConsumer(ctx context.Context, nc *nats.Conn, cfg *conf
 			msgData["getting_started_link"] = gettingStartedLink
 		}
 
+		metadata := map[string]any{"subject": "Welcome to the platform!"}
+		if evt.ServiceID != "" {
+			metadata["service_id"] = evt.ServiceID
+		}
+
 		msg := messaging.Message{
 			TenantID:    evt.TenantID,
 			Channel:     "email",
@@ -88,9 +98,7 @@ func startAuthNotificationConsumer(ctx context.Context, nc *nats.Conn, cfg *conf
 			Target:      messaging.TargetCustomer,
 			To:          []string{evt.Email},
 			Data:        msgData,
-			Metadata: map[string]any{
-				"subject": "Welcome to the platform!",
-			},
+			Metadata:    metadata,
 			RequestID:      uuid.New().String(),
 			IdempotencyKey: fmt.Sprintf("auth-welcome-%s", evt.UserID),
 			QueuedAt:       time.Now(),
@@ -150,6 +158,12 @@ func startAuthNotificationConsumer(ctx context.Context, nc *nats.Conn, cfg *conf
 		}
 
 		tenantID, _ := payload["tenant_id"].(string)
+		serviceID, _ := payload["service_id"].(string)
+
+		resetMetadata := map[string]any{"subject": "Reset your password"}
+		if serviceID != "" {
+			resetMetadata["service_id"] = serviceID
+		}
 
 		msg := messaging.Message{
 			TenantID:    tenantID,
@@ -162,9 +176,7 @@ func startAuthNotificationConsumer(ctx context.Context, nc *nats.Conn, cfg *conf
 				"name":       name,
 				"reset_link": resetLink,
 			},
-			Metadata: map[string]any{
-				"subject": "Reset your password",
-			},
+			Metadata: resetMetadata,
 			RequestID:      uuid.New().String(),
 			IdempotencyKey: fmt.Sprintf("auth-password-reset-%s", payload["user_id"]),
 			QueuedAt:       time.Now(),

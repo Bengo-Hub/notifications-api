@@ -189,9 +189,10 @@ func startFleetConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 			SenderScope: messaging.SenderScopeTenant,
 			Target:      target,
 			To:          []string{recipientEmail},
-			Data:        mapping.DataBuilder(evt.Payload, tenantWebsite, riderAppBaseURL()),
+			Data:        mapping.DataBuilder(evt.Payload, tenantWebsite, ti.ServiceURL("logistics", "NOTIFICATIONS_RIDER_APP_URL", riderAppBaseURL())),
 			Metadata: map[string]interface{}{
-				"subject": mapping.EmailSubject,
+				"subject":    mapping.EmailSubject,
+				"service_id": "logistics",
 			},
 			RequestID:      uuid.New().String(),
 			IdempotencyKey: fmt.Sprintf("fleet-%s-%s", evt.Subject(), memberID),

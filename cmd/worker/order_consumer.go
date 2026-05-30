@@ -216,17 +216,19 @@ func startOrderConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 		}
 
 		// Resolve tenant info for building order links
+		var ti *tenantInfo
 		tenantWebsite := ""
 		tenantSlug := ""
-		if ti, err := tr.resolve(ctx, evtTenantID); err == nil {
+		if resolved, err := tr.resolve(ctx, evtTenantID); err == nil {
+			ti = resolved
 			tenantWebsite = ti.Website
 			tenantSlug = ti.Slug
 		} else {
 			logg.Warn("order event: could not resolve tenant, using empty website", zap.String("tenant_id", evtTenantID), zap.Error(err))
 		}
 
-		// Use ordering app URL for "View Order" links instead of tenant website
-		appURL := orderAppBaseURL(tenantSlug, tenantWebsite)
+		// Use per-tenant ordering app URL when available, otherwise fall back to env/website.
+		appURL := ti.ServiceURL("ordering", "NOTIFICATIONS_ORDERING_APP_URL", orderAppBaseURL(tenantSlug, tenantWebsite))
 
 		orderID, _ := evtData["order_id"].(string)
 
@@ -239,7 +241,8 @@ func startOrderConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 			To:          []string{email},
 			Data:        mapping.DataBuilder(evtData, appURL),
 			Metadata: map[string]interface{}{
-				"subject": mapping.EmailSubject,
+				"subject":    mapping.EmailSubject,
+				"service_id": "ordering",
 			},
 			RequestID:      uuid.New().String(),
 			IdempotencyKey: fmt.Sprintf("order-%s-%s", evtType, orderID),

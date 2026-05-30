@@ -321,17 +321,23 @@ func renderMessage(ctx context.Context, cfg *config.Config, tpl *templates.Loade
 			if t.SecondaryColor != "" {
 				data["brand_secondary_color"] = t.SecondaryColor
 			}
-			// Expose per-tenant app URL from caller data or resolved tenant metadata.
-			// Caller-provided app_url takes precedence (set by services like truload-backend).
-			if _, callerSet := data["app_url"]; !callerSet && t.AppURL != "" {
-				data["app_url"] = t.AppURL
+			// Resolve app URL for this message with cascading priority:
+			// 1. Caller explicitly set app_url (service knows its own URL — strongest signal)
+			// 2. service_id in message metadata → per-tenant ServiceURLs[service_id]
+			// 3. tenant-level AppURL (default, for single-service tenants or SSO-only auth events)
+			if _, callerSet := data["app_url"]; !callerSet {
+				if svcID, _ := msg.Metadata["service_id"].(string); svcID != "" {
+					if u, ok := t.ServiceURLs[svcID]; ok && u != "" {
+						data["app_url"] = u
+					}
+				}
+				if _, still := data["app_url"]; !still && t.AppURL != "" {
+					data["app_url"] = t.AppURL
+				}
 			}
 			// Auto-build getting_started_link if the caller didn't supply one.
 			if _, ok := data["getting_started_link"]; !ok {
 				appURL, _ := data["app_url"].(string)
-				if appURL == "" {
-					appURL = t.AppURL
-				}
 				if appURL != "" {
 					data["getting_started_link"] = appURL + "/" + t.Slug
 				}

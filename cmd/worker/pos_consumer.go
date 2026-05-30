@@ -352,6 +352,10 @@ func startPosConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamConte
 			metadata["subject"] = mapping.EmailSubject
 		}
 
+		// Use per-tenant POS URL when available, otherwise fall back to env/website.
+		posURL := ti.ServiceURL("pos", "NOTIFICATIONS_POS_APP_URL", serviceURL("NOTIFICATIONS_POS_APP_URL", ti.Website))
+		metadata["service_id"] = "pos"
+
 		msg := messaging.Message{
 			TenantID:       tenantID,
 			Channel:        mapping.Channel,
@@ -359,7 +363,7 @@ func startPosConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamConte
 			SenderScope:    messaging.SenderScopeTenant,
 			Target:         mapping.Target,
 			To:             []string{to},
-			Data:           mapping.DataBuilder(evt.Payload, ti.Website),
+			Data:           mapping.DataBuilder(evt.Payload, posURL),
 			Metadata:       metadata,
 			RequestID:      uuid.New().String(),
 			IdempotencyKey: fmt.Sprintf("pos-%s-%s", evt.EventType, evt.AggregateID),

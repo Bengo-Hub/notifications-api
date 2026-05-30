@@ -22,13 +22,35 @@ type tenantInfo struct {
 	ContactEmail   string
 	ContactPhone   string
 	Website        string
-	// AppURL is the per-tenant deployed app base URL (e.g. "https://kuraweigh.kura.go.ke").
+	// AppURL is the per-tenant primary app base URL (e.g. "https://kuraweigh.kura.go.ke").
 	// Distinct from Website (corporate site). Stored in auth-api tenant metadata["app_url"].
-	// Used to build getting_started_link and other deep links in email templates.
+	// Used as the default for getting_started_link and other deep links in email templates.
 	AppURL         string
+	// ServiceURLs maps service names to their per-tenant deployed frontend URLs.
+	// e.g. {"truload": "https://kuraweigh.kura.go.ke", "logistics": "https://logistics.kura.go.ke"}
+	// Stored in auth-api tenant metadata["service_urls"]. Takes priority over AppURL for
+	// service-specific email links (order links, rider dashboard, etc.).
+	ServiceURLs    map[string]string
 	LogoURL        string
 	PrimaryColor   string
 	SecondaryColor string
+}
+
+// ServiceURL returns the per-tenant URL for the given service name.
+// Falls back to the global env-var URL (envVar) and then to fallback.
+// Strips trailing slash from all candidates.
+func (t *tenantInfo) ServiceURL(service, envVar, fallback string) string {
+	if t != nil {
+		if u, ok := t.ServiceURLs[service]; ok && u != "" {
+			return strings.TrimRight(u, "/")
+		}
+	}
+	if envVar != "" {
+		if u := serviceURL(envVar, ""); u != "" {
+			return u
+		}
+	}
+	return strings.TrimRight(fallback, "/")
 }
 
 // tenantResolver resolves tenant details from local DB + Redis-cached auth-api data.
@@ -114,10 +136,24 @@ func (r *tenantResolver) enrichFromCache(ctx context.Context, info *tenantInfo) 
 	info.ContactEmail = details.ContactEmail
 	info.ContactPhone = details.ContactPhone
 	info.Website = normalizeWebsite(details.Website)
-	// AppURL comes from auth-api tenant metadata["app_url"] — the per-tenant deployed app domain.
+	// AppURL and ServiceURLs come from auth-api tenant metadata — per-tenant deployed app domains.
 	if details.Metadata != nil {
 		if v, ok := details.Metadata["app_url"].(string); ok && v != "" {
 			info.AppURL = normalizeWebsite(v)
+		}
+		// service_urls: {"truload": "https://...", "logistics": "https://...", ...}
+		if raw, ok := details.Metadata["service_urls"]; ok {
+			if m, ok := raw.(map[string]interface{}); ok {
+				urls := make(map[string]string, len(m))
+				for svc, val := range m {
+					if u, ok := val.(string); ok && u != "" {
+						urls[svc] = normalizeWebsite(u)
+					}
+				}
+				if len(urls) > 0 {
+					info.ServiceURLs = urls
+				}
+			}
 		}
 	}
 	info.LogoURL = branding.LogoURL
