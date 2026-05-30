@@ -60,7 +60,7 @@ func main() {
 	// For dev/staging, sync a list of known slugs from SEED_TENANTS env var.
 	tenantSlugs := os.Getenv("SEED_TENANTS")
 	if tenantSlugs == "" {
-		tenantSlugs = "codevertex,mss,urban-loft,kura,ultichange,codevertex-demo"
+		tenantSlugs = "codevertex,mss,kura,ultichange,codevertex-demo"
 	}
 
 	tenantSyncer := tenantmodule.NewSyncer(client, cfg.Services.AuthAPI)
