@@ -22,6 +22,10 @@ type tenantInfo struct {
 	ContactEmail   string
 	ContactPhone   string
 	Website        string
+	// AppURL is the per-tenant deployed app base URL (e.g. "https://kuraweigh.kura.go.ke").
+	// Distinct from Website (corporate site). Stored in auth-api tenant metadata["app_url"].
+	// Used to build getting_started_link and other deep links in email templates.
+	AppURL         string
 	LogoURL        string
 	PrimaryColor   string
 	SecondaryColor string
@@ -110,6 +114,12 @@ func (r *tenantResolver) enrichFromCache(ctx context.Context, info *tenantInfo) 
 	info.ContactEmail = details.ContactEmail
 	info.ContactPhone = details.ContactPhone
 	info.Website = normalizeWebsite(details.Website)
+	// AppURL comes from auth-api tenant metadata["app_url"] — the per-tenant deployed app domain.
+	if details.Metadata != nil {
+		if v, ok := details.Metadata["app_url"].(string); ok && v != "" {
+			info.AppURL = normalizeWebsite(v)
+		}
+	}
 	info.LogoURL = branding.LogoURL
 	info.PrimaryColor = branding.PrimaryColor
 	info.SecondaryColor = branding.SecondaryColor

@@ -263,11 +263,46 @@ func (h *NotificationHandler) Enqueue(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Publish per-channel usage event for subscriptions-api limit tracking.
+	h.publishUsageEvent(r.Context(), tenant, req.Channel)
+
 	recordDeliveryLog(r.Context(), h.entClient, tenant, req.Template, req.Channel, req.To)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
 	json.NewEncoder(w).Encode(enqueueResponse{Status: "queued", RequestID: requestID})
+}
+
+// publishUsageEvent publishes a notifications.<channel>.sent event to NATS for subscriptions-api
+// usage tracking. Non-fatal — errors are logged and ignored.
+func (h *NotificationHandler) publishUsageEvent(ctx context.Context, tenant, channel string) {
+	if h.nats == nil {
+		return
+	}
+	subject := ""
+	switch channel {
+	case "email":
+		subject = "notifications.email.sent"
+	case "sms":
+		subject = "notifications.sms.sent"
+	case "push":
+		subject = "notifications.push.sent"
+	default:
+		return
+	}
+
+	payload, _ := json.Marshal(map[string]any{
+		"tenant_id": tenant,
+		"channel":   channel,
+	})
+	js, err := h.nats.JetStream()
+	if err != nil {
+		h.log.Warn("usage event: jetstream init failed", zap.Error(err))
+		return
+	}
+	if _, err := js.Publish(subject, payload); err != nil {
+		h.log.Warn("usage event: publish failed", zap.String("subject", subject), zap.Error(err))
+	}
 }
 
 // EnqueueMessage enqueues a notification message (used by template test-send and other callers).

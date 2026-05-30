@@ -48,20 +48,36 @@ func startAuthNotificationConsumer(ctx context.Context, nc *nats.Conn, cfg *conf
 			return
 		}
 
-		// Resolve tenant for branding
-		tenantWebsite := ""
+		// Resolve tenant for branding and per-tenant app URL
+		var tenantSlug string
+		tenantAppURL := ""
 		if evt.TenantID != "" {
 			if ti, err := tr.resolve(ctx, evt.TenantID); err == nil {
-				tenantWebsite = ti.Website
+				tenantAppURL = ti.AppURL // per-tenant deployed app URL (e.g. https://kuraweigh.kura.go.ke)
+				tenantSlug = ti.Slug
 			}
 		}
-		if tenantWebsite == "" {
-			tenantWebsite = "https://accounts.codevertexitsolutions.com"
+		if tenantSlug == "" {
+			tenantSlug = evt.TenantSlug
 		}
 
 		name := evt.FullName
 		if name == "" {
 			name = evt.Email
+		}
+
+		// Build getting_started_link: use AppURL+slug if available; renderMessage will also
+		// auto-set it, but setting it here avoids relying on that fallback.
+		gettingStartedLink := ""
+		if tenantAppURL != "" && tenantSlug != "" {
+			gettingStartedLink = tenantAppURL + "/" + tenantSlug
+		} else if tenantAppURL != "" {
+			gettingStartedLink = tenantAppURL
+		}
+
+		msgData := map[string]any{"name": name}
+		if gettingStartedLink != "" {
+			msgData["getting_started_link"] = gettingStartedLink
 		}
 
 		msg := messaging.Message{
@@ -71,10 +87,7 @@ func startAuthNotificationConsumer(ctx context.Context, nc *nats.Conn, cfg *conf
 			SenderScope: messaging.SenderScopePlatform,
 			Target:      messaging.TargetCustomer,
 			To:          []string{evt.Email},
-			Data: map[string]any{
-				"name":                 name,
-				"getting_started_link": fmt.Sprintf("%s/dashboard", tenantWebsite),
-			},
+			Data:        msgData,
 			Metadata: map[string]any{
 				"subject": "Welcome to the platform!",
 			},

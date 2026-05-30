@@ -321,6 +321,21 @@ func renderMessage(ctx context.Context, cfg *config.Config, tpl *templates.Loade
 			if t.SecondaryColor != "" {
 				data["brand_secondary_color"] = t.SecondaryColor
 			}
+			// Expose per-tenant app URL from caller data or resolved tenant metadata.
+			// Caller-provided app_url takes precedence (set by services like truload-backend).
+			if _, callerSet := data["app_url"]; !callerSet && t.AppURL != "" {
+				data["app_url"] = t.AppURL
+			}
+			// Auto-build getting_started_link if the caller didn't supply one.
+			if _, ok := data["getting_started_link"]; !ok {
+				appURL, _ := data["app_url"].(string)
+				if appURL == "" {
+					appURL = t.AppURL
+				}
+				if appURL != "" {
+					data["getting_started_link"] = appURL + "/" + t.Slug
+				}
+			}
 		} else {
 			logg.Warn("failed to load tenant branding", zap.String("tenant_id", msg.TenantID), zap.Error(err))
 		}
