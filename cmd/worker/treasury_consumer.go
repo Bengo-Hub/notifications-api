@@ -87,7 +87,7 @@ var treasuryMappings = map[string]treasuryNotificationMapping{
 			}
 		},
 	},
-	"treasury.refund.completed": {
+	"refund.completed": {
 		TemplateID:   "finance/refund_completed",
 		EmailSubject: "Your refund has been processed",
 		DataBuilder: func(payload map[string]any, tenantWebsite string) map[string]any {
