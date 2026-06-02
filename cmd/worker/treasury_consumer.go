@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -279,6 +280,14 @@ func startTreasuryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStream
 		if customerEmail == "" {
 			ti, err := tr.resolve(ctx, tenantID)
 			if err != nil {
+				// A non-existent / deleted tenant will never resolve, so Nak-looping the message
+				// poison-pills the consumer forever. Ack-drop on "not found"; only Nak (retry)
+				// genuinely transient failures.
+				if strings.Contains(err.Error(), "not found") {
+					logg.Warn("treasury event: tenant not found, dropping", zap.String("tenant_id", tenantID), zap.String("type", eventType))
+					_ = m.Ack()
+					return
+				}
 				logg.Error("treasury event: failed to resolve tenant", zap.String("tenant_id", tenantID), zap.Error(err))
 				_ = m.Nak()
 				return
