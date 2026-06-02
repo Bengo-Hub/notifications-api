@@ -27,6 +27,12 @@ type authUserEvent struct {
 	// When set, the notifications-api resolves the tenant's per-service URL from service_urls
 	// metadata instead of the generic app_url, so email links point to the right service.
 	ServiceID  string `json:"service_id,omitempty"`
+	// Admin-provisioned accounts (method="admin_provisioned"): the welcome email
+	// links to the SSO sign-in page rather than a generic getting-started link.
+	// The user signs in with a temporary password and must change it on first login.
+	Welcome            bool   `json:"welcome,omitempty"`
+	LoginURL           string `json:"login_url,omitempty"`
+	MustChangePassword bool   `json:"must_change_password,omitempty"`
 }
 
 // startAuthNotificationConsumer subscribes to auth.user.created events (plain NATS,
@@ -84,8 +90,20 @@ func startAuthNotificationConsumer(ctx context.Context, nc *nats.Conn, cfg *conf
 		if gettingStartedLink != "" {
 			msgData["getting_started_link"] = gettingStartedLink
 		}
+		// Admin-provisioned accounts: surface the SSO login link + first-login
+		// password-change notice so the template can render a "Sign In" CTA.
+		if evt.LoginURL != "" {
+			msgData["login_url"] = evt.LoginURL
+		}
+		if evt.MustChangePassword {
+			msgData["must_change_password"] = true
+		}
 
-		metadata := map[string]any{"subject": "Welcome to the platform!"}
+		subject := "Welcome to the platform!"
+		if evt.Method == "admin_provisioned" {
+			subject = "You've been added — set up your account"
+		}
+		metadata := map[string]any{"subject": subject}
 		if evt.ServiceID != "" {
 			metadata["service_id"] = evt.ServiceID
 		}

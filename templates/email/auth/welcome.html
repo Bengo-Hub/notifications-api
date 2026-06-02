@@ -1,8 +1,18 @@
 {{ define "content" }}
   <p>Welcome {{ .name }},</p>
   <p>We're excited to have you at {{ or .brand_name "our platform" }}.</p>
-  <p>
-    <a href="{{ .getting_started_link }}" style="background:{{ or .brand_primary_color "#0F766E" }};color:#ffffff !important;text-decoration:none;padding:10px 16px;border-radius:6px;display:inline-block;">Get Started</a>
-  </p>
+  {{ if .login_url }}
+    <p>An account has been created for you. Sign in with the temporary password your administrator shared with you.</p>
+    <p>
+      <a href="{{ .login_url }}" style="background:{{ or .brand_primary_color "#0F766E" }};color:#ffffff !important;text-decoration:none;padding:10px 16px;border-radius:6px;display:inline-block;">Sign In</a>
+    </p>
+    {{ if .must_change_password }}
+      <p style="color:#6b7280;">For your security, you'll be asked to set a new password the first time you sign in.</p>
+    {{ end }}
+  {{ else }}
+    <p>
+      <a href="{{ .getting_started_link }}" style="background:{{ or .brand_primary_color "#0F766E" }};color:#ffffff !important;text-decoration:none;padding:10px 16px;border-radius:6px;display:inline-block;">Get Started</a>
+    </p>
+  {{ end }}
   <p style="color:#6b7280;">Cheers,<br/>{{ or .brand_name .brand }}</p>
 {{ end }}
