@@ -164,7 +164,10 @@ func (p *SMTPProvider) SendEmail(ctx context.Context, from string, to []string, 
 	if err := c.Mail(envelopeFrom); err != nil {
 		return fmt.Errorf("smtp mail from: %w", err)
 	}
-	allRcpts := append(to, cc...)
+	// Build a fresh slice — append(to, cc...) can alias and mutate the caller's `to` backing array.
+	allRcpts := make([]string, 0, len(to)+len(cc))
+	allRcpts = append(allRcpts, to...)
+	allRcpts = append(allRcpts, cc...)
 	for _, rcpt := range allRcpts {
 		if err := c.Rcpt(rcpt); err != nil {
 			return fmt.Errorf("smtp rcpt to: %w", err)
