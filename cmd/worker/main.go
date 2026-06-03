@@ -30,6 +30,7 @@ import (
 	"github.com/bengobox/notifications-api/internal/platform/events"
 	"github.com/bengobox/notifications-api/internal/platform/templates"
 	"github.com/bengobox/notifications-api/internal/providers"
+	"github.com/bengobox/notifications-api/internal/providers/email"
 	"github.com/bengobox/notifications-api/internal/shared/logger"
 
 	"github.com/bengobox/notifications-api/internal/modules/billing"
@@ -421,8 +422,16 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, bil
 		if brandName, ok := msg.Data["brand_name"].(string); ok && brandName != "" {
 			fromOverride = brandName // Provider will wrap as "BrandName <configured-email>"
 		}
+		// Optional attachments (e.g. payslip PDFs the ERP sends on erp.email.requested).
+		var atts []email.Attachment
+		for _, a := range msg.Attachments {
+			if len(a.Content) == 0 {
+				continue
+			}
+			atts = append(atts, email.Attachment{Filename: a.Filename, ContentType: a.ContentType, Content: a.Content})
+		}
 		emailProv, _ := pm.GetEmailProvider(ctx, providerTenantID, preferred)
-		err := emailProv.SendEmail(ctx, fromOverride, msg.To, msg.Cc, subject, rendered, "")
+		err := emailProv.SendEmail(ctx, fromOverride, msg.To, msg.Cc, subject, rendered, "", atts)
 		if err != nil {
 			logg.Warn("tenant email delivery failed, trying platform fallback",
 				zap.String("tenant_id", msg.TenantID),
@@ -433,7 +442,7 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, bil
 			if providerTenantID != pm.PlatformID {
 				platformProv, pErr := pm.GetEmailProvider(ctx, pm.PlatformID, "")
 				if pErr == nil {
-					if fbErr := platformProv.SendEmail(ctx, fromOverride, msg.To, msg.Cc, subject, rendered, ""); fbErr == nil {
+					if fbErr := platformProv.SendEmail(ctx, fromOverride, msg.To, msg.Cc, subject, rendered, "", atts); fbErr == nil {
 						logg.Info("email sent via platform fallback",
 							zap.String("provider", platformProv.Name()),
 							zap.String("template", msg.TemplateID),

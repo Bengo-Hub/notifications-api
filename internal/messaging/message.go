@@ -28,9 +28,18 @@ type Message struct {
 	Cc             []string       `json:"cc,omitempty"`  // email CC recipients (email channel only)
 	Data           map[string]any `json:"data"`
 	Metadata       map[string]any `json:"metadata,omitempty"`
+	Attachments    []Attachment   `json:"attachments,omitempty"` // email channel only; optional
 	RequestID      string         `json:"requestId"`
 	IdempotencyKey string         `json:"idempotencyKey"`
 	QueuedAt       time.Time      `json:"queuedAt"`
+}
+
+// Attachment is an optional email file attachment carried on a Message. Content is raw
+// bytes (JSON-encoded as base64), so producers like the ERP can send base64 directly.
+type Attachment struct {
+	Filename    string `json:"filename"`
+	ContentType string `json:"contentType,omitempty"`
+	Content     []byte `json:"content"`
 }
 
 // EffectiveSenderScope returns the sender scope, defaulting to tenant if empty.

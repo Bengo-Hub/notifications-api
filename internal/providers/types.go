@@ -1,10 +1,15 @@
 package providers
 
-import "context"
+import (
+	"context"
 
-// EmailProvider sends email messages.
+	"github.com/bengobox/notifications-api/internal/providers/email"
+)
+
+// EmailProvider sends email messages. attachments is optional (nil/empty = none);
+// every provider accepts the same signature and includes attachments only when present.
 type EmailProvider interface {
-	SendEmail(ctx context.Context, from string, to []string, cc []string, subject string, htmlBody string, textBody string) error
+	SendEmail(ctx context.Context, from string, to []string, cc []string, subject string, htmlBody string, textBody string, attachments []email.Attachment) error
 	Name() string
 }
 

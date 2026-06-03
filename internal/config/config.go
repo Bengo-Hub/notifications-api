@@ -97,7 +97,7 @@ type ProviderConfig struct {
 	APNSCert               string `envconfig:"PROVIDERS_APNS_CERT"`
 	APNSKey                string `envconfig:"PROVIDERS_APNS_KEY"`
 	DefaultEmailSender     string `envconfig:"PROVIDERS_DEFAULT_EMAIL_SENDER" default:"Urban Cafe <hello@bengobox.com>"`
-	DefaultSMSSender       string `envconfig:"PROVIDERS_DEFAULT_SMS_SENDER" default:codevertex`
+	DefaultSMSSender       string `envconfig:"PROVIDERS_DEFAULT_SMS_SENDER" default:"codevertex"`
 	DefaultPushTopic       string `envconfig:"PROVIDERS_DEFAULT_PUSH_TOPIC" default:"general"`
 }
 

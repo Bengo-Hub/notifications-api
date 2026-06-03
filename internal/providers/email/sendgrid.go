@@ -3,6 +3,7 @@ package email
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -12,7 +13,7 @@ import (
 const sendGridEndpoint = "https://api.sendgrid.com/v3/mail/send"
 
 // SendWithSendGrid sends an email using the SendGrid v3 HTTP API.
-func SendWithSendGrid(ctx context.Context, apiKey, from string, to []string, cc []string, subject, htmlBody, textBody string) error {
+func SendWithSendGrid(ctx context.Context, apiKey, from string, to []string, cc []string, subject, htmlBody, textBody string, attachments []Attachment) error {
 	if apiKey == "" {
 		return fmt.Errorf("sendgrid api key not configured")
 	}
@@ -42,6 +43,21 @@ func SendWithSendGrid(ctx context.Context, apiKey, from string, to []string, cc 
 		From:             sgEmail{Email: from},
 		Subject:          subject,
 		Content:          content,
+	}
+	for _, att := range attachments {
+		if len(att.Content) == 0 {
+			continue
+		}
+		ct := att.ContentType
+		if ct == "" {
+			ct = "application/octet-stream"
+		}
+		payload.Attachments = append(payload.Attachments, sgAttachment{
+			Content:     base64.StdEncoding.EncodeToString(att.Content),
+			Filename:    att.Filename,
+			Type:        ct,
+			Disposition: "attachment",
+		})
 	}
 
 	body, err := json.Marshal(payload)
@@ -74,6 +90,14 @@ type sgPayload struct {
 	From             sgEmail             `json:"from"`
 	Subject          string              `json:"subject"`
 	Content          []sgContent         `json:"content"`
+	Attachments      []sgAttachment      `json:"attachments,omitempty"`
+}
+
+type sgAttachment struct {
+	Content     string `json:"content"` // base64-encoded
+	Filename    string `json:"filename"`
+	Type        string `json:"type,omitempty"`
+	Disposition string `json:"disposition,omitempty"`
 }
 
 type sgPersonalization struct {
