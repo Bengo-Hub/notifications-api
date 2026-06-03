@@ -48,6 +48,7 @@ func (s *Subscriber) Start(ctx context.Context) error {
 		"inventory": {"inventory.>"},
 		"pos":       {"pos.>"},
 		"treasury":  {"treasury.>"},
+		"erp":       {"erp.>"},
 	}
 	for stream, subjects := range streams {
 		if _, err := js.StreamInfo(stream); err != nil {
@@ -69,6 +70,8 @@ func (s *Subscriber) Start(ctx context.Context) error {
 		{"inventory.purchase_order.received", "notif-po-received", s.handlePOReceived},
 		{"pos.kds.waiter.called", "notif-kds-waiter-called", s.handleKDSWaiterCalled},
 		{"treasury.payroll.disbursed", "notif-payroll-disbursed", s.handlePayrollDisbursed},
+		{"erp.email.requested", "notif-erp-email-req", s.handleERPEmailRequested},
+		{"erp.notification.requested", "notif-erp-notif-req", s.handleERPNotificationRequested},
 	}
 
 	started := make([]*nats.Subscription, 0, len(subs))
