@@ -27,7 +27,9 @@ type inventoryEvent struct {
 type inventoryNotificationMapping struct {
 	TemplateID   string
 	EmailSubject string
-	DataBuilder  func(data map[string]interface{}, tenantWebsite string) map[string]interface{}
+	// ToBuyer routes the email to the customer (payload buyer_email) instead of the tenant admin.
+	ToBuyer     bool
+	DataBuilder func(data map[string]interface{}, tenantWebsite string) map[string]interface{}
 }
 
 var inventoryMappings = map[string]inventoryNotificationMapping{
@@ -57,6 +59,27 @@ var inventoryMappings = map[string]inventoryNotificationMapping{
 				"item_sku":  data["sku"],
 				"location":  data["warehouse_id"],
 				"item_link": fmt.Sprintf("%s/dashboard/inventory?sku=%s", tenantWebsite, data["sku"]),
+			}
+		},
+	},
+	// Event ticket issued — delivered to the buyer with their ticket code.
+	"inventory.ticket.issued": {
+		TemplateID:   "events/ticket_issued",
+		EmailSubject: "Your event ticket",
+		ToBuyer:      true,
+		DataBuilder: func(data map[string]interface{}, tenantWebsite string) map[string]interface{} {
+			buyer, _ := data["buyer_name"].(string)
+			if buyer == "" {
+				buyer = "there"
+			}
+			return map[string]interface{}{
+				"buyer_name":   buyer,
+				"code":         data["code"],
+				"tier_name":    data["tier_name"],
+				"quantity":     data["quantity"],
+				"currency":    data["currency"],
+				"total_price": data["total_price"],
+				"ticket_link": "",
 			}
 		},
 	},
@@ -92,8 +115,22 @@ func startInventoryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStrea
 			_ = m.Nak()
 			return
 		}
-		if ti.ContactEmail == "" {
-			logg.Warn("inventory event: tenant has no contact_email, skipping", zap.String("tenant_id", evt.TenantID))
+		// Recipient: customer-facing notifications (e.g. ticket issued) go to the buyer; the rest go
+		// to the tenant admin.
+		recipient := ti.ContactEmail
+		target := messaging.TargetStaff
+		if mapping.ToBuyer {
+			buyerEmail, _ := evt.Payload["buyer_email"].(string)
+			if buyerEmail == "" {
+				logg.Warn("inventory event: ticket has no buyer_email, skipping", zap.String("tenant_id", evt.TenantID))
+				_ = m.Ack()
+				return
+			}
+			recipient = buyerEmail
+			target = messaging.TargetCustomer
+		}
+		if recipient == "" {
+			logg.Warn("inventory event: no recipient, skipping", zap.String("tenant_id", evt.TenantID))
 			_ = m.Ack()
 			return
 		}
@@ -105,8 +142,8 @@ func startInventoryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStrea
 			Channel:     "email",
 			TemplateID:  mapping.TemplateID,
 			SenderScope: messaging.SenderScopeTenant,
-			Target:      messaging.TargetStaff,
-			To:          []string{ti.ContactEmail},
+			Target:      target,
+			To:          []string{recipient},
 			Data:        mapping.DataBuilder(evt.Payload, ti.Website),
 			Metadata: map[string]interface{}{
 				"subject": mapping.EmailSubject,

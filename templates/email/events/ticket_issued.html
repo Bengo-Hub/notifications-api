@@ -1,0 +1,14 @@
+{{ define "content" }}
+  <p>Hello {{ .buyer_name }},</p>
+  <p>Your event ticket is confirmed. 🎟️</p>
+  <p><strong>Ticket code:</strong> {{ .code }}</p>
+  {{ if .tier_name }}<p><strong>Ticket type:</strong> {{ .tier_name }}</p>{{ end }}
+  <p><strong>Quantity:</strong> {{ .quantity }}</p>
+  <p><strong>Total paid:</strong> {{ .currency }} {{ .total_price }}</p>
+  <p>Present this code at the entrance for check-in. Keep it safe — it is your entry pass.</p>
+  {{ if .ticket_link }}
+  <p>
+    <a class="button" href="{{ .ticket_link }}">View your ticket</a>
+  </p>
+  {{ end }}
+{{ end }}
