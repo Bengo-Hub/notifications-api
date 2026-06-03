@@ -1,6 +1,6 @@
 module github.com/bengobox/notifications-api
 
-go 1.24.11
+go 1.26.0
 
 // Map module path to correct GitHub repository
 replace github.com/Bengo-Hub/shared-auth-client => github.com/Bengo-Hub/auth-client v0.6.1
