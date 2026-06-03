@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -137,6 +138,17 @@ func startInventoryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStrea
 
 		sku, _ := evt.Payload["sku"].(string)
 
+		data := mapping.DataBuilder(evt.Payload, ti.Website)
+		// For buyer-facing tickets, link to the public branded ticket PDF (with QR) on inventory-api.
+		if mapping.ToBuyer {
+			if code, _ := evt.Payload["code"].(string); code != "" && ti.Slug != "" {
+				invBase := ti.ServiceURL("inventory_api", "NOTIFICATIONS_INVENTORY_API_URL", "")
+				if invBase != "" {
+					data["ticket_link"] = fmt.Sprintf("%s/api/v1/%s/inventory/tickets/%s/pdf", strings.TrimRight(invBase, "/"), ti.Slug, code)
+				}
+			}
+		}
+
 		msg := messaging.Message{
 			TenantID:    evt.TenantID,
 			Channel:     "email",
@@ -144,7 +156,7 @@ func startInventoryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStrea
 			SenderScope: messaging.SenderScopeTenant,
 			Target:      target,
 			To:          []string{recipient},
-			Data:        mapping.DataBuilder(evt.Payload, ti.Website),
+			Data:        data,
 			Metadata: map[string]interface{}{
 				"subject": mapping.EmailSubject,
 			},
