@@ -2,6 +2,7 @@ package events
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -94,12 +95,12 @@ func (s *Subscriber) publishMessage(msg messaging.Message) error {
 // template (the pipeline always renders through a template; there is no raw-body
 // passthrough).
 //
-// Honest limitations of the current pipeline (none of these fields are carried by
-// messaging.Message or the EmailProvider interface, so they are logged and dropped):
-//   - attachments (inline base64) — EmailProvider.SendEmail takes no attachments
-//   - bcc, reply_to, from_email   — SendEmail signature is (from, to, cc, subject, html, text)
+// attachments ARE supported: base64 content is decoded and carried through
+// messaging.Message.Attachments to every email provider (SMTP/Brevo/SendGrid).
+// Remaining limitations (logged, not carried by messaging.Message / the provider API):
+//   - bcc, reply_to, from_email — SendEmail signature is (from, to, cc, subject, html, text, attachments)
 //     and `from` is only used as a display-name override, not a real From address
-//   - html_message                — the generic template HTML-escapes .message, so a
+//   - html_message              — the generic template HTML-escapes .message, so a
 //     pre-rendered HTML body cannot be injected safely; the plain message is sent
 //
 // cc IS supported (messaging.Message.Cc). Plan-based email rate limiting is enforced
@@ -139,17 +140,21 @@ func (s *Subscriber) handleERPEmailRequested(msg *nats.Msg) {
 		subject = "Notification"
 	}
 
-	// Be transparent about anything the pipeline cannot carry for this email.
-	if len(p.Attachments) > 0 {
-		names := make([]string, 0, len(p.Attachments))
-		for _, a := range p.Attachments {
-			names = append(names, a.Filename)
+	// Decode optional attachments (base64) — carried through to the email provider.
+	var atts []messaging.Attachment
+	for _, a := range p.Attachments {
+		if a.Filename == "" || a.Content == "" {
+			continue
 		}
-		s.log.Warn("erp.email.requested: attachments dropped — send pipeline does not support inline attachments",
-			zap.String("tenant_id", env.TenantID),
-			zap.Strings("attachments", names),
-		)
+		raw, derr := base64.StdEncoding.DecodeString(a.Content)
+		if derr != nil {
+			s.log.Warn("erp.email.requested: skipping attachment with invalid base64",
+				zap.String("tenant_id", env.TenantID), zap.String("filename", a.Filename))
+			continue
+		}
+		atts = append(atts, messaging.Attachment{Filename: a.Filename, ContentType: a.Mimetype, Content: raw})
 	}
+
 	if p.HTMLMessage != nil && *p.HTMLMessage != "" {
 		s.log.Warn("erp.email.requested: html_message ignored — pipeline renders plain message through generic template",
 			zap.String("tenant_id", env.TenantID))
@@ -169,6 +174,7 @@ func (s *Subscriber) handleERPEmailRequested(msg *nats.Msg) {
 		Target:      messaging.TargetStaff,
 		To:          to,
 		Cc:          cc,
+		Attachments: atts,
 		Data: map[string]any{
 			"title":   subject,
 			"message": p.Message,

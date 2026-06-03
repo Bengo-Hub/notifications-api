@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -39,12 +40,38 @@ type NotificationHandler struct {
 
 type CreateMessageRequest struct {
 	Channel  string         `json:"channel" binding:"required" example:"email"`
-	Tenant   string         `json:"tenant" binding:"required" example:codevertex`
+	Tenant   string         `json:"tenant" binding:"required" example:"codevertex"`
 	Template string         `json:"template" binding:"required" example:"invoice_due"`
 	Data     map[string]any `json:"data" binding:"required" swaggertype:"object" example:"{\"name\":\"Jane\",\"invoice_number\":\"INV-1001\",\"amount\":\"KES 1,200\",\"due_date\":\"2025-11-30\",\"payment_link\":\"https://pay.example.com/invoices/INV-1001\",\"brand_name\":\"BengoBox\"}"`
 	To       []string       `json:"to" binding:"required,min=1" example:"customer@example.com"`
 	Cc       []string       `json:"cc,omitempty" example:"manager@example.com"`
 	Metadata map[string]any `json:"metadata" swaggertype:"object" example:"{\"subject\":\"Invoice INV-1001 is due\",\"provider\":\"smtp\"}"`
+	// Optional email attachments (base64-encoded content). Ignored for non-email channels.
+	Attachments []MessageAttachmentRequest `json:"attachments,omitempty"`
+}
+
+// MessageAttachmentRequest is an optional base64 file attachment on a REST send request.
+type MessageAttachmentRequest struct {
+	Filename    string `json:"filename"`
+	ContentType string `json:"contentType,omitempty"`
+	Content     string `json:"content"` // base64-encoded
+}
+
+// decodeAttachments converts base64 request attachments to messaging.Attachment,
+// skipping any with empty/invalid content.
+func decodeAttachments(in []MessageAttachmentRequest) []messaging.Attachment {
+	var out []messaging.Attachment
+	for _, a := range in {
+		if a.Filename == "" || a.Content == "" {
+			continue
+		}
+		raw, err := base64.StdEncoding.DecodeString(a.Content)
+		if err != nil {
+			continue
+		}
+		out = append(out, messaging.Attachment{Filename: a.Filename, ContentType: a.ContentType, Content: raw})
+	}
+	return out
 }
 
 func NewNotificationHandler(log *zap.Logger, natsConn *nats.Conn, cache *redis.Client, eventsCfg config.EventsConfig, entClient *ent.Client, upgradeURL string, billingSvc *billing.Service, whatsappSubSvc *billing.WhatsAppSubscriptionService) *NotificationHandler {
@@ -262,6 +289,7 @@ func (h *NotificationHandler) Enqueue(w http.ResponseWriter, r *http.Request) {
 		To:             req.To,
 		Cc:             req.Cc,
 		Metadata:       req.Metadata,
+		Attachments:    decodeAttachments(req.Attachments),
 		RequestID:      requestID,
 		IdempotencyKey: idemp,
 		QueuedAt:       time.Now(),

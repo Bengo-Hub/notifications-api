@@ -3,6 +3,7 @@ package email
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -29,7 +30,7 @@ func NewBrevoProvider(cfg BrevoConfig) *BrevoProvider {
 
 func (p *BrevoProvider) Name() string { return "brevo" }
 
-func (p *BrevoProvider) SendEmail(ctx context.Context, from string, to []string, cc []string, subject string, htmlBody string, textBody string) error {
+func (p *BrevoProvider) SendEmail(ctx context.Context, from string, to []string, cc []string, subject string, htmlBody string, textBody string, attachments []Attachment) error {
 	if p.cfg.APIKey == "" {
 		return fmt.Errorf("brevo: api key not configured")
 	}
@@ -68,6 +69,15 @@ func (p *BrevoProvider) SendEmail(ctx context.Context, from string, to []string,
 		payload.TextContent = textBody
 		payload.HTMLContent = ""
 	}
+	for _, att := range attachments {
+		if len(att.Content) == 0 {
+			continue
+		}
+		payload.Attachment = append(payload.Attachment, brevoAttachment{
+			Name:    att.Filename,
+			Content: base64.StdEncoding.EncodeToString(att.Content),
+		})
+	}
 
 	body, err := json.Marshal(payload)
 	if err != nil {
@@ -96,12 +106,18 @@ func (p *BrevoProvider) SendEmail(ctx context.Context, from string, to []string,
 }
 
 type brevoPayload struct {
-	Sender      brevoSender      `json:"sender"`
-	To          []brevoRecipient `json:"to"`
-	Cc          []brevoRecipient `json:"cc,omitempty"`
-	Subject     string           `json:"subject"`
-	HTMLContent string           `json:"htmlContent,omitempty"`
-	TextContent string           `json:"textContent,omitempty"`
+	Sender      brevoSender       `json:"sender"`
+	To          []brevoRecipient  `json:"to"`
+	Cc          []brevoRecipient  `json:"cc,omitempty"`
+	Subject     string            `json:"subject"`
+	HTMLContent string            `json:"htmlContent,omitempty"`
+	TextContent string            `json:"textContent,omitempty"`
+	Attachment  []brevoAttachment `json:"attachment,omitempty"`
+}
+
+type brevoAttachment struct {
+	Content string `json:"content"` // base64-encoded file content
+	Name    string `json:"name"`
 }
 
 type brevoSender struct {

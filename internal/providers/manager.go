@@ -204,7 +204,7 @@ func (m *Manager) TestConnection(ctx context.Context, channel, providerName, to 
 		if err != nil {
 			return err
 		}
-		return prov.SendEmail(ctx, "", []string{to}, nil, "Test connection", "<p>Test notification from Notifications API.</p>", "Test notification from Notifications API.")
+		return prov.SendEmail(ctx, "", []string{to}, nil, "Test connection", "<p>Test notification from Notifications API.</p>", "Test notification from Notifications API.", nil)
 	case "sms":
 		prov, err := m.GetSMSProvider(ctx, m.PlatformID, providerName)
 		if err != nil {
@@ -271,11 +271,11 @@ type sendGridAdapter struct {
 
 func (s *sendGridAdapter) Name() string { return "sendgrid" }
 
-func (s *sendGridAdapter) SendEmail(ctx context.Context, from string, to []string, cc []string, subject string, htmlBody string, textBody string) error {
+func (s *sendGridAdapter) SendEmail(ctx context.Context, from string, to []string, cc []string, subject string, htmlBody string, textBody string, attachments []email.Attachment) error {
 	if from == "" {
 		from = s.from
 	}
-	return email.SendWithSendGrid(ctx, s.apiKey, from, to, cc, subject, htmlBody, textBody)
+	return email.SendWithSendGrid(ctx, s.apiKey, from, to, cc, subject, htmlBody, textBody, attachments)
 }
 
 // twilioAdapter bridges to our existing stub (or future real impl)

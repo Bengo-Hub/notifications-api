@@ -3,11 +3,31 @@ package email
 import (
 	"context"
 	"crypto/tls"
+	"encoding/base64"
 	"fmt"
 	"net"
 	"net/smtp"
+	"strconv"
 	"strings"
 )
+
+// chunk76 wraps a base64 string at 76 characters per line (RFC 2045).
+func chunk76(s string) string {
+	const n = 76
+	if len(s) <= n {
+		return s
+	}
+	var b strings.Builder
+	for i := 0; i < len(s); i += n {
+		end := i + n
+		if end > len(s) {
+			end = len(s)
+		}
+		b.WriteString(s[i:end])
+		b.WriteString("\r\n")
+	}
+	return strings.TrimRight(b.String(), "\r\n")
+}
 
 // loginAuth implements smtp.Auth for the AUTH LOGIN mechanism, required by
 // Microsoft 365 / Outlook which does not accept AUTH PLAIN.
@@ -61,7 +81,7 @@ func extractEmail(s string) string {
 	return strings.TrimSpace(s)
 }
 
-func (p *SMTPProvider) SendEmail(ctx context.Context, from string, to []string, cc []string, subject string, htmlBody string, textBody string) error {
+func (p *SMTPProvider) SendEmail(ctx context.Context, from string, to []string, cc []string, subject string, htmlBody string, textBody string, attachments []Attachment) error {
 	if from == "" {
 		from = p.cfg.From
 	} else if !strings.Contains(from, "@") && p.cfg.From != "" {
@@ -71,7 +91,7 @@ func (p *SMTPProvider) SendEmail(ctx context.Context, from string, to []string, 
 	if p.cfg.Host == "" || p.cfg.Port == 0 {
 		return fmt.Errorf("smtp not configured")
 	}
-	addr := fmt.Sprintf("%s:%d", p.cfg.Host, p.cfg.Port)
+	addr := net.JoinHostPort(p.cfg.Host, strconv.Itoa(p.cfg.Port))
 
 	// SMTP envelope requires bare email; headers can have display name
 	envelopeFrom := extractEmail(from)
@@ -94,14 +114,42 @@ func (p *SMTPProvider) SendEmail(ctx context.Context, from string, to []string, 
 	}
 	b.WriteString("Subject: " + subject + "\r\n")
 	b.WriteString("MIME-Version: 1.0\r\n")
+
+	// Build the body MIME part (with its own Content-Type) so it can be nested inside a
+	// multipart/mixed envelope when attachments are present.
+	var body strings.Builder
 	if htmlBody != "" && textBody != "" {
-		b.WriteString("Content-Type: multipart/alternative; boundary=BOUNDARY\r\n\r\n")
-		b.WriteString("--BOUNDARY\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n" + textBody + "\r\n")
-		b.WriteString("--BOUNDARY\r\nContent-Type: text/html; charset=utf-8\r\n\r\n" + htmlBody + "\r\n--BOUNDARY--")
+		body.WriteString("Content-Type: multipart/alternative; boundary=ALTBND\r\n\r\n")
+		body.WriteString("--ALTBND\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n" + textBody + "\r\n")
+		body.WriteString("--ALTBND\r\nContent-Type: text/html; charset=utf-8\r\n\r\n" + htmlBody + "\r\n--ALTBND--")
 	} else if htmlBody != "" {
-		b.WriteString("Content-Type: text/html; charset=utf-8\r\n\r\n" + htmlBody)
+		body.WriteString("Content-Type: text/html; charset=utf-8\r\n\r\n" + htmlBody)
 	} else {
-		b.WriteString("Content-Type: text/plain; charset=utf-8\r\n\r\n" + textBody)
+		body.WriteString("Content-Type: text/plain; charset=utf-8\r\n\r\n" + textBody)
+	}
+
+	if len(attachments) == 0 {
+		b.WriteString(body.String())
+	} else {
+		// Wrap body + files in multipart/mixed (attachments are base64, 76-col wrapped).
+		b.WriteString("Content-Type: multipart/mixed; boundary=MIXEDBND\r\n\r\n")
+		b.WriteString("--MIXEDBND\r\n" + body.String() + "\r\n")
+		for _, att := range attachments {
+			if len(att.Content) == 0 {
+				continue
+			}
+			ct := att.ContentType
+			if ct == "" {
+				ct = "application/octet-stream"
+			}
+			fn := strings.ReplaceAll(att.Filename, "\"", "")
+			b.WriteString("--MIXEDBND\r\n")
+			b.WriteString("Content-Type: " + ct + "; name=\"" + fn + "\"\r\n")
+			b.WriteString("Content-Disposition: attachment; filename=\"" + fn + "\"\r\n")
+			b.WriteString("Content-Transfer-Encoding: base64\r\n\r\n")
+			b.WriteString(chunk76(base64.StdEncoding.EncodeToString(att.Content)) + "\r\n")
+		}
+		b.WriteString("--MIXEDBND--")
 	}
 
 	select {
