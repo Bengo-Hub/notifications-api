@@ -131,6 +131,16 @@ func TenantIDLTE(v uuid.UUID) predicate.NotificationRole {
 	return predicate.NotificationRole(sql.FieldLTE(FieldTenantID, v))
 }
 
+// TenantIDIsNil applies the IsNil predicate on the "tenant_id" field.
+func TenantIDIsNil() predicate.NotificationRole {
+	return predicate.NotificationRole(sql.FieldIsNull(FieldTenantID))
+}
+
+// TenantIDNotNil applies the NotNil predicate on the "tenant_id" field.
+func TenantIDNotNil() predicate.NotificationRole {
+	return predicate.NotificationRole(sql.FieldNotNull(FieldTenantID))
+}
+
 // RoleCodeEQ applies the EQ predicate on the "role_code" field.
 func RoleCodeEQ(v string) predicate.NotificationRole {
 	return predicate.NotificationRole(sql.FieldEQ(FieldRoleCode, v))

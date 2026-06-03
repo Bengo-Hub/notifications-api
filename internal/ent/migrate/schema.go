@@ -158,7 +158,7 @@ var (
 	// NotificationRolesColumns holds the columns for the "notification_roles" table.
 	NotificationRolesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "tenant_id", Type: field.TypeUUID},
+		{Name: "tenant_id", Type: field.TypeUUID, Nullable: true},
 		{Name: "role_code", Type: field.TypeString},
 		{Name: "name", Type: field.TypeString},
 		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
@@ -181,6 +181,11 @@ var (
 				Name:    "notificationrole_tenant_id_role_code",
 				Unique:  true,
 				Columns: []*schema.Column{NotificationRolesColumns[1], NotificationRolesColumns[2]},
+			},
+			{
+				Name:    "notificationrole_role_code",
+				Unique:  false,
+				Columns: []*schema.Column{NotificationRolesColumns[2]},
 			},
 			{
 				Name:    "notificationrole_is_system_role",

@@ -33,6 +33,14 @@ func (_c *NotificationRoleCreate) SetTenantID(v uuid.UUID) *NotificationRoleCrea
 	return _c
 }
 
+// SetNillableTenantID sets the "tenant_id" field if the given value is not nil.
+func (_c *NotificationRoleCreate) SetNillableTenantID(v *uuid.UUID) *NotificationRoleCreate {
+	if v != nil {
+		_c.SetTenantID(*v)
+	}
+	return _c
+}
+
 // SetRoleCode sets the "role_code" field.
 func (_c *NotificationRoleCreate) SetRoleCode(v string) *NotificationRoleCreate {
 	_c.mutation.SetRoleCode(v)
@@ -215,9 +223,6 @@ func (_c *NotificationRoleCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *NotificationRoleCreate) check() error {
-	if _, ok := _c.mutation.TenantID(); !ok {
-		return &ValidationError{Name: "tenant_id", err: errors.New(`ent: missing required field "NotificationRole.tenant_id"`)}
-	}
 	if _, ok := _c.mutation.RoleCode(); !ok {
 		return &ValidationError{Name: "role_code", err: errors.New(`ent: missing required field "NotificationRole.role_code"`)}
 	}
@@ -281,7 +286,7 @@ func (_c *NotificationRoleCreate) createSpec() (*NotificationRole, *sqlgraph.Cre
 	}
 	if value, ok := _c.mutation.TenantID(); ok {
 		_spec.SetField(notificationrole.FieldTenantID, field.TypeUUID, value)
-		_node.TenantID = value
+		_node.TenantID = &value
 	}
 	if value, ok := _c.mutation.RoleCode(); ok {
 		_spec.SetField(notificationrole.FieldRoleCode, field.TypeString, value)
@@ -419,6 +424,12 @@ func (u *NotificationRoleUpsert) UpdateTenantID() *NotificationRoleUpsert {
 	return u
 }
 
+// ClearTenantID clears the value of the "tenant_id" field.
+func (u *NotificationRoleUpsert) ClearTenantID() *NotificationRoleUpsert {
+	u.SetNull(notificationrole.FieldTenantID)
+	return u
+}
+
 // SetRoleCode sets the "role_code" field.
 func (u *NotificationRoleUpsert) SetRoleCode(v string) *NotificationRoleUpsert {
 	u.Set(notificationrole.FieldRoleCode, v)
@@ -547,6 +558,13 @@ func (u *NotificationRoleUpsertOne) SetTenantID(v uuid.UUID) *NotificationRoleUp
 func (u *NotificationRoleUpsertOne) UpdateTenantID() *NotificationRoleUpsertOne {
 	return u.Update(func(s *NotificationRoleUpsert) {
 		s.UpdateTenantID()
+	})
+}
+
+// ClearTenantID clears the value of the "tenant_id" field.
+func (u *NotificationRoleUpsertOne) ClearTenantID() *NotificationRoleUpsertOne {
+	return u.Update(func(s *NotificationRoleUpsert) {
+		s.ClearTenantID()
 	})
 }
 
@@ -856,6 +874,13 @@ func (u *NotificationRoleUpsertBulk) SetTenantID(v uuid.UUID) *NotificationRoleU
 func (u *NotificationRoleUpsertBulk) UpdateTenantID() *NotificationRoleUpsertBulk {
 	return u.Update(func(s *NotificationRoleUpsert) {
 		s.UpdateTenantID()
+	})
+}
+
+// ClearTenantID clears the value of the "tenant_id" field.
+func (u *NotificationRoleUpsertBulk) ClearTenantID() *NotificationRoleUpsertBulk {
+	return u.Update(func(s *NotificationRoleUpsert) {
+		s.ClearTenantID()
 	})
 }
 

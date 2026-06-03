@@ -78,9 +78,6 @@ func main() {
 		fmt.Printf("  synced tenant: %s (%s)\n", slug, id)
 
 		seedTenantDefaults(ctx, client, id.String(), slug)
-
-		// Seed RBAC roles for each tenant
-		seedNotificationRoles(ctx, client, id)
 	}
 
 	// ── Phase 3: Identity — roles, permissions, role-permission mappings ─
@@ -89,8 +86,9 @@ func main() {
 	seedRoles(ctx, client)
 	seedRolePermissions(ctx, client)
 
-	// ── Phase 4: New RBAC — notification permissions & role-permission mappings ─
+	// ── Phase 4: New RBAC — notification permissions, global roles & role-permission mappings ─
 	seedNotificationPermissions(ctx, client)
+	seedNotificationRoles(ctx, client) // global roles, shared platform-wide
 	seedNotificationRolePermissions(ctx, client)
 
 	// ── Phase 5: Rate limit configs ─────────────────────────────────────
@@ -457,9 +455,17 @@ func notifRoleUUID(tenantID uuid.UUID, roleCode string) uuid.UUID {
 	return uuid.UUID(hash[:16])
 }
 
-// seedNotificationRoles creates the new RBAC notification roles for a tenant.
-func seedNotificationRoles(ctx context.Context, client *ent.Client, tenantID uuid.UUID) {
-	fmt.Printf("  seeding notification roles for tenant %s...\n", tenantID)
+// globalNotifRoleUUID returns the deterministic ID for a shared, platform-wide (global) notification role.
+func globalNotifRoleUUID(roleCode string) uuid.UUID {
+	hash := sha256.Sum256([]byte("notif_role:global:" + roleCode))
+	return uuid.UUID(hash[:16])
+}
+
+// seedNotificationRoles creates the platform-wide (global, tenant_id NULL) RBAC notification roles,
+// shared across all tenants. Permissions are reconciled by seedNotificationRolePermissions, which
+// iterates every NotificationRole (global or tenant) so none is left under-permissioned.
+func seedNotificationRoles(ctx context.Context, client *ent.Client) {
+	fmt.Println("  seeding global notification roles (shared platform-wide)...")
 
 	type roleDef struct {
 		code        string
@@ -474,10 +480,10 @@ func seedNotificationRoles(ctx context.Context, client *ent.Client, tenantID uui
 	}
 
 	for _, r := range roles {
-		id := notifRoleUUID(tenantID, r.code)
+		id := globalNotifRoleUUID(r.code)
 		existing, _ := client.NotificationRole.Query().
 			Where(
-				notificationrole.TenantID(tenantID),
+				notificationrole.TenantIDIsNil(),
 				notificationrole.RoleCode(r.code),
 			).Only(ctx)
 
@@ -487,20 +493,20 @@ func seedNotificationRoles(ctx context.Context, client *ent.Client, tenantID uui
 				SetDescription(r.description).
 				SetIsSystemRole(true).
 				Save(ctx)
-			fmt.Printf("    notification role (updated): %s\n", r.code)
+			fmt.Printf("    global notification role (updated): %s\n", r.code)
 			continue
 		}
 
+		// Do NOT set tenant_id — NULL marks this as a global/system role shared platform-wide.
 		err := client.NotificationRole.Create().
 			SetID(id).
-			SetTenantID(tenantID).
 			SetRoleCode(r.code).
 			SetName(r.name).
 			SetDescription(r.description).
 			SetIsSystemRole(true).
 			Exec(ctx)
 		if err == nil {
-			fmt.Printf("    notification role: %s\n", r.code)
+			fmt.Printf("    global notification role: %s\n", r.code)
 		} else {
 			fmt.Printf("    ! notification role %s: %v\n", r.code, err)
 		}

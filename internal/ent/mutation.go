@@ -3524,7 +3524,7 @@ func (m *NotificationRoleMutation) TenantID() (r uuid.UUID, exists bool) {
 // OldTenantID returns the old "tenant_id" field's value of the NotificationRole entity.
 // If the NotificationRole object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *NotificationRoleMutation) OldTenantID(ctx context.Context) (v uuid.UUID, err error) {
+func (m *NotificationRoleMutation) OldTenantID(ctx context.Context) (v *uuid.UUID, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldTenantID is only allowed on UpdateOne operations")
 	}
@@ -3538,9 +3538,22 @@ func (m *NotificationRoleMutation) OldTenantID(ctx context.Context) (v uuid.UUID
 	return oldValue.TenantID, nil
 }
 
+// ClearTenantID clears the value of the "tenant_id" field.
+func (m *NotificationRoleMutation) ClearTenantID() {
+	m.tenant_id = nil
+	m.clearedFields[notificationrole.FieldTenantID] = struct{}{}
+}
+
+// TenantIDCleared returns if the "tenant_id" field was cleared in this mutation.
+func (m *NotificationRoleMutation) TenantIDCleared() bool {
+	_, ok := m.clearedFields[notificationrole.FieldTenantID]
+	return ok
+}
+
 // ResetTenantID resets all changes to the "tenant_id" field.
 func (m *NotificationRoleMutation) ResetTenantID() {
 	m.tenant_id = nil
+	delete(m.clearedFields, notificationrole.FieldTenantID)
 }
 
 // SetRoleCode sets the "role_code" field.
@@ -4123,6 +4136,9 @@ func (m *NotificationRoleMutation) AddField(name string, value ent.Value) error 
 // mutation.
 func (m *NotificationRoleMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(notificationrole.FieldTenantID) {
+		fields = append(fields, notificationrole.FieldTenantID)
+	}
 	if m.FieldCleared(notificationrole.FieldDescription) {
 		fields = append(fields, notificationrole.FieldDescription)
 	}
@@ -4140,6 +4156,9 @@ func (m *NotificationRoleMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *NotificationRoleMutation) ClearField(name string) error {
 	switch name {
+	case notificationrole.FieldTenantID:
+		m.ClearTenantID()
+		return nil
 	case notificationrole.FieldDescription:
 		m.ClearDescription()
 		return nil

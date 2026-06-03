@@ -47,6 +47,12 @@ func (_u *NotificationRoleUpdate) SetNillableTenantID(v *uuid.UUID) *Notificatio
 	return _u
 }
 
+// ClearTenantID clears the value of the "tenant_id" field.
+func (_u *NotificationRoleUpdate) ClearTenantID() *NotificationRoleUpdate {
+	_u.mutation.ClearTenantID()
+	return _u
+}
+
 // SetRoleCode sets the "role_code" field.
 func (_u *NotificationRoleUpdate) SetRoleCode(v string) *NotificationRoleUpdate {
 	_u.mutation.SetRoleCode(v)
@@ -300,6 +306,9 @@ func (_u *NotificationRoleUpdate) sqlSave(ctx context.Context) (_node int, err e
 	if value, ok := _u.mutation.TenantID(); ok {
 		_spec.SetField(notificationrole.FieldTenantID, field.TypeUUID, value)
 	}
+	if _u.mutation.TenantIDCleared() {
+		_spec.ClearField(notificationrole.FieldTenantID, field.TypeUUID)
+	}
 	if value, ok := _u.mutation.RoleCode(); ok {
 		_spec.SetField(notificationrole.FieldRoleCode, field.TypeString, value)
 	}
@@ -486,6 +495,12 @@ func (_u *NotificationRoleUpdateOne) SetNillableTenantID(v *uuid.UUID) *Notifica
 	if v != nil {
 		_u.SetTenantID(*v)
 	}
+	return _u
+}
+
+// ClearTenantID clears the value of the "tenant_id" field.
+func (_u *NotificationRoleUpdateOne) ClearTenantID() *NotificationRoleUpdateOne {
+	_u.mutation.ClearTenantID()
 	return _u
 }
 
@@ -771,6 +786,9 @@ func (_u *NotificationRoleUpdateOne) sqlSave(ctx context.Context) (_node *Notifi
 	}
 	if value, ok := _u.mutation.TenantID(); ok {
 		_spec.SetField(notificationrole.FieldTenantID, field.TypeUUID, value)
+	}
+	if _u.mutation.TenantIDCleared() {
+		_spec.ClearField(notificationrole.FieldTenantID, field.TypeUUID)
 	}
 	if value, ok := _u.mutation.RoleCode(); ok {
 		_spec.SetField(notificationrole.FieldRoleCode, field.TypeString, value)

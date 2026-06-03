@@ -9,7 +9,7 @@ import (
 // NotificationRole represents a notification service role.
 type NotificationRole struct {
 	ID           uuid.UUID
-	TenantID     uuid.UUID
+	TenantID     *uuid.UUID // nil = global/system role shared platform-wide
 	RoleCode     string
 	Name         string
 	Description  *string
