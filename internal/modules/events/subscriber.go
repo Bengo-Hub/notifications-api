@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -68,6 +70,7 @@ func (s *Subscriber) Start(ctx context.Context) error {
 	subs := []sub{
 		{"inventory.stock.low", "notif-inventory-low-stock", s.handleLowStock},
 		{"inventory.purchase_order.received", "notif-po-received", s.handlePOReceived},
+		{"inventory.ticket.issued", "notif-ticket-issued", s.handleTicketIssued},
 		{"pos.kds.waiter.called", "notif-kds-waiter-called", s.handleKDSWaiterCalled},
 		{"treasury.payroll.disbursed", "notif-payroll-disbursed", s.handlePayrollDisbursed},
 		{"erp.email.requested", "notif-erp-email-req", s.handleERPEmailRequested},
@@ -188,6 +191,57 @@ func (s *Subscriber) handlePOReceived(msg *nats.Msg) {
 		})
 	}
 	s.log.Info("po_received notifications dispatched", zap.String("po_number", p.PONumber))
+	_ = msg.Ack()
+}
+
+// handleTicketIssued emails the buyer their event ticket (code + branded PDF link with QR) when
+// inventory issues a ticket on a paid order. tenant_id is on the envelope; ticket fields are in the
+// payload (see inventory tickets.ticketPayload).
+func (s *Subscriber) handleTicketIssued(msg *nats.Msg) {
+	var envelope struct {
+		TenantID string `json:"tenant_id"`
+		Payload  struct {
+			BuyerEmail string  `json:"buyer_email"`
+			BuyerName  string  `json:"buyer_name"`
+			Code       string  `json:"code"`
+			TierName   string  `json:"tier_name"`
+			Quantity   int     `json:"quantity"`
+			TotalPrice float64 `json:"total_price"`
+			Currency   string  `json:"currency"`
+		} `json:"payload"`
+	}
+	if err := json.Unmarshal(msg.Data, &envelope); err != nil {
+		s.log.Warn("ticket_issued: unmarshal failed", zap.Error(err))
+		_ = msg.Ack() // malformed — don't redeliver
+		return
+	}
+	p := envelope.Payload
+	if envelope.TenantID == "" || p.BuyerEmail == "" || p.Code == "" {
+		// No recipient (e.g. issued before the buyer-contact propagation fix) — nothing to send.
+		s.log.Info("ticket_issued: skipping (missing tenant/buyer_email/code)", zap.String("code", p.Code))
+		_ = msg.Ack()
+		return
+	}
+	invBase := os.Getenv("INVENTORY_API_URL")
+	if invBase == "" {
+		invBase = "https://inventoryapi.codevertexitsolutions.com"
+	}
+	ticketLink := fmt.Sprintf("%s/api/v1/%s/inventory/tickets/%s/pdf", strings.TrimRight(invBase, "/"), envelope.TenantID, p.Code)
+	buyerName := p.BuyerName
+	if buyerName == "" {
+		buyerName = "there"
+	}
+	s.publish(envelope.TenantID, "email", "events/ticket_issued", messaging.TargetCustomer, []string{p.BuyerEmail}, map[string]any{
+		"buyer_name":  buyerName,
+		"code":        p.Code,
+		"tier_name":   p.TierName,
+		"quantity":    p.Quantity,
+		"total_price": p.TotalPrice,
+		"currency":    p.Currency,
+		"ticket_link": ticketLink,
+	})
+	s.log.Info("ticket_issued notification dispatched",
+		zap.String("tenant_id", envelope.TenantID), zap.String("code", p.Code), zap.String("to", p.BuyerEmail))
 	_ = msg.Ack()
 }
 
