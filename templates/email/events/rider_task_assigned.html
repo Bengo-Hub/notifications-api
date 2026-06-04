@@ -1,0 +1,7 @@
+{{ define "content" }}
+  <p>Hello {{ .rider_name }},</p>
+  <p>A new delivery task has been assigned to you. 🛵</p>
+  {{ if .tracking_code }}<p><strong>Tracking code:</strong> {{ .tracking_code }}</p>{{ end }}
+  {{ if .order_ref }}<p><strong>Order reference:</strong> {{ .order_ref }}</p>{{ end }}
+  <p>Open the rider app to view the pickup and drop-off details and accept the task.</p>
+{{ end }}

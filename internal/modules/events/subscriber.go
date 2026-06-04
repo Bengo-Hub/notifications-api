@@ -51,6 +51,7 @@ func (s *Subscriber) Start(ctx context.Context) error {
 		"pos":       {"pos.>"},
 		"treasury":  {"treasury.>"},
 		"erp":       {"erp.>"},
+		"logistics": {"logistics.>"},
 	}
 	for stream, subjects := range streams {
 		if _, err := js.StreamInfo(stream); err != nil {
@@ -71,6 +72,7 @@ func (s *Subscriber) Start(ctx context.Context) error {
 		{"inventory.stock.low", "notif-inventory-low-stock", s.handleLowStock},
 		{"inventory.purchase_order.received", "notif-po-received", s.handlePOReceived},
 		{"inventory.ticket.issued", "notif-ticket-issued", s.handleTicketIssued},
+		{"logistics.task.assigned", "notif-rider-task-assigned", s.handleRiderTaskAssigned},
 		{"pos.kds.waiter.called", "notif-kds-waiter-called", s.handleKDSWaiterCalled},
 		{"treasury.payroll.disbursed", "notif-payroll-disbursed", s.handlePayrollDisbursed},
 		{"erp.email.requested", "notif-erp-email-req", s.handleERPEmailRequested},
@@ -242,6 +244,47 @@ func (s *Subscriber) handleTicketIssued(msg *nats.Msg) {
 	})
 	s.log.Info("ticket_issued notification dispatched",
 		zap.String("tenant_id", envelope.TenantID), zap.String("code", p.Code), zap.String("to", p.BuyerEmail))
+	_ = msg.Ack()
+}
+
+// handleRiderTaskAssigned emails the rider when a delivery task is assigned to them. tenant_id is on
+// the envelope; rider_email/rider_name + tracking/order refs are in the payload (enriched by
+// logistics from its synced user table).
+func (s *Subscriber) handleRiderTaskAssigned(msg *nats.Msg) {
+	var envelope struct {
+		TenantID string `json:"tenant_id"`
+		Payload  struct {
+			TaskID            string `json:"task_id"`
+			TrackingCode      string `json:"tracking_code"`
+			ExternalReference string `json:"external_reference"`
+			RiderEmail        string `json:"rider_email"`
+			RiderName         string `json:"rider_name"`
+		} `json:"payload"`
+	}
+	if err := json.Unmarshal(msg.Data, &envelope); err != nil {
+		s.log.Warn("rider_task_assigned: unmarshal failed", zap.Error(err))
+		_ = msg.Ack()
+		return
+	}
+	p := envelope.Payload
+	if envelope.TenantID == "" || p.RiderEmail == "" {
+		// No rider email to notify (older event / unsynced rider) — nothing to send.
+		s.log.Info("rider_task_assigned: skipping (no tenant/rider_email)", zap.String("task_id", p.TaskID))
+		_ = msg.Ack()
+		return
+	}
+	riderName := p.RiderName
+	if riderName == "" {
+		riderName = "there"
+	}
+	s.publish(envelope.TenantID, "email", "events/rider_task_assigned", messaging.TargetStaff, []string{p.RiderEmail}, map[string]any{
+		"rider_name":    riderName,
+		"tracking_code": p.TrackingCode,
+		"order_ref":     p.ExternalReference,
+		"task_id":       p.TaskID,
+	})
+	s.log.Info("rider_task_assigned notification dispatched",
+		zap.String("tenant_id", envelope.TenantID), zap.String("task_id", p.TaskID), zap.String("to", p.RiderEmail))
 	_ = msg.Ack()
 }
 
