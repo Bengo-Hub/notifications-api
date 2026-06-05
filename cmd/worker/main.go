@@ -46,6 +46,20 @@ import (
 // drop after one attempt rather than retrying the same failing send.
 const maxDeliveryAttempts = 1
 
+// dedupStr returns the input with empty strings and duplicates removed, preserving order.
+func dedupStr(in []string) []string {
+	seen := make(map[string]bool, len(in))
+	out := make([]string, 0, len(in))
+	for _, s := range in {
+		if s == "" || seen[s] {
+			continue
+		}
+		seen[s] = true
+		out = append(out, s)
+	}
+	return out
+}
+
 // subscribeWithRetry attempts a JetStream subscription with exponential backoff.
 // After a pod restart, NATS may still consider the previous durable consumer
 // binding active until its heartbeat expires. This retries until it succeeds.
@@ -437,32 +451,49 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, bil
 			}
 			atts = append(atts, email.Attachment{Filename: a.Filename, ContentType: a.ContentType, Content: a.Content})
 		}
-		emailProv, _ := pm.GetEmailProvider(ctx, providerTenantID, preferred)
-		err := emailProv.SendEmail(ctx, fromOverride, msg.To, msg.Cc, subject, rendered, "", atts)
-		if err != nil {
-			logg.Warn("tenant email delivery failed, trying platform fallback",
-				zap.String("tenant_id", msg.TenantID),
-				zap.String("provider", emailProv.Name()),
-				zap.Error(err),
-			)
-			// Fallback to platform provider if tenant provider fails
-			if providerTenantID != pm.PlatformID {
-				platformProv, pErr := pm.GetEmailProvider(ctx, pm.PlatformID, "")
-				if pErr == nil {
-					if fbErr := platformProv.SendEmail(ctx, fromOverride, msg.To, msg.Cc, subject, rendered, "", atts); fbErr == nil {
-						logg.Info("email sent via platform fallback",
-							zap.String("provider", platformProv.Name()),
-							zap.String("template", msg.TemplateID),
-							zap.Strings("to", msg.To),
-						)
-						return nil
-					}
-				}
-			}
-			return err
+		// Deliver through the first email provider that actually SENDS. GetEmailProvider returns
+		// the first *constructable* provider, and SMTP is always constructable when a platform
+		// SMTP host is set — so a blocked SMTP (e.g. Zoho "550 unusual sending activity") would
+		// otherwise mask SendGrid/Brevo entirely. Iterate the provider TYPES, and tenant then
+		// platform scope, so a failed send falls through to the next REAL provider instead of
+		// re-failing on the same blocked one. (Previously the "platform fallback" re-resolved to
+		// the same SMTP provider and never tried SendGrid/Brevo.)
+		emailTypes := dedupStr([]string{strings.ToLower(preferred), "smtp", "sendgrid", "brevo"})
+		emailScopes := []string{providerTenantID}
+		if providerTenantID != pm.PlatformID {
+			emailScopes = append(emailScopes, pm.PlatformID)
 		}
-		logg.Info("email sent", zap.String("provider", emailProv.Name()), zap.String("template", msg.TemplateID), zap.Strings("to", msg.To))
-		return nil
+		var lastEmailErr error
+		for _, ptid := range emailScopes {
+			isPlatform := ptid == pm.PlatformID && providerTenantID != pm.PlatformID
+			for _, ptype := range emailTypes {
+				prov, perr := pm.GetEmailProvider(ctx, ptid, ptype)
+				if perr != nil || prov == nil {
+					continue
+				}
+				if serr := prov.SendEmail(ctx, fromOverride, msg.To, msg.Cc, msg.Bcc, subject, rendered, "", atts); serr != nil {
+					lastEmailErr = serr
+					logg.Warn("email provider failed, trying next",
+						zap.String("provider", prov.Name()),
+						zap.String("provider_type", ptype),
+						zap.Bool("platform_scope", isPlatform),
+						zap.Error(serr),
+					)
+					continue
+				}
+				logg.Info("email sent",
+					zap.String("provider", prov.Name()),
+					zap.String("template", msg.TemplateID),
+					zap.Strings("to", msg.To),
+					zap.Bool("platform_fallback", isPlatform),
+				)
+				return nil
+			}
+		}
+		if lastEmailErr == nil {
+			lastEmailErr = fmt.Errorf("no email provider available")
+		}
+		return lastEmailErr
 
 	case "sms":
 		// Deduct credits based on segments and recipient count
