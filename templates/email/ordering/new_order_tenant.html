@@ -1,0 +1,19 @@
+{{ define "content" }}
+  <p>Hello {{ or .outlet_name "Team" }},</p>
+  <p><strong>A new online order has just arrived</strong> and is awaiting your action.</p>
+  <p><strong>Order:</strong> #{{ or .order_number .order_id }}</p>
+  {{ if .customer_name }}
+  <p><strong>Customer:</strong> {{ .customer_name }}</p>
+  {{ end }}
+  <p><strong>Order total:</strong> {{ .total_amount }}</p>
+  {{ if .delivery_address }}
+  <p><strong>Fulfilment:</strong> Delivery</p>
+  <p><strong>Deliver to:</strong> {{ .delivery_address }}</p>
+  {{ else }}
+  <p><strong>Fulfilment:</strong> Pickup / Dine-in</p>
+  {{ end }}
+  <p>
+    <a class="button" href="{{ .manage_link }}">Manage Order</a>
+  </p>
+  <p class="muted">Please review, confirm and prepare this order from your dashboard.</p>
+{{ end }}

@@ -264,11 +264,40 @@ func startOrderConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 			QueuedAt:       time.Now(),
 		}
 
-		// On a brand-new order, Bcc the tenant/outlet contact email so staff are informed a
-		// new order has been placed and is awaiting action (alongside the customer's copy).
-		if evtType == "ordering.order.created" && ti != nil && ti.ContactEmail != "" &&
-			!strings.EqualFold(strings.TrimSpace(ti.ContactEmail), strings.TrimSpace(email)) {
-			msg.Bcc = []string{ti.ContactEmail}
+		// On a brand-new online order, send the tenant/outlet a dedicated, actionable
+		// "new order arrived" alert — a SEPARATE email to the tenant contact address, using
+		// its own staff-facing template. This is NOT a Bcc of the customer's confirmation
+		// (which staff have no use for) and is never sent to the customer.
+		if evtType == "ordering.order.created" && ti != nil && ti.ContactEmail != "" {
+			tenantMsg := messaging.Message{
+				TenantID:    evtTenantID,
+				Channel:     "email",
+				TemplateID:  "ordering/new_order_tenant",
+				SenderScope: messaging.SenderScopeTenant,
+				Target:      messaging.TargetStaff,
+				To:          []string{ti.ContactEmail},
+				Data: map[string]interface{}{
+					"outlet_name":      evtData["outlet_name"],
+					"order_number":     evtData["order_number"],
+					"order_id":         evtData["order_id"],
+					"customer_name":    evtData["customer_name"],
+					"total_amount":     evtData["total_amount"],
+					"delivery_address": evtData["delivery_address"],
+					"manage_link":      serviceURL("NOTIFICATIONS_POS_APP_URL", tenantWebsite) + "/online-orders",
+				},
+				Metadata: map[string]interface{}{
+					"subject":    "New order received — action required",
+					"service_id": "ordering",
+				},
+				RequestID:      uuid.New().String(),
+				IdempotencyKey: fmt.Sprintf("new-order-tenant-%s", orderID),
+				QueuedAt:       time.Now(),
+			}
+			if _, terr := messaging.Publish(ctx, nc, cfg.Events, tenantMsg); terr != nil {
+				logg.Warn("failed to dispatch tenant new-order alert", zap.String("order_id", orderID), zap.Error(terr))
+			} else {
+				logg.Info("tenant new-order alert dispatched", zap.String("order_id", orderID), zap.String("to", ti.ContactEmail))
+			}
 		}
 
 		if _, err := messaging.Publish(ctx, nc, cfg.Events, msg); err != nil {
