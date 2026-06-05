@@ -99,6 +99,12 @@ type ProviderConfig struct {
 	DefaultEmailSender     string `envconfig:"PROVIDERS_DEFAULT_EMAIL_SENDER" default:"Urban Cafe <hello@bengobox.com>"`
 	DefaultSMSSender       string `envconfig:"PROVIDERS_DEFAULT_SMS_SENDER" default:"codevertex"`
 	DefaultPushTopic       string `envconfig:"PROVIDERS_DEFAULT_PUSH_TOPIC" default:"general"`
+	// Email send protection — avoid provider rate-limit blocks (e.g. Zoho "mail rate
+	// exceeded") by pacing sends, and protect sender reputation / reduce failure logs by
+	// validating recipients (syntax + MX) and suppressing hard-bounced addresses.
+	EmailMaxPerHour int  `envconfig:"PROVIDERS_EMAIL_MAX_PER_HOUR" default:"200"`
+	EmailBurst      int  `envconfig:"PROVIDERS_EMAIL_BURST" default:"25"`
+	EmailValidateMX bool `envconfig:"PROVIDERS_EMAIL_VALIDATE_MX" default:"true"`
 }
 
 type TemplateConfig struct {

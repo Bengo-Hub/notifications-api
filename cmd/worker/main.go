@@ -150,6 +150,7 @@ func main() {
 	platformIDStr := platformID.String()
 
 	pm := providers.NewManager(dbPool, cfg.Postgres, cfg.Providers, encryption.KeyFromEnv(cfg.Security.EncryptionKey), cfg.App.Env, platformIDStr)
+	emailGuardian := newEmailGuard(cfg.Providers.EmailMaxPerHour, cfg.Providers.EmailBurst, cfg.Providers.EmailValidateMX, logg)
 
 	durable := "notifications-worker"
 	// Redis for cached auth-api tenant data (branding, contact info)
@@ -185,7 +186,7 @@ func main() {
 		}
 
 		// Deliver via provider
-		deliverErr := deliver(ctx, cfg, pm, billingSvc, tr, &msg, rendered, logg)
+		deliverErr := deliver(ctx, cfg, pm, emailGuardian, billingSvc, tr, &msg, rendered, logg)
 		if deliverErr != nil {
 			logg.Warn("delivery failed",
 				zap.String("channel", msg.Channel),
@@ -389,7 +390,7 @@ func renderMessage(ctx context.Context, cfg *config.Config, tpl *templates.Loade
 }
 
 // deliver sends the rendered message via the appropriate provider.
-func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, billingSvc *billing.Service, tr *tenantResolver, msg *messaging.Message, rendered string, logg *zap.Logger) error {
+func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg *emailGuard, billingSvc *billing.Service, tr *tenantResolver, msg *messaging.Message, rendered string, logg *zap.Logger) error {
 	channel := strings.ToLower(msg.Channel)
 	preferred := ""
 	if p, ok := msg.Metadata["provider"].(string); ok {
@@ -437,8 +438,23 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, bil
 			}
 			atts = append(atts, email.Attachment{Filename: a.Filename, ContentType: a.ContentType, Content: a.Content})
 		}
+		// Guard the shared provider account: skip invalid/unresolvable/suppressed recipients
+		// (no guaranteed bounce, no noisy failure log) and pace the send under the provider's
+		// rate limit so a backlog/burst never trips "mail rate exceeded".
+		validTo, skipped := eg.ValidRecipients(msg.To)
+		if len(skipped) > 0 {
+			logg.Warn("skipped invalid email recipients",
+				zap.Strings("skipped", skipped), zap.String("template", msg.TemplateID))
+		}
+		if len(validTo) == 0 {
+			logg.Warn("no valid email recipients — skipping send",
+				zap.Strings("to", msg.To), zap.String("template", msg.TemplateID))
+			return nil // ack: nothing deliverable, do not retry
+		}
+		eg.WaitForSlot(ctx, 20*time.Second)
+
 		emailProv, _ := pm.GetEmailProvider(ctx, providerTenantID, preferred)
-		err := emailProv.SendEmail(ctx, fromOverride, msg.To, msg.Cc, msg.Bcc, subject, rendered, "", atts)
+		err := emailProv.SendEmail(ctx, fromOverride, validTo, msg.Cc, msg.Bcc, subject, rendered, "", atts)
 		if err != nil {
 			logg.Warn("tenant email delivery failed, trying platform fallback",
 				zap.String("tenant_id", msg.TenantID),
@@ -449,19 +465,24 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, bil
 			if providerTenantID != pm.PlatformID {
 				platformProv, pErr := pm.GetEmailProvider(ctx, pm.PlatformID, "")
 				if pErr == nil {
-					if fbErr := platformProv.SendEmail(ctx, fromOverride, msg.To, msg.Cc, msg.Bcc, subject, rendered, "", atts); fbErr == nil {
+					if fbErr := platformProv.SendEmail(ctx, fromOverride, validTo, msg.Cc, msg.Bcc, subject, rendered, "", atts); fbErr == nil {
 						logg.Info("email sent via platform fallback",
 							zap.String("provider", platformProv.Name()),
 							zap.String("template", msg.TemplateID),
-							zap.Strings("to", msg.To),
+							zap.Strings("to", validTo),
 						)
 						return nil
 					}
 				}
 			}
+			// Hard bounce (550 5.1.x) on a single recipient → suppress it so we stop sending
+			// to a known-bad mailbox (protects sender reputation; not for 5.4.6 rate errors).
+			if isPermanentRecipientError(err) && len(validTo) == 1 {
+				eg.Suppress(validTo[0], 30*24*time.Hour)
+			}
 			return err
 		}
-		logg.Info("email sent", zap.String("provider", emailProv.Name()), zap.String("template", msg.TemplateID), zap.Strings("to", msg.To))
+		logg.Info("email sent", zap.String("provider", emailProv.Name()), zap.String("template", msg.TemplateID), zap.Strings("to", validTo))
 		return nil
 
 	case "sms":
