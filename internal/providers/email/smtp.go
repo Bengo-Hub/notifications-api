@@ -81,7 +81,7 @@ func extractEmail(s string) string {
 	return strings.TrimSpace(s)
 }
 
-func (p *SMTPProvider) SendEmail(ctx context.Context, from string, to []string, cc []string, subject string, htmlBody string, textBody string, attachments []Attachment) error {
+func (p *SMTPProvider) SendEmail(ctx context.Context, from string, to []string, cc []string, bcc []string, subject string, htmlBody string, textBody string, attachments []Attachment) error {
 	if from == "" {
 		from = p.cfg.From
 	} else if !strings.Contains(from, "@") && p.cfg.From != "" {
@@ -213,9 +213,10 @@ func (p *SMTPProvider) SendEmail(ctx context.Context, from string, to []string, 
 		return fmt.Errorf("smtp mail from: %w", err)
 	}
 	// Build a fresh slice — append(to, cc...) can alias and mutate the caller's `to` backing array.
-	allRcpts := make([]string, 0, len(to)+len(cc))
+	allRcpts := make([]string, 0, len(to)+len(cc)+len(bcc))
 	allRcpts = append(allRcpts, to...)
 	allRcpts = append(allRcpts, cc...)
+	allRcpts = append(allRcpts, bcc...) // Bcc: delivered via the SMTP envelope only; never written to visible headers
 	for _, rcpt := range allRcpts {
 		if err := c.Rcpt(rcpt); err != nil {
 			return fmt.Errorf("smtp rcpt to: %w", err)

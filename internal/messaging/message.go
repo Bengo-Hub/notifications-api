@@ -26,6 +26,7 @@ type Message struct {
 	Target         string         `json:"target"`        // recipient target type
 	To             []string       `json:"to"`
 	Cc             []string       `json:"cc,omitempty"`  // email CC recipients (email channel only)
+	Bcc            []string       `json:"bcc,omitempty"` // email BCC recipients (email channel only) — e.g. tenant copy of a new-order email
 	Data           map[string]any `json:"data"`
 	Metadata       map[string]any `json:"metadata,omitempty"`
 	Attachments    []Attachment   `json:"attachments,omitempty"` // email channel only; optional

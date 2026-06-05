@@ -9,7 +9,7 @@ import (
 // EmailProvider sends email messages. attachments is optional (nil/empty = none);
 // every provider accepts the same signature and includes attachments only when present.
 type EmailProvider interface {
-	SendEmail(ctx context.Context, from string, to []string, cc []string, subject string, htmlBody string, textBody string, attachments []email.Attachment) error
+	SendEmail(ctx context.Context, from string, to []string, cc []string, bcc []string, subject string, htmlBody string, textBody string, attachments []email.Attachment) error
 	Name() string
 }
 

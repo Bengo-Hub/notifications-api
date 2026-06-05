@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -247,6 +248,13 @@ func startOrderConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 			RequestID:      uuid.New().String(),
 			IdempotencyKey: fmt.Sprintf("order-%s-%s", evtType, orderID),
 			QueuedAt:       time.Now(),
+		}
+
+		// On a brand-new order, Bcc the tenant/outlet contact email so staff are informed a
+		// new order has been placed and is awaiting action (alongside the customer's copy).
+		if evtType == "ordering.order.created" && ti != nil && ti.ContactEmail != "" &&
+			!strings.EqualFold(strings.TrimSpace(ti.ContactEmail), strings.TrimSpace(email)) {
+			msg.Bcc = []string{ti.ContactEmail}
 		}
 
 		if _, err := messaging.Publish(ctx, nc, cfg.Events, msg); err != nil {

@@ -13,7 +13,7 @@ import (
 const sendGridEndpoint = "https://api.sendgrid.com/v3/mail/send"
 
 // SendWithSendGrid sends an email using the SendGrid v3 HTTP API.
-func SendWithSendGrid(ctx context.Context, apiKey, from string, to []string, cc []string, subject, htmlBody, textBody string, attachments []Attachment) error {
+func SendWithSendGrid(ctx context.Context, apiKey, from string, to []string, cc []string, bcc []string, subject, htmlBody, textBody string, attachments []Attachment) error {
 	if apiKey == "" {
 		return fmt.Errorf("sendgrid api key not configured")
 	}
@@ -24,6 +24,9 @@ func SendWithSendGrid(ctx context.Context, apiKey, from string, to []string, cc 
 	}
 	for _, addr := range cc {
 		p.Cc = append(p.Cc, sgEmail{Email: addr})
+	}
+	for _, addr := range bcc {
+		p.Bcc = append(p.Bcc, sgEmail{Email: addr})
 	}
 	personalizations := []sgPersonalization{p}
 
@@ -101,8 +104,9 @@ type sgAttachment struct {
 }
 
 type sgPersonalization struct {
-	To []sgEmail `json:"to"`
-	Cc []sgEmail `json:"cc,omitempty"`
+	To  []sgEmail `json:"to"`
+	Cc  []sgEmail `json:"cc,omitempty"`
+	Bcc []sgEmail `json:"bcc,omitempty"`
 }
 
 type sgEmail struct {
