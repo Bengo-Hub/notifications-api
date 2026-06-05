@@ -69,12 +69,19 @@ func orderAppBaseURL(tenantSlug, tenantWebsite string) string {
 	return serviceURLWithSlug("NOTIFICATIONS_ORDERING_APP_URL", tenantSlug, tenantWebsite)
 }
 
-// orderLink builds the "View Order" URL for customer emails.
-// For guest orders (no customer_id), returns a Google Maps link to the outlet.
-// For authenticated orders, returns a link to the ordering app order page.
+// orderLink builds the public "View Order" URL for customer emails. It points at the
+// tenant-scoped guest order page ({app}/{slug}/orders/guest/{id}), which opens without
+// a login for both guest and authenticated-user orders — the unguessable order UUID is
+// the access capability. orderAppURL may or may not already carry the slug (per-tenant
+// config), so the slug is only appended when missing to avoid a doubled segment.
 func orderLink(data map[string]interface{}, orderAppURL string) string {
 	orderID, _ := data["order_id"].(string)
-	return fmt.Sprintf("%s/orders/%s", orderAppURL, orderID)
+	slug, _ := data["tenant_slug"].(string)
+	base := strings.TrimRight(orderAppURL, "/")
+	if slug != "" && !strings.HasSuffix(base, "/"+slug) {
+		base = base + "/" + slug
+	}
+	return fmt.Sprintf("%s/orders/guest/%s", base, orderID)
 }
 
 var orderMappings = map[string]orderNotificationMapping{
@@ -120,9 +127,10 @@ var orderMappings = map[string]orderNotificationMapping{
 		EmailSubject: "Your order has been delivered",
 		DataBuilder: func(data map[string]interface{}, orderAppURL string) map[string]interface{} {
 			return map[string]interface{}{
-				"name":       data["customer_name"],
-				"order_id":   data["order_id"],
-				"order_link": orderLink(data, orderAppURL),
+				"name":        data["customer_name"],
+				"order_id":    data["order_id"],
+				"order_link":  orderLink(data, orderAppURL),
+				"review_link": orderLink(data, orderAppURL) + "?rate=1",
 			}
 		},
 	},
@@ -232,6 +240,12 @@ func startOrderConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 		appURL := ti.ServiceURL("ordering", "NOTIFICATIONS_ORDERING_APP_URL", orderAppBaseURL(tenantSlug, tenantWebsite))
 
 		orderID, _ := evtData["order_id"].(string)
+
+		// Expose the tenant slug to DataBuilders so order/review links can target the
+		// tenant-scoped public guest order page ({app}/{slug}/orders/guest/{id}).
+		if tenantSlug != "" {
+			evtData["tenant_slug"] = tenantSlug
+		}
 
 		msg := messaging.Message{
 			TenantID:    evtTenantID,
