@@ -37,7 +37,14 @@ import (
 	"github.com/bengobox/notifications-api/internal/modules/tenant"
 )
 
-const maxRetries = 3
+// maxDeliveryAttempts caps how many times the worker tries to DELIVER a single
+// notification before dead-lettering it. One attempt only: the deliver() path
+// already falls back across providers (tenant SMTP -> platform SMTP) within that
+// single attempt, so a failure means every fallback option was already exhausted.
+// Redelivering would just hammer a rate-limited or blocked provider (e.g. Zoho
+// "550 5.4.6 Unusual sending activity detected"), making the block worse — so we
+// drop after one attempt rather than retrying the same failing send.
+const maxDeliveryAttempts = 1
 
 // subscribeWithRetry attempts a JetStream subscription with exponential backoff.
 // After a pod restart, NATS may still consider the previous durable consumer
@@ -187,8 +194,8 @@ func main() {
 				zap.Error(deliverErr),
 			)
 
-			if attempt >= maxRetries {
-				logg.Error("max retries exceeded, dropping message",
+			if attempt >= maxDeliveryAttempts {
+				logg.Error("delivery failed, dropping (single-attempt policy; provider fallback already exhausted)",
 					zap.String("channel", msg.Channel),
 					zap.String("tenant_id", msg.TenantID),
 					zap.String("request_id", msg.RequestID),
@@ -196,9 +203,9 @@ func main() {
 					zap.Uint64("attempts", attempt),
 					zap.Error(deliverErr),
 				)
-				_ = m.Ack() // give up after max retries
+				_ = m.Ack() // dead-letter: do not redeliver and hammer a blocked/rate-limited provider
 			} else {
-				// NAck triggers redelivery after AckWait (30s)
+				// NAck triggers redelivery after AckWait (30s) — only reachable if maxDeliveryAttempts is raised >1
 				_ = m.Nak()
 			}
 			return
@@ -214,7 +221,7 @@ func main() {
 	}
 
 	subscribeWithRetry(ctx, js, logg, "notifications worker", false, func() (*nats.Subscription, error) {
-		return js.Subscribe(subject, msgHandler, nats.Durable(durable), nats.ManualAck(), nats.AckWait(30*time.Second), nats.MaxDeliver(maxRetries))
+		return js.Subscribe(subject, msgHandler, nats.Durable(durable), nats.ManualAck(), nats.AckWait(30*time.Second), nats.MaxDeliver(maxDeliveryAttempts))
 	})
 
 	// Start fleet lifecycle event consumer (logistics-service → email notifications)
