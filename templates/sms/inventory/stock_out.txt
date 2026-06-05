@@ -1,2 +1,2 @@
-{{ or .brand_name codevertex }}: URGENT - Stock out for {{ .item_name }} ({{ .item_sku }}) at {{ .location }}. Immediate action required. View: {{ .item_link }}
+{{ or .brand_name "codevertex" }}: URGENT - Stock out for {{ .item_name }} ({{ .item_sku }}) at {{ .location }}. Immediate action required. View: {{ .item_link }}
 

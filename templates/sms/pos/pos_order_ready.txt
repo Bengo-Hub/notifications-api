@@ -1,2 +1,2 @@
-{{ or .brand_name codevertex }}: Your order {{ .order_id }} is ready for pickup at {{ .outlet_name }}. View: {{ .order_link }}
+{{ or .brand_name "codevertex" }}: Your order {{ .order_id }} is ready for pickup at {{ .outlet_name }}. View: {{ .order_link }}
 

@@ -1,2 +1,2 @@
-{{ or .brand_name codevertex }}: Your delivery {{ .order_id }} has been completed! Delivered at {{ .delivered_at }}. View: {{ .order_link }}
+{{ or .brand_name "codevertex" }}: Your delivery {{ .order_id }} has been completed! Delivered at {{ .delivered_at }}. View: {{ .order_link }}
 

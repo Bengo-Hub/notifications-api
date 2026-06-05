@@ -1,1 +1,1 @@
-{{ or .brand_name codevertex }}: Invoice {{ .invoice_number }} for {{ .amount }} is due on {{ .due_date }}. Pay: {{ .payment_link }}
+{{ or .brand_name "codevertex" }}: Invoice {{ .invoice_number }} for {{ .amount }} is due on {{ .due_date }}. Pay: {{ .payment_link }}

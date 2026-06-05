@@ -1,2 +1,2 @@
-{{ or .brand_name codevertex }}: Receipt {{ .receipt_number }} for {{ .total_amount }}. Date: {{ .transaction_date }}. View: {{ .receipt_link }}
+{{ or .brand_name "codevertex" }}: Receipt {{ .receipt_number }} for {{ .total_amount }}. Date: {{ .transaction_date }}. View: {{ .receipt_link }}
 

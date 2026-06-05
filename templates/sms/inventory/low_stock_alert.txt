@@ -1,2 +1,2 @@
-{{ or .brand_name codevertex }}: Low stock alert! {{ .item_name }} ({{ .item_sku }}) at {{ .location }}. Current: {{ .current_stock }}, Min: {{ .min_threshold }}. View: {{ .item_link }}
+{{ or .brand_name "codevertex" }}: Low stock alert! {{ .item_name }} ({{ .item_sku }}) at {{ .location }}. Current: {{ .current_stock }}, Min: {{ .min_threshold }}. View: {{ .item_link }}
 

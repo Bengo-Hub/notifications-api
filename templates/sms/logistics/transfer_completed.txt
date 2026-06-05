@@ -1,2 +1,2 @@
-{{ or .brand_name codevertex }}: Transfer {{ .transfer_id }} completed. {{ .from_location }} → {{ .to_location }}. View: {{ .transfer_link }}
+{{ or .brand_name "codevertex" }}: Transfer {{ .transfer_id }} completed. {{ .from_location }} → {{ .to_location }}. View: {{ .transfer_link }}
 
