@@ -110,6 +110,66 @@ var subscriptionMappings = map[string]subscriptionNotificationMapping{
 			}
 		},
 	},
+	// invoice_generated fires when subscriptions issues a subscription invoice (7 days
+	// before expiry or via manual platform-owner generation). Emails the tenant the
+	// invoice with a durable pay link + PDF. Reuses the finance/invoice_sent template.
+	"invoice_generated": {
+		TemplateID:   "finance/invoice_sent",
+		EmailSubject: "Your subscription invoice is ready",
+		DataBuilder: func(payload map[string]any, tenantWebsite string) map[string]any {
+			return map[string]any{
+				"name":           "Admin",
+				"amount":         fmt.Sprintf("%v %v", payload["currency"], payload["amount"]),
+				"due_date":       formatEventDate(payload["due_date"]),
+				"invoice_number": payload["invoice_number"],
+				"invoice_link":   payload["pdf_url"], // public branded PDF
+				"payment_link":   payload["pay_url"], // durable treasury pay page
+			}
+		},
+	},
+	// grace_reminder fires once per day during the post-expiry grace period with a
+	// decremented countdown. payload.pay_link is the durable treasury pay page.
+	"grace_reminder": {
+		TemplateID:   "subscription/grace_reminder",
+		EmailSubject: "Action required: pay to keep your services active",
+		DataBuilder: func(payload map[string]any, tenantWebsite string) map[string]any {
+			return map[string]any{
+				"name":           "Admin",
+				"plan_name":      payload["plan_code"],
+				"days_remaining": payload["days_remaining"],
+				"grace_ends_at":  payload["grace_ends_at"],
+				"amount":         payload["amount"],
+				"invoice_number": payload["invoice_number"],
+				"payment_link":   firstNonEmpty(payload["pay_link"], fmt.Sprintf("%s/settings/subscription", tenantWebsite)),
+			}
+		},
+	},
+	// grace_started fires once when a subscription enters grace (period end passed unpaid).
+	"grace_started": {
+		TemplateID:   "subscription/grace_reminder",
+		EmailSubject: "Your subscription payment is overdue",
+		DataBuilder: func(payload map[string]any, tenantWebsite string) map[string]any {
+			return map[string]any{
+				"name":           "Admin",
+				"plan_name":      payload["plan_code"],
+				"days_remaining": payload["days_remaining"],
+				"grace_ends_at":  payload["grace_ends_at"],
+				"amount":         payload["amount"],
+				"invoice_number": payload["invoice_number"],
+				"payment_link":   firstNonEmpty(payload["pay_link"], fmt.Sprintf("%s/settings/subscription", tenantWebsite)),
+			}
+		},
+	},
+}
+
+// firstNonEmpty returns the first argument that is a non-empty string, else "".
+func firstNonEmpty(vals ...any) string {
+	for _, v := range vals {
+		if s, ok := v.(string); ok && s != "" {
+			return s
+		}
+	}
+	return ""
 }
 
 // startSubscriptionConsumer subscribes to subscription.> events from the

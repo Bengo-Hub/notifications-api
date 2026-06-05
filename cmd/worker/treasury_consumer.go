@@ -96,6 +96,20 @@ var treasuryMappings = map[string]treasuryNotificationMapping{
 	},
 }
 
+// formatEventDate renders an RFC3339 timestamp (as emitted by Go's time.Time JSON
+// marshaling) into a friendly date for emails. Falls back to the raw value. Shared
+// across consumers in this package (e.g. subscription invoice_generated).
+func formatEventDate(v any) string {
+	s, _ := v.(string)
+	if s == "" {
+		return ""
+	}
+	if t, err := time.Parse(time.RFC3339, s); err == nil {
+		return t.Format("02 Jan 2006")
+	}
+	return s
+}
+
 // startTreasuryConsumer subscribes to treasury.> events from the treasury-api
 // JetStream stream and dispatches payment notification emails. It also handles
 // credit top-up (reference_type=topup) and WhatsApp subscription activation

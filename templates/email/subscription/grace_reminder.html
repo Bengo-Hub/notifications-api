@@ -1,0 +1,21 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <h2 style="color: #dc2626;">Action Required: {{ .days_remaining }} day(s) left to pay</h2>
+  <p>Your subscription for <strong>{{ .plan_name }}</strong> has reached the end of its billing period and is now in a grace period. Your services remain active for now, but access will be <strong>blocked</strong> if payment is not received.</p>
+
+  <div style="background:#fef2f2; border:1px solid #fecaca; padding:16px; border-radius:6px; margin:16px 0;">
+    <strong>Plan:</strong> {{ .plan_name }}<br/>
+    {{ if .invoice_number }}<strong>Invoice:</strong> {{ .invoice_number }}<br/>{{ end }}
+    <strong>Amount Due:</strong> {{ .amount }}<br/>
+    <strong>Days Remaining:</strong> {{ .days_remaining }}<br/>
+    <strong>Access Blocked On:</strong> {{ .grace_ends_at }}
+  </div>
+
+  <p>Please settle your invoice now to avoid any interruption to your service.</p>
+
+  {{ if .payment_link }}
+  <p>
+    <a class="button" href="{{ .payment_link }}">Pay Now</a>
+  </p>
+  {{ end }}
+{{ end }}
