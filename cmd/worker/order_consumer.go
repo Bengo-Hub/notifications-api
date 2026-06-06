@@ -62,6 +62,14 @@ type orderNotificationMapping struct {
 	TemplateID   string
 	EmailSubject string
 	DataBuilder  func(data map[string]interface{}, orderAppURL string) map[string]interface{}
+	// IdempotencyScope, when non-empty, overrides the default per-event-type
+	// idempotency key with "order-<scope>-<orderID>". Distinct event types that
+	// should produce a single deduplicated email share the same scope. The review
+	// email is sent on BOTH ordering.order.delivered (delivery orders terminate at
+	// "delivered") and ordering.order.completed (pickup/dine-in terminate at
+	// "completed"); since the state machine also allows delivered→completed, an order
+	// can emit both events — the shared "review" scope ensures only one review email.
+	IdempotencyScope string
 }
 
 // orderAppBaseURL returns the ordering app URL for building "View Order" links.
@@ -82,6 +90,19 @@ func orderLink(data map[string]interface{}, orderAppURL string) string {
 		base = base + "/" + slug
 	}
 	return fmt.Sprintf("%s/orders/guest/%s", base, orderID)
+}
+
+// reviewEmailDataBuilder builds the data for the post-delivery review/rating email.
+// Shared by both ordering.order.completed (pickup/dine-in) and ordering.order.delivered
+// (delivery), so the "Leave a rating / review" link is identical regardless of which
+// terminal event fires.
+func reviewEmailDataBuilder(data map[string]interface{}, orderAppURL string) map[string]interface{} {
+	return map[string]interface{}{
+		"name":        data["customer_name"],
+		"order_id":    data["order_id"],
+		"order_link":  orderLink(data, orderAppURL),
+		"review_link": orderLink(data, orderAppURL) + "?rate=1",
+	}
 }
 
 var orderMappings = map[string]orderNotificationMapping{
@@ -132,17 +153,23 @@ var orderMappings = map[string]orderNotificationMapping{
 			}
 		},
 	},
+	// Pickup/dine-in orders terminate at "completed" and get the review/rating email.
 	"ordering.order.completed": {
-		TemplateID:   "ordering/order_delivered",
-		EmailSubject: "Your order has been delivered",
-		DataBuilder: func(data map[string]interface{}, orderAppURL string) map[string]interface{} {
-			return map[string]interface{}{
-				"name":        data["customer_name"],
-				"order_id":    data["order_id"],
-				"order_link":  orderLink(data, orderAppURL),
-				"review_link": orderLink(data, orderAppURL) + "?rate=1",
-			}
-		},
+		TemplateID:       "ordering/order_delivered",
+		EmailSubject:     "Your order has been delivered",
+		DataBuilder:      reviewEmailDataBuilder,
+		IdempotencyScope: "review",
+	},
+	// DELIVERY orders terminate at "delivered" (they never reach "completed"), so the
+	// review/rating email must also fire here — using the same template, subject, and
+	// builder as completed. The shared "review" idempotency scope prevents a second
+	// review email if an order emits both delivered and completed (delivered→completed
+	// is a permitted transition).
+	"ordering.order.delivered": {
+		TemplateID:       "ordering/order_delivered",
+		EmailSubject:     "Your order has been delivered",
+		DataBuilder:      reviewEmailDataBuilder,
+		IdempotencyScope: "review",
 	},
 	"ordering.order.cancelled": {
 		TemplateID:   "ordering/order_cancelled",
@@ -251,6 +278,15 @@ func startOrderConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 
 		orderID, _ := evtData["order_id"].(string)
 
+		// Build the idempotency key. By default it is per-event-type so distinct
+		// notifications for the same order don't collide. Mappings that set an
+		// IdempotencyScope (e.g. the review email, emitted on BOTH delivered and
+		// completed) share a single key so the email is sent at most once per order.
+		idempotencyKey := fmt.Sprintf("order-%s-%s", evtType, orderID)
+		if mapping.IdempotencyScope != "" {
+			idempotencyKey = fmt.Sprintf("order-%s-%s", mapping.IdempotencyScope, orderID)
+		}
+
 		// Expose the tenant slug to DataBuilders so order/review links can target the
 		// tenant-scoped public guest order page ({app}/{slug}/orders/guest/{id}).
 		if tenantSlug != "" {
@@ -270,7 +306,7 @@ func startOrderConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 				"service_id": "ordering",
 			},
 			RequestID:      uuid.New().String(),
-			IdempotencyKey: fmt.Sprintf("order-%s-%s", evtType, orderID),
+			IdempotencyKey: idempotencyKey,
 			QueuedAt:       time.Now(),
 		}
 
