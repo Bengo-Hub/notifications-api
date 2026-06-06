@@ -247,6 +247,14 @@ func (s *Subscriber) handleTicketIssued(msg *nats.Msg) {
 	_ = msg.Ack()
 }
 
+// riderAppURL returns the rider-app base URL from env, defaulting to the canonical production URL.
+func riderAppURL() string {
+	if u := os.Getenv("NOTIFICATIONS_RIDER_APP_URL"); u != "" {
+		return strings.TrimRight(u, "/")
+	}
+	return "https://riderapp.codevertexitsolutions.com"
+}
+
 // handleRiderTaskAssigned emails the rider when a delivery task is assigned to them. tenant_id is on
 // the envelope; rider_email/rider_name + tracking/order refs are in the payload (enriched by
 // logistics from its synced user table).
@@ -282,6 +290,7 @@ func (s *Subscriber) handleRiderTaskAssigned(msg *nats.Msg) {
 		"tracking_code": p.TrackingCode,
 		"order_ref":     p.ExternalReference,
 		"task_id":       p.TaskID,
+		"rider_app_url": riderAppURL(),
 	})
 	s.log.Info("rider_task_assigned notification dispatched",
 		zap.String("tenant_id", envelope.TenantID), zap.String("task_id", p.TaskID), zap.String("to", p.RiderEmail))

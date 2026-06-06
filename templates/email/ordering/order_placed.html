@@ -9,8 +9,15 @@
   {{ if .delivery_address }}
   <p><strong>Delivery Address:</strong> {{ .delivery_address }}</p>
   {{ end }}
+  {{ if .pod_code }}
+  <div style="margin:20px 0;padding:16px;border:1px solid #e0e0e0;border-radius:8px;background:#f8f8f8;text-align:center;">
+    <p style="margin:0 0 8px;">Your delivery confirmation code:</p>
+    <p style="margin:0;font-size:28px;font-weight:bold;letter-spacing:4px;">{{ .pod_code }}</p>
+    <p class="muted" style="margin:8px 0 0;">Give this code to the rider when your order arrives to confirm delivery.</p>
+  </div>
+  {{ end }}
   <p>
-    <a class="button" href="{{ .order_link }}">Track Order</a>
+    <a class="button" href="{{ .order_link }}">View Order</a>
   </p>
   {{ if .pay_link }}
   <p>

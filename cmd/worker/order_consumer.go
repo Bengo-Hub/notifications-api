@@ -101,6 +101,9 @@ var orderMappings = map[string]orderNotificationMapping{
 				// so we always provide the link; if the order is already paid the guest page
 				// simply shows the order without prompting for payment.
 				"pay_link": orderLink(data, orderAppURL) + "?pay=1",
+				// Proof-of-delivery code (6-digit); empty for non-delivery orders.
+				// The template only renders the PoD block when this is non-empty.
+				"pod_code": data["pod_code"],
 			}
 		},
 	},
@@ -120,10 +123,12 @@ var orderMappings = map[string]orderNotificationMapping{
 		EmailSubject: "Your order is out for delivery",
 		DataBuilder: func(data map[string]interface{}, orderAppURL string) map[string]interface{} {
 			return map[string]interface{}{
-				"name":       data["customer_name"],
-				"order_id":   data["order_id"],
-				"rider_name": data["rider_name"],
-				"order_link": orderLink(data, orderAppURL),
+				"name":        data["customer_name"],
+				"order_id":    data["order_id"],
+				"rider_name":  data["rider_name"],
+				"rider_phone": data["rider_phone"],
+				"order_link":  orderLink(data, orderAppURL),
+				"track_link":  orderLink(data, orderAppURL),
 			}
 		},
 	},

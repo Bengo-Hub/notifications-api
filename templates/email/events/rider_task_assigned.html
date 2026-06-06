@@ -4,4 +4,7 @@
   {{ if .tracking_code }}<p><strong>Tracking code:</strong> {{ .tracking_code }}</p>{{ end }}
   {{ if .order_ref }}<p><strong>Order reference:</strong> {{ .order_ref }}</p>{{ end }}
   <p>Open the rider app to view the pickup and drop-off details and accept the task.</p>
+  <p>
+    <a class="button" href="{{ .rider_app_url }}">Open Rider App</a>
+  </p>
 {{ end }}
