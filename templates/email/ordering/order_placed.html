@@ -12,6 +12,12 @@
   <p>
     <a class="button" href="{{ .order_link }}">Track Order</a>
   </p>
+  {{ if .pay_link }}
+  <p>
+    <a class="button" href="{{ .pay_link }}">Pay Now</a>
+  </p>
+  <p class="muted">Haven't paid yet? Use the button above to pay for your order.</p>
+  {{ end }}
   <p class="muted">We'll notify you when your order is ready.</p>
 {{ end }}
 

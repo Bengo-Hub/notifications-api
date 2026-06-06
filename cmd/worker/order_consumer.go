@@ -96,6 +96,11 @@ var orderMappings = map[string]orderNotificationMapping{
 				"estimated_prep_time": data["estimated_prep_time"],
 				"delivery_address":    data["delivery_address"],
 				"order_link":          orderLink(data, orderAppURL),
+				// "Pay Now" deep-link to the public guest order page with the Pay-Now modal
+				// auto-opened (?pay=1). The order.created event carries no payment-status flag,
+				// so we always provide the link; if the order is already paid the guest page
+				// simply shows the order without prompting for payment.
+				"pay_link": orderLink(data, orderAppURL) + "?pay=1",
 			}
 		},
 	},
