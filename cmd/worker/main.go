@@ -16,6 +16,7 @@ import (
 	"github.com/google/uuid"
 
 	sharedcache "github.com/Bengo-Hub/cache"
+	eventslib "github.com/Bengo-Hub/shared-events"
 	serviceclient "github.com/Bengo-Hub/shared-service-client"
 
 	entdb "github.com/bengobox/notifications-api/internal/database"
@@ -221,9 +222,7 @@ func main() {
 		_ = m.Ack()
 	}
 
-	subscribeWithRetry(ctx, js, logg, "notifications worker", false, func() (*nats.Subscription, error) {
-		return js.Subscribe(subject, msgHandler, nats.Durable(durable), nats.ManualAck(), nats.AckWait(30*time.Second), nats.MaxDeliver(maxDeliveryAttempts))
-	})
+	eventslib.SubscribeWithRebind(logg, js, subject, msgHandler, nats.Durable(durable), nats.ManualAck(), nats.AckWait(30*time.Second), nats.MaxDeliver(maxDeliveryAttempts))
 
 	// Start fleet lifecycle event consumer (logistics-service → email notifications)
 	startFleetConsumer(ctx, nc, js, cfg, tr, logg)

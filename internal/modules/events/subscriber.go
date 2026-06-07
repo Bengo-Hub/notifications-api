@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	eventslib "github.com/Bengo-Hub/shared-events"
 	"github.com/google/uuid"
 	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
@@ -79,9 +80,10 @@ func (s *Subscriber) Start(ctx context.Context) error {
 		{"erp.notification.requested", "notif-erp-notif-req", s.handleERPNotificationRequested},
 	}
 
-	started := make([]*nats.Subscription, 0, len(subs))
 	for _, s2 := range subs {
-		sub, err := js.Subscribe(
+		eventslib.SubscribeWithRebind(
+			s.log,
+			js,
 			s2.subject,
 			s2.handler,
 			nats.Durable(s2.durable),
@@ -90,19 +92,11 @@ func (s *Subscriber) Start(ctx context.Context) error {
 			nats.MaxDeliver(maxDeliver),
 			nats.DeliverAll(),
 		)
-		if err != nil {
-			s.log.Warn("events subscriber: subscribe failed", zap.String("subject", s2.subject), zap.Error(err))
-			continue
-		}
-		started = append(started, sub)
 	}
 
-	s.log.Info("cross-service NATS subscribers started", zap.Int("count", len(started)))
+	s.log.Info("cross-service NATS subscribers started", zap.Int("count", len(subs)))
 
 	<-ctx.Done()
-	for _, sub := range started {
-		_ = sub.Unsubscribe()
-	}
 	return nil
 }
 

@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	eventslib "github.com/Bengo-Hub/shared-events"
 	"github.com/google/uuid"
 	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
@@ -218,13 +219,11 @@ func startFleetConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 		_ = m.Ack()
 	}
 
-	subscribeWithRetry(ctx, js, logg, "fleet consumer", true, func() (*nats.Subscription, error) {
-		return js.Subscribe("logistics.fleet.>", handler,
-			nats.BindStream("logistics"),
-			nats.Durable("notifications-logistics-fleet"),
-			nats.ManualAck(),
-			nats.AckWait(30*time.Second),
-			nats.MaxDeliver(3),
-		)
-	})
+	eventslib.SubscribeWithRebind(logg, js, "logistics.fleet.>", handler,
+		nats.BindStream("logistics"),
+		nats.Durable("notifications-logistics-fleet"),
+		nats.ManualAck(),
+		nats.AckWait(30*time.Second),
+		nats.MaxDeliver(3),
+	)
 }

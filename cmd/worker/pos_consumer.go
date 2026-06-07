@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	eventslib "github.com/Bengo-Hub/shared-events"
 	"github.com/google/uuid"
 	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
@@ -380,13 +381,11 @@ func startPosConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamConte
 		_ = m.Ack()
 	}
 
-	subscribeWithRetry(ctx, js, logg, "pos consumer", true, func() (*nats.Subscription, error) {
-		return js.Subscribe("pos.>", handler,
-			nats.BindStream("pos"),
-			nats.Durable("notifications-pos-orders"),
-			nats.ManualAck(),
-			nats.AckWait(30*time.Second),
-			nats.MaxDeliver(3),
-		)
-	})
+	eventslib.SubscribeWithRebind(logg, js, "pos.>", handler,
+		nats.BindStream("pos"),
+		nats.Durable("notifications-pos-orders"),
+		nats.ManualAck(),
+		nats.AckWait(30*time.Second),
+		nats.MaxDeliver(3),
+	)
 }

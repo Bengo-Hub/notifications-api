@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	eventslib "github.com/Bengo-Hub/shared-events"
 	"github.com/google/uuid"
 	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
@@ -118,13 +119,11 @@ func startProjectsConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStream
 	}
 
 	// Projects-api stream name — check what's configured
-	subscribeWithRetry(ctx, js, logg, "projects consumer", true, func() (*nats.Subscription, error) {
-		return js.Subscribe("project.>", handler,
-			nats.BindStream("projects"),
-			nats.Durable("notifications-projects"),
-			nats.ManualAck(),
-			nats.AckWait(30*time.Second),
-			nats.MaxDeliver(3),
-		)
-	})
+	eventslib.SubscribeWithRebind(logg, js, "project.>", handler,
+		nats.BindStream("projects"),
+		nats.Durable("notifications-projects"),
+		nats.ManualAck(),
+		nats.AckWait(30*time.Second),
+		nats.MaxDeliver(3),
+	)
 }

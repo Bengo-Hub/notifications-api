@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	eventslib "github.com/Bengo-Hub/shared-events"
 	"github.com/google/uuid"
 	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
@@ -354,13 +355,11 @@ func startTreasuryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStream
 		_ = m.Ack()
 	}
 
-	subscribeWithRetry(ctx, js, logg, "treasury consumer", true, func() (*nats.Subscription, error) {
-		return js.Subscribe("treasury.>", handler,
-			nats.BindStream("treasury"),
-			nats.Durable("notifications-treasury-payments"),
-			nats.ManualAck(),
-			nats.AckWait(30*time.Second),
-			nats.MaxDeliver(3),
-		)
-	})
+	eventslib.SubscribeWithRebind(logg, js, "treasury.>", handler,
+		nats.BindStream("treasury"),
+		nats.Durable("notifications-treasury-payments"),
+		nats.ManualAck(),
+		nats.AckWait(30*time.Second),
+		nats.MaxDeliver(3),
+	)
 }

@@ -8,9 +8,12 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 )
 
 const sendGridEndpoint = "https://api.sendgrid.com/v3/mail/send"
+
+var providerHTTPClient = &http.Client{Timeout: 15 * time.Second}
 
 // SendWithSendGrid sends an email using the SendGrid v3 HTTP API.
 func SendWithSendGrid(ctx context.Context, apiKey, from string, to []string, cc []string, bcc []string, subject, htmlBody, textBody string, attachments []Attachment) error {
@@ -75,7 +78,7 @@ func SendWithSendGrid(ctx context.Context, apiKey, from string, to []string, cc 
 	req.Header.Set("Authorization", "Bearer "+apiKey)
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := providerHTTPClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("sendgrid: send request: %w", err)
 	}
