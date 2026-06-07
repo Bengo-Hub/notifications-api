@@ -31,7 +31,6 @@ import (
 	"github.com/bengobox/notifications-api/internal/modules/billing"
 	eventsmod "github.com/bengobox/notifications-api/internal/modules/events"
 	"github.com/bengobox/notifications-api/internal/modules/identity"
-	"github.com/bengobox/notifications-api/internal/modules/outbox"
 	"github.com/bengobox/notifications-api/internal/modules/rbac"
 	"github.com/bengobox/notifications-api/internal/modules/tenant"
 	templatesmod "github.com/bengobox/notifications-api/internal/modules/templates"
@@ -223,7 +222,7 @@ func New(ctx context.Context) (*App, error) {
 				sqlDB.SetMaxIdleConns(1)
 				sqlDB.SetConnMaxLifetime(5 * time.Minute)
 				sqlDB.SetConnMaxIdleTime(1 * time.Minute)
-				outboxRepo := outbox.NewRepository(sqlDB)
+				outboxRepo := eventslib.NewSQLOutboxRepository(sqlDB)
 				pubCfg := eventslib.DefaultPublisherConfig(js, outboxRepo, log)
 				outboxPublisher = eventslib.NewPublisher(pubCfg)
 				log.Info("outbox publisher initialized")
