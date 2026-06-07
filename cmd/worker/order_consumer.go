@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	eventslib "github.com/Bengo-Hub/shared-events"
 	"github.com/google/uuid"
 	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
@@ -365,13 +366,11 @@ func startOrderConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 		_ = m.Ack()
 	}
 
-	subscribeWithRetry(ctx, js, logg, "order consumer", true, func() (*nats.Subscription, error) {
-		return js.Subscribe("ordering.order.>", handler,
-			nats.BindStream("ordering"),
-			nats.Durable("notifications-ordering-status"),
-			nats.ManualAck(),
-			nats.AckWait(30*time.Second),
-			nats.MaxDeliver(3),
-		)
-	})
+	eventslib.SubscribeWithRebind(logg, js, "ordering.order.>", handler,
+		nats.BindStream("ordering"),
+		nats.Durable("notifications-ordering-status"),
+		nats.ManualAck(),
+		nats.AckWait(30*time.Second),
+		nats.MaxDeliver(3),
+	)
 }

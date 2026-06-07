@@ -98,7 +98,7 @@ func (p *BrevoProvider) SendEmail(ctx context.Context, from string, to []string,
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := providerHTTPClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("brevo: send request: %w", err)
 	}

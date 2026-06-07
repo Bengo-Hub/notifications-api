@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	eventslib "github.com/Bengo-Hub/shared-events"
 	"github.com/google/uuid"
 	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
@@ -183,13 +184,11 @@ func startInventoryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStrea
 		_ = m.Ack()
 	}
 
-	subscribeWithRetry(ctx, js, logg, "inventory consumer", true, func() (*nats.Subscription, error) {
-		return js.Subscribe("inventory.>", handler,
-			nats.BindStream("inventory"),
-			nats.Durable("notifications-inventory-stock"),
-			nats.ManualAck(),
-			nats.AckWait(30*time.Second),
-			nats.MaxDeliver(3),
-		)
-	})
+	eventslib.SubscribeWithRebind(logg, js, "inventory.>", handler,
+		nats.BindStream("inventory"),
+		nats.Durable("notifications-inventory-stock"),
+		nats.ManualAck(),
+		nats.AckWait(30*time.Second),
+		nats.MaxDeliver(3),
+	)
 }

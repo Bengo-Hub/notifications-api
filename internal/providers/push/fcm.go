@@ -17,6 +17,8 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+var providerHTTPClient = &http.Client{Timeout: 15 * time.Second}
+
 // FCMConfig holds the Firebase Cloud Messaging configuration.
 type FCMConfig struct {
 	// ProjectID is the Firebase project ID. If empty it is extracted from ServiceAccount JSON.
@@ -128,7 +130,7 @@ func (p *FCMProvider) getAccessToken(ctx context.Context) (string, error) {
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := providerHTTPClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("fcm: token request: %w", err)
 	}
@@ -187,7 +189,7 @@ func (p *FCMProvider) sendMessage(ctx context.Context, accessToken, token, title
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+accessToken)
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := providerHTTPClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("fcm: send: %w", err)
 	}

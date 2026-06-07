@@ -8,9 +8,12 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 )
 
 const twilioBaseURL = "https://api.twilio.com/2010-04-01"
+
+var providerHTTPClient = &http.Client{Timeout: 15 * time.Second}
 
 // SendWithTwilio sends SMS messages using the Twilio REST API.
 func SendWithTwilio(ctx context.Context, accountSID, authToken, from string, to []string, body string) error {
@@ -35,7 +38,7 @@ func SendWithTwilio(ctx context.Context, accountSID, authToken, from string, to 
 		req.SetBasicAuth(accountSID, authToken)
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-		resp, err := http.DefaultClient.Do(req)
+		resp, err := providerHTTPClient.Do(req)
 		if err != nil {
 			lastErr = fmt.Errorf("twilio: send request for %s: %w", recipient, err)
 			continue
