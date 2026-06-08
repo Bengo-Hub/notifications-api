@@ -1,0 +1,9 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <p>Just a friendly reminder that invoice {{ .invoice_number }} for {{ .amount }} is now
+     {{ .days_overdue }} day(s) past its due date of {{ .due_date }}.</p>
+  <p>If you've already paid, thank you — please ignore this note. Otherwise you can settle it here:</p>
+  <p>
+    <a class="button" href="{{ .payment_link }}">Pay Now</a>
+  </p>
+{{ end }}
