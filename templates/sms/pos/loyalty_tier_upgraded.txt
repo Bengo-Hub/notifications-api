@@ -1,0 +1,1 @@
+{{ or .brand_name "codevertex" }}: Congratulations {{ .customer_name }}! You've reached {{ .new_tier }} tier ({{ .lifetime_points }} lifetime pts).

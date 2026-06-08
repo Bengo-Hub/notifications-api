@@ -75,6 +75,9 @@ func (s *Subscriber) Start(ctx context.Context) error {
 		{"inventory.ticket.issued", "notif-ticket-issued", s.handleTicketIssued},
 		{"logistics.task.assigned", "notif-rider-task-assigned", s.handleRiderTaskAssigned},
 		{"pos.kds.waiter.called", "notif-kds-waiter-called", s.handleKDSWaiterCalled},
+		{"pos.loyalty.points.earned", "notif-loyalty-points-earned", s.handleLoyaltyPointsEarned},
+		{"pos.loyalty.tier_upgraded", "notif-loyalty-tier-upgraded", s.handleLoyaltyTierUpgraded},
+		{"pos.loyalty.referral_earned", "notif-loyalty-referral-earned", s.handleLoyaltyReferralEarned},
 		{"treasury.payroll.disbursed", "notif-payroll-disbursed", s.handlePayrollDisbursed},
 		{"erp.email.requested", "notif-erp-email-req", s.handleERPEmailRequested},
 		{"erp.notification.requested", "notif-erp-notif-req", s.handleERPNotificationRequested},
@@ -358,5 +361,104 @@ func (s *Subscriber) handlePayrollDisbursed(msg *nats.Msg) {
 		zap.String("tenant_id", p.TenantID),
 		zap.String("staff_name", p.StaffName),
 	)
+	_ = msg.Ack()
+}
+
+// handleLoyaltyPointsEarned sends a "you earned X pts" SMS to the customer (pos.loyalty.points.earned).
+func (s *Subscriber) handleLoyaltyPointsEarned(msg *nats.Msg) {
+	var e struct {
+		TenantID string `json:"tenant_id"`
+		Payload  struct {
+			TenantID      string `json:"tenant_id"`
+			CustomerName  string `json:"customer_name"`
+			CustomerPhone string `json:"customer_phone"`
+			PointsEarned  int    `json:"points_earned"`
+			BalanceAfter  int    `json:"balance_after"`
+		} `json:"payload"`
+	}
+	if err := json.Unmarshal(msg.Data, &e); err != nil {
+		s.log.Warn("loyalty_points_earned: unmarshal failed", zap.Error(err))
+		_ = msg.Nak()
+		return
+	}
+	tid := e.TenantID
+	if tid == "" {
+		tid = e.Payload.TenantID
+	}
+	if tid == "" || e.Payload.CustomerPhone == "" {
+		_ = msg.Ack()
+		return
+	}
+	s.publish(tid, "sms", "pos/loyalty_points_earned", messaging.TargetCustomer, []string{e.Payload.CustomerPhone}, map[string]any{
+		"customer_name": e.Payload.CustomerName,
+		"points_earned": e.Payload.PointsEarned,
+		"balance_after": e.Payload.BalanceAfter,
+	})
+	_ = msg.Ack()
+}
+
+// handleLoyaltyTierUpgraded sends a tier-upgrade congratulations SMS (pos.loyalty.tier_upgraded).
+func (s *Subscriber) handleLoyaltyTierUpgraded(msg *nats.Msg) {
+	var e struct {
+		TenantID string `json:"tenant_id"`
+		Payload  struct {
+			TenantID       string `json:"tenant_id"`
+			CustomerName   string `json:"customer_name"`
+			CustomerPhone  string `json:"customer_phone"`
+			NewTier        string `json:"new_tier"`
+			LifetimePoints int    `json:"lifetime_points"`
+		} `json:"payload"`
+	}
+	if err := json.Unmarshal(msg.Data, &e); err != nil {
+		s.log.Warn("loyalty_tier_upgraded: unmarshal failed", zap.Error(err))
+		_ = msg.Nak()
+		return
+	}
+	tid := e.TenantID
+	if tid == "" {
+		tid = e.Payload.TenantID
+	}
+	if tid == "" || e.Payload.CustomerPhone == "" {
+		_ = msg.Ack()
+		return
+	}
+	s.publish(tid, "sms", "pos/loyalty_tier_upgraded", messaging.TargetCustomer, []string{e.Payload.CustomerPhone}, map[string]any{
+		"customer_name":   e.Payload.CustomerName,
+		"new_tier":        e.Payload.NewTier,
+		"lifetime_points": e.Payload.LifetimePoints,
+	})
+	_ = msg.Ack()
+}
+
+// handleLoyaltyReferralEarned sends a "you earned referral bonus" SMS to the referrer (pos.loyalty.referral_earned).
+func (s *Subscriber) handleLoyaltyReferralEarned(msg *nats.Msg) {
+	var e struct {
+		TenantID string `json:"tenant_id"`
+		Payload  struct {
+			TenantID      string `json:"tenant_id"`
+			ReferrerName  string `json:"referrer_name"`
+			ReferrerPhone string `json:"referrer_phone"`
+			BonusPoints   int    `json:"bonus_points"`
+			BalanceAfter  int    `json:"balance_after"`
+		} `json:"payload"`
+	}
+	if err := json.Unmarshal(msg.Data, &e); err != nil {
+		s.log.Warn("loyalty_referral_earned: unmarshal failed", zap.Error(err))
+		_ = msg.Nak()
+		return
+	}
+	tid := e.TenantID
+	if tid == "" {
+		tid = e.Payload.TenantID
+	}
+	if tid == "" || e.Payload.ReferrerPhone == "" {
+		_ = msg.Ack()
+		return
+	}
+	s.publish(tid, "sms", "pos/loyalty_referral_earned", messaging.TargetCustomer, []string{e.Payload.ReferrerPhone}, map[string]any{
+		"customer_name": e.Payload.ReferrerName,
+		"bonus_points":  e.Payload.BonusPoints,
+		"balance_after": e.Payload.BalanceAfter,
+	})
 	_ = msg.Ack()
 }
