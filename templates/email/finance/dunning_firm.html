@@ -1,0 +1,10 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <p>Our records show invoice {{ .invoice_number }} for {{ .amount }} is now
+     {{ .days_overdue }} days overdue (due {{ .due_date }}).</p>
+  <p>Please arrange payment at your earliest convenience to keep your account in good standing:</p>
+  <p>
+    <a class="button" href="{{ .payment_link }}">Pay Now</a>
+  </p>
+  <p class="muted">If you've already paid, please disregard this notice.</p>
+{{ end }}

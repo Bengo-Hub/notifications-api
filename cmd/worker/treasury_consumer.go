@@ -363,6 +363,11 @@ func startTreasuryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStream
 		// tier isn't mistaken for a duplicate of the first.
 		if eventType == "dunning.reminder_sent" {
 			msg.IdempotencyKey = fmt.Sprintf("treasury-dunning-%s-%v", aggregateID, payload["reminder_number"])
+			// Escalate the wording by tier (gentle/firm/urgent) using the schedule's template name;
+			// any other/empty value keeps the default invoice_overdue template.
+			if t, _ := payload["template"].(string); t == "gentle" || t == "firm" || t == "urgent" {
+				msg.TemplateID = "finance/dunning_" + t
+			}
 		}
 
 		if _, err := messaging.Publish(ctx, nc, cfg.Events, msg); err != nil {
