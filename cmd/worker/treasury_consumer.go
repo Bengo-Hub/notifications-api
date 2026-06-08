@@ -94,6 +94,27 @@ var treasuryMappings = map[string]treasuryNotificationMapping{
 			}
 		},
 	},
+	// AR dunning: treasury's dunning worker emits one reminder per invoice per overdue tier.
+	// Reuses the existing invoice_overdue template (same fields). Recipient is the invoice's
+	// customer_email (carried in the event payload).
+	"dunning.reminder_sent": {
+		TemplateID:   "finance/invoice_overdue",
+		EmailSubject: "Payment reminder: invoice overdue",
+		DataBuilder: func(payload map[string]any, tenantWebsite string) map[string]any {
+			name, _ := payload["customer_name"].(string)
+			if name == "" {
+				name = "Customer"
+			}
+			return map[string]any{
+				"name":           name,
+				"invoice_number": payload["invoice_number"],
+				"amount":         payload["amount"],
+				"due_date":       payload["due_date"],
+				"days_overdue":   payload["days_overdue"],
+				"payment_link":   fmt.Sprintf("%s/invoices/%s", serviceURL("NOTIFICATIONS_TREASURY_APP_URL", tenantWebsite), payload["invoice_id"]),
+			}
+		},
+	},
 }
 
 // formatEventDate renders an RFC3339 timestamp (as emitted by Go's time.Time JSON
@@ -335,6 +356,12 @@ func startTreasuryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStream
 			RequestID:      uuid.New().String(),
 			IdempotencyKey: fmt.Sprintf("treasury-%s-%s", eventType, aggregateID),
 			QueuedAt:       time.Now(),
+		}
+
+		// Dunning fires up to 3 tiers for the same invoice — key each tier independently so a later
+		// tier isn't mistaken for a duplicate of the first.
+		if eventType == "dunning.reminder_sent" {
+			msg.IdempotencyKey = fmt.Sprintf("treasury-dunning-%s-%v", aggregateID, payload["reminder_number"])
 		}
 
 		if _, err := messaging.Publish(ctx, nc, cfg.Events, msg); err != nil {
