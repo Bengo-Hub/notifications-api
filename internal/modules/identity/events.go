@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	eventslib "github.com/Bengo-Hub/shared-events"
 	"github.com/google/uuid"
 	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
@@ -297,7 +298,7 @@ func (h *EventHandler) HandleAuthTenantUpdated(ctx context.Context, event *AuthT
 
 // SubscribeToAuthEvents subscribes to auth-service events via NATS.
 func (h *EventHandler) SubscribeToAuthEvents(nc *nats.Conn) error {
-	_, err := nc.Subscribe("auth.user.created", func(msg *nats.Msg) {
+	_, err := eventslib.QueueSubscribe(h.logger, nc, "auth.user.created", "notif-identity-sync", func(msg *nats.Msg) {
 		var event AuthUserCreatedEvent
 		if err := json.Unmarshal(msg.Data, &event); err != nil {
 			h.logger.Error("Failed to unmarshal auth.user.created event", zap.Error(err))
@@ -314,7 +315,7 @@ func (h *EventHandler) SubscribeToAuthEvents(nc *nats.Conn) error {
 		return fmt.Errorf("identity: subscribe to auth.user.created: %w", err)
 	}
 
-	_, err = nc.Subscribe("auth.user.updated", func(msg *nats.Msg) {
+	_, err = eventslib.QueueSubscribe(h.logger, nc, "auth.user.updated", "notif-identity-sync", func(msg *nats.Msg) {
 		var event AuthUserUpdatedEvent
 		if err := json.Unmarshal(msg.Data, &event); err != nil {
 			h.logger.Error("Failed to unmarshal auth.user.updated event", zap.Error(err))
@@ -331,7 +332,7 @@ func (h *EventHandler) SubscribeToAuthEvents(nc *nats.Conn) error {
 		return fmt.Errorf("identity: subscribe to auth.user.updated: %w", err)
 	}
 
-	_, err = nc.Subscribe("auth.user.deactivated", func(msg *nats.Msg) {
+	_, err = eventslib.QueueSubscribe(h.logger, nc, "auth.user.deactivated", "notif-identity-sync", func(msg *nats.Msg) {
 		var event AuthUserDeactivatedEvent
 		if err := json.Unmarshal(msg.Data, &event); err != nil {
 			h.logger.Error("Failed to unmarshal auth.user.deactivated event", zap.Error(err))
@@ -348,7 +349,7 @@ func (h *EventHandler) SubscribeToAuthEvents(nc *nats.Conn) error {
 		return fmt.Errorf("identity: subscribe to auth.user.deactivated: %w", err)
 	}
 
-	_, err = nc.Subscribe("auth.tenant.created", func(msg *nats.Msg) {
+	_, err = eventslib.QueueSubscribe(h.logger, nc, "auth.tenant.created", "notif-identity-sync", func(msg *nats.Msg) {
 		var event AuthTenantCreatedEvent
 		if err := json.Unmarshal(msg.Data, &event); err != nil {
 			h.logger.Error("Failed to unmarshal auth.tenant.created event", zap.Error(err))
@@ -365,7 +366,7 @@ func (h *EventHandler) SubscribeToAuthEvents(nc *nats.Conn) error {
 		return fmt.Errorf("identity: subscribe to auth.tenant.created: %w", err)
 	}
 
-	_, err = nc.Subscribe("auth.tenant.updated", func(msg *nats.Msg) {
+	_, err = eventslib.QueueSubscribe(h.logger, nc, "auth.tenant.updated", "notif-identity-sync", func(msg *nats.Msg) {
 		var event AuthTenantUpdatedEvent
 		if err := json.Unmarshal(msg.Data, &event); err != nil {
 			h.logger.Error("Failed to unmarshal auth.tenant.updated event", zap.Error(err))
