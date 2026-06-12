@@ -10,8 +10,8 @@ github.com/Bengo-Hub/httpware v0.5.0 h1:VHyPDJeJgkPH0hpdKyZnvgiVJzWYyp/+okLSjthH
 github.com/Bengo-Hub/httpware v0.5.0/go.mod h1:TZYP+f/fbbqw3xXGpcvVNZL5Ah1WGCasTcbQynJtI4o=
 github.com/Bengo-Hub/pagination v0.3.0 h1:cvFHj+A5fMD5B+L89Epw/SfVxIPAzL82JViXAYlxjEM=
 github.com/Bengo-Hub/pagination v0.3.0/go.mod h1:qXxXpX45Shf6qplVtxqEeOMeKiSr/W4nT4nMLQqF4/g=
-github.com/Bengo-Hub/shared-events v0.4.3 h1:9ZwQtUe7rmoKvcBLjaVMAlNqmXXO+1YSO1x6mUV40yg=
-github.com/Bengo-Hub/shared-events v0.4.3/go.mod h1:wUlYLn/wCTM+MXPGUvW3eDzj5jcp026SIq8gT2dRwY0=
+github.com/Bengo-Hub/shared-events v0.5.0 h1:efE7qTNbKpe2hT8EN2VF1a4bd6YoV886xWyVMQuFThs=
+github.com/Bengo-Hub/shared-events v0.5.0/go.mod h1:wUlYLn/wCTM+MXPGUvW3eDzj5jcp026SIq8gT2dRwY0=
 github.com/Bengo-Hub/shared-service-client v0.3.0 h1:8A+sxSxJu71Uz2rIRasJbzeu0NG2rqXAWLgh86272ww=
 github.com/Bengo-Hub/shared-service-client v0.3.0/go.mod h1:n5segEtBfcG1/2YM+fssZ/dxKk4zjZ9+GmexzAe+G9g=
 github.com/DATA-DOG/go-sqlmock v1.5.0 h1:Shsta01QNfFxHCfpW6YH2STWB0MudeXXEWMr20OEh60=

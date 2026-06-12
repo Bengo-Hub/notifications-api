@@ -10,6 +10,7 @@ import (
 	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
 
+	eventslib "github.com/Bengo-Hub/shared-events"
 	"github.com/bengobox/notifications-api/internal/config"
 	"github.com/bengobox/notifications-api/internal/messaging"
 )
@@ -138,7 +139,7 @@ func startAuthNotificationConsumer(ctx context.Context, nc *nats.Conn, cfg *conf
 	}
 
 	subscribeWithRetry(ctx, nil, logg, "auth notification consumer", true, func() (*nats.Subscription, error) {
-		return nc.Subscribe("auth.user.created", welcomeHandler)
+		return eventslib.QueueSubscribe(logg, nc, "auth.user.created", "notif-welcome", welcomeHandler)
 	})
 
 	// Password reset email on reset request
@@ -209,7 +210,7 @@ func startAuthNotificationConsumer(ctx context.Context, nc *nats.Conn, cfg *conf
 	}
 
 	subscribeWithRetry(ctx, nil, logg, "auth password reset consumer", true, func() (*nats.Subscription, error) {
-		return nc.Subscribe("auth.user.password_reset.requested", resetHandler)
+		return eventslib.QueueSubscribe(logg, nc, "auth.user.password_reset.requested", "notif-pwreset", resetHandler)
 	})
 
 	// OTP email — dispatched when user requests email verification before a helpdesk ticket
@@ -271,6 +272,6 @@ func startAuthNotificationConsumer(ctx context.Context, nc *nats.Conn, cfg *conf
 	}
 
 	subscribeWithRetry(ctx, nil, logg, "auth otp consumer", true, func() (*nats.Subscription, error) {
-		return nc.Subscribe("auth.user.otp.requested", otpHandler)
+		return eventslib.QueueSubscribe(logg, nc, "auth.user.otp.requested", "notif-otp", otpHandler)
 	})
 }
