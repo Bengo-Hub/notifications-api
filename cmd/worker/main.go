@@ -127,9 +127,9 @@ func main() {
 	}
 	defer client.Close()
 
-	if err := client.Schema.Create(ctx); err != nil {
-		logg.Fatal("failed to create schema", zap.Error(err))
-	}
+	// NOTE: schema DDL is owned by the migrate binary (cmd/migrate, direct connection) run by the
+	// entrypoint — NOT here. Running Schema.Create through the runtime (pgbouncer transaction-pooled)
+	// connection is unsafe + redundant, so the worker no longer auto-migrates.
 
 	// Initialize Treasury Client for top-up monitoring
 	treasuryCfg := serviceclient.DefaultConfig(cfg.Services.TreasuryAPI, "treasury-api", logg)
