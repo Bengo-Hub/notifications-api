@@ -5,6 +5,7 @@ package ent
 import (
 	"time"
 
+	"github.com/bengobox/notifications-api/internal/ent/backup"
 	"github.com/bengobox/notifications-api/internal/ent/credittransaction"
 	"github.com/bengobox/notifications-api/internal/ent/deliverylog"
 	"github.com/bengobox/notifications-api/internal/ent/devicetoken"
@@ -32,6 +33,32 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	backupFields := schema.Backup{}.Fields()
+	_ = backupFields
+	// backupDescName is the schema descriptor for name field.
+	backupDescName := backupFields[2].Descriptor()
+	// backup.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	backup.NameValidator = backupDescName.Validators[0].(func(string) error)
+	// backupDescPath is the schema descriptor for path field.
+	backupDescPath := backupFields[3].Descriptor()
+	// backup.PathValidator is a validator for the "path" field. It is called by the builders before save.
+	backup.PathValidator = backupDescPath.Validators[0].(func(string) error)
+	// backupDescSizeBytes is the schema descriptor for size_bytes field.
+	backupDescSizeBytes := backupFields[4].Descriptor()
+	// backup.DefaultSizeBytes holds the default value on creation for the size_bytes field.
+	backup.DefaultSizeBytes = backupDescSizeBytes.Default.(int64)
+	// backupDescStatus is the schema descriptor for status field.
+	backupDescStatus := backupFields[5].Descriptor()
+	// backup.DefaultStatus holds the default value on creation for the status field.
+	backup.DefaultStatus = backupDescStatus.Default.(string)
+	// backupDescCreatedAt is the schema descriptor for created_at field.
+	backupDescCreatedAt := backupFields[6].Descriptor()
+	// backup.DefaultCreatedAt holds the default value on creation for the created_at field.
+	backup.DefaultCreatedAt = backupDescCreatedAt.Default.(func() time.Time)
+	// backupDescID is the schema descriptor for id field.
+	backupDescID := backupFields[0].Descriptor()
+	// backup.DefaultID holds the default value on creation for the id field.
+	backup.DefaultID = backupDescID.Default.(func() uuid.UUID)
 	credittransactionFields := schema.CreditTransaction{}.Fields()
 	_ = credittransactionFields
 	// credittransactionDescProviderCost is the schema descriptor for provider_cost field.

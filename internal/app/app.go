@@ -28,6 +28,7 @@ import (
 	identityhandler "github.com/bengobox/notifications-api/internal/http/handlers/identity"
 	router "github.com/bengobox/notifications-api/internal/http/router"
 	sharedcache "github.com/Bengo-Hub/cache"
+	backupmod "github.com/bengobox/notifications-api/internal/modules/backup"
 	"github.com/bengobox/notifications-api/internal/modules/billing"
 	eventsmod "github.com/bengobox/notifications-api/internal/modules/events"
 	"github.com/bengobox/notifications-api/internal/modules/identity"
@@ -92,6 +93,14 @@ func New(ctx context.Context) (*App, error) {
 	if err := entdb.RunMigrations(ctx, entClient); err != nil {
 		log.Warn("ent migration failed", zap.Error(err))
 	}
+
+	// Dedicated sql.DB for the backup module (raw tenant-row dump + advisory lock).
+	backupSQLDB, err := sql.Open("pgx", cfg.Postgres.URL)
+	if err != nil {
+		return nil, fmt.Errorf("backup sql.DB init: %w", err)
+	}
+	backupSQLDB.SetMaxOpenConns(2)
+	backupSQLDB.SetMaxIdleConns(1)
 
 	// Initialize Treasury client
 	treasuryCfg := serviceclient.DefaultConfig(cfg.Services.TreasuryAPI, "treasury-api", log.Named("treasury.client"))
@@ -248,7 +257,16 @@ func New(ctx context.Context) (*App, error) {
 	// Initialize service config handler for platform admin + tenant settings
 	serviceConfigHandler := handlers.NewServiceConfigHandler(entClient, log)
 
-	httpRouter := router.New(log, healthHandler, notificationHandler, templateHandler, platformProviders, tenantProviders, analyticsHandler, billingHandler, platformBilling, settingsHandler, rbacHandler, authMeHandler, deviceTokenHandler, cfg.Security.APIKey, authMiddleware, authenticator, cfg.HTTP.AllowedOrigins, tenantSyncer, rateLimiter, serviceConfigHandler, whatsappSubsHandler)
+	// Tenant-scoped backups + daily 02:00 auto-backup scheduler + retention churn.
+	backupSvc := backupmod.NewService(backupSQLDB, entClient, cfg.Backup.Dir, log)
+	backupHandler := handlers.NewBackupHandler(log, backupSvc, cfg.Backup.RetentionDays)
+	backupmod.NewScheduler(backupSvc, backupmod.SchedulerConfig{
+		Enabled:       cfg.Backup.ScheduleEnabled,
+		Hour:          cfg.Backup.ScheduleHour,
+		RetentionDays: cfg.Backup.RetentionDays,
+	}, log).Start(ctx)
+
+	httpRouter := router.New(log, healthHandler, notificationHandler, templateHandler, platformProviders, tenantProviders, analyticsHandler, billingHandler, platformBilling, settingsHandler, rbacHandler, authMeHandler, deviceTokenHandler, cfg.Security.APIKey, authMiddleware, authenticator, cfg.HTTP.AllowedOrigins, tenantSyncer, rateLimiter, serviceConfigHandler, whatsappSubsHandler, backupHandler)
 
 	httpServer := &http.Server{
 		Addr:              fmt.Sprintf("%s:%d", cfg.HTTP.Host, cfg.HTTP.Port),
