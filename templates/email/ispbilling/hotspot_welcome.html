@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #222;">
+  <h2>Welcome to {{ or .company_name "ISP" }}</h2>
+  <p>Hi {{ .full_name }},</p>
+  <p>Your hotspot account has been created. Use the credentials below to get online:</p>
+  <ul>
+    <li><strong>Username:</strong> {{ .username }}</li>
+    <li><strong>Password:</strong> {{ .password }}</li>
+    <li><strong>Package:</strong> {{ .package_name }}</li>
+    <li><strong>Valid for:</strong> {{ .validity_days }} day(s)</li>
+  </ul>
+  {{ if .portal_url }}<p><a href="{{ .portal_url }}">Open the customer portal</a></p>{{ end }}
+  <p>Need help? Contact us{{ if .support_email }} at {{ .support_email }}{{ end }}{{ if .support_phone }} / {{ .support_phone }}{{ end }}.</p>
+  <p>&mdash; {{ or .company_name "ISP" }}</p>
+</body>
+</html>

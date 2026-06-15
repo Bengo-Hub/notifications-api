@@ -1,0 +1,7 @@
+*{{ or .company_name "ISP" }}*
+Payment received, thank you {{ .full_name }}!
+
+Amount: {{ or .currency "KES" }} {{ .payment_amount }}
+Receipt: {{ .receipt_number }}
+Package: {{ .package_name }}
+Active until: {{ .expiry_date }}

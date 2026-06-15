@@ -36,12 +36,29 @@ func NewManager(db *pgxpool.Pool, dbCfg config.PostgresConfig, cfg config.Provid
 }
 
 func (m *Manager) GetWhatsAppProvider(ctx context.Context, tenantID string, preferred string) (WhatsAppProvider, error) {
-	order := []string{"apiwap"}
+	// meta_cloud (official Meta WhatsApp Cloud API) is the preferred provider —
+	// no BSP per-message markup, Meta-hosted reliability. apiwap is kept as fallback.
+	order := []string{"meta_cloud", "apiwap"}
 	if preferred != "" {
 		order = append([]string{strings.ToLower(preferred)}, order...)
 	}
 	for _, name := range dedup(order) {
 		switch name {
+		case "meta_cloud":
+			s, _ := pcfg.LoadTenantProviderSettings(ctx, m.dbCfg, tenantID, m.env, "whatsapp", "meta_cloud", m.decryptionKey)
+			accessToken := s["access_token"]
+			phoneNumberID := s["phone_number_id"]
+			apiVersion := s["api_version"]
+
+			if accessToken == "" || phoneNumberID == "" {
+				continue // not configured for this tenant/platform — try fallback
+			}
+
+			return whatsapp.NewMetaCloudProvider(whatsapp.MetaCloudConfig{
+				AccessToken:   accessToken,
+				PhoneNumberID: phoneNumberID,
+				APIVersion:    apiVersion,
+			}), nil
 		case "apiwap":
 			s, _ := pcfg.LoadTenantProviderSettings(ctx, m.dbCfg, tenantID, m.env, "whatsapp", "apiwap", m.decryptionKey)
 			apiKey := s["api_key"]
@@ -149,7 +166,9 @@ func (m *Manager) GetEmailProvider(ctx context.Context, tenantID string, preferr
 }
 
 func (m *Manager) GetSMSProvider(ctx context.Context, tenantID string, preferred string) (SMSProvider, error) {
-	order := []string{"twilio", "africastalking", "vonage", "plivo"}
+	// Africa's Talking is the DEFAULT SMS provider (local carrier relationships,
+	// better deliverability/cost for the Kenya/Africa market). Twilio is the fallback.
+	order := []string{"africastalking", "twilio", "vonage", "plivo"}
 	if preferred != "" {
 		order = append([]string{strings.ToLower(preferred)}, order...)
 	}

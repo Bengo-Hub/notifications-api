@@ -1,0 +1,7 @@
+*{{ or .company_name "ISP" }}*
+Welcome {{ .full_name }}! Your PPPoE connection is active.
+
+Username: {{ .username }}
+Password: {{ .password }}
+Package: {{ .package_name }} ({{ .download_speed }}/{{ .upload_speed }} Mbps)
+{{ if .support_phone }}Support: {{ .support_phone }}{{ end }}

@@ -1,0 +1,1 @@
+{{ or .company_name "ISP" }}: Hi {{ .full_name }}, your {{ .package_name }} subscription expires on {{ .expiry_date }} ({{ .days_remaining }} day(s) left). Renew via Paybill {{ or .paybill "" }} Acc {{ or .account_number "" }} to stay connected.

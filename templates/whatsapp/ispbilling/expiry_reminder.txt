@@ -1,0 +1,6 @@
+*{{ or .company_name "ISP" }}*
+Hi {{ .full_name }}, your *{{ .package_name }}* subscription expires on {{ .expiry_date }} ({{ .days_remaining }} day(s) left).
+
+Renew to stay connected:
+{{ if .paybill }}Paybill: {{ .paybill }}{{ end }}
+{{ if .account_number }}Account: {{ .account_number }}{{ end }}

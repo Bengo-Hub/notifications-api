@@ -1,0 +1,8 @@
+*{{ or .company_name "ISP" }}*
+Welcome {{ .full_name }}! Your hotspot account is ready.
+
+Login: {{ .username }}
+Password: {{ .password }}
+Package: {{ .package_name }}
+Valid: {{ .validity_days }} day(s)
+{{ if .portal_url }}Portal: {{ .portal_url }}{{ end }}
