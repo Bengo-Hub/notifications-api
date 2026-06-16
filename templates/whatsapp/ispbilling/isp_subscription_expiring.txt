@@ -1,0 +1,7 @@
+*{{ or .company_name "ISP" }}*
+Hi {{ .customer_name }}, your {{ .package_name }} is about to expire.
+
+{{ if .expiry_at }}Expires: {{ .expiry_at }}{{ end }}
+{{ if .days_remaining }}{{ .days_remaining }} day(s) remaining{{ end }}
+
+Renew now to stay connected.

@@ -1,0 +1,1 @@
+{{ or .brand_name "Notifications" }}: Your SMS credit balance is low ({{ .balance }} remaining). Top up to avoid interruption to customer notifications.

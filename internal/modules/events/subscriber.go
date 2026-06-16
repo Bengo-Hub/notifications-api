@@ -54,6 +54,7 @@ func (s *Subscriber) Start(ctx context.Context) error {
 		"erp":        {"erp.>"},
 		"logistics":  {"logistics.>"},
 		"marketflow": {"marketflow.>"},
+		"isp":        {"isp.>"},
 	}
 	for stream, subjects := range streams {
 		if _, err := js.StreamInfo(stream); err != nil {
@@ -83,6 +84,10 @@ func (s *Subscriber) Start(ctx context.Context) error {
 		{"erp.email.requested", "notif-erp-email-req", s.handleERPEmailRequested},
 		{"erp.notification.requested", "notif-erp-notif-req", s.handleERPNotificationRequested},
 		{"marketflow.campaign.sms_queued", "notif-marketflow-campaign-sms", s.handleMarketflowCampaignSMS},
+		{"isp.subscriber.created", "notif-isp-subscriber-created", s.handleISPSubscriberCreated},
+		{"isp.payment.received", "notif-isp-payment-received", s.handleISPPaymentReceived},
+		{"isp.subscription.renewed", "notif-isp-subscription-renewed", s.handleISPSubscriptionRenewed},
+		{"isp.subscription.expiring", "notif-isp-subscription-expiring", s.handleISPSubscriptionExpiring},
 	}
 
 	for _, s2 := range subs {
@@ -491,5 +496,186 @@ func (s *Subscriber) handleMarketflowCampaignSMS(msg *nats.Msg) {
 	s.publish(tid, "sms", "marketflow/campaign_sms", messaging.TargetCustomer, []string{e.Payload.Phone}, map[string]any{
 		"message": e.Payload.Message,
 	})
+	_ = msg.Ack()
+}
+
+// handleISPSubscriberCreated sends new ISP subscribers their connection credentials over SMS (and
+// WhatsApp when a phone is present — the delivery-path gate skips WhatsApp if the tenant has no
+// active subscription). isp.subscriber.created. tenant_id is on the envelope; subscriber fields are
+// in the payload (see isp-billing subscriber.created publisher — field names listed in PR notes).
+func (s *Subscriber) handleISPSubscriberCreated(msg *nats.Msg) {
+	var e struct {
+		TenantID string `json:"tenant_id"`
+		Payload  struct {
+			TenantID     string `json:"tenant_id"`
+			CustomerName string `json:"customer_name"`
+			Phone        string `json:"phone"`
+			Username     string `json:"username"`
+			Password     string `json:"password"`
+			PackageName  string `json:"package_name"`
+			PackageType  string `json:"package_type"`
+			ExpiryAt     string `json:"expiry_at"`
+		} `json:"payload"`
+	}
+	if err := json.Unmarshal(msg.Data, &e); err != nil {
+		s.log.Warn("isp_subscriber_created: unmarshal failed", zap.Error(err))
+		_ = msg.Nak()
+		return
+	}
+	tid := e.TenantID
+	if tid == "" {
+		tid = e.Payload.TenantID
+	}
+	if tid == "" || e.Payload.Phone == "" {
+		s.log.Info("isp_subscriber_created: skipping (missing tenant/phone)", zap.String("username", e.Payload.Username))
+		_ = msg.Ack()
+		return
+	}
+	data := map[string]any{
+		"customer_name": e.Payload.CustomerName,
+		"username":      e.Payload.Username,
+		"password":      e.Payload.Password,
+		"package_name":  e.Payload.PackageName,
+		"package_type":  e.Payload.PackageType,
+		"expiry_at":     e.Payload.ExpiryAt,
+	}
+	s.publish(tid, "sms", "ispbilling/subscription_credentials", messaging.TargetCustomer, []string{e.Payload.Phone}, data)
+	// Also attempt WhatsApp — the delivery-path gate skips it if the tenant has no active WA subscription.
+	s.publish(tid, "whatsapp", "ispbilling/subscription_credentials", messaging.TargetCustomer, []string{e.Payload.Phone}, data)
+	s.log.Info("isp_subscriber_created notifications dispatched", zap.String("tenant_id", tid), zap.String("username", e.Payload.Username))
+	_ = msg.Ack()
+}
+
+// handleISPPaymentReceived notifies the customer (SMS + email) that their payment was received.
+// isp.payment.received.
+func (s *Subscriber) handleISPPaymentReceived(msg *nats.Msg) {
+	var e struct {
+		TenantID string `json:"tenant_id"`
+		Payload  struct {
+			TenantID      string  `json:"tenant_id"`
+			CustomerName  string  `json:"customer_name"`
+			Phone         string  `json:"phone"`
+			Email         string  `json:"email"`
+			Amount        float64 `json:"amount"`
+			Currency      string  `json:"currency"`
+			PackageName   string  `json:"package_name"`
+			ExpiryAt      string  `json:"expiry_at"`
+		} `json:"payload"`
+	}
+	if err := json.Unmarshal(msg.Data, &e); err != nil {
+		s.log.Warn("isp_payment_received: unmarshal failed", zap.Error(err))
+		_ = msg.Nak()
+		return
+	}
+	tid := e.TenantID
+	if tid == "" {
+		tid = e.Payload.TenantID
+	}
+	if tid == "" {
+		_ = msg.Ack()
+		return
+	}
+	data := map[string]any{
+		"customer_name": e.Payload.CustomerName,
+		"amount":        e.Payload.Amount,
+		"currency":      e.Payload.Currency,
+		"package_name":  e.Payload.PackageName,
+		"expiry_at":     e.Payload.ExpiryAt,
+	}
+	if e.Payload.Phone != "" {
+		s.publish(tid, "sms", "ispbilling/payment_received", messaging.TargetCustomer, []string{e.Payload.Phone}, data)
+	}
+	if e.Payload.Email != "" {
+		s.publish(tid, "email", "ispbilling/payment_received", messaging.TargetCustomer, []string{e.Payload.Email}, data)
+	}
+	if e.Payload.Phone == "" && e.Payload.Email == "" {
+		s.log.Info("isp_payment_received: no phone/email to notify", zap.String("tenant_id", tid))
+	}
+	_ = msg.Ack()
+}
+
+// handleISPSubscriptionRenewed notifies the customer their subscription was renewed (SMS + email).
+// isp.subscription.renewed.
+func (s *Subscriber) handleISPSubscriptionRenewed(msg *nats.Msg) {
+	var e struct {
+		TenantID string `json:"tenant_id"`
+		Payload  struct {
+			TenantID     string `json:"tenant_id"`
+			CustomerName string `json:"customer_name"`
+			Phone        string `json:"phone"`
+			Email        string `json:"email"`
+			PackageName  string `json:"package_name"`
+			PackageType  string `json:"package_type"`
+			ExpiryAt     string `json:"expiry_at"`
+		} `json:"payload"`
+	}
+	if err := json.Unmarshal(msg.Data, &e); err != nil {
+		s.log.Warn("isp_subscription_renewed: unmarshal failed", zap.Error(err))
+		_ = msg.Nak()
+		return
+	}
+	tid := e.TenantID
+	if tid == "" {
+		tid = e.Payload.TenantID
+	}
+	if tid == "" {
+		_ = msg.Ack()
+		return
+	}
+	data := map[string]any{
+		"customer_name": e.Payload.CustomerName,
+		"package_name":  e.Payload.PackageName,
+		"package_type":  e.Payload.PackageType,
+		"expiry_at":     e.Payload.ExpiryAt,
+	}
+	if e.Payload.Phone != "" {
+		s.publish(tid, "sms", "ispbilling/subscription_renewal", messaging.TargetCustomer, []string{e.Payload.Phone}, data)
+	}
+	if e.Payload.Email != "" {
+		s.publish(tid, "email", "ispbilling/subscription_renewal", messaging.TargetCustomer, []string{e.Payload.Email}, data)
+	}
+	_ = msg.Ack()
+}
+
+// handleISPSubscriptionExpiring warns the customer that their subscription is about to expire
+// (SMS + email). isp.subscription.expiring.
+func (s *Subscriber) handleISPSubscriptionExpiring(msg *nats.Msg) {
+	var e struct {
+		TenantID string `json:"tenant_id"`
+		Payload  struct {
+			TenantID      string `json:"tenant_id"`
+			CustomerName  string `json:"customer_name"`
+			Phone         string `json:"phone"`
+			Email         string `json:"email"`
+			PackageName   string `json:"package_name"`
+			ExpiryAt      string `json:"expiry_at"`
+			DaysRemaining int    `json:"days_remaining"`
+		} `json:"payload"`
+	}
+	if err := json.Unmarshal(msg.Data, &e); err != nil {
+		s.log.Warn("isp_subscription_expiring: unmarshal failed", zap.Error(err))
+		_ = msg.Nak()
+		return
+	}
+	tid := e.TenantID
+	if tid == "" {
+		tid = e.Payload.TenantID
+	}
+	if tid == "" {
+		_ = msg.Ack()
+		return
+	}
+	data := map[string]any{
+		"customer_name":  e.Payload.CustomerName,
+		"package_name":   e.Payload.PackageName,
+		"expiry_at":      e.Payload.ExpiryAt,
+		"days_remaining": e.Payload.DaysRemaining,
+	}
+	if e.Payload.Phone != "" {
+		s.publish(tid, "sms", "ispbilling/isp_subscription_expiring", messaging.TargetCustomer, []string{e.Payload.Phone}, data)
+	}
+	if e.Payload.Email != "" {
+		s.publish(tid, "email", "ispbilling/isp_subscription_expiring", messaging.TargetCustomer, []string{e.Payload.Email}, data)
+	}
 	_ = msg.Ack()
 }

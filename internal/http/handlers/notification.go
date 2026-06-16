@@ -238,7 +238,10 @@ func (h *NotificationHandler) Enqueue(w http.ResponseWriter, r *http.Request) {
 	if req.Channel == "whatsapp" {
 		if tid, err := uuid.Parse(tenant); err == nil {
 			if h.whatsappSubSvc != nil {
-				if quotaErr := h.whatsappSubSvc.CheckQuota(r.Context(), tid); quotaErr != nil {
+				// Read-only pre-check for the synchronous 402 response. The actual quota counter
+				// increment happens once on the delivery path (worker CheckQuota) — using the
+				// mutating CheckQuota here too would double-count this single message.
+				if quotaErr := h.whatsappSubSvc.VerifyQuota(r.Context(), tid); quotaErr != nil {
 					w.Header().Set("Content-Type", "application/json")
 					w.WriteHeader(http.StatusPaymentRequired)
 					errCode := "no_active_subscription"

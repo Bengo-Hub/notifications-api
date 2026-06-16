@@ -187,7 +187,7 @@ func main() {
 		}
 
 		// Deliver via provider
-		deliverErr := deliver(ctx, cfg, pm, emailGuardian, billingSvc, tr, &msg, rendered, logg)
+		deliverErr := deliver(ctx, cfg, pm, emailGuardian, billingSvc, whatsappSubsSvc, tr, &msg, rendered, logg)
 		if deliverErr != nil {
 			logg.Warn("delivery failed",
 				zap.String("channel", msg.Channel),
@@ -389,7 +389,7 @@ func renderMessage(ctx context.Context, cfg *config.Config, tpl *templates.Loade
 }
 
 // deliver sends the rendered message via the appropriate provider.
-func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg *emailGuard, billingSvc *billing.Service, tr *tenantResolver, msg *messaging.Message, rendered string, logg *zap.Logger) error {
+func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg *emailGuard, billingSvc *billing.Service, whatsappSubsSvc *billing.WhatsAppSubscriptionService, tr *tenantResolver, msg *messaging.Message, rendered string, logg *zap.Logger) error {
 	channel := strings.ToLower(msg.Channel)
 	preferred := ""
 	if p, ok := msg.Metadata["provider"].(string); ok {
@@ -485,19 +485,59 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 		return nil
 
 	case "sms":
-		// Deduct credits based on segments and recipient count
-		if err := billingSvc.DeductSMSCredits(ctx, tenantID, rendered, len(msg.To), "SMS Delivery"); err != nil {
-			return fmt.Errorf("billing: %w", err)
+		// Pre-send credit gate (applies to BOTH HTTP-enqueued and event-sourced sends).
+		// FAIL-CLOSED: never send SMS unless we can positively confirm the tenant has
+		// credit. A missing credit account returns balance 0 (-> skip); a balance-check
+		// error also skips (we must not send uncharged). Skip+ack rather than error so the
+		// single-attempt worker doesn't noisily dead-letter; the tenant must top up.
+		balance, balErr := billingSvc.GetBalance(ctx, tenantID, "SMS")
+		if balErr != nil {
+			logg.Warn("sms send skipped: credit balance check failed (fail-closed)",
+				zap.String("tenant_id", tenantID.String()),
+				zap.String("template", msg.TemplateID),
+				zap.Error(balErr),
+			)
+			return nil
+		}
+		if balance <= 0 {
+			logg.Warn("sms send skipped: insufficient credits",
+				zap.String("tenant_id", tenantID.String()),
+				zap.String("template", msg.TemplateID),
+				zap.Float64("balance", balance),
+			)
+			return nil // ack: nothing to retry until the tenant tops up
 		}
 
 		smsProv, _ := pm.GetSMSProvider(ctx, providerTenantID, preferred)
 		if err := smsProv.SendSMS(ctx, cfg.Providers.DefaultSMSSender, msg.To, rendered); err != nil {
 			return err
 		}
+		// Deduct credits only after a successful send (segments × recipients).
+		if err := billingSvc.DeductSMSCredits(ctx, tenantID, rendered, len(msg.To), "SMS Delivery"); err != nil {
+			logg.Warn("sms sent but credit deduction failed", zap.String("tenant_id", tenantID.String()), zap.Error(err))
+		}
 		logg.Info("sms sent", zap.String("provider", smsProv.Name()), zap.Strings("to", msg.To))
 		return nil
 
 	case "whatsapp":
+		// Pre-send subscription/quota gate (applies to BOTH HTTP-enqueued and event-sourced sends).
+		// Skip+ack when the tenant has no active WhatsApp subscription or has exhausted its quota.
+		// CheckQuota also increments the monthly message counter on success.
+		// FAIL-CLOSED: never send WhatsApp without an active subscription/quota. If the
+		// subscription service isn't wired, skip rather than send unmetered.
+		if whatsappSubsSvc == nil {
+			logg.Warn("whatsapp send skipped: subscription service unavailable (fail-closed)",
+				zap.String("tenant_id", tenantID.String()), zap.String("template", msg.TemplateID))
+			return nil
+		}
+		if quotaErr := whatsappSubsSvc.CheckQuota(ctx, tenantID); quotaErr != nil {
+			logg.Warn("whatsapp send skipped: no active subscription/quota",
+				zap.String("tenant_id", tenantID.String()),
+				zap.String("template", msg.TemplateID),
+				zap.Error(quotaErr),
+			)
+			return nil // ack: nothing to retry until the tenant subscribes / quota resets
+		}
 		if err := billingSvc.DeductWhatsAppCredits(ctx, tenantID, len(msg.To), "WhatsApp Delivery"); err != nil {
 			return fmt.Errorf("billing: %w", err)
 		}

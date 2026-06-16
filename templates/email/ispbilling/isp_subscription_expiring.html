@@ -1,0 +1,9 @@
+{{ define "content" }}
+  <p>Hi {{ .customer_name }},</p>
+  <p>Your <strong>{{ .package_name }}</strong> subscription is about to expire.</p>
+  <ul>
+    {{ if .expiry_at }}<li><strong>Expires:</strong> {{ .expiry_at }}</li>{{ end }}
+    {{ if .days_remaining }}<li><strong>Days remaining:</strong> {{ .days_remaining }}</li>{{ end }}
+  </ul>
+  <p>Please renew now to stay connected.</p>
+{{ end }}

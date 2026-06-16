@@ -248,6 +248,29 @@ func (s *WhatsAppSubscriptionService) IsWhatsAppEnabled(ctx context.Context, ten
 	return true, nil
 }
 
+// VerifyQuota verifies the tenant has an active subscription with remaining quota WITHOUT
+// incrementing the message counter. Use this for read-only pre-checks (e.g. the synchronous
+// HTTP enqueue guard) where the actual counter increment happens later on the delivery path via
+// CheckQuota — this avoids double-counting a single message. Returns the same error codes as
+// CheckQuota ("no_active_subscription" / "quota_exhausted").
+func (s *WhatsAppSubscriptionService) VerifyQuota(ctx context.Context, tenantID uuid.UUID) error {
+	sub, err := s.getActiveSub(ctx, tenantID)
+	if err != nil {
+		return fmt.Errorf("check subscription: %w", err)
+	}
+	if sub == nil {
+		return fmt.Errorf("no_active_subscription: tenant has no active WhatsApp plan")
+	}
+	plan, err := sub.QueryPlan().Only(ctx)
+	if err != nil {
+		return fmt.Errorf("query plan: %w", err)
+	}
+	if plan.MessagesPerMonth > 0 && sub.MessagesUsed >= plan.MessagesPerMonth {
+		return fmt.Errorf("quota_exhausted: monthly limit of %d messages reached", plan.MessagesPerMonth)
+	}
+	return nil
+}
+
 // CheckQuota verifies message quota and increments the counter atomically.
 // Returns an error with code "quota_exhausted" if over limit.
 func (s *WhatsAppSubscriptionService) CheckQuota(ctx context.Context, tenantID uuid.UUID) error {

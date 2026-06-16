@@ -1,0 +1,1 @@
+{{ or .company_name "ISP" }}: Hi {{ .customer_name }}, your {{ .package_name }} ({{ .package_type }}) has been renewed{{ if .expiry_at }} and is valid until {{ .expiry_at }}{{ end }}. Thank you.

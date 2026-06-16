@@ -1,0 +1,9 @@
+{{ define "content" }}
+  <p>Hi {{ .customer_name }},</p>
+  <p>Your <strong>{{ .package_name }}</strong> ({{ .package_type }}) subscription has been renewed.</p>
+  <ul>
+    <li><strong>Package:</strong> {{ .package_name }} ({{ .package_type }})</li>
+    {{ if .expiry_at }}<li><strong>Valid until:</strong> {{ .expiry_at }}</li>{{ end }}
+  </ul>
+  <p>Thank you for staying with us.</p>
+{{ end }}

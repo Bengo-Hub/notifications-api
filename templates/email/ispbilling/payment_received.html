@@ -1,0 +1,9 @@
+{{ define "content" }}
+  <p>Hi {{ .customer_name }},</p>
+  <p>We have received your payment. Thank you!</p>
+  <ul>
+    <li><strong>Amount:</strong> {{ or .currency "KES" }} {{ .amount }}</li>
+    <li><strong>Package:</strong> {{ .package_name }}</li>
+    {{ if .expiry_at }}<li><strong>Active until:</strong> {{ .expiry_at }}</li>{{ end }}
+  </ul>
+{{ end }}
