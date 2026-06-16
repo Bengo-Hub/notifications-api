@@ -14,6 +14,8 @@ type Tx struct {
 	config
 	// Backup is the client for interacting with the Backup builders.
 	Backup *BackupClient
+	// BackupSetting is the client for interacting with the BackupSetting builders.
+	BackupSetting *BackupSettingClient
 	// CreditTransaction is the client for interacting with the CreditTransaction builders.
 	CreditTransaction *CreditTransactionClient
 	// DeliveryLog is the client for interacting with the DeliveryLog builders.
@@ -186,6 +188,7 @@ func (tx *Tx) Client() *Client {
 
 func (tx *Tx) init() {
 	tx.Backup = NewBackupClient(tx.config)
+	tx.BackupSetting = NewBackupSettingClient(tx.config)
 	tx.CreditTransaction = NewCreditTransactionClient(tx.config)
 	tx.DeliveryLog = NewDeliveryLogClient(tx.config)
 	tx.DeviceToken = NewDeviceTokenClient(tx.config)

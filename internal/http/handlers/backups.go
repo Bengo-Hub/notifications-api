@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -38,9 +39,48 @@ func (h *BackupHandler) RegisterRoutes(r chi.Router) {
 		br.Get("/", h.List)
 		br.Post("/", h.Create)
 		br.Post("/churn", h.Churn)
+		br.Get("/settings", h.GetSettings)
+		br.Put("/settings", h.UpdateSettings)
 		br.Get("/{name}/download", h.Download)
 		br.Delete("/{name}", h.Delete)
 	})
+}
+
+// GetSettings returns the tenant's auto-backup settings (defaults when never activated).
+func (h *BackupHandler) GetSettings(w http.ResponseWriter, r *http.Request) {
+	tenantID, ok := tenantUUID(r)
+	if !ok {
+		respondJSON(w, http.StatusBadRequest, map[string]string{"error": "tenant context required"})
+		return
+	}
+	settings, err := h.svc.GetSettings(r.Context(), tenantID)
+	if err != nil {
+		h.log.Error("get backup settings", zap.Error(err))
+		respondJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to get backup settings"})
+		return
+	}
+	respondJSON(w, http.StatusOK, settings)
+}
+
+// UpdateSettings upserts the tenant's auto-backup settings (opt-in activation flag).
+func (h *BackupHandler) UpdateSettings(w http.ResponseWriter, r *http.Request) {
+	tenantID, ok := tenantUUID(r)
+	if !ok {
+		respondJSON(w, http.StatusBadRequest, map[string]string{"error": "tenant context required"})
+		return
+	}
+	var in backup.Settings
+	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
+		respondJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+		return
+	}
+	settings, err := h.svc.UpsertSettings(r.Context(), tenantID, in)
+	if err != nil {
+		h.log.Error("update backup settings", zap.Error(err))
+		respondJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to update backup settings"})
+		return
+	}
+	respondJSON(w, http.StatusOK, settings)
 }
 
 // tenantUUID resolves the requesting tenant from context (TenantV2 middleware), with a
