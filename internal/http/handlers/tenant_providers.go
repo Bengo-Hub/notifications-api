@@ -17,16 +17,17 @@ import (
 
 // TenantProviders handles tenant-level notification provider selection.
 type TenantProviders struct {
-	client        *ent.Client
-	logger        *zap.Logger
-	PlatformID    string
-	encryptionKey []byte
+	client      *ent.Client
+	logger      *zap.Logger
+	PlatformID  string
+	keyProvider *encryption.KeyProvider
 }
 
 // NewTenantProviders creates a new TenantProviders handler.
-// encryptionKey is optional (32 bytes for AES-256); when set, secret values are encrypted at rest.
-func NewTenantProviders(client *ent.Client, logger *zap.Logger, platformID string, encryptionKey []byte) *TenantProviders {
-	return &TenantProviders{client: client, logger: logger, PlatformID: platformID, encryptionKey: encryptionKey}
+// keyProvider resolves the provider-credential encryption key (DB-first, env fallback);
+// when a key is available, secret values are encrypted at rest.
+func NewTenantProviders(client *ent.Client, logger *zap.Logger, platformID string, keyProvider *encryption.KeyProvider) *TenantProviders {
+	return &TenantProviders{client: client, logger: logger, PlatformID: platformID, keyProvider: keyProvider}
 }
 
 type availableProviderResponse struct {
@@ -397,9 +398,9 @@ func (h *TenantProviders) SaveProviderSettings(w http.ResponseWriter, r *http.Re
 			} else {
 				continue
 			}
-		} else if isSecret && len(h.encryptionKey) == 32 {
-			// Encrypt new secret values at rest
-			if enc, err := encryption.Encrypt(v, h.encryptionKey); err == nil {
+		} else if isSecret {
+			// Encrypt new secret values at rest using the resolved primary key (if any).
+			if enc, ok, encErr := h.keyProvider.Encrypt(ctx, v); encErr == nil && ok {
 				value = enc
 				isEncrypted = true
 			}

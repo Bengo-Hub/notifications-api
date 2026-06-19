@@ -150,7 +150,10 @@ func main() {
 	}
 	platformIDStr := platformID.String()
 
-	pm := providers.NewManager(dbPool, cfg.Postgres, cfg.Providers, encryption.KeyFromEnv(cfg.Security.EncryptionKey), cfg.App.Env, platformIDStr)
+	// Resolve the provider-credential decryption key DB-first (platform-owner-configurable
+	// ServiceConfig encryption_key, tenant_id IS NULL) with env fallback.
+	keyProvider := encryption.NewKeyProvider(client, cfg.Security.EncryptionKey)
+	pm := providers.NewManager(dbPool, cfg.Postgres, cfg.Providers, keyProvider.Primary(ctx), cfg.App.Env, platformIDStr)
 	emailGuardian := newEmailGuard(cfg.Providers.EmailMaxPerHour, cfg.Providers.EmailBurst, cfg.Providers.EmailValidateMX, logg)
 
 	durable := "notifications-worker"

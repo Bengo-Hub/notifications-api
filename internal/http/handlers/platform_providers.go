@@ -19,15 +19,17 @@ const platformTenantID = "platform"
 
 // PlatformProviders handles platform-level notification provider configuration.
 type PlatformProviders struct {
-	client        *ent.Client
-	logger        *zap.Logger
-	encryptionKey []byte
-	manager       *providers.Manager
+	client      *ent.Client
+	logger      *zap.Logger
+	keyProvider *encryption.KeyProvider
+	manager     *providers.Manager
 }
 
-// NewPlatformProviders creates a new PlatformProviders handler. encryptionKey is optional (32 bytes) for encrypting secrets at rest. manager is optional, used for test connection endpoint.
-func NewPlatformProviders(client *ent.Client, logger *zap.Logger, encryptionKey []byte, manager *providers.Manager) *PlatformProviders {
-	return &PlatformProviders{client: client, logger: logger, encryptionKey: encryptionKey, manager: manager}
+// NewPlatformProviders creates a new PlatformProviders handler. keyProvider resolves the
+// provider-credential encryption key (DB-first, env fallback) for encrypting secrets at
+// rest. manager is optional, used for the test connection endpoint.
+func NewPlatformProviders(client *ent.Client, logger *zap.Logger, keyProvider *encryption.KeyProvider, manager *providers.Manager) *PlatformProviders {
+	return &PlatformProviders{client: client, logger: logger, keyProvider: keyProvider, manager: manager}
 }
 
 type testProviderRequest struct {
@@ -196,8 +198,8 @@ func (h *PlatformProviders) ConfigureProvider(w http.ResponseWriter, r *http.Req
 			} else {
 				continue
 			}
-		} else if secret && len(h.encryptionKey) == 32 {
-			if enc, err := encryption.Encrypt(v, h.encryptionKey); err == nil {
+		} else if secret {
+			if enc, ok, encErr := h.keyProvider.Encrypt(ctx, v); encErr == nil && ok {
 				value = enc
 				isEncrypted = true
 			}

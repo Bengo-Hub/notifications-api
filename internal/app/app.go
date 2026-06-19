@@ -132,16 +132,24 @@ func New(ctx context.Context) (*App, error) {
 	}
 	templateRepo := templatesmod.NewRepository(entClient, templateCache)
 	templateHandler := handlers.NewTemplateHandler(templateLoader, templateRepo, notificationHandler)
-	providerManager := providers.NewManager(dbPool, cfg.Postgres, cfg.Providers, encryption.KeyFromEnv(cfg.Security.EncryptionKey), cfg.App.Env, platformIDStr)
-	platformProviders := handlers.NewPlatformProviders(entClient, log, encryption.KeyFromEnv(cfg.Security.EncryptionKey), providerManager)
-	tenantProviders := handlers.NewTenantProviders(entClient, log, platformIDStr, encryption.KeyFromEnv(cfg.Security.EncryptionKey))
+	// Provider-credential encryption key: DB-first (platform-owner configurable via
+	// ServiceConfig encryption_key, tenant_id IS NULL), env fallback
+	// (SECURITY_ENCRYPTION_KEY). No dev fallback; absent => encryption disabled.
+	keyProvider := encryption.NewKeyProvider(entClient, cfg.Security.EncryptionKey)
+
+	// The provider Manager (used by the worker/test paths) consumes a bare key for
+	// decryption at rest; seed it with the resolved primary key.
+	providerManager := providers.NewManager(dbPool, cfg.Postgres, cfg.Providers, keyProvider.Primary(ctx), cfg.App.Env, platformIDStr)
+	platformProviders := handlers.NewPlatformProviders(entClient, log, keyProvider, providerManager)
+	tenantProviders := handlers.NewTenantProviders(entClient, log, platformIDStr, keyProvider)
+	encryptionKeyHandler := handlers.NewEncryptionKeyHandler(entClient, log, keyProvider)
 	analyticsHandler := handlers.NewAnalyticsHandler(entClient, log)
 
 	deviceTokenHandler := handlers.NewDeviceTokenHandler(log, entClient)
 
 	billingHandler := handlers.NewBillingHandler(log, billingService)
 	platformBilling := handlers.NewPlatformBilling(entClient, log)
-	settingsHandler := handlers.NewSettingsHandler(log, encryption.KeyFromEnv(cfg.Security.EncryptionKey))
+	settingsHandler := handlers.NewSettingsHandler(log, keyProvider)
 
 	// Initialize identity module (RBAC)
 	identityRepo := identity.NewEntRepository(entClient)
@@ -266,7 +274,7 @@ func New(ctx context.Context) (*App, error) {
 		RetentionDays: cfg.Backup.RetentionDays,
 	}, log).Start(ctx)
 
-	httpRouter := router.New(log, healthHandler, notificationHandler, templateHandler, platformProviders, tenantProviders, analyticsHandler, billingHandler, platformBilling, settingsHandler, rbacHandler, authMeHandler, deviceTokenHandler, cfg.Security.APIKey, authMiddleware, authenticator, cfg.HTTP.AllowedOrigins, tenantSyncer, rateLimiter, serviceConfigHandler, whatsappSubsHandler, backupHandler)
+	httpRouter := router.New(log, healthHandler, notificationHandler, templateHandler, platformProviders, tenantProviders, analyticsHandler, billingHandler, platformBilling, settingsHandler, rbacHandler, authMeHandler, deviceTokenHandler, cfg.Security.APIKey, authMiddleware, authenticator, cfg.HTTP.AllowedOrigins, tenantSyncer, rateLimiter, serviceConfigHandler, whatsappSubsHandler, backupHandler, encryptionKeyHandler)
 
 	httpServer := &http.Server{
 		Addr:              fmt.Sprintf("%s:%d", cfg.HTTP.Host, cfg.HTTP.Port),
