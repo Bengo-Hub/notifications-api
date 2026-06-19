@@ -16,7 +16,8 @@ RUN GOTOOLCHAIN=auto CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /bin/noti
     GOTOOLCHAIN=auto CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /bin/notifications-seed ./cmd/seed
 
 FROM alpine:3.20
-RUN apk add --no-cache ca-certificates tzdata postgresql-client && addgroup -S app && adduser -S app -G app
+# rclone: powers pluggable backup-destination mirroring off the local PVC.
+RUN apk add --no-cache ca-certificates tzdata postgresql-client rclone && addgroup -S app && adduser -S app -G app
 WORKDIR /app
 # Copy all binaries to well-known locations
 COPY --from=builder /bin/notifications-api /usr/local/bin/notifications-api

@@ -265,8 +265,15 @@ func New(ctx context.Context) (*App, error) {
 	// Initialize service config handler for platform admin + tenant settings
 	serviceConfigHandler := handlers.NewServiceConfigHandler(entClient, log)
 
+	// Pluggable backup destination (OneDrive/GDrive/S3/WebDAV/SFTP/SMB) — encrypted
+	// at rest with a SECRET_KEY-derived AES-256 key. The handler owns the destination
+	// Store; its Uploader is attached to the backup service so every PVC backup is
+	// additionally mirrored best-effort.
+	backupDestHandler := handlers.NewBackupDestinationHandler(entClient, log)
+
 	// Tenant-scoped backups + daily 02:00 auto-backup scheduler + retention churn.
-	backupSvc := backupmod.NewService(backupSQLDB, entClient, cfg.Backup.Dir, log)
+	backupSvc := backupmod.NewService(backupSQLDB, entClient, cfg.Backup.Dir, log).
+		WithMirrorer(backupDestHandler.Uploader())
 	backupHandler := handlers.NewBackupHandler(log, backupSvc, cfg.Backup.RetentionDays)
 	backupmod.NewScheduler(backupSvc, backupmod.SchedulerConfig{
 		Enabled:       cfg.Backup.ScheduleEnabled,
@@ -274,7 +281,7 @@ func New(ctx context.Context) (*App, error) {
 		RetentionDays: cfg.Backup.RetentionDays,
 	}, log).Start(ctx)
 
-	httpRouter := router.New(log, healthHandler, notificationHandler, templateHandler, platformProviders, tenantProviders, analyticsHandler, billingHandler, platformBilling, settingsHandler, rbacHandler, authMeHandler, deviceTokenHandler, cfg.Security.APIKey, authMiddleware, authenticator, cfg.HTTP.AllowedOrigins, tenantSyncer, rateLimiter, serviceConfigHandler, whatsappSubsHandler, backupHandler, encryptionKeyHandler)
+	httpRouter := router.New(log, healthHandler, notificationHandler, templateHandler, platformProviders, tenantProviders, analyticsHandler, billingHandler, platformBilling, settingsHandler, rbacHandler, authMeHandler, deviceTokenHandler, cfg.Security.APIKey, authMiddleware, authenticator, cfg.HTTP.AllowedOrigins, tenantSyncer, rateLimiter, serviceConfigHandler, whatsappSubsHandler, backupHandler, encryptionKeyHandler, backupDestHandler)
 
 	httpServer := &http.Server{
 		Addr:              fmt.Sprintf("%s:%d", cfg.HTTP.Host, cfg.HTTP.Port),

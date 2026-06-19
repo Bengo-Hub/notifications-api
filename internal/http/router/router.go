@@ -19,7 +19,7 @@ import (
 	ratelimitmw "github.com/bengobox/notifications-api/internal/shared/middleware"
 )
 
-func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handlers.NotificationHandler, templates *handlers.TemplateHandler, platformProviders *handlers.PlatformProviders, tenantProviders *handlers.TenantProviders, analytics *handlers.AnalyticsHandler, billing *handlers.BillingHandler, platformBilling *handlers.PlatformBilling, settings *handlers.SettingsHandler, rbacHandler *handlers.RBACHandler, authMeHandler *handlers.AuthMeHandler, deviceTokens *handlers.DeviceTokenHandler, apiKey string, authMiddleware *authclient.AuthMiddleware, authenticator *identityhandler.Authenticator, allowedOrigins []string, tenantSyncer *tenant.Syncer, rateLimiter *ratelimitmw.RateLimiter, serviceConfig *handlers.ServiceConfigHandler, whatsappSubs *handlers.WhatsAppSubscriptionHandler, backups *handlers.BackupHandler, encryptionKey *handlers.EncryptionKeyHandler) http.Handler {
+func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handlers.NotificationHandler, templates *handlers.TemplateHandler, platformProviders *handlers.PlatformProviders, tenantProviders *handlers.TenantProviders, analytics *handlers.AnalyticsHandler, billing *handlers.BillingHandler, platformBilling *handlers.PlatformBilling, settings *handlers.SettingsHandler, rbacHandler *handlers.RBACHandler, authMeHandler *handlers.AuthMeHandler, deviceTokens *handlers.DeviceTokenHandler, apiKey string, authMiddleware *authclient.AuthMiddleware, authenticator *identityhandler.Authenticator, allowedOrigins []string, tenantSyncer *tenant.Syncer, rateLimiter *ratelimitmw.RateLimiter, serviceConfig *handlers.ServiceConfigHandler, whatsappSubs *handlers.WhatsAppSubscriptionHandler, backups *handlers.BackupHandler, encryptionKey *handlers.EncryptionKeyHandler, backupDest *handlers.BackupDestinationHandler) http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RealIP)
@@ -103,6 +103,10 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 				}
 				if encryptionKey != nil {
 					encryptionKey.RegisterPlatformRoutes(platform)
+				}
+				// Platform-default backup destination (OneDrive/GDrive/S3/WebDAV/SFTP/SMB).
+				if backupDest != nil {
+					backupDest.RegisterPlatformRoutes(platform)
 				}
 				platform.Route("/billing", func(pb chi.Router) {
 					if authenticator != nil {
@@ -226,6 +230,17 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 							bg.Use(authenticator.RequirePermissions(identity.PermSettingsManage))
 						}
 						backups.RegisterRoutes(bg)
+					})
+				}
+
+				// Per-tenant backup-destination override (mirrors backups off the PVC)
+				// — same settings-manage permission gate as the tenant backups routes.
+				if backupDest != nil {
+					tenantRouter.Group(func(bdg chi.Router) {
+						if authenticator != nil {
+							bdg.Use(authenticator.RequirePermissions(identity.PermSettingsManage))
+						}
+						backupDest.RegisterRoutes(bdg)
 					})
 				}
 
