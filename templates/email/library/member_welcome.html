@@ -1,0 +1,10 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <p>A new library member has been registered.</p>
+  <p><strong>Member:</strong> {{ .member_name }}</p>
+  <p><strong>Membership No:</strong> {{ .membership_no }}</p>
+  <p>
+    <a class="button" href="{{ .dashboard }}">View Members</a>
+  </p>
+  <p class="muted">The member can now borrow items and place holds per their tier.</p>
+{{ end }}

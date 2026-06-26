@@ -1,0 +1,11 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <p>A borrowed library item is now <strong>overdue</strong>.</p>
+  <p><strong>Member:</strong> {{ .member_id }}</p>
+  <p><strong>Loan:</strong> {{ .loan_id }}</p>
+  <p><strong>Was due:</strong> {{ .due_at }}</p>
+  <p>
+    <a class="button" href="{{ .dashboard }}">Open Circulation Desk</a>
+  </p>
+  <p class="muted">Please follow up so the item can be returned and any fines settled.</p>
+{{ end }}

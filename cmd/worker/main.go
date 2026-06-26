@@ -233,6 +233,9 @@ func main() {
 	// Start inventory stock event consumer (inventory-service → low stock alerts)
 	startInventoryConsumer(ctx, nc, js, cfg, tr, logg)
 
+	// Start library event consumer (library-service → overdue / hold-ready / fine / member alerts)
+	startLibraryConsumer(ctx, nc, js, cfg, tr, logg)
+
 	// Start order status event consumer (ordering-service → customer notifications)
 	startOrderConsumer(ctx, nc, js, cfg, tr, logg)
 

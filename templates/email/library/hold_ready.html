@@ -1,0 +1,11 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <p>A reserved item is now <strong>ready for pickup</strong>.</p>
+  <p><strong>Member:</strong> {{ .member_id }}</p>
+  <p><strong>Title (bib):</strong> {{ .bib_record }}</p>
+  <p><strong>Hold expires:</strong> {{ .expires_at }}</p>
+  <p>
+    <a class="button" href="{{ .dashboard }}">View Holds</a>
+  </p>
+  <p class="muted">The member should collect the item before the hold expires.</p>
+{{ end }}
