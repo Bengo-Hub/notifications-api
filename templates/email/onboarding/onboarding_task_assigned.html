@@ -1,0 +1,22 @@
+{{ define "content" }}
+  <p>Hello {{ .first_name }},</p>
+  <p>A new onboarding task has been assigned to you: <strong>{{ .task_name }}</strong>.</p>
+  <table style="width:100%; border-collapse:collapse; margin:16px 0;">
+    <tr>
+      <td style="padding:8px 0; color:#6b7280; width:45%;">Task</td>
+      <td style="padding:8px 0; font-weight:600;">{{ .task_name }}</td>
+    </tr>
+    {{ if .due_date }}
+    <tr>
+      <td style="padding:8px 0; color:#6b7280;">Due Date</td>
+      <td style="padding:8px 0; font-weight:600;">{{ .due_date }}</td>
+    </tr>
+    {{ end }}
+  </table>
+  {{ if .portal_link }}
+  <p>
+    <a href="{{ .portal_link }}" style="background:{{ or .brand_primary_color "#0F766E" }};color:#ffffff !important;text-decoration:none;padding:10px 16px;border-radius:6px;display:inline-block;">View Task</a>
+  </p>
+  {{ end }}
+  <p class="muted">Please complete this task before the due date.</p>
+{{ end }}

@@ -1,0 +1,32 @@
+{{ define "content" }}
+  <p>Dear {{ .first_name }},</p>
+  <p>We're pleased to invite you to an interview for the <strong>{{ .job_title }}</strong> position.</p>
+  <table style="width:100%; border-collapse:collapse; margin:16px 0;">
+    <tr>
+      <td style="padding:8px 0; color:#6b7280; width:45%;">Position</td>
+      <td style="padding:8px 0; font-weight:600;">{{ .job_title }}</td>
+    </tr>
+    <tr>
+      <td style="padding:8px 0; color:#6b7280;">Date &amp; Time</td>
+      <td style="padding:8px 0; font-weight:600;">{{ .interview_date }}</td>
+    </tr>
+    {{ if .interview_location }}
+    <tr>
+      <td style="padding:8px 0; color:#6b7280;">Location</td>
+      <td style="padding:8px 0; font-weight:600;">{{ .interview_location }}</td>
+    </tr>
+    {{ end }}
+    {{ if .interview_mode }}
+    <tr>
+      <td style="padding:8px 0; color:#6b7280;">Mode</td>
+      <td style="padding:8px 0; font-weight:600;">{{ .interview_mode }}</td>
+    </tr>
+    {{ end }}
+  </table>
+  {{ if .meeting_link }}
+  <p>
+    <a href="{{ .meeting_link }}" style="background:{{ or .brand_primary_color "#0F766E" }};color:#ffffff !important;text-decoration:none;padding:10px 16px;border-radius:6px;display:inline-block;">Join Interview</a>
+  </p>
+  {{ end }}
+  <p class="muted">Please confirm your availability. We look forward to speaking with you.</p>
+{{ end }}

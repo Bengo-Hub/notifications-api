@@ -1,0 +1,24 @@
+{{ define "content" }}
+  <p>Hello {{ or .first_name "there" }},</p>
+  <p>The payroll run for <strong>{{ .period }}</strong> has been processed successfully.</p>
+  <table style="width:100%; border-collapse:collapse; margin:16px 0;">
+    <tr>
+      <td style="padding:8px 0; color:#6b7280; width:45%;">Period</td>
+      <td style="padding:8px 0; font-weight:600;">{{ .period }}</td>
+    </tr>
+    <tr>
+      <td style="padding:8px 0; color:#6b7280;">Payslips Generated</td>
+      <td style="padding:8px 0; font-weight:600;">{{ .employee_count }}</td>
+    </tr>
+    <tr>
+      <td style="padding:8px 0; color:#6b7280;">Total Net</td>
+      <td style="padding:8px 0; font-weight:600; color:#059669;">{{ .total_net }}</td>
+    </tr>
+  </table>
+  {{ if .review_link }}
+  <p>
+    <a href="{{ .review_link }}" style="background:{{ or .brand_primary_color "#0F766E" }};color:#ffffff !important;text-decoration:none;padding:10px 16px;border-radius:6px;display:inline-block;">Review Payroll Run</a>
+  </p>
+  {{ end }}
+  <p class="muted">Please review and authorise disbursement when ready.</p>
+{{ end }}

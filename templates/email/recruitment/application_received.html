@@ -1,0 +1,11 @@
+{{ define "content" }}
+  <p>Dear {{ .first_name }},</p>
+  <p>Thank you for applying for the <strong>{{ .job_title }}</strong> position. We have received your application.</p>
+  <p>Our recruitment team will review your details and get back to you regarding the next steps.</p>
+  {{ if .portal_link }}
+  <p>
+    <a href="{{ .portal_link }}" style="background:{{ or .brand_primary_color "#0F766E" }};color:#ffffff !important;text-decoration:none;padding:10px 16px;border-radius:6px;display:inline-block;">Track Application</a>
+  </p>
+  {{ end }}
+  <p class="muted">We appreciate your interest in joining {{ or .brand_name "our team" }}.</p>
+{{ end }}

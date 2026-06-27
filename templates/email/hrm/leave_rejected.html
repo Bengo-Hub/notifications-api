@@ -1,0 +1,30 @@
+{{ define "content" }}
+  <p>Hello {{ .first_name }},</p>
+  <p>We regret to inform you that your <strong>{{ .leave_type }}</strong> leave request has been <strong style="color:#b91c1c;">declined</strong>.</p>
+  <table style="width:100%; border-collapse:collapse; margin:16px 0;">
+    <tr>
+      <td style="padding:8px 0; color:#6b7280; width:45%;">Leave Type</td>
+      <td style="padding:8px 0; font-weight:600;">{{ .leave_type }}</td>
+    </tr>
+    <tr>
+      <td style="padding:8px 0; color:#6b7280;">From</td>
+      <td style="padding:8px 0; font-weight:600;">{{ .start_date }}</td>
+    </tr>
+    <tr>
+      <td style="padding:8px 0; color:#6b7280;">To</td>
+      <td style="padding:8px 0; font-weight:600;">{{ .end_date }}</td>
+    </tr>
+    {{ if .reason }}
+    <tr>
+      <td style="padding:8px 0; color:#6b7280;">Reason / Notes</td>
+      <td style="padding:8px 0;">{{ .reason }}</td>
+    </tr>
+    {{ end }}
+  </table>
+  {{ if .portal_link }}
+  <p>
+    <a href="{{ .portal_link }}" style="background:{{ or .brand_primary_color "#0F766E" }};color:#ffffff !important;text-decoration:none;padding:10px 16px;border-radius:6px;display:inline-block;">View Request</a>
+  </p>
+  {{ end }}
+  <p class="muted">Please reach out to your manager or HR if you have any questions.</p>
+{{ end }}

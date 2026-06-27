@@ -214,20 +214,43 @@ The Notifications Service is a centralized communications platform for all Bengo
 **Integration Type**: Events (NATS) + REST API
 
 **Use Cases**:
-- Payroll notifications
-- Leave approval notifications
+- Payroll notifications (payslips, runs, disbursement, consultant vouchers)
+- HRM notifications (leave decisions, appraisals)
+- Recruitment notifications (application, interview, offer, welcome)
+- Onboarding notifications (task assignment, completion)
 - Expense approval notifications
 
 **Events Consumed**:
 - `erp.payroll.generated` - Send payslip notification
 - `erp.leave.approved` - Send leave approval
 - `erp.expense.approved` - Send expense approval
+- `erp.email.requested` - Render a named template (referenced via `template_id`)
 
 **Events Published**: None
 
-**Template Mapping**:
-- `payroll_generated` → `payslip_email` template
-- `leave_approved` → `leave_approval_sms` template
+**Template Mapping** (email `template_id` referenced by `erp.email.requested`):
+
+Payroll:
+- `payroll/payslip_email` - Employee payslip (PDF payslip attached)
+- `payroll/payroll_processed` - Manager notice that a payroll run was processed
+- `payroll/payroll_disbursed` - Notice that a payroll run was disbursed
+- `payroll/consultant_voucher_email` - Consultant payment voucher (PDF voucher attached)
+
+HRM:
+- `hrm/leave_approved` - Leave request approved
+- `hrm/leave_rejected` - Leave request declined
+- `hrm/leave_pending` - Leave request submitted / pending approval
+- `hrm/appraisal_due` - Performance appraisal due
+
+Recruitment:
+- `recruitment/application_received` - Application acknowledged
+- `recruitment/interview_scheduled` - Interview invitation
+- `recruitment/offer_extended` - Job offer (offer details/PDF attached)
+- `recruitment/employee_welcome` - New-hire welcome
+
+Onboarding:
+- `onboarding/onboarding_task_assigned` - Onboarding task assigned
+- `onboarding/onboarding_completed` - Onboarding completed
 
 ### TruLoad Backend
 

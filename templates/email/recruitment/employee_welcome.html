@@ -1,0 +1,23 @@
+{{ define "content" }}
+  <p>Dear {{ .first_name }},</p>
+  <p>Welcome to {{ or .brand_name "the team" }}! We're thrilled to have you join us as <strong>{{ .job_title }}</strong>.</p>
+  {{ if .start_date }}
+  <table style="width:100%; border-collapse:collapse; margin:16px 0;">
+    <tr>
+      <td style="padding:8px 0; color:#6b7280; width:45%;">Role</td>
+      <td style="padding:8px 0; font-weight:600;">{{ .job_title }}</td>
+    </tr>
+    <tr>
+      <td style="padding:8px 0; color:#6b7280;">Start Date</td>
+      <td style="padding:8px 0; font-weight:600;">{{ .start_date }}</td>
+    </tr>
+  </table>
+  {{ end }}
+  <p>Your onboarding details and first-day information will follow shortly.</p>
+  {{ if .portal_link }}
+  <p>
+    <a href="{{ .portal_link }}" style="background:{{ or .brand_primary_color "#0F766E" }};color:#ffffff !important;text-decoration:none;padding:10px 16px;border-radius:6px;display:inline-block;">Get Started</a>
+  </p>
+  {{ end }}
+  <p class="muted">We look forward to working with you.</p>
+{{ end }}

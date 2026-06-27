@@ -1,0 +1,34 @@
+{{ define "content" }}
+  <p>Hello {{ or .first_name "there" }},</p>
+  <p>The <strong>{{ .period }}</strong> payroll has been disbursed.</p>
+  <table style="width:100%; border-collapse:collapse; margin:16px 0;">
+    <tr>
+      <td style="padding:8px 0; color:#6b7280; width:45%;">Period</td>
+      <td style="padding:8px 0; font-weight:600;">{{ .period }}</td>
+    </tr>
+    {{ if .employee_count }}
+    <tr>
+      <td style="padding:8px 0; color:#6b7280;">Payments Sent</td>
+      <td style="padding:8px 0; font-weight:600;">{{ .employee_count }}</td>
+    </tr>
+    {{ end }}
+    {{ if .total_net }}
+    <tr>
+      <td style="padding:8px 0; color:#6b7280;">Total Disbursed</td>
+      <td style="padding:8px 0; font-weight:600; color:#059669;">{{ .total_net }}</td>
+    </tr>
+    {{ end }}
+    {{ if .disbursed_at }}
+    <tr>
+      <td style="padding:8px 0; color:#6b7280;">Disbursed On</td>
+      <td style="padding:8px 0; font-weight:600;">{{ .disbursed_at }}</td>
+    </tr>
+    {{ end }}
+  </table>
+  {{ if .review_link }}
+  <p>
+    <a href="{{ .review_link }}" style="background:{{ or .brand_primary_color "#0F766E" }};color:#ffffff !important;text-decoration:none;padding:10px 16px;border-radius:6px;display:inline-block;">View Details</a>
+  </p>
+  {{ end }}
+  <p class="muted">Employees will receive their individual payslips separately.</p>
+{{ end }}

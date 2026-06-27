@@ -1,0 +1,14 @@
+{{ define "content" }}
+  <p>Hello {{ .first_name }},</p>
+  <p>Congratulations — you've completed all your onboarding tasks! 🎉</p>
+  {{ if .task_name }}
+  <p>The final task, <strong>{{ .task_name }}</strong>, has been marked complete{{ if .due_date }} on {{ .due_date }}{{ end }}.</p>
+  {{ end }}
+  <p>You're all set up and ready to go. Welcome aboard!</p>
+  {{ if .portal_link }}
+  <p>
+    <a href="{{ .portal_link }}" style="background:{{ or .brand_primary_color "#0F766E" }};color:#ffffff !important;text-decoration:none;padding:10px 16px;border-radius:6px;display:inline-block;">Go to Dashboard</a>
+  </p>
+  {{ end }}
+  <p class="muted">If you have any questions, your manager or HR is here to help.</p>
+{{ end }}
