@@ -166,10 +166,12 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 					if authenticator != nil {
 						notif.Use(authenticator.RequirePermissions(identity.PermNotificationsSend))
 					}
-					// Rate limit email sending by subscription plan (max_emails_per_day from JWT claims)
-					if rateLimiter != nil {
-						notif.Use(ratelimitmw.RequireRateLimit(rateLimiter, "max_emails_per_day"))
-					}
+					// Rate limiting is applied PER-CHANNEL inside Enqueue (handler), keyed by
+					// the actual message channel: only email (email_notifications_per_day) and
+					// webhook (webhook_calls_per_day) are plan-rate-limited; SMS/WhatsApp are
+					// credit-based and push is never blocked (see channelRateLimitKey). A
+					// route-level blanket limiter is intentionally NOT used here because it would
+					// also block SMS/push/WhatsApp once the email cap is hit, violating policy.
 					notif.Post("/messages", notifications.Enqueue)
 				})
 
