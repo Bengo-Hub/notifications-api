@@ -42,6 +42,7 @@ func (s *Subscriber) Start(ctx context.Context) error {
 	}
 
 	type sub struct {
+		stream  string
 		subject string
 		durable string
 		handler nats.MsgHandler
@@ -72,29 +73,31 @@ func (s *Subscriber) Start(ctx context.Context) error {
 	}
 
 	subs := []sub{
-		{"inventory.stock.low", "notif-inventory-low-stock", s.handleLowStock},
-		{"inventory.purchase_order.received", "notif-po-received", s.handlePOReceived},
-		{"inventory.ticket.issued", "notif-ticket-issued", s.handleTicketIssued},
-		{"logistics.task.assigned", "notif-rider-task-assigned", s.handleRiderTaskAssigned},
-		{"pos.kds.waiter.called", "notif-kds-waiter-called", s.handleKDSWaiterCalled},
-		{"pos.loyalty.points.earned", "notif-loyalty-points-earned", s.handleLoyaltyPointsEarned},
-		{"pos.loyalty.tier_upgraded", "notif-loyalty-tier-upgraded", s.handleLoyaltyTierUpgraded},
-		{"pos.loyalty.referral_earned", "notif-loyalty-referral-earned", s.handleLoyaltyReferralEarned},
-		{"treasury.payroll.disbursed", "notif-payroll-disbursed", s.handlePayrollDisbursed},
-		{"erp.email.requested", "notif-erp-email-req", s.handleERPEmailRequested},
-		{"erp.notification.requested", "notif-erp-notif-req", s.handleERPNotificationRequested},
-		{"marketflow.campaign.sms_queued", "notif-marketflow-campaign-sms", s.handleMarketflowCampaignSMS},
-		{"isp.subscriber.created", "notif-isp-subscriber-created", s.handleISPSubscriberCreated},
-		{"isp.payment.received", "notif-isp-payment-received", s.handleISPPaymentReceived},
-		{"isp.subscription.renewed", "notif-isp-subscription-renewed", s.handleISPSubscriptionRenewed},
-		{"isp.subscription.expiring", "notif-isp-subscription-expiring", s.handleISPSubscriptionExpiring},
+		{"inventory", "inventory.stock.low", "notif-inventory-low-stock", s.handleLowStock},
+		{"inventory", "inventory.purchase_order.received", "notif-po-received", s.handlePOReceived},
+		{"inventory", "inventory.ticket.issued", "notif-ticket-issued", s.handleTicketIssued},
+		{"logistics", "logistics.task.assigned", "notif-rider-task-assigned", s.handleRiderTaskAssigned},
+		{"pos", "pos.kds.waiter.called", "notif-kds-waiter-called", s.handleKDSWaiterCalled},
+		{"pos", "pos.loyalty.points.earned", "notif-loyalty-points-earned", s.handleLoyaltyPointsEarned},
+		{"pos", "pos.loyalty.tier_upgraded", "notif-loyalty-tier-upgraded", s.handleLoyaltyTierUpgraded},
+		{"pos", "pos.loyalty.referral_earned", "notif-loyalty-referral-earned", s.handleLoyaltyReferralEarned},
+		{"treasury", "treasury.payroll.disbursed", "notif-payroll-disbursed", s.handlePayrollDisbursed},
+		{"erp", "erp.email.requested", "notif-erp-email-req", s.handleERPEmailRequested},
+		{"erp", "erp.notification.requested", "notif-erp-notif-req", s.handleERPNotificationRequested},
+		{"marketflow", "marketflow.campaign.sms_queued", "notif-marketflow-campaign-sms", s.handleMarketflowCampaignSMS},
+		{"isp", "isp.subscriber.created", "notif-isp-subscriber-created", s.handleISPSubscriberCreated},
+		{"isp", "isp.payment.received", "notif-isp-payment-received", s.handleISPPaymentReceived},
+		{"isp", "isp.subscription.renewed", "notif-isp-subscription-renewed", s.handleISPSubscriptionRenewed},
+		{"isp", "isp.subscription.expiring", "notif-isp-subscription-expiring", s.handleISPSubscriptionExpiring},
 	}
 
 	for _, s2 := range subs {
-		eventslib.SubscribeWithRebind(
+		eventslib.SubscribeQueueWithRebind(
 			s.log,
 			js,
+			s2.stream,
 			s2.subject,
+			s2.durable,
 			s2.handler,
 			nats.Durable(s2.durable),
 			nats.AckExplicit(),

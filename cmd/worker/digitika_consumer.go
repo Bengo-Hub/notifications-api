@@ -203,7 +203,7 @@ func startDigitikaConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStream
 		_ = m.Ack()
 	}
 
-	eventslib.SubscribeWithRebind(logg, js, "digitika.>", handler,
+	eventslib.SubscribeQueueWithRebind(logg, js, "digitika", "digitika.>", "notifications-digitika", handler,
 		nats.BindStream("digitika"),
 		nats.Durable("notifications-digitika"),
 		nats.ManualAck(),

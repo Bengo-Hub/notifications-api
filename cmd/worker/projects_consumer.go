@@ -119,7 +119,7 @@ func startProjectsConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStream
 	}
 
 	// Projects-api stream name — check what's configured
-	eventslib.SubscribeWithRebind(logg, js, "project.>", handler,
+	eventslib.SubscribeQueueWithRebind(logg, js, "projects", "project.>", "notifications-projects", handler,
 		nats.BindStream("projects"),
 		nats.Durable("notifications-projects"),
 		nats.ManualAck(),

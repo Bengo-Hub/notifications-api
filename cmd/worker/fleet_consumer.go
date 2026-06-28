@@ -219,7 +219,7 @@ func startFleetConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 		_ = m.Ack()
 	}
 
-	eventslib.SubscribeWithRebind(logg, js, "logistics.fleet.>", handler,
+	eventslib.SubscribeQueueWithRebind(logg, js, "logistics", "logistics.fleet.>", "notifications-logistics-fleet", handler,
 		nats.BindStream("logistics"),
 		nats.Durable("notifications-logistics-fleet"),
 		nats.ManualAck(),

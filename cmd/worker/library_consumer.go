@@ -151,7 +151,7 @@ func startLibraryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamC
 		_ = m.Ack()
 	}
 
-	eventslib.SubscribeWithRebind(logg, js, "library.>", handler,
+	eventslib.SubscribeQueueWithRebind(logg, js, "library", "library.>", "notifications-library", handler,
 		nats.BindStream("library"),
 		nats.Durable("notifications-library"),
 		nats.ManualAck(),

@@ -148,7 +148,7 @@ func startTicketingConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStrea
 		_ = m.Ack()
 	}
 
-	eventslib.SubscribeWithRebind(logg, js, "ticketing.>", handler,
+	eventslib.SubscribeQueueWithRebind(logg, js, "ticketing", "ticketing.>", "notifications-ticketing", handler,
 		nats.BindStream("ticketing"),
 		nats.Durable("notifications-ticketing"),
 		nats.ManualAck(),

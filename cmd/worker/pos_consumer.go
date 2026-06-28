@@ -381,7 +381,7 @@ func startPosConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamConte
 		_ = m.Ack()
 	}
 
-	eventslib.SubscribeWithRebind(logg, js, "pos.>", handler,
+	eventslib.SubscribeQueueWithRebind(logg, js, "pos", "pos.>", "notifications-pos-orders", handler,
 		nats.BindStream("pos"),
 		nats.Durable("notifications-pos-orders"),
 		nats.ManualAck(),

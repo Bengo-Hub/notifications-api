@@ -269,7 +269,7 @@ func startSubscriptionConsumer(ctx context.Context, nc *nats.Conn, js nats.JetSt
 		_ = m.Ack()
 	}
 
-	eventslib.SubscribeWithRebind(logg, js, "subscription.>", handler,
+	eventslib.SubscribeQueueWithRebind(logg, js, "subscription", "subscription.>", "notifications-subscription-lifecycle", handler,
 		nats.BindStream("subscription"),
 		nats.Durable("notifications-subscription-lifecycle"),
 		nats.ManualAck(),

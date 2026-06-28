@@ -387,7 +387,7 @@ func startTreasuryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStream
 		_ = m.Ack()
 	}
 
-	eventslib.SubscribeWithRebind(logg, js, "treasury.>", handler,
+	eventslib.SubscribeQueueWithRebind(logg, js, "treasury", "treasury.>", "notifications-treasury-payments", handler,
 		nats.BindStream("treasury"),
 		nats.Durable("notifications-treasury-payments"),
 		nats.ManualAck(),

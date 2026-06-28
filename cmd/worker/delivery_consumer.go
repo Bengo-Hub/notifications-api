@@ -162,7 +162,7 @@ func startDeliveryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStream
 		_ = m.Ack()
 	}
 
-	eventslib.SubscribeWithRebind(logg, js, "logistics.task.>", handler,
+	eventslib.SubscribeQueueWithRebind(logg, js, "logistics", "logistics.task.>", "notifications-logistics-delivery", handler,
 		nats.BindStream("logistics"),
 		nats.Durable("notifications-logistics-delivery"),
 		nats.ManualAck(),

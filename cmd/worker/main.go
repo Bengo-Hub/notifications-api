@@ -225,7 +225,7 @@ func main() {
 		_ = m.Ack()
 	}
 
-	eventslib.SubscribeWithRebind(logg, js, subject, msgHandler, nats.Durable(durable), nats.ManualAck(), nats.AckWait(30*time.Second), nats.MaxDeliver(maxDeliveryAttempts))
+	eventslib.SubscribeQueueWithRebind(logg, js, cfg.Events.StreamName, subject, durable, msgHandler, nats.Durable(durable), nats.ManualAck(), nats.AckWait(30*time.Second), nats.MaxDeliver(maxDeliveryAttempts))
 
 	// Start fleet lifecycle event consumer (logistics-service → email notifications)
 	startFleetConsumer(ctx, nc, js, cfg, tr, logg)

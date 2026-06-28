@@ -184,7 +184,7 @@ func startInventoryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStrea
 		_ = m.Ack()
 	}
 
-	eventslib.SubscribeWithRebind(logg, js, "inventory.>", handler,
+	eventslib.SubscribeQueueWithRebind(logg, js, "inventory", "inventory.>", "notifications-inventory-stock", handler,
 		nats.BindStream("inventory"),
 		nats.Durable("notifications-inventory-stock"),
 		nats.ManualAck(),

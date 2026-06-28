@@ -366,7 +366,7 @@ func startOrderConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 		_ = m.Ack()
 	}
 
-	eventslib.SubscribeWithRebind(logg, js, "ordering.order.>", handler,
+	eventslib.SubscribeQueueWithRebind(logg, js, "ordering", "ordering.order.>", "notifications-ordering-status", handler,
 		nats.BindStream("ordering"),
 		nats.Durable("notifications-ordering-status"),
 		nats.ManualAck(),
