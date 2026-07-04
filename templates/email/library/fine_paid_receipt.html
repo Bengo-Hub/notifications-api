@@ -1,0 +1,9 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <p>Your library fine payment has been received. Thank you!</p>
+  <p><strong>Amount Paid:</strong> {{ .amount }}</p>
+  <p>
+    <a class="button" href="{{ .dashboard }}">View My Account</a>
+  </p>
+  <p class="muted">Keep this email as confirmation of your payment.</p>
+{{ end }}

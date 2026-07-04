@@ -1,0 +1,11 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <p>A serial issue has not been received by its expected date and requires follow-up.</p>
+  <p><strong>Issue No:</strong> {{ .issue_no }}</p>
+  <p><strong>Expected Date:</strong> {{ .expected_date }}</p>
+  <p>Please contact the vendor or mark the issue as claimed in the serials module.</p>
+  <p>
+    <a class="button" href="{{ .dashboard }}">Open Serials</a>
+  </p>
+  <p class="muted">Subscription ID: {{ .subscription_id }}</p>
+{{ end }}

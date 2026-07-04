@@ -1,0 +1,10 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <p>The pickup window for your reserved item has closed and the hold has been cancelled.</p>
+  <p><strong>Title:</strong> {{ .bib_title }}</p>
+  <p>You can place a new hold at any time if the item is still needed.</p>
+  <p>
+    <a class="button" href="{{ .dashboard }}">View My Account</a>
+  </p>
+  <p class="muted">Contact the library if you have any questions.</p>
+{{ end }}

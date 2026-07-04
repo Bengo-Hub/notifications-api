@@ -1,0 +1,10 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <p>Your e-book loan has expired and the title is no longer accessible.</p>
+  <p><strong>Title:</strong> {{ .title }}</p>
+  <p>You can borrow this title again if copies are available in the catalog.</p>
+  <p>
+    <a class="button" href="{{ .catalog }}">Browse E-book Catalog</a>
+  </p>
+  <p class="muted">Contact the library if you need further assistance.</p>
+{{ end }}

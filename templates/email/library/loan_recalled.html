@@ -1,0 +1,10 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <p>An item you currently have on loan has been recalled because another patron needs it.</p>
+  <p><strong>New Due Date:</strong> {{ .new_due_at }}</p>
+  <p>Please return the item by the new due date to avoid fines.</p>
+  <p>
+    <a class="button" href="{{ .dashboard }}">View My Loans</a>
+  </p>
+  <p class="muted">Contact the library if you need assistance with the return.</p>
+{{ end }}

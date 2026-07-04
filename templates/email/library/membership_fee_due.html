@@ -1,0 +1,10 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <p>Your library membership is due for renewal. Please renew to keep borrowing access.</p>
+  <p><strong>Renewal Amount:</strong> {{ .amount }}</p>
+  <p><strong>Membership Expires:</strong> {{ .expires_at }}</p>
+  <p>
+    <a class="button" href="{{ .renewal_url }}">Renew Membership</a>
+  </p>
+  <p class="muted">If you have already renewed, please disregard this notice.</p>
+{{ end }}

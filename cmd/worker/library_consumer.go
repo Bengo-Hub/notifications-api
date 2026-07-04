@@ -83,6 +83,75 @@ var libraryMappings = map[string]libraryNotificationMapping{
 			}
 		},
 	},
+	"library.membership.fee_due": {
+		TemplateID:   "library/membership_fee_due",
+		EmailSubject: "Your library membership renewal is due",
+		DataBuilder: func(data map[string]interface{}, tenantWebsite string) map[string]interface{} {
+			return map[string]interface{}{
+				"name":        "Member",
+				"amount":      data["amount"],
+				"expires_at":  data["expires_at"],
+				"renewal_url": fmt.Sprintf("%s/my-account", tenantWebsite),
+			}
+		},
+	},
+	"library.ebook.expired": {
+		TemplateID:   "library/ebook_expired",
+		EmailSubject: "Your e-book loan has expired",
+		DataBuilder: func(data map[string]interface{}, tenantWebsite string) map[string]interface{} {
+			return map[string]interface{}{
+				"name":    "Member",
+				"title":   data["title"],
+				"catalog": fmt.Sprintf("%s/ebooks", tenantWebsite),
+			}
+		},
+	},
+	"library.fine.paid": {
+		TemplateID:   "library/fine_paid_receipt",
+		EmailSubject: "Your library fine has been paid — receipt",
+		DataBuilder: func(data map[string]interface{}, tenantWebsite string) map[string]interface{} {
+			return map[string]interface{}{
+				"name":      "Member",
+				"amount":    data["amount"],
+				"dashboard": fmt.Sprintf("%s/my-account", tenantWebsite),
+			}
+		},
+	},
+	"library.hold.expired": {
+		TemplateID:   "library/hold_expired",
+		EmailSubject: "Your hold pickup window has closed",
+		DataBuilder: func(data map[string]interface{}, tenantWebsite string) map[string]interface{} {
+			return map[string]interface{}{
+				"name":      "Member",
+				"bib_title": data["bib_title"],
+				"dashboard": fmt.Sprintf("%s/my-account", tenantWebsite),
+			}
+		},
+	},
+	"library.loan.recalled": {
+		TemplateID:   "library/loan_recalled",
+		EmailSubject: "An item you have borrowed has been recalled",
+		DataBuilder: func(data map[string]interface{}, tenantWebsite string) map[string]interface{} {
+			return map[string]interface{}{
+				"name":       "Member",
+				"new_due_at": data["new_due_at"],
+				"dashboard":  fmt.Sprintf("%s/my-account", tenantWebsite),
+			}
+		},
+	},
+	"library.serial.issue_late": {
+		TemplateID:   "library/serial_issue_late",
+		EmailSubject: "Serial issue overdue from vendor",
+		DataBuilder: func(data map[string]interface{}, tenantWebsite string) map[string]interface{} {
+			return map[string]interface{}{
+				"name":            "Librarian",
+				"subscription_id": data["subscription_id"],
+				"issue_no":        data["issue_no"],
+				"expected_date":   data["expected_date"],
+				"dashboard":       fmt.Sprintf("%s/serials", tenantWebsite),
+			}
+		},
+	},
 }
 
 // startLibraryConsumer subscribes to library.> events and republishes them as
