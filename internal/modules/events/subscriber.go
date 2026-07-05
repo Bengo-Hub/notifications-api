@@ -78,6 +78,9 @@ func (s *Subscriber) Start(ctx context.Context) error {
 		{"inventory", "inventory.ticket.issued", "notif-ticket-issued", s.handleTicketIssued},
 		{"logistics", "logistics.task.assigned", "notif-rider-task-assigned", s.handleRiderTaskAssigned},
 		{"pos", "pos.kds.waiter.called", "notif-kds-waiter-called", s.handleKDSWaiterCalled},
+		// Customer sale receipt/invoice — auto on finalize + explicit "New Sale Notification".
+		{"pos", "pos.sale.finalized", "notif-pos-sale-finalized", s.handleSaleNotification},
+		{"pos", "pos.sale.notification_requested", "notif-pos-sale-notify", s.handleSaleNotification},
 		{"pos", "pos.loyalty.points.earned", "notif-loyalty-points-earned", s.handleLoyaltyPointsEarned},
 		{"pos", "pos.loyalty.tier_upgraded", "notif-loyalty-tier-upgraded", s.handleLoyaltyTierUpgraded},
 		{"pos", "pos.loyalty.referral_earned", "notif-loyalty-referral-earned", s.handleLoyaltyReferralEarned},
@@ -130,6 +133,48 @@ func (s *Subscriber) publish(tenantID, channel, templateID, target string, to []
 			zap.Error(err),
 		)
 	}
+}
+
+// handleSaleNotification sends the customer their POS sale receipt/invoice by SMS. Handles both
+// pos.sale.finalized (automatic, on payment) and pos.sale.notification_requested (the explicit
+// All-Sales "New Sale Notification" action). No-ops when the sale has no customer phone.
+func (s *Subscriber) handleSaleNotification(msg *nats.Msg) {
+	var envelope struct {
+		Payload struct {
+			TenantID           string  `json:"tenant_id"`
+			OrderNumber        string  `json:"order_number"`
+			CustomerPhone      string  `json:"customer_phone"`
+			CustomerName       string  `json:"customer_name"`
+			TotalAmount        float64 `json:"total_amount"`
+			Currency           string  `json:"currency"`
+			EtimsInvoiceNumber string  `json:"etims_invoice_number"`
+		} `json:"payload"`
+	}
+	if err := json.Unmarshal(msg.Data, &envelope); err != nil {
+		s.log.Warn("sale_notification: unmarshal failed", zap.Error(err))
+		_ = msg.Nak()
+		return
+	}
+	p := envelope.Payload
+	// Nothing to send to (no customer captured on the sale) → ack and move on.
+	if p.TenantID == "" || strings.TrimSpace(p.CustomerPhone) == "" {
+		_ = msg.Ack()
+		return
+	}
+	currency := p.Currency
+	if currency == "" {
+		currency = "KES"
+	}
+	s.publish(p.TenantID, "sms", "pos/sale_receipt", messaging.TargetCustomer, []string{p.CustomerPhone}, map[string]any{
+		"order_number":         p.OrderNumber,
+		"customer_name":        p.CustomerName,
+		"total_amount":         p.TotalAmount,
+		"currency":             currency,
+		"etims_invoice_number": p.EtimsInvoiceNumber,
+	})
+	s.log.Info("sale receipt notification dispatched",
+		zap.String("tenant_id", p.TenantID), zap.String("order_number", p.OrderNumber))
+	_ = msg.Ack()
 }
 
 func (s *Subscriber) handleLowStock(msg *nats.Msg) {
