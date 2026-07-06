@@ -95,6 +95,42 @@ var treasuryMappings = map[string]treasuryNotificationMapping{
 			}
 		},
 	},
+	// Explicit "Send Payment Received Notification" (invoice View Payments modal action) —
+	// confirms ONE recorded payment to the customer. Reuses the payment-receipt template.
+	// NOTE: the automatic treasury.payment_received event (now fired for partials too) is
+	// deliberately NOT mapped — customer comms stay an explicit action, not per-payment spam.
+	"payment_received_notification": {
+		TemplateID:   "finance/payment_receipt",
+		EmailSubject: "Payment received — thank you",
+		DataBuilder: func(payload map[string]any, tenantWebsite string) map[string]any {
+			name, _ := payload["customer_name"].(string)
+			if name == "" {
+				name = "Customer"
+			}
+			return map[string]any{
+				"name":           name,
+				"amount":         fmt.Sprintf("%v %v", payload["currency"], payload["amount"]),
+				"transaction_id": payload["reference"],
+				"payment_method": payload["method"],
+				"payment_date":   formatEventDate(payload["paid_at"]),
+				"invoice_number": payload["invoice_number"],
+				"receipt_link":   fmt.Sprintf("%s/invoices/%s", serviceURL("NOTIFICATIONS_TREASURY_APP_URL", tenantWebsite), payload["invoice_id"]),
+			}
+		},
+	},
+	// OTP second factor for money-movement approvals (REQ-004): emails the 6-digit code to
+	// the APPROVER (payload approver_email — normalized onto customer_email pre-dispatch).
+	// Reuses the auth OTP template (same 5-minute-expiry wording).
+	"approval_otp_requested": {
+		TemplateID:   "auth/otp_verification",
+		EmailSubject: "Your approval verification code",
+		DataBuilder: func(payload map[string]any, _ string) map[string]any {
+			return map[string]any{
+				"name": "Approver",
+				"otp":  payload["otp_code"],
+			}
+		},
+	},
 	// AR dunning: treasury's dunning worker emits one reminder per invoice per overdue tier.
 	// Reuses the existing invoice_overdue template (same fields). Recipient is the invoice's
 	// customer_email (carried in the event payload).
@@ -302,6 +338,18 @@ func startTreasuryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStream
 			return
 		}
 
+		// Approval OTPs go to the APPROVER, never a customer or the tenant fallback contact —
+		// delivering a second factor to the wrong inbox defeats it. Drop when absent.
+		if eventType == "approval_otp_requested" {
+			if ae, _ := payload["approver_email"].(string); ae != "" {
+				payload["customer_email"] = ae
+			} else {
+				logg.Warn("approval otp: no approver_email in payload — dropping", zap.String("tenant_id", tenantID))
+				_ = m.Ack()
+				return
+			}
+		}
+
 		// Get customer email from event payload, fall back to tenant contact
 		customerEmail, _ := payload["customer_email"].(string)
 		if customerEmail == "" {
@@ -339,7 +387,7 @@ func startTreasuryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStream
 		// - Payouts: tenant sends to tenant admin
 		senderScope := messaging.SenderScopeTenant
 		target := messaging.TargetCustomer
-		if eventType == "payout.completed" {
+		if eventType == "payout.completed" || eventType == "approval_otp_requested" {
 			target = messaging.TargetTenantAdmin
 		}
 

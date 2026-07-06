@@ -95,6 +95,26 @@ var posMappings = map[string]posNotificationMapping{
 		},
 	},
 
+	// ---- Customer-facing: explicit "Send Payment Received Notification" (View Payments
+	// modal action) — confirms ONE payment by SMS; reuses the payment-receipt template. ----
+	"payment.received_notification": {
+		TemplateID:   "pos/pos_payment_receipt",
+		Channel:      "sms",
+		EmailSubject: "",
+		Target:       messaging.TargetCustomer,
+		RecipientFunc: func(payload map[string]any, _ string) (string, bool) {
+			return recipientFromPayload(payload, "customer_phone")
+		},
+		DataBuilder: func(payload map[string]any, tenantWebsite string) map[string]any {
+			return map[string]any{
+				"receipt_number":   payload["order_number"],
+				"total_amount":     fmt.Sprintf("%v %v", payload["currency"], payload["amount"]),
+				"transaction_date": payload["paid_at"],
+				"receipt_link":     fmt.Sprintf("%s/receipts", serviceURL("NOTIFICATIONS_POS_APP_URL", tenantWebsite)),
+			}
+		},
+	},
+
 	// ---- KDS: waiter called (SMS to waiter phone) ----
 	"kds.waiter.called": {
 		TemplateID:   "pos/kds_waiter_called",
