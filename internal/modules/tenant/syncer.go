@@ -96,6 +96,68 @@ func (s *Syncer) SyncTenant(ctx context.Context, slug string) (uuid.UUID, error)
 	return realID, nil
 }
 
+// SyncTenantByID fetches the tenant record from auth-api by UUID and persists the minimal
+// reference in the local PG DB using Ent. Used as a fallback when an event consumer only
+// carries a tenant_id (no slug) and the local projection has not caught up yet — e.g. a
+// subscription/order/inventory event arriving for a tenant created moments earlier, before
+// the auth.tenant.created sync consumer (if any) has run. Mirrors SyncTenant's upsert.
+func (s *Syncer) SyncTenantByID(ctx context.Context, id uuid.UUID) (*ent.Tenant, error) {
+	// Fast path: check if tenant exists locally
+	existing, err := s.client.Tenant.Query().Where(enttenant.IDEQ(id)).Only(ctx)
+	if err == nil && existing != nil {
+		return existing, nil
+	}
+
+	endpoint := strings.TrimRight(s.authURL, "/") + "/api/v1/tenants/by-id/" + id.String()
+
+	log.Printf("  [tenant-sync] dynamically fetching %s from %s", id, endpoint)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return nil, fmt.Errorf("tenant.Syncer: build request: %w", err)
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("tenant.Syncer: GET %s: %w", endpoint, err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, fmt.Errorf("tenant.Syncer: tenant %q not found (404)", id)
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("tenant.Syncer: auth-api HTTP %d for %q", resp.StatusCode, id)
+	}
+
+	var remote authAPITenantResponse
+	if err := json.NewDecoder(resp.Body).Decode(&remote); err != nil {
+		return nil, fmt.Errorf("tenant.Syncer: decode response: %w", err)
+	}
+	realID, err := uuid.Parse(remote.ID)
+	if err != nil {
+		return nil, fmt.Errorf("tenant.Syncer: invalid UUID %q: %w", remote.ID, err)
+	}
+
+	now := time.Now()
+
+	err = s.client.Tenant.Create().
+		SetID(realID).
+		SetName(remote.Name).
+		SetSlug(remote.Slug).
+		SetStatus(remote.Status).
+		SetNillableUseCase(nillableStr(remote.UseCase)).
+		SetSyncStatus("synced").
+		SetLastSyncAt(now).
+		OnConflictColumns("id").
+		UpdateNewValues().
+		Exec(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("tenant.Syncer: upsert failed: %w", err)
+	}
+
+	log.Printf("  [tenant-sync] dynamically synced %s (UUID %s) into notifications-api DB", remote.Slug, realID)
+	return s.client.Tenant.Get(ctx, realID)
+}
+
 // nillableStr returns a *string if non-empty, nil otherwise.
 func nillableStr(s string) *string {
 	if s == "" {

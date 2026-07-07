@@ -10,6 +10,7 @@ import (
 	cache "github.com/Bengo-Hub/cache"
 	"github.com/bengobox/notifications-api/internal/ent"
 	enttenant "github.com/bengobox/notifications-api/internal/ent/tenant"
+	"github.com/bengobox/notifications-api/internal/modules/tenant"
 )
 
 // tenantInfo holds the subset of tenant data needed by event consumers.
@@ -58,10 +59,11 @@ type tenantResolver struct {
 	client  *ent.Client
 	cache   *cache.Aside
 	authURL string
+	syncer  *tenant.Syncer
 }
 
 func newTenantResolver(client *ent.Client, c *cache.Aside, authURL string) *tenantResolver {
-	return &tenantResolver{client: client, cache: c, authURL: authURL}
+	return &tenantResolver{client: client, cache: c, authURL: authURL, syncer: tenant.NewSyncer(client, authURL)}
 }
 
 // resolveBySlug looks up a tenant by its slug and returns basic info + cached branding.
@@ -98,7 +100,16 @@ func (r *tenantResolver) resolve(ctx context.Context, tenantID string) (*tenantI
 		Where(enttenant.IDEQ(id)).
 		Only(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("tenant_resolver: tenant %s not found: %w", tenantID, err)
+		if !ent.IsNotFound(err) {
+			return nil, fmt.Errorf("tenant_resolver: tenant %s not found: %w", tenantID, err)
+		}
+		// Local tenant projection hasn't caught up yet (e.g. an event for a tenant created
+		// moments earlier). Fall back to a live fetch-and-persist from auth-api rather than
+		// failing the whole event — mirrors tenant.Syncer.SyncTenant's by-slug fallback.
+		t, err = r.syncer.SyncTenantByID(ctx, id)
+		if err != nil {
+			return nil, fmt.Errorf("tenant_resolver: tenant %s not found: %w", tenantID, err)
+		}
 	}
 
 	info := &tenantInfo{
