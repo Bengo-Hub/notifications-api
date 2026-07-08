@@ -1,6 +1,6 @@
 # Notifications Service
 
-Multi-channel notifications orchestration platform for BengoBox products. Handles tenant-aware email, SMS, and push messaging, template management, provider routing, and compliance logging.
+Multi-channel notifications orchestration platform for Codevertex products. Handles tenant-aware email, SMS, and push messaging, template management, provider routing, and compliance logging.
 
 ## Key Features
 

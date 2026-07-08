@@ -5,7 +5,7 @@
     ],
     "swagger": "2.0",
     "info": {
-        "description": "HTTP API for the BengoBox notifications service.",
+        "description": "HTTP API for the Codevertex notifications service.",
         "title": "Notifications Service API",
         "contact": {},
         "version": "0.1.0"

@@ -92,7 +92,7 @@ definitions:
 host: notificationsapi.codevertexitsolutions.com
 info:
   contact: {}
-  description: HTTP API for the BengoBox notifications service.
+  description: HTTP API for the Codevertex notifications service.
   title: Notifications Service API
   version: 0.1.0
 paths:

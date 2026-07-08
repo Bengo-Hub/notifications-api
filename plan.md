@@ -1,7 +1,7 @@
 # Notifications Service Delivery Plan
 
 ## Vision & Mandate
-- Provide a reusable, low-latency communications platform for all BengoBox products (ordering-service, ERP, billing, etc.) handling transactional and marketing messages across email, SMS, and push channels.
+- Provide a reusable, low-latency communications platform for all Codevertex products (ordering-service, ERP, billing, etc.) handling transactional and marketing messages across email, SMS, and push channels.
 - Centralize template management, provider orchestration, compliance logging, and user preference management while exposing simple APIs and event-driven interfaces.
 - **Entity Ownership**: This service owns all notification entities: templates, delivery logs, provider settings, tenant branding, user preferences, and campaigns. All other services call notifications-api APIs to send messages but never store notification delivery state. Services emit events (e.g., `invoice_created`, `order.ready`) consumed by notifications-api. See **shared-docs/CROSS-SERVICE-DATA-OWNERSHIP.md** for the canonical ownership matrix.
 

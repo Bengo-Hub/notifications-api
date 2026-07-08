@@ -5,7 +5,7 @@
 
 ---
 
-## Notifications API in BengoBox MVP
+## Notifications API in Codevertex MVP
 
 | Item | Status |
 |------|--------|

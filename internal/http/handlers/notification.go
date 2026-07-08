@@ -42,7 +42,7 @@ type CreateMessageRequest struct {
 	Channel  string         `json:"channel" binding:"required" example:"email"`
 	Tenant   string         `json:"tenant" binding:"required" example:"codevertex"`
 	Template string         `json:"template" binding:"required" example:"invoice_due"`
-	Data     map[string]any `json:"data" binding:"required" swaggertype:"object" example:"{\"name\":\"Jane\",\"invoice_number\":\"INV-1001\",\"amount\":\"KES 1,200\",\"due_date\":\"2025-11-30\",\"payment_link\":\"https://pay.example.com/invoices/INV-1001\",\"brand_name\":\"BengoBox\"}"`
+	Data     map[string]any `json:"data" binding:"required" swaggertype:"object" example:"{\"name\":\"Jane\",\"invoice_number\":\"INV-1001\",\"amount\":\"KES 1,200\",\"due_date\":\"2025-11-30\",\"payment_link\":\"https://pay.example.com/invoices/INV-1001\",\"brand_name\":\"Codevertex\"}"`
 	To       []string       `json:"to" binding:"required,min=1" example:"customer@example.com"`
 	Cc       []string       `json:"cc,omitempty" example:"manager@example.com"`
 	Metadata map[string]any `json:"metadata" swaggertype:"object" example:"{\"subject\":\"Invoice INV-1001 is due\",\"provider\":\"smtp\"}"`

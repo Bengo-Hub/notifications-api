@@ -13,7 +13,7 @@ import (
 
 // @title Notifications Service API
 // @version 0.1.0
-// @description HTTP API for the BengoBox notifications service.
+// @description HTTP API for the Codevertex notifications service.
 // @BasePath /api/v1
 // @schemes http https
 // @host notificationsapi.codevertexitsolutions.com

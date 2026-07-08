@@ -2,14 +2,14 @@
 
 ## Overview
 
-The Notifications Service is a centralized communications platform for all BengoBox services. This document details all integration points, protocols, data flows, and implementation guidelines.
+The Notifications Service is a centralized communications platform for all Codevertex services. This document details all integration points, protocols, data flows, and implementation guidelines.
 
 ---
 
 ## Table of Contents
 
 1. [Integration Patterns](#integration-patterns)
-2. [Internal BengoBox Service Integrations](#internal-bengobox-service-integrations)
+2. [Internal Codevertex Service Integrations](#internal-bengobox-service-integrations)
 3. [External Provider Integrations](#external-provider-integrations)
 4. [Event-Driven Architecture](#event-driven-architecture)
 5. [Two-Tier Configuration Management](#two-tier-configuration-management)
@@ -84,7 +84,7 @@ The Notifications Service is a centralized communications platform for all Bengo
 
 ---
 
-## Internal BengoBox Service Integrations
+## Internal Codevertex Service Integrations
 
 ### Auth Service
 

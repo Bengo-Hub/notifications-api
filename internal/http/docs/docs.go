@@ -429,7 +429,7 @@ var SwaggerInfo = &swag.Spec{
 	BasePath:         "/api/v1",
 	Schemes:          []string{"http", "https"},
 	Title:            "Notifications Service API",
-	Description:      "HTTP API for the BengoBox notifications service.",
+	Description:      "HTTP API for the Codevertex notifications service.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

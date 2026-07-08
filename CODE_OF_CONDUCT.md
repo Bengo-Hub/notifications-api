@@ -2,7 +2,7 @@
 
 ## Our Pledge
 
-We pledge to make participation in the BengoBox Notifications project a harassment-free experience for everyone.
+We pledge to make participation in the Codevertex Notifications project a harassment-free experience for everyone.
 
 ## Our Standards
 
