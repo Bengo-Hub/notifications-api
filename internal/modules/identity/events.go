@@ -296,13 +296,38 @@ func (h *EventHandler) HandleAuthTenantUpdated(ctx context.Context, event *AuthT
 	return nil
 }
 
+// decodeAuthPayload unmarshals a shared-events envelope and decodes its `payload`
+// object into v (whose json tags match the payload keys). It returns the envelope's
+// top-level tenant_id so callers can backfill it when the payload omits it. Auth
+// nests all business fields under `payload`; decoding msg.Data straight into v left
+// every field empty (the reference impl is inventory-api's auth_events.go).
+func decodeAuthPayload(data []byte, v any) (envTenantID string, err error) {
+	var env struct {
+		TenantID string          `json:"tenant_id"`
+		Payload  json.RawMessage `json:"payload"`
+	}
+	if err = json.Unmarshal(data, &env); err != nil {
+		return "", err
+	}
+	if len(env.Payload) > 0 {
+		if err = json.Unmarshal(env.Payload, v); err != nil {
+			return env.TenantID, fmt.Errorf("decode payload: %w", err)
+		}
+	}
+	return env.TenantID, nil
+}
+
 // SubscribeToAuthEvents subscribes to auth-service events via NATS.
 func (h *EventHandler) SubscribeToAuthEvents(nc *nats.Conn) error {
 	_, err := eventslib.QueueSubscribe(h.logger, nc, "auth.user.created", "notif-identity-sync", func(msg *nats.Msg) {
 		var event AuthUserCreatedEvent
-		if err := json.Unmarshal(msg.Data, &event); err != nil {
+		envTenant, err := decodeAuthPayload(msg.Data, &event)
+		if err != nil {
 			h.logger.Error("Failed to unmarshal auth.user.created event", zap.Error(err))
 			return
+		}
+		if event.TenantID == "" {
+			event.TenantID = envTenant
 		}
 		ctx := context.Background()
 		if err := h.HandleAuthUserCreated(ctx, &event); err != nil {
@@ -317,9 +342,13 @@ func (h *EventHandler) SubscribeToAuthEvents(nc *nats.Conn) error {
 
 	_, err = eventslib.QueueSubscribe(h.logger, nc, "auth.user.updated", "notif-identity-sync", func(msg *nats.Msg) {
 		var event AuthUserUpdatedEvent
-		if err := json.Unmarshal(msg.Data, &event); err != nil {
+		envTenant, err := decodeAuthPayload(msg.Data, &event)
+		if err != nil {
 			h.logger.Error("Failed to unmarshal auth.user.updated event", zap.Error(err))
 			return
+		}
+		if event.TenantID == "" {
+			event.TenantID = envTenant
 		}
 		ctx := context.Background()
 		if err := h.HandleAuthUserUpdated(ctx, &event); err != nil {
@@ -334,9 +363,13 @@ func (h *EventHandler) SubscribeToAuthEvents(nc *nats.Conn) error {
 
 	_, err = eventslib.QueueSubscribe(h.logger, nc, "auth.user.deactivated", "notif-identity-sync", func(msg *nats.Msg) {
 		var event AuthUserDeactivatedEvent
-		if err := json.Unmarshal(msg.Data, &event); err != nil {
+		envTenant, err := decodeAuthPayload(msg.Data, &event)
+		if err != nil {
 			h.logger.Error("Failed to unmarshal auth.user.deactivated event", zap.Error(err))
 			return
+		}
+		if event.TenantID == "" {
+			event.TenantID = envTenant
 		}
 		ctx := context.Background()
 		if err := h.HandleAuthUserDeactivated(ctx, &event); err != nil {
@@ -351,9 +384,13 @@ func (h *EventHandler) SubscribeToAuthEvents(nc *nats.Conn) error {
 
 	_, err = eventslib.QueueSubscribe(h.logger, nc, "auth.tenant.created", "notif-identity-sync", func(msg *nats.Msg) {
 		var event AuthTenantCreatedEvent
-		if err := json.Unmarshal(msg.Data, &event); err != nil {
+		envTenant, err := decodeAuthPayload(msg.Data, &event)
+		if err != nil {
 			h.logger.Error("Failed to unmarshal auth.tenant.created event", zap.Error(err))
 			return
+		}
+		if event.TenantID == "" {
+			event.TenantID = envTenant
 		}
 		ctx := context.Background()
 		if err := h.HandleAuthTenantCreated(ctx, &event); err != nil {
@@ -368,9 +405,13 @@ func (h *EventHandler) SubscribeToAuthEvents(nc *nats.Conn) error {
 
 	_, err = eventslib.QueueSubscribe(h.logger, nc, "auth.tenant.updated", "notif-identity-sync", func(msg *nats.Msg) {
 		var event AuthTenantUpdatedEvent
-		if err := json.Unmarshal(msg.Data, &event); err != nil {
+		envTenant, err := decodeAuthPayload(msg.Data, &event)
+		if err != nil {
 			h.logger.Error("Failed to unmarshal auth.tenant.updated event", zap.Error(err))
 			return
+		}
+		if event.TenantID == "" {
+			event.TenantID = envTenant
 		}
 		ctx := context.Background()
 		if err := h.HandleAuthTenantUpdated(ctx, &event); err != nil {

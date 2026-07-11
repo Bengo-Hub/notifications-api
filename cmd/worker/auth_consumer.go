@@ -48,10 +48,37 @@ func startAuthNotificationConsumer(ctx context.Context, nc *nats.Conn, cfg *conf
 
 	// Welcome email on user registration
 	welcomeHandler := func(m *nats.Msg) {
-		var evt authUserEvent
-		if err := json.Unmarshal(m.Data, &evt); err != nil {
+		// Auth outbox publishes the shared-events envelope; business fields live under
+		// `payload` (like the reset/otp handlers below). Decoding m.Data straight into a
+		// flat struct left every field empty → "no email, skipping" → welcome never sent.
+		var envelope struct {
+			TenantID   string         `json:"tenant_id"`
+			TenantSlug string         `json:"tenant_slug"`
+			Payload    map[string]any `json:"payload"`
+		}
+		if err := json.Unmarshal(m.Data, &envelope); err != nil {
 			logg.Error("auth user created: unmarshal failed", zap.Error(err))
 			return
+		}
+		p := envelope.Payload
+		if p == nil {
+			logg.Warn("auth user created: no payload")
+			return
+		}
+		var evt authUserEvent
+		evt.UserID, _ = p["user_id"].(string)
+		evt.Email, _ = p["email"].(string)
+		evt.FullName, _ = p["full_name"].(string)
+		evt.Phone, _ = p["phone"].(string)
+		evt.Method, _ = p["method"].(string)
+		evt.ServiceID, _ = p["service_id"].(string)
+		evt.LoginURL, _ = p["login_url"].(string)
+		evt.MustChangePassword, _ = p["must_change_password"].(bool)
+		if evt.TenantID, _ = p["tenant_id"].(string); evt.TenantID == "" {
+			evt.TenantID = envelope.TenantID
+		}
+		if evt.TenantSlug, _ = p["tenant_slug"].(string); evt.TenantSlug == "" {
+			evt.TenantSlug = envelope.TenantSlug
 		}
 
 		if evt.Email == "" {
