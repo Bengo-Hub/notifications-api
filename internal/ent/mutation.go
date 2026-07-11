@@ -15837,6 +15837,7 @@ type UserMutation struct {
 	id                   *uuid.UUID
 	auth_service_user_id *uuid.UUID
 	email                *string
+	email_verified       *bool
 	sync_status          *string
 	sync_at              *time.Time
 	full_name            *string
@@ -16082,6 +16083,42 @@ func (m *UserMutation) OldEmail(ctx context.Context) (v string, err error) {
 // ResetEmail resets all changes to the "email" field.
 func (m *UserMutation) ResetEmail() {
 	m.email = nil
+}
+
+// SetEmailVerified sets the "email_verified" field.
+func (m *UserMutation) SetEmailVerified(b bool) {
+	m.email_verified = &b
+}
+
+// EmailVerified returns the value of the "email_verified" field in the mutation.
+func (m *UserMutation) EmailVerified() (r bool, exists bool) {
+	v := m.email_verified
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEmailVerified returns the old "email_verified" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldEmailVerified(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEmailVerified is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEmailVerified requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEmailVerified: %w", err)
+	}
+	return oldValue.EmailVerified, nil
+}
+
+// ResetEmailVerified resets all changes to the "email_verified" field.
+func (m *UserMutation) ResetEmailVerified() {
+	m.email_verified = nil
 }
 
 // SetSyncStatus sets the "sync_status" field.
@@ -16647,7 +16684,7 @@ func (m *UserMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserMutation) Fields() []string {
-	fields := make([]string, 0, 14)
+	fields := make([]string, 0, 15)
 	if m.tenant != nil {
 		fields = append(fields, user.FieldTenantID)
 	}
@@ -16656,6 +16693,9 @@ func (m *UserMutation) Fields() []string {
 	}
 	if m.email != nil {
 		fields = append(fields, user.FieldEmail)
+	}
+	if m.email_verified != nil {
+		fields = append(fields, user.FieldEmailVerified)
 	}
 	if m.sync_status != nil {
 		fields = append(fields, user.FieldSyncStatus)
@@ -16704,6 +16744,8 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 		return m.AuthServiceUserID()
 	case user.FieldEmail:
 		return m.Email()
+	case user.FieldEmailVerified:
+		return m.EmailVerified()
 	case user.FieldSyncStatus:
 		return m.SyncStatus()
 	case user.FieldSyncAt:
@@ -16741,6 +16783,8 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldAuthServiceUserID(ctx)
 	case user.FieldEmail:
 		return m.OldEmail(ctx)
+	case user.FieldEmailVerified:
+		return m.OldEmailVerified(ctx)
 	case user.FieldSyncStatus:
 		return m.OldSyncStatus(ctx)
 	case user.FieldSyncAt:
@@ -16792,6 +16836,13 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetEmail(v)
+		return nil
+	case user.FieldEmailVerified:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEmailVerified(v)
 		return nil
 	case user.FieldSyncStatus:
 		v, ok := value.(string)
@@ -16960,6 +17011,9 @@ func (m *UserMutation) ResetField(name string) error {
 		return nil
 	case user.FieldEmail:
 		m.ResetEmail()
+		return nil
+	case user.FieldEmailVerified:
+		m.ResetEmailVerified()
 		return nil
 	case user.FieldSyncStatus:
 		m.ResetSyncStatus()

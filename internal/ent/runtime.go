@@ -586,32 +586,36 @@ func init() {
 	userDescEmail := userFields[3].Descriptor()
 	// user.EmailValidator is a validator for the "email" field. It is called by the builders before save.
 	user.EmailValidator = userDescEmail.Validators[0].(func(string) error)
+	// userDescEmailVerified is the schema descriptor for email_verified field.
+	userDescEmailVerified := userFields[4].Descriptor()
+	// user.DefaultEmailVerified holds the default value on creation for the email_verified field.
+	user.DefaultEmailVerified = userDescEmailVerified.Default.(bool)
 	// userDescSyncStatus is the schema descriptor for sync_status field.
-	userDescSyncStatus := userFields[4].Descriptor()
+	userDescSyncStatus := userFields[5].Descriptor()
 	// user.DefaultSyncStatus holds the default value on creation for the sync_status field.
 	user.DefaultSyncStatus = userDescSyncStatus.Default.(string)
 	// userDescFullName is the schema descriptor for full_name field.
-	userDescFullName := userFields[6].Descriptor()
+	userDescFullName := userFields[7].Descriptor()
 	// user.FullNameValidator is a validator for the "full_name" field. It is called by the builders before save.
 	user.FullNameValidator = userDescFullName.Validators[0].(func(string) error)
 	// userDescStatus is the schema descriptor for status field.
-	userDescStatus := userFields[8].Descriptor()
+	userDescStatus := userFields[9].Descriptor()
 	// user.DefaultStatus holds the default value on creation for the status field.
 	user.DefaultStatus = userDescStatus.Default.(string)
 	// userDescLocale is the schema descriptor for locale field.
-	userDescLocale := userFields[10].Descriptor()
+	userDescLocale := userFields[11].Descriptor()
 	// user.DefaultLocale holds the default value on creation for the locale field.
 	user.DefaultLocale = userDescLocale.Default.(string)
 	// userDescMetadata is the schema descriptor for metadata field.
-	userDescMetadata := userFields[12].Descriptor()
+	userDescMetadata := userFields[13].Descriptor()
 	// user.DefaultMetadata holds the default value on creation for the metadata field.
 	user.DefaultMetadata = userDescMetadata.Default.(map[string]interface{})
 	// userDescCreatedAt is the schema descriptor for created_at field.
-	userDescCreatedAt := userFields[13].Descriptor()
+	userDescCreatedAt := userFields[14].Descriptor()
 	// user.DefaultCreatedAt holds the default value on creation for the created_at field.
 	user.DefaultCreatedAt = userDescCreatedAt.Default.(func() time.Time)
 	// userDescUpdatedAt is the schema descriptor for updated_at field.
-	userDescUpdatedAt := userFields[14].Descriptor()
+	userDescUpdatedAt := userFields[15].Descriptor()
 	// user.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	user.DefaultUpdatedAt = userDescUpdatedAt.Default.(func() time.Time)
 	// user.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.

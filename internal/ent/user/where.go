@@ -71,6 +71,11 @@ func Email(v string) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldEmail, v))
 }
 
+// EmailVerified applies equality check predicate on the "email_verified" field. It's identical to EmailVerifiedEQ.
+func EmailVerified(v bool) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldEmailVerified, v))
+}
+
 // SyncStatus applies equality check predicate on the "sync_status" field. It's identical to SyncStatusEQ.
 func SyncStatus(v string) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldSyncStatus, v))
@@ -254,6 +259,16 @@ func EmailEqualFold(v string) predicate.User {
 // EmailContainsFold applies the ContainsFold predicate on the "email" field.
 func EmailContainsFold(v string) predicate.User {
 	return predicate.User(sql.FieldContainsFold(FieldEmail, v))
+}
+
+// EmailVerifiedEQ applies the EQ predicate on the "email_verified" field.
+func EmailVerifiedEQ(v bool) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldEmailVerified, v))
+}
+
+// EmailVerifiedNEQ applies the NEQ predicate on the "email_verified" field.
+func EmailVerifiedNEQ(v bool) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldEmailVerified, v))
 }
 
 // SyncStatusEQ applies the EQ predicate on the "sync_status" field.

@@ -28,6 +28,12 @@ func (User) Fields() []ent.Field {
 			Comment("Reference to auth-service user. Identity data synced from auth-service."),
 		field.String("email").
 			NotEmpty(),
+		// email_verified mirrors auth-service's durable users.email_verified (carried on
+		// auth.user.created/updated). The email delivery gate drops mail to a KNOWN user
+		// whose email is unverified; addresses with no local user row are unaffected.
+		field.Bool("email_verified").
+			Default(false).
+			Comment("Mirror of auth-service users.email_verified; gates outbound email"),
 		field.String("sync_status").
 			Default("pending").
 			Comment("Sync status with auth-service: pending, synced, failed"),

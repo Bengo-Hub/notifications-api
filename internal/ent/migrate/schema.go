@@ -621,6 +621,7 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "auth_service_user_id", Type: field.TypeUUID, Unique: true, Nullable: true},
 		{Name: "email", Type: field.TypeString},
+		{Name: "email_verified", Type: field.TypeBool, Default: false},
 		{Name: "sync_status", Type: field.TypeString, Default: "pending"},
 		{Name: "sync_at", Type: field.TypeTime, Nullable: true},
 		{Name: "full_name", Type: field.TypeString},
@@ -642,7 +643,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "users_tenants_users",
-				Columns:    []*schema.Column{UsersColumns[14]},
+				Columns:    []*schema.Column{UsersColumns[15]},
 				RefColumns: []*schema.Column{TenantsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -651,17 +652,17 @@ var (
 			{
 				Name:    "user_tenant_id_email",
 				Unique:  true,
-				Columns: []*schema.Column{UsersColumns[14], UsersColumns[2]},
+				Columns: []*schema.Column{UsersColumns[15], UsersColumns[2]},
 			},
 			{
 				Name:    "user_tenant_id_auth_service_user_id",
 				Unique:  false,
-				Columns: []*schema.Column{UsersColumns[14], UsersColumns[1]},
+				Columns: []*schema.Column{UsersColumns[15], UsersColumns[1]},
 			},
 			{
 				Name:    "user_tenant_id_status",
 				Unique:  false,
-				Columns: []*schema.Column{UsersColumns[14], UsersColumns[7]},
+				Columns: []*schema.Column{UsersColumns[15], UsersColumns[8]},
 			},
 			{
 				Name:    "user_email",
@@ -671,7 +672,7 @@ var (
 			{
 				Name:    "user_sync_status",
 				Unique:  false,
-				Columns: []*schema.Column{UsersColumns[3]},
+				Columns: []*schema.Column{UsersColumns[4]},
 			},
 			{
 				Name:    "user_auth_service_user_id",
@@ -681,7 +682,7 @@ var (
 			{
 				Name:    "user_created_at",
 				Unique:  false,
-				Columns: []*schema.Column{UsersColumns[12]},
+				Columns: []*schema.Column{UsersColumns[13]},
 			},
 		},
 	}

@@ -28,27 +28,29 @@ func NewEventHandler(service *Service, logger *zap.Logger) *EventHandler {
 
 // AuthUserCreatedEvent represents an auth.user.created event.
 type AuthUserCreatedEvent struct {
-	UserID    string                 `json:"user_id"`
-	TenantID  string                 `json:"tenant_id"`
-	Email     string                 `json:"email"`
-	FullName  string                 `json:"full_name"`
-	Phone     string                 `json:"phone,omitempty"`
-	Status    string                 `json:"status"`
-	Roles     []string               `json:"roles,omitempty"`
-	Metadata  map[string]interface{} `json:"metadata,omitempty"`
-	CreatedAt time.Time              `json:"created_at"`
+	UserID        string                 `json:"user_id"`
+	TenantID      string                 `json:"tenant_id"`
+	Email         string                 `json:"email"`
+	EmailVerified bool                   `json:"email_verified"`
+	FullName      string                 `json:"full_name"`
+	Phone         string                 `json:"phone,omitempty"`
+	Status        string                 `json:"status"`
+	Roles         []string               `json:"roles,omitempty"`
+	Metadata      map[string]interface{} `json:"metadata,omitempty"`
+	CreatedAt     time.Time              `json:"created_at"`
 }
 
 // AuthUserUpdatedEvent represents an auth.user.updated event.
 type AuthUserUpdatedEvent struct {
-	UserID    string                 `json:"user_id"`
-	TenantID  string                 `json:"tenant_id,omitempty"`
-	Email     string                 `json:"email,omitempty"`
-	FullName  string                 `json:"full_name,omitempty"`
-	Phone     string                 `json:"phone,omitempty"`
-	Status    string                 `json:"status,omitempty"`
-	Metadata  map[string]interface{} `json:"metadata,omitempty"`
-	UpdatedAt time.Time              `json:"updated_at"`
+	UserID        string                 `json:"user_id"`
+	TenantID      string                 `json:"tenant_id,omitempty"`
+	Email         string                 `json:"email,omitempty"`
+	EmailVerified bool                   `json:"email_verified,omitempty"`
+	FullName      string                 `json:"full_name,omitempty"`
+	Phone         string                 `json:"phone,omitempty"`
+	Status        string                 `json:"status,omitempty"`
+	Metadata      map[string]interface{} `json:"metadata,omitempty"`
+	UpdatedAt     time.Time              `json:"updated_at"`
 }
 
 // AuthUserDeactivatedEvent represents an auth.user.deactivated event.
@@ -93,13 +95,14 @@ func (h *EventHandler) HandleAuthUserCreated(ctx context.Context, event *AuthUse
 	}
 
 	authUserData := map[string]interface{}{
-		"id":        event.UserID,
-		"email":     event.Email,
-		"full_name": event.FullName,
-		"phone":     event.Phone,
-		"status":    event.Status,
-		"roles":     event.Roles,
-		"metadata":  event.Metadata,
+		"id":             event.UserID,
+		"email":          event.Email,
+		"email_verified": event.EmailVerified,
+		"full_name":      event.FullName,
+		"phone":          event.Phone,
+		"status":         event.Status,
+		"roles":          event.Roles,
+		"metadata":       event.Metadata,
 	}
 
 	_, err = h.service.SyncUserFromAuthService(ctx, authServiceUserID, tenantID, authUserData)

@@ -20,6 +20,7 @@ import (
 	serviceclient "github.com/Bengo-Hub/shared-service-client"
 
 	entdb "github.com/bengobox/notifications-api/internal/database"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
 
@@ -190,7 +191,7 @@ func main() {
 		}
 
 		// Deliver via provider
-		deliverErr := deliver(ctx, cfg, pm, emailGuardian, billingSvc, whatsappSubsSvc, tr, &msg, rendered, logg)
+		deliverErr := deliver(ctx, cfg, pm, emailGuardian, billingSvc, whatsappSubsSvc, tr, dbPool, &msg, rendered, logg)
 		if deliverErr != nil {
 			logg.Warn("delivery failed",
 				zap.String("channel", msg.Channel),
@@ -395,7 +396,47 @@ func renderMessage(ctx context.Context, cfg *config.Config, tpl *templates.Loade
 }
 
 // deliver sends the rendered message via the appropriate provider.
-func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg *emailGuard, billingSvc *billing.Service, whatsappSubsSvc *billing.WhatsAppSubscriptionService, tr *tenantResolver, msg *messaging.Message, rendered string, logg *zap.Logger) error {
+// verificationExemptTemplate lists the emails that must ALWAYS send even to an unverified
+// account, because they are how the user verifies or recovers access. Gating these would
+// lock an unverified user out permanently.
+func verificationExemptTemplate(templateID string) bool {
+	t := strings.ToLower(templateID)
+	for _, p := range []string{"auth/welcome", "auth/password_reset", "auth/otp", "verify"} {
+		if strings.Contains(t, p) {
+			return true
+		}
+	}
+	return false
+}
+
+// unverifiedUserRecipients returns the subset of `to` that map to a KNOWN local user whose
+// email is not verified. Addresses with no user row (end customers, tenant contact_email,
+// suppliers) are never returned — user-level gating must not touch them.
+func unverifiedUserRecipients(ctx context.Context, db *pgxpool.Pool, to []string) map[string]bool {
+	drop := map[string]bool{}
+	if db == nil || len(to) == 0 {
+		return drop
+	}
+	lowered := make([]string, len(to))
+	for i, e := range to {
+		lowered[i] = strings.ToLower(strings.TrimSpace(e))
+	}
+	rows, err := db.Query(ctx,
+		`SELECT lower(email) FROM users WHERE lower(email) = ANY($1) AND email_verified = false`, lowered)
+	if err != nil {
+		return drop // fail-open: never block mail on a lookup error
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var e string
+		if rows.Scan(&e) == nil {
+			drop[e] = true
+		}
+	}
+	return drop
+}
+
+func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg *emailGuard, billingSvc *billing.Service, whatsappSubsSvc *billing.WhatsAppSubscriptionService, tr *tenantResolver, dbPool *pgxpool.Pool, msg *messaging.Message, rendered string, logg *zap.Logger) error {
 	channel := strings.ToLower(msg.Channel)
 	preferred := ""
 	if p, ok := msg.Metadata["provider"].(string); ok {
@@ -450,6 +491,29 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 		if len(skipped) > 0 {
 			logg.Warn("skipped invalid email recipients",
 				zap.Strings("skipped", skipped), zap.String("template", msg.TemplateID))
+		}
+		// Email-verification gate: drop recipients that ARE a known local user whose email
+		// is unverified — that address is either a placeholder (undeliverable) or one the
+		// user hasn't proven, and they are being pushed to verify at login. Addresses with
+		// no user row (customers, tenant contacts, suppliers) pass untouched, and the
+		// verify/welcome/reset templates are always allowed so users can still verify.
+		if !verificationExemptTemplate(msg.TemplateID) {
+			if drop := unverifiedUserRecipients(ctx, dbPool, validTo); len(drop) > 0 {
+				kept := make([]string, 0, len(validTo))
+				var gated []string
+				for _, e := range validTo {
+					if drop[strings.ToLower(strings.TrimSpace(e))] {
+						gated = append(gated, e)
+						continue
+					}
+					kept = append(kept, e)
+				}
+				if len(gated) > 0 {
+					logg.Info("gated email to unverified account(s)",
+						zap.Strings("gated", gated), zap.String("template", msg.TemplateID))
+				}
+				validTo = kept
+			}
 		}
 		if len(validTo) == 0 {
 			logg.Warn("no valid email recipients — skipping send",

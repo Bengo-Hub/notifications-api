@@ -21,6 +21,8 @@ const (
 	FieldAuthServiceUserID = "auth_service_user_id"
 	// FieldEmail holds the string denoting the email field in the database.
 	FieldEmail = "email"
+	// FieldEmailVerified holds the string denoting the email_verified field in the database.
+	FieldEmailVerified = "email_verified"
 	// FieldSyncStatus holds the string denoting the sync_status field in the database.
 	FieldSyncStatus = "sync_status"
 	// FieldSyncAt holds the string denoting the sync_at field in the database.
@@ -69,6 +71,7 @@ var Columns = []string{
 	FieldTenantID,
 	FieldAuthServiceUserID,
 	FieldEmail,
+	FieldEmailVerified,
 	FieldSyncStatus,
 	FieldSyncAt,
 	FieldFullName,
@@ -101,6 +104,8 @@ func ValidColumn(column string) bool {
 var (
 	// EmailValidator is a validator for the "email" field. It is called by the builders before save.
 	EmailValidator func(string) error
+	// DefaultEmailVerified holds the default value on creation for the "email_verified" field.
+	DefaultEmailVerified bool
 	// DefaultSyncStatus holds the default value on creation for the "sync_status" field.
 	DefaultSyncStatus string
 	// FullNameValidator is a validator for the "full_name" field. It is called by the builders before save.
@@ -142,6 +147,11 @@ func ByAuthServiceUserID(opts ...sql.OrderTermOption) OrderOption {
 // ByEmail orders the results by the email field.
 func ByEmail(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldEmail, opts...).ToFunc()
+}
+
+// ByEmailVerified orders the results by the email_verified field.
+func ByEmailVerified(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldEmailVerified, opts...).ToFunc()
 }
 
 // BySyncStatus orders the results by the sync_status field.

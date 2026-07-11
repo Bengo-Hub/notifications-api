@@ -52,6 +52,20 @@ func (_c *UserCreate) SetEmail(v string) *UserCreate {
 	return _c
 }
 
+// SetEmailVerified sets the "email_verified" field.
+func (_c *UserCreate) SetEmailVerified(v bool) *UserCreate {
+	_c.mutation.SetEmailVerified(v)
+	return _c
+}
+
+// SetNillableEmailVerified sets the "email_verified" field if the given value is not nil.
+func (_c *UserCreate) SetNillableEmailVerified(v *bool) *UserCreate {
+	if v != nil {
+		_c.SetEmailVerified(*v)
+	}
+	return _c
+}
+
 // SetSyncStatus sets the "sync_status" field.
 func (_c *UserCreate) SetSyncStatus(v string) *UserCreate {
 	_c.mutation.SetSyncStatus(v)
@@ -259,6 +273,10 @@ func (_c *UserCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (_c *UserCreate) defaults() {
+	if _, ok := _c.mutation.EmailVerified(); !ok {
+		v := user.DefaultEmailVerified
+		_c.mutation.SetEmailVerified(v)
+	}
 	if _, ok := _c.mutation.SyncStatus(); !ok {
 		v := user.DefaultSyncStatus
 		_c.mutation.SetSyncStatus(v)
@@ -301,6 +319,9 @@ func (_c *UserCreate) check() error {
 		if err := user.EmailValidator(v); err != nil {
 			return &ValidationError{Name: "email", err: fmt.Errorf(`ent: validator failed for field "User.email": %w`, err)}
 		}
+	}
+	if _, ok := _c.mutation.EmailVerified(); !ok {
+		return &ValidationError{Name: "email_verified", err: errors.New(`ent: missing required field "User.email_verified"`)}
 	}
 	if _, ok := _c.mutation.SyncStatus(); !ok {
 		return &ValidationError{Name: "sync_status", err: errors.New(`ent: missing required field "User.sync_status"`)}
@@ -374,6 +395,10 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Email(); ok {
 		_spec.SetField(user.FieldEmail, field.TypeString, value)
 		_node.Email = value
+	}
+	if value, ok := _c.mutation.EmailVerified(); ok {
+		_spec.SetField(user.FieldEmailVerified, field.TypeBool, value)
+		_node.EmailVerified = value
 	}
 	if value, ok := _c.mutation.SyncStatus(); ok {
 		_spec.SetField(user.FieldSyncStatus, field.TypeString, value)
@@ -543,6 +568,18 @@ func (u *UserUpsert) SetEmail(v string) *UserUpsert {
 // UpdateEmail sets the "email" field to the value that was provided on create.
 func (u *UserUpsert) UpdateEmail() *UserUpsert {
 	u.SetExcluded(user.FieldEmail)
+	return u
+}
+
+// SetEmailVerified sets the "email_verified" field.
+func (u *UserUpsert) SetEmailVerified(v bool) *UserUpsert {
+	u.Set(user.FieldEmailVerified, v)
+	return u
+}
+
+// UpdateEmailVerified sets the "email_verified" field to the value that was provided on create.
+func (u *UserUpsert) UpdateEmailVerified() *UserUpsert {
+	u.SetExcluded(user.FieldEmailVerified)
 	return u
 }
 
@@ -787,6 +824,20 @@ func (u *UserUpsertOne) SetEmail(v string) *UserUpsertOne {
 func (u *UserUpsertOne) UpdateEmail() *UserUpsertOne {
 	return u.Update(func(s *UserUpsert) {
 		s.UpdateEmail()
+	})
+}
+
+// SetEmailVerified sets the "email_verified" field.
+func (u *UserUpsertOne) SetEmailVerified(v bool) *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.SetEmailVerified(v)
+	})
+}
+
+// UpdateEmailVerified sets the "email_verified" field to the value that was provided on create.
+func (u *UserUpsertOne) UpdateEmailVerified() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateEmailVerified()
 	})
 }
 
@@ -1222,6 +1273,20 @@ func (u *UserUpsertBulk) SetEmail(v string) *UserUpsertBulk {
 func (u *UserUpsertBulk) UpdateEmail() *UserUpsertBulk {
 	return u.Update(func(s *UserUpsert) {
 		s.UpdateEmail()
+	})
+}
+
+// SetEmailVerified sets the "email_verified" field.
+func (u *UserUpsertBulk) SetEmailVerified(v bool) *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.SetEmailVerified(v)
+	})
+}
+
+// UpdateEmailVerified sets the "email_verified" field to the value that was provided on create.
+func (u *UserUpsertBulk) UpdateEmailVerified() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateEmailVerified()
 	})
 }
 

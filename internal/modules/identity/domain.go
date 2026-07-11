@@ -122,6 +122,7 @@ type User struct {
 	TenantID          string                 `json:"tenantId"`
 	AuthServiceUserID *uuid.UUID             `json:"authServiceUserId,omitempty"`
 	Email             string                 `json:"email"`
+	EmailVerified     bool                   `json:"emailVerified"`
 	FullName          string                 `json:"fullName"`
 	Phone             string                 `json:"phone"`
 	Roles             []Role                 `json:"roles"`

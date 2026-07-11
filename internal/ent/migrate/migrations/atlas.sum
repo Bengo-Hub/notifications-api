@@ -1,4 +1,4 @@
-h1:IRfq3rlPn33kapfKzcPVY0N7bpwhVyKKFwM5sE4hy48=
+h1:PhU0lb+JKq+7hZQWYEy+VzRnQa8DEyv6Xt5G76cElNY=
 20260311180156_billing_sprint_init.sql h1:gkMT+MDZoIyzvPtcnje3ig6c5LOL3+IXsC0TQ0BHbvE=
 20260311185040_consolidate_tenant_branding.sql h1:q+wkVvf0N0lQ9JPeFATkqtUX34+zeE1MkhYFOUBpXfs=
 20260322072519_add_identity_rbac.sql h1:FABNFn9pQa3FfKmO1INir0u96sdb13nAIuyMOq5uWF4=
@@ -11,3 +11,4 @@ h1:IRfq3rlPn33kapfKzcPVY0N7bpwhVyKKFwM5sE4hy48=
 20260603161539_notifications_roles_global_nullable_tenant.sql h1:Z1/DVeLkb7eoXquPeCrkCCQwW8/y7HNY+o2t5OAdB1g=
 20260615230442_add_backup_tracking.sql h1:Em5NNea/iN80+II4MLroa/jPrOObQo9lskvRUBLQky0=
 20260616083419_add_backup_setting.sql h1:oi1PvF6m/gQ1nDHF1sqe0AHg6k5bFuWA8GPQvNaeN/k=
+20260711171241_add_user_email_verified.sql h1:KpCn6MgxZWw6CGEm7L7Oo9TLFgvMRnUi6JvM29jRgKk=

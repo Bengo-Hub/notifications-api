@@ -26,6 +26,8 @@ type User struct {
 	AuthServiceUserID uuid.UUID `json:"auth_service_user_id,omitempty"`
 	// Email holds the value of the "email" field.
 	Email string `json:"email,omitempty"`
+	// Mirror of auth-service users.email_verified; gates outbound email
+	EmailVerified bool `json:"email_verified,omitempty"`
 	// Sync status with auth-service: pending, synced, failed
 	SyncStatus string `json:"sync_status,omitempty"`
 	// Last sync timestamp with auth-service
@@ -92,6 +94,8 @@ func (*User) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case user.FieldMetadata:
 			values[i] = new([]byte)
+		case user.FieldEmailVerified:
+			values[i] = new(sql.NullBool)
 		case user.FieldEmail, user.FieldSyncStatus, user.FieldFullName, user.FieldPhone, user.FieldStatus, user.FieldPrimaryRole, user.FieldLocale:
 			values[i] = new(sql.NullString)
 		case user.FieldSyncAt, user.FieldLastLoginAt, user.FieldCreatedAt, user.FieldUpdatedAt:
@@ -136,6 +140,12 @@ func (_m *User) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field email", values[i])
 			} else if value.Valid {
 				_m.Email = value.String
+			}
+		case user.FieldEmailVerified:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field email_verified", values[i])
+			} else if value.Valid {
+				_m.EmailVerified = value.Bool
 			}
 		case user.FieldSyncStatus:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -259,6 +269,9 @@ func (_m *User) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("email=")
 	builder.WriteString(_m.Email)
+	builder.WriteString(", ")
+	builder.WriteString("email_verified=")
+	builder.WriteString(fmt.Sprintf("%v", _m.EmailVerified))
 	builder.WriteString(", ")
 	builder.WriteString("sync_status=")
 	builder.WriteString(_m.SyncStatus)

@@ -117,6 +117,9 @@ func (s *Service) updateUserFromAuthService(ctx context.Context, user *User, aut
 	if status, ok := authUserData["status"].(string); ok {
 		user.Status = status
 	}
+	if verified, ok := authUserData["email_verified"].(bool); ok {
+		user.EmailVerified = verified
+	}
 
 	now := s.now()
 	user.SyncAt = &now
@@ -175,12 +178,15 @@ func (s *Service) createUserFromAuthService(ctx context.Context, authServiceUser
 		permissions = ConsolidatePermissions(roles)
 	}
 
+	emailVerified, _ := authUserData["email_verified"].(bool)
+
 	now := s.now()
 	user := &User{
 		ID:                authServiceUserID,
 		TenantID:          tenantID,
 		AuthServiceUserID: &authServiceUserID,
 		Email:             email,
+		EmailVerified:     emailVerified,
 		FullName:          fullName,
 		Phone:             phone,
 		Status:            status,
