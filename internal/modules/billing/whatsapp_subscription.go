@@ -21,14 +21,17 @@ type WhatsAppSubscriptionService struct {
 	client         *ent.Client
 	log            *zap.Logger
 	treasuryClient *serviceclient.Client
+	treasuryAPIKey string
 }
 
 // NewWhatsAppSubscriptionService creates a new WhatsApp subscription service.
-func NewWhatsAppSubscriptionService(client *ent.Client, log *zap.Logger, treasuryClient *serviceclient.Client) *WhatsAppSubscriptionService {
+// treasuryAPIKey is the shared INTERNAL_SERVICE_KEY sent as X-API-Key on S2S calls.
+func NewWhatsAppSubscriptionService(client *ent.Client, log *zap.Logger, treasuryClient *serviceclient.Client, treasuryAPIKey string) *WhatsAppSubscriptionService {
 	return &WhatsAppSubscriptionService{
 		client:         client,
 		log:            log.Named("whatsapp.subscription"),
 		treasuryClient: treasuryClient,
+		treasuryAPIKey: treasuryAPIKey,
 	}
 }
 
@@ -126,7 +129,11 @@ func (s *WhatsAppSubscriptionService) InitiateSubscription(ctx context.Context, 
 		},
 	}
 
-	resp, err := s.treasuryClient.Post(ctx, fmt.Sprintf("/api/v1/%s/payments/intents", tenantID), req, nil)
+	var treasuryHeaders map[string]string
+	if s.treasuryAPIKey != "" {
+		treasuryHeaders = map[string]string{"X-API-Key": s.treasuryAPIKey}
+	}
+	resp, err := s.treasuryClient.Post(ctx, fmt.Sprintf("/api/v1/%s/payments/intents", tenantID), req, treasuryHeaders)
 	if err != nil {
 		return nil, fmt.Errorf("treasury api error: %w", err)
 	}

@@ -137,7 +137,7 @@ func main() {
 	treasuryClient := serviceclient.New(treasuryCfg)
 
 	billingSvc := billing.NewService(client, logg, treasuryClient)
-	whatsappSubsSvc := billing.NewWhatsAppSubscriptionService(client, logg, treasuryClient)
+	whatsappSubsSvc := billing.NewWhatsAppSubscriptionService(client, logg, treasuryClient, cfg.Security.APIKey)
 	dbPool, err := database.NewPool(ctx, cfg.Postgres)
 	if err != nil {
 		logg.Warn("postgres not available for provider overrides", zap.Error(err))

@@ -116,7 +116,7 @@ func New(ctx context.Context) (*App, error) {
 
 	healthHandler := handlers.NewHealthHandler(log, dbPool, redisClient, natsConn)
 	billingService := billing.NewService(entClient, log, treasuryClient)
-	whatsappSubsService := billing.NewWhatsAppSubscriptionService(entClient, log, treasuryClient)
+	whatsappSubsService := billing.NewWhatsAppSubscriptionService(entClient, log, treasuryClient, cfg.Security.APIKey)
 
 	// Seed default WhatsApp plans on startup
 	if seedErr := whatsappSubsService.SeedDefaultPlans(ctx); seedErr != nil {
