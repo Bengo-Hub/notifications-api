@@ -117,9 +117,26 @@ func startInventoryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStrea
 			_ = m.Nak()
 			return
 		}
-		// Recipient: customer-facing notifications (e.g. ticket issued) go to the buyer; the rest go
-		// to the tenant admin.
+		// Staff alert emails (low stock / stock out) are OPT-IN: the publisher embeds
+		// notification.enabled from the tenant's inventory config. Absent or false means
+		// the tenant never opted in — skip. Buyer-facing messages (tickets) are
+		// transactional and always send.
+		notif, _ := evt.Payload["notification"].(map[string]interface{})
+		if !mapping.ToBuyer {
+			if enabled, _ := notif["enabled"].(bool); !enabled {
+				logg.Debug("inventory event: alert emails not enabled for tenant, skipping",
+					zap.String("tenant_id", evt.TenantID), zap.String("type", evt.EventType))
+				_ = m.Ack()
+				return
+			}
+		}
+
+		// Recipient: customer-facing notifications (e.g. ticket issued) go to the buyer; staff
+		// alerts go to the tenant's configured alert address, falling back to the tenant admin.
 		recipient := ti.ContactEmail
+		if alertEmail, _ := notif["email"].(string); alertEmail != "" && !mapping.ToBuyer {
+			recipient = alertEmail
+		}
 		target := messaging.TargetStaff
 		if mapping.ToBuyer {
 			buyerEmail, _ := evt.Payload["buyer_email"].(string)

@@ -522,9 +522,20 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 		}
 		eg.WaitForSlot(ctx, 20*time.Second)
 
+		// Circuit breaker: a tenant provider whose credentials recently failed auth is
+		// skipped entirely — every attempt is a doomed AUTH against the SMTP host, and
+		// bursts of failed logins trip the provider's abuse detection (Zoho 550 5.4.6).
+		if providerTenantID != pm.PlatformID && eg.ProviderCoolingDown(providerTenantID) {
+			providerTenantID = pm.PlatformID
+			preferred = ""
+		}
+
 		emailProv, _ := pm.GetEmailProvider(ctx, providerTenantID, preferred)
 		err := emailProv.SendEmail(ctx, fromOverride, validTo, msg.Cc, msg.Bcc, subject, rendered, "", atts)
 		if err != nil {
+			if providerTenantID != pm.PlatformID && isAuthFailureError(err) {
+				eg.CoolProvider(providerTenantID, 30*time.Minute)
+			}
 			logg.Warn("tenant email delivery failed, trying platform fallback",
 				zap.String("tenant_id", msg.TenantID),
 				zap.String("provider", emailProv.Name()),

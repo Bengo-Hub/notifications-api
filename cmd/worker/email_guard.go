@@ -40,6 +40,13 @@ type emailGuard struct {
 	// in-process suppression of hard-bounced / invalid recipients
 	supMu      sync.Mutex
 	suppressed map[string]time.Time
+
+	// circuit breaker for tenant providers with failing credentials: a provider that
+	// fails auth is skipped (straight to platform fallback) until the cooldown expires,
+	// instead of hammering the SMTP host with a doomed AUTH per message — bursts of
+	// failed logins are exactly what trips Zoho's abuse detection.
+	provMu       sync.Mutex
+	provCooldown map[string]time.Time
 }
 
 type mxEntry struct {
@@ -69,9 +76,50 @@ func newEmailGuard(maxPerHour, burst int, validateMX bool, log *zap.Logger) *ema
 		maxTokens:  float64(burst),
 		perSec:     float64(maxPerHour) / 3600.0,
 		last:       time.Now(),
-		mxCache:    make(map[string]mxEntry),
-		suppressed: make(map[string]time.Time),
+		mxCache:      make(map[string]mxEntry),
+		suppressed:   make(map[string]time.Time),
+		provCooldown: make(map[string]time.Time),
 	}
+}
+
+// ProviderCoolingDown reports whether the given provider key (tenant id) recently failed
+// authentication and should be skipped in favor of the platform provider.
+func (g *emailGuard) ProviderCoolingDown(key string) bool {
+	g.provMu.Lock()
+	defer g.provMu.Unlock()
+	exp, ok := g.provCooldown[key]
+	if !ok {
+		return false
+	}
+	if time.Now().After(exp) {
+		delete(g.provCooldown, key)
+		return false
+	}
+	return true
+}
+
+// CoolProvider opens the circuit for a provider key after an auth failure.
+func (g *emailGuard) CoolProvider(key string, ttl time.Duration) {
+	if key == "" {
+		return
+	}
+	g.provMu.Lock()
+	g.provCooldown[key] = time.Now().Add(ttl)
+	g.provMu.Unlock()
+	g.log.Warn("tenant email provider cooling down after auth failure",
+		zap.String("tenant_id", key), zap.Duration("ttl", ttl))
+}
+
+// isAuthFailureError reports whether an SMTP error means the provider's own credentials
+// are bad (535 / authentication failed) — a config problem that will fail identically on
+// every send until the tenant fixes their provider settings.
+func isAuthFailureError(err error) bool {
+	if err == nil {
+		return false
+	}
+	s := strings.ToLower(err.Error())
+	return strings.Contains(s, "535") || strings.Contains(s, "authentication failed") ||
+		strings.Contains(s, "auth: ")
 }
 
 // ValidRecipients returns the subset of addrs safe to send to, plus the skipped ones.

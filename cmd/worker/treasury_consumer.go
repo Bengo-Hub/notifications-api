@@ -350,9 +350,39 @@ func startTreasuryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStream
 			}
 		}
 
-		// Get customer email from event payload, fall back to tenant contact
+		// Automatic per-payment result emails are OPT-IN: treasury embeds
+		// notification.enabled from the tenant's config. Absent or false means the tenant
+		// never opted in — skip. Without this gate every POS sale generated a
+		// "Payment successful" email, flooding the shared SMTP account (and, before the
+		// fallback fix below, all of them landed in the tenant admin's inbox).
+		if eventType == "payment.succeeded" || eventType == "payment.failed" {
+			notif, _ := payload["notification"].(map[string]any)
+			if enabled, _ := notif["enabled"].(bool); !enabled {
+				logg.Debug("treasury event: payment emails not enabled for tenant, skipping",
+					zap.String("tenant_id", tenantID), zap.String("type", eventType))
+				_ = m.Ack()
+				return
+			}
+		}
+
+		// Get customer email from the event payload (immediate-settle events carry it as
+		// notification.recipient_email instead of top-level customer_email). Customer-facing
+		// events must NEVER fall back to the tenant contact: a walk-in POS payment has no
+		// customer email, and mailing the tenant admin instead is pure spam. Only
+		// admin-facing events (payouts) may fall back to the tenant contact.
 		customerEmail, _ := payload["customer_email"].(string)
 		if customerEmail == "" {
+			if notif, _ := payload["notification"].(map[string]any); notif != nil {
+				customerEmail, _ = notif["recipient_email"].(string)
+			}
+		}
+		if customerEmail == "" {
+			if eventType != "payout.completed" {
+				logg.Debug("treasury event: no customer_email on customer-facing event, skipping",
+					zap.String("tenant_id", tenantID), zap.String("type", eventType))
+				_ = m.Ack()
+				return
+			}
 			ti, err := tr.resolve(ctx, tenantID)
 			if err != nil {
 				// A non-existent / deleted tenant will never resolve, so Nak-looping the message
