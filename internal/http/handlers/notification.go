@@ -16,6 +16,7 @@ import (
 
 	httpware "github.com/Bengo-Hub/httpware"
 	authclient "github.com/Bengo-Hub/shared-auth-client"
+	eventslib "github.com/Bengo-Hub/shared-events"
 
 	"github.com/google/uuid"
 
@@ -334,16 +335,32 @@ func (h *NotificationHandler) publishUsageEvent(ctx context.Context, tenant, cha
 		return
 	}
 
-	payload, _ := json.Marshal(map[string]any{
+	// Shared-events envelope + event-id header: the subscriptions usage consumer dedupes
+	// via EventIDFromMsg, so a bespoke flat payload without an id made redeliveries
+	// double-meter. tenant may be a slug for some callers — only a UUID goes in tenant_id.
+	tenantUUID := uuid.Nil
+	if id, err := uuid.Parse(tenant); err == nil {
+		tenantUUID = id
+	}
+	ev := eventslib.NewEvent(channel+".sent", "notifications", uuid.New(), tenantUUID, map[string]any{
 		"tenant_id": tenant,
 		"channel":   channel,
 	})
+	payload, err := ev.ToJSON()
+	if err != nil {
+		h.log.Warn("usage event: marshal envelope failed", zap.Error(err))
+		return
+	}
 	js, err := h.nats.JetStream()
 	if err != nil {
 		h.log.Warn("usage event: jetstream init failed", zap.Error(err))
 		return
 	}
-	if _, err := js.Publish(subject, payload); err != nil {
+	msg := nats.NewMsg(subject)
+	msg.Data = payload
+	msg.Header = nats.Header{}
+	msg.Header.Set("event-id", ev.ID.String())
+	if _, err := js.PublishMsg(msg); err != nil {
 		h.log.Warn("usage event: publish failed", zap.String("subject", subject), zap.Error(err))
 	}
 }

@@ -36,6 +36,7 @@ import (
 	"github.com/bengobox/notifications-api/internal/shared/logger"
 
 	"github.com/bengobox/notifications-api/internal/modules/billing"
+	"github.com/bengobox/notifications-api/internal/modules/preferences"
 	"github.com/bengobox/notifications-api/internal/modules/tenant"
 )
 
@@ -167,11 +168,34 @@ func main() {
 	// Tenant resolver for event consumers and template branding
 	tr := newTenantResolver(client, tenantCache, cfg.Services.AuthAPI)
 
+	// Per-tenant notification gate: EVERY producer (domain-event consumers, HTTP/S2S
+	// enqueue, ERP relay) converges on this worker, so enforcing here covers the whole
+	// platform. Locked security templates always pass; essential types default ON;
+	// optional types deliver only when the tenant enabled them in settings.
+	prefGate := preferences.NewGate(client, redisClient, logg)
+
 	msgHandler := func(m *nats.Msg) {
 		var msg messaging.Message
 		if err := json.Unmarshal(m.Data, &msg); err != nil {
 			logg.Error("invalid message, dropping", zap.Error(err))
 			_ = m.Ack() // unrecoverable — don't retry
+			return
+		}
+
+		// Notification-preferences gate (before render/deliver). msg.TenantID may be a
+		// slug — resolve to the UUID the ServiceConfig rows are keyed by.
+		gateTenant := msg.TenantID
+		if _, perr := uuid.Parse(gateTenant); perr != nil && gateTenant != "" {
+			if t, rErr := tr.resolve(ctx, gateTenant); rErr == nil {
+				gateTenant = t.ID.String()
+			}
+		}
+		if !prefGate.Enabled(ctx, gateTenant, msg.TemplateID) {
+			logg.Info("notification disabled by tenant preferences, dropping",
+				zap.String("template", msg.TemplateID),
+				zap.String("tenant_id", msg.TenantID),
+				zap.String("channel", msg.Channel))
+			_ = m.Ack()
 			return
 		}
 

@@ -32,6 +32,7 @@ import (
 	"github.com/bengobox/notifications-api/internal/modules/billing"
 	eventsmod "github.com/bengobox/notifications-api/internal/modules/events"
 	"github.com/bengobox/notifications-api/internal/modules/identity"
+	"github.com/bengobox/notifications-api/internal/modules/preferences"
 	"github.com/bengobox/notifications-api/internal/modules/rbac"
 	"github.com/bengobox/notifications-api/internal/modules/tenant"
 	templatesmod "github.com/bengobox/notifications-api/internal/modules/templates"
@@ -265,6 +266,11 @@ func New(ctx context.Context) (*App, error) {
 	// Initialize service config handler for platform admin + tenant settings
 	serviceConfigHandler := handlers.NewServiceConfigHandler(entClient, log)
 
+	// Per-tenant notification-type toggles (feed the worker's dispatch gate; the gate
+	// instance here is only used to invalidate the Redis cache on settings writes).
+	prefGate := preferences.NewGate(entClient, redisClient, log)
+	notificationPrefsHandler := handlers.NewPreferencesHandler(log, entClient, prefGate)
+
 	// Pluggable backup destination (OneDrive/GDrive/S3/WebDAV/SFTP/SMB) — encrypted
 	// at rest with a SECRET_KEY-derived AES-256 key. The handler owns the destination
 	// Store; its Uploader is attached to the backup service so every PVC backup is
@@ -281,7 +287,7 @@ func New(ctx context.Context) (*App, error) {
 		RetentionDays: cfg.Backup.RetentionDays,
 	}, log).Start(ctx)
 
-	httpRouter := router.New(log, healthHandler, notificationHandler, templateHandler, platformProviders, tenantProviders, analyticsHandler, billingHandler, platformBilling, settingsHandler, rbacHandler, authMeHandler, deviceTokenHandler, cfg.Security.APIKey, authMiddleware, authenticator, cfg.HTTP.AllowedOrigins, tenantSyncer, rateLimiter, serviceConfigHandler, whatsappSubsHandler, backupHandler, encryptionKeyHandler, backupDestHandler)
+	httpRouter := router.New(log, healthHandler, notificationHandler, templateHandler, platformProviders, tenantProviders, analyticsHandler, billingHandler, platformBilling, settingsHandler, rbacHandler, authMeHandler, deviceTokenHandler, cfg.Security.APIKey, authMiddleware, authenticator, cfg.HTTP.AllowedOrigins, tenantSyncer, rateLimiter, serviceConfigHandler, whatsappSubsHandler, backupHandler, encryptionKeyHandler, backupDestHandler, notificationPrefsHandler)
 
 	httpServer := &http.Server{
 		Addr:              fmt.Sprintf("%s:%d", cfg.HTTP.Host, cfg.HTTP.Port),
