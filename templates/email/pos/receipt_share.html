@@ -1,0 +1,10 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <p>Thank you for your purchase at {{ or .brand_name "our store" }}!</p>
+  <p><strong>Order Number:</strong> {{ .order_number }}</p>
+  <p><strong>Total:</strong> {{ .total_amount }}</p>
+  <p>
+    <a class="button" href="{{ .download_link }}">Download Receipt</a>
+  </p>
+  <p class="muted">Tap the button above to view or download your receipt at any time.</p>
+{{ end }}

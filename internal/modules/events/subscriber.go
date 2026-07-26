@@ -49,8 +49,8 @@ func (s *Subscriber) Start(ctx context.Context) error {
 	}
 
 	streams := map[string][]string{
-		"inventory": {"inventory.>"},
-		"pos":       {"pos.>"},
+		"inventory":  {"inventory.>"},
+		"pos":        {"pos.>"},
 		"treasury":   {"treasury.>"},
 		"erp":        {"erp.>"},
 		"logistics":  {"logistics.>"},
@@ -135,19 +135,24 @@ func (s *Subscriber) publish(tenantID, channel, templateID, target string, to []
 	}
 }
 
-// handleSaleNotification sends the customer their POS sale receipt/invoice by SMS. Handles both
+// handleSaleNotification sends the customer their POS sale receipt/invoice. Handles both
 // pos.sale.finalized (automatic, on payment) and pos.sale.notification_requested (the explicit
-// All-Sales "New Sale Notification" action). No-ops when the sale has no customer phone.
+// All-Sales "New Sale Notification" / receipt-share action). Dispatches by the requested channel
+// (sms | email | whatsapp), falling back to SMS when the requested channel has no matching
+// contact on file. No-ops when neither a phone nor an email was captured/supplied.
 func (s *Subscriber) handleSaleNotification(msg *nats.Msg) {
 	var envelope struct {
 		Payload struct {
 			TenantID           string  `json:"tenant_id"`
 			OrderNumber        string  `json:"order_number"`
 			CustomerPhone      string  `json:"customer_phone"`
+			CustomerEmail      string  `json:"customer_email"`
 			CustomerName       string  `json:"customer_name"`
 			TotalAmount        float64 `json:"total_amount"`
 			Currency           string  `json:"currency"`
 			EtimsInvoiceNumber string  `json:"etims_invoice_number"`
+			DownloadLink       string  `json:"download_link"`
+			Channel            string  `json:"channel"`
 		} `json:"payload"`
 	}
 	if err := json.Unmarshal(msg.Data, &envelope); err != nil {
@@ -156,8 +161,10 @@ func (s *Subscriber) handleSaleNotification(msg *nats.Msg) {
 		return
 	}
 	p := envelope.Payload
-	// Nothing to send to (no customer captured on the sale) → ack and move on.
-	if p.TenantID == "" || strings.TrimSpace(p.CustomerPhone) == "" {
+	phone := strings.TrimSpace(p.CustomerPhone)
+	email := strings.TrimSpace(p.CustomerEmail)
+	// Nothing to send to (no customer contact captured on the sale) → ack and move on.
+	if p.TenantID == "" || (phone == "" && email == "") {
 		_ = msg.Ack()
 		return
 	}
@@ -165,15 +172,50 @@ func (s *Subscriber) handleSaleNotification(msg *nats.Msg) {
 	if currency == "" {
 		currency = "KES"
 	}
-	s.publish(p.TenantID, "sms", "pos/sale_receipt", messaging.TargetCustomer, []string{p.CustomerPhone}, map[string]any{
-		"order_number":         p.OrderNumber,
+
+	// Resolve the effective channel: an explicit request falls back to SMS when its contact is
+	// missing (e.g. "email" requested but the sale has no email on file); the legacy default
+	// (empty channel) is SMS, matching this consumer's original behaviour.
+	channel := strings.ToLower(strings.TrimSpace(p.Channel))
+	switch channel {
+	case "whatsapp", "email":
+		if channel == "whatsapp" && phone == "" {
+			channel = "email"
+		}
+		if channel == "email" && email == "" {
+			channel = "sms"
+		}
+	default:
+		channel = "sms"
+	}
+	if channel == "sms" && phone == "" {
+		// Requested/fell-back-to SMS but there's no phone at all — last resort: email.
+		if email == "" {
+			_ = msg.Ack()
+			return
+		}
+		channel = "email"
+	}
+
+	data := map[string]any{
+		"name":                 p.CustomerName,
 		"customer_name":        p.CustomerName,
+		"order_number":         p.OrderNumber,
 		"total_amount":         p.TotalAmount,
 		"currency":             currency,
 		"etims_invoice_number": p.EtimsInvoiceNumber,
-	})
+		"download_link":        p.DownloadLink,
+	}
+	switch channel {
+	case "whatsapp":
+		s.publish(p.TenantID, "whatsapp", "pos/receipt_share", messaging.TargetCustomer, []string{phone}, data)
+	case "email":
+		s.publish(p.TenantID, "email", "pos/receipt_share", messaging.TargetCustomer, []string{email}, data)
+	default:
+		s.publish(p.TenantID, "sms", "pos/sale_receipt", messaging.TargetCustomer, []string{phone}, data)
+	}
 	s.log.Info("sale receipt notification dispatched",
-		zap.String("tenant_id", p.TenantID), zap.String("order_number", p.OrderNumber))
+		zap.String("tenant_id", p.TenantID), zap.String("order_number", p.OrderNumber), zap.String("channel", channel))
 	_ = msg.Ack()
 }
 
@@ -210,12 +252,12 @@ func (s *Subscriber) handleLowStock(msg *nats.Msg) {
 func (s *Subscriber) handlePOReceived(msg *nats.Msg) {
 	var envelope struct {
 		Payload struct {
-			TenantID     string  `json:"tenant_id"`
-			PONumber     string  `json:"po_number"`
-			SupplierName string  `json:"supplier_name"`
-			TotalAmount  float64 `json:"total_amount"`
-			Currency     string  `json:"currency"`
-			SupplierEmail string `json:"supplier_email"`
+			TenantID      string  `json:"tenant_id"`
+			PONumber      string  `json:"po_number"`
+			SupplierName  string  `json:"supplier_name"`
+			TotalAmount   float64 `json:"total_amount"`
+			Currency      string  `json:"currency"`
+			SupplierEmail string  `json:"supplier_email"`
 		} `json:"payload"`
 	}
 	if err := json.Unmarshal(msg.Data, &envelope); err != nil {
@@ -600,14 +642,14 @@ func (s *Subscriber) handleISPPaymentReceived(msg *nats.Msg) {
 	var e struct {
 		TenantID string `json:"tenant_id"`
 		Payload  struct {
-			TenantID      string  `json:"tenant_id"`
-			CustomerName  string  `json:"customer_name"`
-			Phone         string  `json:"phone"`
-			Email         string  `json:"email"`
-			Amount        float64 `json:"amount"`
-			Currency      string  `json:"currency"`
-			PackageName   string  `json:"package_name"`
-			ExpiryAt      string  `json:"expiry_at"`
+			TenantID     string  `json:"tenant_id"`
+			CustomerName string  `json:"customer_name"`
+			Phone        string  `json:"phone"`
+			Email        string  `json:"email"`
+			Amount       float64 `json:"amount"`
+			Currency     string  `json:"currency"`
+			PackageName  string  `json:"package_name"`
+			ExpiryAt     string  `json:"expiry_at"`
 		} `json:"payload"`
 	}
 	if err := json.Unmarshal(msg.Data, &e); err != nil {

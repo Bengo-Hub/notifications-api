@@ -1,0 +1,1 @@
+{{ or .brand_name "Codevertex" }}: Thank you {{ .customer_name }}! Order {{ .order_number }} - {{ or .currency "KES" }} {{ .total_amount }}.{{ if .download_link }} Receipt: {{ .download_link }}{{ end }}

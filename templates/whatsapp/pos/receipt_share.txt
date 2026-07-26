@@ -1,0 +1,8 @@
+*{{ or .brand_name "Codevertex" }}*
+Thank you for your purchase, {{ .name }}!
+
+Order: {{ .order_number }}
+Total: {{ or .currency "KES" }} {{ .total_amount }}
+
+Tap the link below to view or download your receipt:
+{{ .download_link }}
