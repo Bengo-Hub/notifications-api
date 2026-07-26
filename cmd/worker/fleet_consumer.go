@@ -42,7 +42,7 @@ func riderAppBaseURL() string {
 	if u := os.Getenv("NOTIFICATIONS_RIDER_APP_URL"); u != "" {
 		return u
 	}
-	return "https://riderapp.codevertexitsolutions.com"
+	return "https://riderapp.codevertexafrica.com"
 }
 
 // ssoBaseURL returns the SSO/auth-ui base URL for user registration.
@@ -50,7 +50,7 @@ func ssoBaseURL() string {
 	if u := os.Getenv("NOTIFICATIONS_SSO_UI_URL"); u != "" {
 		return u
 	}
-	return "https://accounts.codevertexitsolutions.com"
+	return "https://accounts.codevertexafrica.com"
 }
 
 var fleetMappings = map[string]fleetNotificationMapping{

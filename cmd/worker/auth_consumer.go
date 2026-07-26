@@ -200,7 +200,7 @@ func startAuthNotificationConsumer(ctx context.Context, nc *nats.Conn, cfg *conf
 
 		resetLink, _ := payload["reset_link"].(string)
 		if resetLink == "" {
-			resetLink = "https://accounts.codevertexitsolutions.com/reset-password"
+			resetLink = "https://accounts.codevertexafrica.com/reset-password"
 		}
 
 		tenantID, _ := payload["tenant_id"].(string)

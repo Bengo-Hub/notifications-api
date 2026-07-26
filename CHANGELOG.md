@@ -50,4 +50,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 - Replaced local `replace` directive with Go workspace (`go.work`) for local development; production deployments use private Go module approach.
 
 ### DevOps
-- Verified centralized `devops-k8s` integration, ingress host set to `notifications.codevertexitsolutions.com`
+- Verified centralized `devops-k8s` integration, ingress host set to `notifications.codevertexafrica.com`

@@ -10,7 +10,7 @@
         "contact": {},
         "version": "0.1.0"
     },
-    "host": "notificationsapi.codevertexitsolutions.com",
+    "host": "notificationsapi.codevertexafrica.com",
     "basePath": "/api/v1",
     "paths": {
         "/analytics/delivery/{tenantId}": {

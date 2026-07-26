@@ -425,7 +425,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "0.1.0",
-	Host:             "notificationsapi.codevertexitsolutions.com",
+	Host:             "notificationsapi.codevertexafrica.com",
 	BasePath:         "/api/v1",
 	Schemes:          []string{"http", "https"},
 	Title:            "Notifications Service API",

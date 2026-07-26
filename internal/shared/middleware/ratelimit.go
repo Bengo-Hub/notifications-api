@@ -101,7 +101,7 @@ func RequireRateLimit(rl *RateLimiter, featureKey string) func(http.Handler) htt
 					"feature":     result.Feature,
 					"limit":       result.Limit,
 					"used":        result.Used,
-					"upgrade_url": "https://pricingapi.codevertexitsolutions.com/upgrade",
+					"upgrade_url": "https://pricingapi.codevertexafrica.com/upgrade",
 					"message":     fmt.Sprintf("Daily %s limit reached. Upgrade your plan or add overage.", featureKey),
 				})
 				return

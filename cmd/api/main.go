@@ -16,7 +16,7 @@ import (
 // @description HTTP API for the Codevertex notifications service.
 // @BasePath /api/v1
 // @schemes http https
-// @host notificationsapi.codevertexitsolutions.com
+// @host notificationsapi.codevertexafrica.com
 // @securityDefinitions.apikey bearerAuth
 // @in header
 // @name Authorization

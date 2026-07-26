@@ -769,7 +769,7 @@ func seedPlatformAdmin(ctx context.Context, client *ent.Client, syncer *tenantmo
 		SetID(adminUserID).
 		SetTenantID(tenantID).
 		SetAuthServiceUserID(adminUserID).
-		SetEmail("admin@codevertexitsolutions.com").
+		SetEmail("admin@codevertexafrica.com").
 		SetFullName("Platform Admin").
 		SetStatus("active").
 		SetSyncStatus("synced").

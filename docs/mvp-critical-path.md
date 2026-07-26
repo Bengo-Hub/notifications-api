@@ -9,7 +9,7 @@
 
 | Item | Status |
 |------|--------|
-| **Production domain** | `notificationsapi.codevertexitsolutions.com` |
+| **Production domain** | `notificationsapi.codevertexafrica.com` |
 | **RBAC** | No local roles; JWT from auth-api; shared-auth-client validation |
 | **Endpoints** | Templates, platform providers, tenant branding, analytics/delivery, delivery logs, send message, template test send, billing balance/transactions/topup |
 

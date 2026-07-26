@@ -320,7 +320,7 @@ func (s *Subscriber) handleTicketIssued(msg *nats.Msg) {
 	}
 	invBase := os.Getenv("INVENTORY_API_URL")
 	if invBase == "" {
-		invBase = "https://inventoryapi.codevertexitsolutions.com"
+		invBase = "https://inventoryapi.codevertexafrica.com"
 	}
 	ticketLink := fmt.Sprintf("%s/api/v1/%s/inventory/tickets/%s/pdf", strings.TrimRight(invBase, "/"), envelope.TenantID, p.Code)
 	buyerName := p.BuyerName
@@ -346,7 +346,7 @@ func riderAppURL() string {
 	if u := os.Getenv("NOTIFICATIONS_RIDER_APP_URL"); u != "" {
 		return strings.TrimRight(u, "/")
 	}
-	return "https://riderapp.codevertexitsolutions.com"
+	return "https://riderapp.codevertexafrica.com"
 }
 
 // handleRiderTaskAssigned emails the rider when a delivery task is assigned to them. tenant_id is on

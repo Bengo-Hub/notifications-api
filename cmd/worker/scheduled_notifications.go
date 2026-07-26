@@ -172,7 +172,7 @@ func (s *ScheduledNotifier) dispatchExpiryWarning(ctx context.Context, sub expir
 
 	tenantWebsite := ti.Website
 	if tenantWebsite == "" {
-		tenantWebsite = "https://pricing.codevertexitsolutions.com"
+		tenantWebsite = "https://pricing.codevertexafrica.com"
 	}
 
 	msg := messaging.Message{

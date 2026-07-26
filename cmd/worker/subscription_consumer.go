@@ -225,7 +225,7 @@ func startSubscriptionConsumer(ctx context.Context, nc *nats.Conn, js nats.JetSt
 
 		tenantWebsite := ti.Website
 		if tenantWebsite == "" {
-			tenantWebsite = "https://pricing.codevertexitsolutions.com"
+			tenantWebsite = "https://pricing.codevertexafrica.com"
 		}
 
 		// Check for explicit recipient in event payload notification block

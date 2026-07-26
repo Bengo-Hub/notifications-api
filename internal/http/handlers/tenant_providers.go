@@ -253,7 +253,7 @@ func (h *TenantProviders) UpdateBranding(w http.ResponseWriter, r *http.Request)
 	w.WriteHeader(http.StatusGone)
 	_ = json.NewEncoder(w).Encode(map[string]string{
 		"error":   "gone",
-		"message": "Branding is managed at the SSO portal. Visit accounts.codevertexitsolutions.com/dashboard/settings to manage tenant branding.",
+		"message": "Branding is managed at the SSO portal. Visit accounts.codevertexafrica.com/dashboard/settings to manage tenant branding.",
 	})
 }
 

@@ -4,7 +4,7 @@ import "time"
 
 // SenderScope determines which provider to use for sending.
 const (
-	SenderScopePlatform = "platform" // Use platform provider (notifications@codevertexitsolutions.com)
+	SenderScopePlatform = "platform" // Use platform provider (notifications@codevertexafrica.com)
 	SenderScopeTenant   = "tenant"   // Use tenant's configured provider, fallback to platform
 )
 
