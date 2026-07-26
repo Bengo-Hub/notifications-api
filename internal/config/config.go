@@ -38,10 +38,10 @@ type BackupConfig struct {
 }
 
 type ServicesConfig struct {
-	AuthAPI          string `envconfig:"SERVICES_AUTH_API_URL" default:"https://sso.codevertexitsolutions.com"`
-	TreasuryAPI      string `envconfig:"TREASURY_API_URL" default:"https://booksapi.codevertexitsolutions.com"`
-	SubscriptionsAPI string `envconfig:"SERVICES_SUBSCRIPTIONS_API_URL" default:"https://pricingapi.codevertexitsolutions.com"`
-	SubscriptionsURL string `envconfig:"SERVICES_SUBSCRIPTIONS_UPGRADE_URL" default:"https://pricingapi.codevertexitsolutions.com/upgrade"`
+	AuthAPI          string `envconfig:"SERVICES_AUTH_API_URL" default:"https://sso.codevertexafrica.com"`
+	TreasuryAPI      string `envconfig:"TREASURY_API_URL" default:"https://booksapi.codevertexafrica.com"`
+	SubscriptionsAPI string `envconfig:"SERVICES_SUBSCRIPTIONS_API_URL" default:"https://pricingapi.codevertexafrica.com"`
+	SubscriptionsURL string `envconfig:"SERVICES_SUBSCRIPTIONS_UPGRADE_URL" default:"https://pricingapi.codevertexafrica.com/upgrade"`
 }
 
 type AppConfig struct {
@@ -58,7 +58,7 @@ type HTTPConfig struct {
 	IdleTimeout    time.Duration `envconfig:"HTTP_IDLE_TIMEOUT" default:"60s"`
 	TLSCertFile    string        `envconfig:"HTTP_TLS_CERT_FILE"`
 	TLSKeyFile     string        `envconfig:"HTTP_TLS_KEY_FILE"`
-	AllowedOrigins []string      `envconfig:"HTTP_ALLOWED_ORIGINS" default:"https://notifications.codevertexitsolutions.com,https://ordersapp.codevertexitsolutions.com,https://accounts.codevertexitsolutions.com,https://theurbanloftcafe.com,http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000"`
+	AllowedOrigins []string      `envconfig:"HTTP_ALLOWED_ORIGINS" default:"https://notifications.codevertexafrica.com,https://ordering.codevertexafrica.com,https://accounts.codevertexafrica.com,https://theurbanloftcafe.com,http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000"`
 }
 
 type PostgresConfig struct {
@@ -127,8 +127,8 @@ type SecurityConfig struct {
 	APIKey string `envconfig:"INTERNAL_SERVICE_KEY"`
 	// Auth Service SSO (JWT) integration
 	RequireJWT bool   `envconfig:"SECURITY_REQUIRE_JWT" default:"true"`
-	JWKSURL    string `envconfig:"SECURITY_JWKS_URL" default:"https://sso.codevertexitsolutions.com/api/v1/.well-known/jwks.json"`
-	Issuer     string `envconfig:"SECURITY_JWT_ISSUER" default:"https://sso.codevertexitsolutions.com"`
+	JWKSURL    string `envconfig:"SECURITY_JWKS_URL" default:"https://sso.codevertexafrica.com/api/v1/.well-known/jwks.json"`
+	Issuer     string `envconfig:"SECURITY_JWT_ISSUER" default:"https://sso.codevertexafrica.com"`
 	Audience   string `envconfig:"SECURITY_JWT_AUDIENCE" default:"codevertex"`
 	// API key validation database URL (optional, enables API key authentication)
 	APIKeyDBURL string `envconfig:"SECURITY_API_KEY_DB_URL"`

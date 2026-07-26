@@ -89,7 +89,7 @@ definitions:
         example: payment_success
         type: string
     type: object
-host: notificationsapi.codevertexitsolutions.com
+host: notificationsapi.codevertexafrica.com
 info:
   contact: {}
   description: HTTP API for the Codevertex notifications service.
