@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -24,14 +25,22 @@ const (
 
 // Subscriber listens to cross-service NATS events and dispatches notifications.
 type Subscriber struct {
-	nc  *nats.Conn
-	cfg config.EventsConfig
-	log *zap.Logger
+	nc      *nats.Conn
+	cfg     config.EventsConfig
+	log     *zap.Logger
+	authAPI string
 }
 
 // New creates a new cross-service event subscriber.
 func New(nc *nats.Conn, cfg config.EventsConfig, log *zap.Logger) *Subscriber {
 	return &Subscriber{nc: nc, cfg: cfg, log: log.Named("events.subscriber")}
+}
+
+// WithAuthAPI sets the auth-api base URL used to enrich a new-tenant alert with the
+// registrant's contact details, which the auth.tenant.created event does not carry.
+func (s *Subscriber) WithAuthAPI(url string) *Subscriber {
+	s.authAPI = strings.TrimRight(url, "/")
+	return s
 }
 
 // Start subscribes to inventory, KDS, and payroll events.
@@ -48,6 +57,14 @@ func (s *Subscriber) Start(ctx context.Context) error {
 		handler nats.MsgHandler
 	}
 
+	// Durables that must start at the stream head instead of replaying history. Needed for
+	// any subject whose backlog is still inside the stream's retention window when the
+	// consumer is first created — the auth stream holds every tenant created in the last
+	// 72h, so a DeliverAll consumer would email an alert for each one on first rollout.
+	deliverNewDurables := map[string]bool{
+		"notif-platform-new-tenant": true,
+	}
+
 	streams := map[string][]string{
 		"inventory":  {"inventory.>"},
 		"pos":        {"pos.>"},
@@ -56,6 +73,7 @@ func (s *Subscriber) Start(ctx context.Context) error {
 		"logistics":  {"logistics.>"},
 		"marketflow": {"marketflow.>"},
 		"isp":        {"isp.>"},
+		"auth":       {"auth.>"},
 	}
 	for stream, subjects := range streams {
 		if _, err := js.StreamInfo(stream); err != nil {
@@ -92,9 +110,17 @@ func (s *Subscriber) Start(ctx context.Context) error {
 		{"isp", "isp.payment.received", "notif-isp-payment-received", s.handleISPPaymentReceived},
 		{"isp", "isp.subscription.renewed", "notif-isp-subscription-renewed", s.handleISPSubscriptionRenewed},
 		{"isp", "isp.subscription.expiring", "notif-isp-subscription-expiring", s.handleISPSubscriptionExpiring},
+		// Internal platform-ops alert: a new organisation signed up. Distinct durable from the
+		// identity module's own auth.tenant.created consumer, so projection and alerting retry
+		// independently.
+		{"auth", "auth.tenant.created", "notif-platform-new-tenant", s.handleNewTenantRegistered},
 	}
 
 	for _, s2 := range subs {
+		startAt := nats.DeliverAll()
+		if deliverNewDurables[s2.durable] {
+			startAt = nats.DeliverNew()
+		}
 		eventslib.SubscribeQueueWithRebind(
 			s.log,
 			js,
@@ -106,7 +132,7 @@ func (s *Subscriber) Start(ctx context.Context) error {
 			nats.AckExplicit(),
 			nats.AckWait(ackWait),
 			nats.MaxDeliver(maxDeliver),
-			nats.DeliverAll(),
+			startAt,
 		)
 	}
 
@@ -133,6 +159,177 @@ func (s *Subscriber) publish(tenantID, channel, templateID, target string, to []
 			zap.Error(err),
 		)
 	}
+}
+
+// platformAlertRecipients splits the configured comma-separated alert list, dropping blanks.
+// An empty result switches the new-tenant alert off.
+func (s *Subscriber) platformAlertRecipients() []string {
+	var out []string
+	for _, part := range strings.Split(s.cfg.PlatformAlertEmails, ",") {
+		if addr := strings.TrimSpace(part); addr != "" {
+			out = append(out, addr)
+		}
+	}
+	return out
+}
+
+// authTenantDetail is the subset of auth-api's tenant record the alert needs. The
+// auth.tenant.created event carries identity and plan fields but no contact details, so
+// those are pulled from auth-api — the whole point of the alert is to be actionable
+// without opening the admin console.
+type authTenantDetail struct {
+	Name         string         `json:"name"`
+	Slug         string         `json:"slug"`
+	ContactEmail string         `json:"contact_email"`
+	ContactPhone string         `json:"contact_phone"`
+	Website      string         `json:"website"`
+	Country      string         `json:"country"`
+	UseCase      string         `json:"use_case"`
+	UseCases     []string       `json:"use_cases"`
+	OrgSize      string         `json:"org_size"`
+	Metadata     map[string]any `json:"metadata"`
+}
+
+// fetchTenantDetail best-effort loads the full tenant record. A failure is not fatal: the
+// alert still goes out with whatever the event carried.
+func (s *Subscriber) fetchTenantDetail(slug string) *authTenantDetail {
+	if s.authAPI == "" || slug == "" {
+		return nil
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, s.authAPI+"/api/v1/tenants/by-slug/"+slug, nil)
+	if err != nil {
+		return nil
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		s.log.Warn("new_tenant_registered: tenant detail fetch failed", zap.String("slug", slug), zap.Error(err))
+		return nil
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil
+	}
+	var d authTenantDetail
+	if err := json.NewDecoder(resp.Body).Decode(&d); err != nil {
+		return nil
+	}
+	return &d
+}
+
+// metaString pulls a string value out of the tenant metadata blob, where the signup flows
+// stash channel-specific extras (ISP WhatsApp number, coverage area, org size, …).
+func metaString(meta map[string]any, key string) string {
+	if meta == nil {
+		return ""
+	}
+	if v, ok := meta[key].(string); ok {
+		return strings.TrimSpace(v)
+	}
+	return ""
+}
+
+// handleNewTenantRegistered emails the platform team whenever an organisation signs up, with
+// enough contact detail to follow up directly. auth.tenant.created.
+func (s *Subscriber) handleNewTenantRegistered(msg *nats.Msg) {
+	to := s.platformAlertRecipients()
+	if len(to) == 0 {
+		_ = msg.Ack() // alert deliberately disabled
+		return
+	}
+
+	var e struct {
+		TenantID string `json:"tenant_id"`
+		Payload  struct {
+			TenantID     string `json:"tenant_id"`
+			Name         string `json:"name"`
+			Slug         string `json:"slug"`
+			UseCase      string `json:"use_case"`
+			SelectedPlan string `json:"selected_plan"`
+			CreatedBy    string `json:"created_by"`
+			Country      string `json:"country"`
+			TaxPin       string `json:"tax_pin"`
+			IsDemo       bool   `json:"is_demo"`
+		} `json:"payload"`
+	}
+	if err := json.Unmarshal(msg.Data, &e); err != nil {
+		s.log.Warn("new_tenant_registered: unmarshal failed", zap.Error(err))
+		_ = msg.Ack() // malformed payload will never parse — retrying is pointless
+		return
+	}
+
+	tid := e.TenantID
+	if tid == "" {
+		tid = e.Payload.TenantID
+	}
+	slug := e.Payload.Slug
+	if tid == "" && slug == "" {
+		s.log.Warn("new_tenant_registered: event carries neither tenant_id nor slug")
+		_ = msg.Ack()
+		return
+	}
+
+	// A demo tenant is created by our own seed, not by a real signup — alerting on it would
+	// page the team on every deploy.
+	if e.Payload.IsDemo {
+		s.log.Info("new_tenant_registered: skipping demo tenant", zap.String("slug", slug))
+		_ = msg.Ack()
+		return
+	}
+
+	name := e.Payload.Name
+	data := map[string]any{
+		"tenant_id":     tid,
+		"tenant_slug":   slug,
+		"tenant_name":   name,
+		"use_case":      e.Payload.UseCase,
+		"selected_plan": e.Payload.SelectedPlan,
+		"registered_by": e.Payload.CreatedBy,
+		"country":       e.Payload.Country,
+		"tax_pin":       e.Payload.TaxPin,
+		"registered_at": time.Now().UTC().Format("2006-01-02 15:04 MST"),
+	}
+	if s.cfg.AdminConsoleURL != "" && slug != "" {
+		data["admin_link"] = strings.TrimRight(s.cfg.AdminConsoleURL, "/") + "/admin/tenants/" + slug
+	}
+
+	if d := s.fetchTenantDetail(slug); d != nil {
+		if d.Name != "" {
+			name = d.Name
+			data["tenant_name"] = d.Name
+		}
+		data["contact_email"] = d.ContactEmail
+		data["contact_phone"] = d.ContactPhone
+		data["website"] = d.Website
+		if d.Country != "" {
+			data["country"] = d.Country
+		}
+		if d.UseCase != "" {
+			data["use_case"] = d.UseCase
+		}
+		if len(d.UseCases) > 0 {
+			data["use_cases"] = strings.Join(d.UseCases, ", ")
+		}
+		orgSize := d.OrgSize
+		if orgSize == "" {
+			orgSize = metaString(d.Metadata, "org_size")
+		}
+		data["org_size"] = orgSize
+		// Channel-specific extras the signup flows stash in metadata (e.g. the ISP hotspot
+		// flow records a WhatsApp number and coverage area but no contact_email/phone).
+		data["whatsapp"] = metaString(d.Metadata, "isp_whatsapp")
+		data["coverage_area"] = metaString(d.Metadata, "isp_coverage_area")
+	}
+
+	// Sent under the platform-owner tenant context (tid) rather than a customer tenant, so the
+	// per-tenant preference gate can never suppress an internal ops alert.
+	s.publish(tid, "email", "platform/new_tenant_registered", messaging.TargetPlatformAdmin, to, data)
+	s.log.Info("new_tenant_registered alert dispatched",
+		zap.String("tenant_id", tid), zap.String("slug", slug),
+		zap.String("name", name), zap.Int("recipients", len(to)))
+	_ = msg.Ack()
 }
 
 // handleSaleNotification sends the customer their POS sale receipt/invoice. Handles both

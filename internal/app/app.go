@@ -300,7 +300,8 @@ func New(ctx context.Context) (*App, error) {
 
 	var crossServiceSubscriber *eventsmod.Subscriber
 	if natsConn != nil {
-		crossServiceSubscriber = eventsmod.New(natsConn, cfg.Events, log)
+		crossServiceSubscriber = eventsmod.New(natsConn, cfg.Events, log).
+			WithAuthAPI(cfg.Services.AuthAPI)
 	}
 
 	return &App{

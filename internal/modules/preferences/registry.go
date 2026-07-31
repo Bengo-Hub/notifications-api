@@ -60,6 +60,10 @@ var Registry = []Type{
 	{Key: "subscription/subscription_expiring", Label: "Subscription expiring", Group: "Subscription", Class: ClassEssential},
 	{Key: "subscription/grace_reminder", Label: "Grace-period reminder", Group: "Subscription", Class: ClassEssential},
 	{Key: "platform/plan_expiry_warning", Label: "Plan expiry warning", Group: "Subscription", Class: ClassEssential},
+	// Internal platform-ops alert (goes to Codevertex staff, never to a tenant), so it is
+	// LOCKED — a tenant toggling their own preferences must not be able to switch off the
+	// notice that tells us they exist.
+	{Key: "platform/new_tenant_registered", Label: "New tenant registered (platform ops)", Group: "Account & Security", Class: ClassLocked},
 	{Key: "subscription/subscription_created", Label: "Subscription created", Group: "Subscription", Class: ClassOptional},
 	{Key: "subscription/subscription_renewed", Label: "Subscription renewed", Group: "Subscription", Class: ClassOptional},
 	{Key: "subscription/subscription_upgraded", Label: "Subscription upgraded", Group: "Subscription", Class: ClassOptional},

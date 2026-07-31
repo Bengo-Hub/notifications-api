@@ -82,6 +82,15 @@ type EventsConfig struct {
 	StreamName string        `envconfig:"EVENTS_NATS_STREAM" default:"notifications"`
 	Subject    string        `envconfig:"EVENTS_NATS_SUBJECT" default:"notifications.events"`
 	AckWait    time.Duration `envconfig:"EVENTS_NATS_ACK_WAIT" default:"30s"`
+
+	// PlatformAlertEmails receives internal platform-ops notices — currently the
+	// "a new tenant just registered" alert, which carries the registrant's contact
+	// details so the team can follow up. Comma-separated for multiple recipients.
+	// Set to an empty value to switch the alert off entirely.
+	PlatformAlertEmails string `envconfig:"PLATFORM_ALERT_EMAILS" default:"codevertexitsolutions@gmail.com"`
+
+	// AdminConsoleURL builds the "open in admin console" deep link in that alert.
+	AdminConsoleURL string `envconfig:"ADMIN_CONSOLE_URL" default:"https://accounts.codevertexafrica.com"`
 }
 
 type ProviderConfig struct {

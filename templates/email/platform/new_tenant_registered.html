@@ -1,0 +1,36 @@
+{{ define "content" }}
+  <h2>New tenant registered: {{ .tenant_name }}</h2>
+  <p>
+    A new organisation has just signed up on the platform. Contact details are below so
+    the team can reach out without digging through the admin console.
+  </p>
+
+  <table role="presentation" style="width:100%;border-collapse:collapse;margin:16px 0">
+    <tbody>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Organisation</strong></td><td style="padding:6px 0">{{ .tenant_name }}</td></tr>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Slug</strong></td><td style="padding:6px 0">{{ .tenant_slug }}</td></tr>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Tenant ID</strong></td><td style="padding:6px 0"><code>{{ .tenant_id }}</code></td></tr>
+      {{ if .registered_by }}<tr><td style="padding:6px 12px 6px 0"><strong>Registered by</strong></td><td style="padding:6px 0"><a href="mailto:{{ .registered_by }}">{{ .registered_by }}</a></td></tr>{{ end }}
+      {{ if .contact_name }}<tr><td style="padding:6px 12px 6px 0"><strong>Contact name</strong></td><td style="padding:6px 0">{{ .contact_name }}</td></tr>{{ end }}
+      {{ if .contact_email }}<tr><td style="padding:6px 12px 6px 0"><strong>Contact email</strong></td><td style="padding:6px 0"><a href="mailto:{{ .contact_email }}">{{ .contact_email }}</a></td></tr>{{ end }}
+      {{ if .contact_phone }}<tr><td style="padding:6px 12px 6px 0"><strong>Contact phone</strong></td><td style="padding:6px 0"><a href="tel:{{ .contact_phone }}">{{ .contact_phone }}</a></td></tr>{{ end }}
+      {{ if .whatsapp }}<tr><td style="padding:6px 12px 6px 0"><strong>WhatsApp</strong></td><td style="padding:6px 0">{{ .whatsapp }}</td></tr>{{ end }}
+      {{ if .website }}<tr><td style="padding:6px 12px 6px 0"><strong>Website</strong></td><td style="padding:6px 0"><a href="{{ .website }}">{{ .website }}</a></td></tr>{{ end }}
+      {{ if .use_case }}<tr><td style="padding:6px 12px 6px 0"><strong>Primary use case</strong></td><td style="padding:6px 0">{{ .use_case }}</td></tr>{{ end }}
+      {{ if .use_cases }}<tr><td style="padding:6px 12px 6px 0"><strong>All use cases</strong></td><td style="padding:6px 0">{{ .use_cases }}</td></tr>{{ end }}
+      {{ if .org_size }}<tr><td style="padding:6px 12px 6px 0"><strong>Org size</strong></td><td style="padding:6px 0">{{ .org_size }}</td></tr>{{ end }}
+      {{ if .coverage_area }}<tr><td style="padding:6px 12px 6px 0"><strong>Coverage area</strong></td><td style="padding:6px 0">{{ .coverage_area }}</td></tr>{{ end }}
+      {{ if .country }}<tr><td style="padding:6px 12px 6px 0"><strong>Country</strong></td><td style="padding:6px 0">{{ .country }}</td></tr>{{ end }}
+      {{ if .selected_plan }}<tr><td style="padding:6px 12px 6px 0"><strong>Selected plan</strong></td><td style="padding:6px 0">{{ .selected_plan }}</td></tr>{{ end }}
+      {{ if .tax_pin }}<tr><td style="padding:6px 12px 6px 0"><strong>KRA PIN</strong></td><td style="padding:6px 0">{{ .tax_pin }}</td></tr>{{ end }}
+      {{ if .is_demo }}<tr><td style="padding:6px 12px 6px 0"><strong>Demo tenant</strong></td><td style="padding:6px 0">yes</td></tr>{{ end }}
+      {{ if .registered_at }}<tr><td style="padding:6px 12px 6px 0"><strong>Registered at</strong></td><td style="padding:6px 0">{{ .registered_at }}</td></tr>{{ end }}
+    </tbody>
+  </table>
+
+  {{ if .admin_link }}
+  <p>
+    <a class="button" href="{{ .admin_link }}">Open in admin console</a>
+  </p>
+  {{ end }}
+{{ end }}
