@@ -12,6 +12,8 @@ github.com/Bengo-Hub/pagination v0.3.0 h1:cvFHj+A5fMD5B+L89Epw/SfVxIPAzL82JViXAY
 github.com/Bengo-Hub/pagination v0.3.0/go.mod h1:qXxXpX45Shf6qplVtxqEeOMeKiSr/W4nT4nMLQqF4/g=
 github.com/Bengo-Hub/shared-events v0.6.1 h1:mSegYSPD4kh6SIsDMABRPf7LETZ1jH7Qkorqm2K0EHA=
 github.com/Bengo-Hub/shared-events v0.6.1/go.mod h1:eLz1wguUzi7PRZC29V/E4lq/YbT3yGDb8H2oXX7DXQU=
+github.com/Bengo-Hub/shared-ratelimit v0.1.0 h1:mm0vp8294UNsoQR76bhQPYddAReapsu0ULYWRYEnIu8=
+github.com/Bengo-Hub/shared-ratelimit v0.1.0/go.mod h1:kOvfbvBv8IzY/ISBkYTTwAp0PE3LSaXizKPJoGdDN8w=
 github.com/Bengo-Hub/shared-service-client v0.3.1 h1:Z8I2m4NPSLhIRUOS7T2/uS5Tq5MW8qBIFOZ2Wnev6Nk=
 github.com/Bengo-Hub/shared-service-client v0.3.1/go.mod h1:n5segEtBfcG1/2YM+fssZ/dxKk4zjZ9+GmexzAe+G9g=
 github.com/DATA-DOG/go-sqlmock v1.5.0 h1:Shsta01QNfFxHCfpW6YH2STWB0MudeXXEWMr20OEh60=

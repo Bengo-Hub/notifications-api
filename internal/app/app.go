@@ -41,8 +41,8 @@ import (
 	"github.com/bengobox/notifications-api/internal/platform/events"
 	"github.com/bengobox/notifications-api/internal/platform/templates"
 	"github.com/bengobox/notifications-api/internal/providers"
-	ratelimitmw "github.com/bengobox/notifications-api/internal/shared/middleware"
 	"github.com/bengobox/notifications-api/internal/shared/logger"
+	ratelimit "github.com/Bengo-Hub/shared-ratelimit"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
@@ -257,9 +257,9 @@ func New(ctx context.Context) (*App, error) {
 	authMeHandler := handlers.NewAuthMeHandler(rbacService, log.Named("auth.me"), platformIDStr)
 
 	// Initialize Redis-backed rate limiter for email sending by subscription plan
-	var rateLimiter *ratelimitmw.RateLimiter
+	var rateLimiter *ratelimit.Quota
 	if redisClient != nil {
-		rateLimiter = ratelimitmw.NewRateLimiter(redisClient)
+		rateLimiter = ratelimit.NewQuota(redisClient)
 		log.Info("email rate limiter initialized (subscription plan limits via JWT claims)")
 	}
 

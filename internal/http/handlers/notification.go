@@ -15,6 +15,7 @@ import (
 	"go.uber.org/zap"
 
 	httpware "github.com/Bengo-Hub/httpware"
+	ratelimit "github.com/Bengo-Hub/shared-ratelimit"
 	authclient "github.com/Bengo-Hub/shared-auth-client"
 	eventslib "github.com/Bengo-Hub/shared-events"
 
@@ -24,7 +25,6 @@ import (
 	"github.com/bengobox/notifications-api/internal/ent"
 	"github.com/bengobox/notifications-api/internal/messaging"
 	"github.com/bengobox/notifications-api/internal/modules/billing"
-	appmw "github.com/bengobox/notifications-api/internal/shared/middleware"
 )
 
 type NotificationHandler struct {
@@ -33,7 +33,7 @@ type NotificationHandler struct {
 	cache          *redis.Client
 	eventsCfg      config.EventsConfig
 	entClient      *ent.Client
-	rateLimiter    *appmw.RateLimiter
+	rateLimiter    *ratelimit.Quota
 	upgradeURL     string
 	billingSvc     *billing.Service
 	whatsappSubSvc *billing.WhatsAppSubscriptionService
@@ -76,9 +76,9 @@ func decodeAttachments(in []MessageAttachmentRequest) []messaging.Attachment {
 }
 
 func NewNotificationHandler(log *zap.Logger, natsConn *nats.Conn, cache *redis.Client, eventsCfg config.EventsConfig, entClient *ent.Client, upgradeURL string, billingSvc *billing.Service, whatsappSubSvc *billing.WhatsAppSubscriptionService) *NotificationHandler {
-	var rl *appmw.RateLimiter
+	var rl *ratelimit.Quota
 	if cache != nil {
-		rl = appmw.NewRateLimiter(cache)
+		rl = ratelimit.NewQuota(cache)
 	}
 	return &NotificationHandler{
 		log:            log,
