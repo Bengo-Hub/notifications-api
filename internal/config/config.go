@@ -40,7 +40,7 @@ type BackupConfig struct {
 type ServicesConfig struct {
 	AuthAPI          string `envconfig:"SERVICES_AUTH_API_URL" default:"https://sso.codevertexafrica.com"`
 	TreasuryAPI      string `envconfig:"TREASURY_API_URL" default:"https://booksapi.codevertexafrica.com"`
-	SubscriptionsAPI string `envconfig:"SERVICES_SUBSCRIPTIONS_API_URL" default:"https://pricingapi.codevertexafrica.com"`
+	SubscriptionsAPI string `envconfig:"SUBSCRIPTION_BASE_URL" default:"https://pricingapi.codevertexafrica.com"`
 	SubscriptionsURL string `envconfig:"SERVICES_SUBSCRIPTIONS_UPGRADE_URL" default:"https://pricingapi.codevertexafrica.com/upgrade"`
 }
 
