@@ -97,13 +97,16 @@ func (s *Subscriber) publishMessage(msg messaging.Message) error {
 //
 // attachments ARE supported: base64 content is decoded and carried through
 // messaging.Message.Attachments to every email provider (SMTP/Brevo/SendGrid).
-// Remaining limitations (logged, not carried by messaging.Message / the provider API):
-//   - bcc, reply_to, from_email — SendEmail signature is (from, to, cc, subject, html, text, attachments)
-//     and `from` is only used as a display-name override, not a real From address
-//   - html_message              — the generic template HTML-escapes .message, so a
-//     pre-rendered HTML body cannot be injected safely; the plain message is sent
+// cc/bcc/from_email/reply_to are ALL supported (messaging.Message.Cc/Bcc/From/ReplyTo,
+// threaded through EmailProvider.SendEmail — fixed 2026-08-18; an earlier version of
+// this comment claimed these were dropped, which was stale even before that fix: bcc
+// and a full-email `from` override were already wired end-to-end, only reply_to
+// genuinely wasn't).
+// Remaining limitation (logged, not carried by messaging.Message / the provider API):
+//   - html_message — the generic template HTML-escapes .message, so a pre-rendered
+//     HTML body cannot be injected safely; the plain message is sent instead
 //
-// cc IS supported (messaging.Message.Cc). Plan-based email rate limiting is enforced
+// Plan-based email rate limiting is enforced
 // only at the HTTP entrypoint (it needs JWT plan claims); like every other
 // cross-service consumer, async events are not rate-limited here.
 func (s *Subscriber) handleERPEmailRequested(msg *nats.Msg) {
@@ -159,11 +162,14 @@ func (s *Subscriber) handleERPEmailRequested(msg *nats.Msg) {
 		s.log.Warn("erp.email.requested: html_message ignored — pipeline renders plain message through generic template",
 			zap.String("tenant_id", env.TenantID))
 	}
-	if (p.FromEmail != nil && *p.FromEmail != "") ||
-		len(p.BCC) > 0 ||
-		(p.ReplyTo != nil && *p.ReplyTo != "") {
-		s.log.Warn("erp.email.requested: from_email/bcc/reply_to dropped — not supported by EmailProvider interface",
-			zap.String("tenant_id", env.TenantID))
+	bcc := messaging.NormalizeRecipients(p.BCC)
+	fromEmail := ""
+	if p.FromEmail != nil {
+		fromEmail = strings.TrimSpace(*p.FromEmail)
+	}
+	replyTo := ""
+	if p.ReplyTo != nil {
+		replyTo = strings.TrimSpace(*p.ReplyTo)
 	}
 
 	m := messaging.Message{
@@ -174,6 +180,9 @@ func (s *Subscriber) handleERPEmailRequested(msg *nats.Msg) {
 		Target:      messaging.TargetStaff,
 		To:          to,
 		Cc:          cc,
+		Bcc:         bcc,
+		From:        fromEmail,
+		ReplyTo:     replyTo,
 		Attachments: atts,
 		Data: map[string]any{
 			"title":   subject,

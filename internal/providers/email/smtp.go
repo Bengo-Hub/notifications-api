@@ -81,7 +81,7 @@ func extractEmail(s string) string {
 	return strings.TrimSpace(s)
 }
 
-func (p *SMTPProvider) SendEmail(ctx context.Context, from string, to []string, cc []string, bcc []string, subject string, htmlBody string, textBody string, attachments []Attachment) error {
+func (p *SMTPProvider) SendEmail(ctx context.Context, from string, to []string, cc []string, bcc []string, replyTo string, subject string, htmlBody string, textBody string, attachments []Attachment) error {
 	if from == "" {
 		from = p.cfg.From
 	} else if !strings.Contains(from, "@") && p.cfg.From != "" {
@@ -111,6 +111,9 @@ func (p *SMTPProvider) SendEmail(ctx context.Context, from string, to []string, 
 	b.WriteString("To: " + strings.Join(to, ",") + "\r\n")
 	if len(cc) > 0 {
 		b.WriteString("Cc: " + strings.Join(cc, ",") + "\r\n")
+	}
+	if replyTo != "" {
+		b.WriteString("Reply-To: " + replyTo + "\r\n")
 	}
 	b.WriteString("Subject: " + subject + "\r\n")
 	b.WriteString("MIME-Version: 1.0\r\n")

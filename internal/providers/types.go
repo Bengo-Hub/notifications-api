@@ -8,8 +8,12 @@ import (
 
 // EmailProvider sends email messages. attachments is optional (nil/empty = none);
 // every provider accepts the same signature and includes attachments only when present.
+// replyTo is optional (""= none) — added 2026-08-18 so platform-scope transactional
+// mail (sent from no-reply@) can still route genuine replies to a real, monitored
+// inbox instead of either bouncing or being silently read by nobody. See
+// messaging.Message.ReplyTo and cmd/worker/main.go's platform-scope default.
 type EmailProvider interface {
-	SendEmail(ctx context.Context, from string, to []string, cc []string, bcc []string, subject string, htmlBody string, textBody string, attachments []email.Attachment) error
+	SendEmail(ctx context.Context, from string, to []string, cc []string, bcc []string, replyTo string, subject string, htmlBody string, textBody string, attachments []email.Attachment) error
 	Name() string
 }
 

@@ -25,8 +25,10 @@ type Message struct {
 	SenderScope    string         `json:"senderScope"`   // "platform" or "tenant" (default: tenant)
 	Target         string         `json:"target"`        // recipient target type
 	To             []string       `json:"to"`
-	Cc             []string       `json:"cc,omitempty"`  // email CC recipients (email channel only)
-	Bcc            []string       `json:"bcc,omitempty"` // email BCC recipients (email channel only) — e.g. tenant copy of a new-order email
+	Cc             []string       `json:"cc,omitempty"`      // email CC recipients (email channel only)
+	Bcc            []string       `json:"bcc,omitempty"`     // email BCC recipients (email channel only) — e.g. tenant copy of a new-order email
+	From           string         `json:"from,omitempty"`    // email From override — a full "name <email>" or bare email; see cmd/worker/main.go's fromOverride precedence
+	ReplyTo        string         `json:"replyTo,omitempty"` // email Reply-To override (email channel only); see cmd/worker/main.go's platform-scope default
 	Data           map[string]any `json:"data"`
 	Metadata       map[string]any `json:"metadata,omitempty"`
 	Attachments    []Attachment   `json:"attachments,omitempty"` // email channel only; optional

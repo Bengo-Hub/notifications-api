@@ -496,10 +496,13 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 			subject = s
 		}
 		// Compose "from" with tenant brand name for display (e.g., "Urban Loft Cafe <info@...>")
-		fromOverride := ""
-		if brandName, ok := msg.Data["brand_name"].(string); ok && brandName != "" {
-			fromOverride = brandName // Provider will wrap as "BrandName <configured-email>"
+		fromOverride := msg.From // explicit full "name <email>"/bare-email override, e.g. from erp.email.requested's from_email
+		if fromOverride == "" {
+			if brandName, ok := msg.Data["brand_name"].(string); ok && brandName != "" {
+				fromOverride = brandName // Provider will wrap as "BrandName <configured-email>"
+			}
 		}
+		replyTo := msg.ReplyTo
 		// Optional attachments (e.g. payslip PDFs the ERP sends on erp.email.requested).
 		var atts []email.Attachment
 		for _, a := range msg.Attachments {
@@ -555,7 +558,7 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 		}
 
 		emailProv, _ := pm.GetEmailProvider(ctx, providerTenantID, preferred)
-		err := emailProv.SendEmail(ctx, fromOverride, validTo, msg.Cc, msg.Bcc, subject, rendered, "", atts)
+		err := emailProv.SendEmail(ctx, fromOverride, validTo, msg.Cc, msg.Bcc, replyTo, subject, rendered, "", atts)
 		if err != nil {
 			if providerTenantID != pm.PlatformID && isAuthFailureError(err) {
 				eg.CoolProvider(providerTenantID, 30*time.Minute)
@@ -569,7 +572,7 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 			if providerTenantID != pm.PlatformID {
 				platformProv, pErr := pm.GetEmailProvider(ctx, pm.PlatformID, "")
 				if pErr == nil {
-					if fbErr := platformProv.SendEmail(ctx, fromOverride, validTo, msg.Cc, msg.Bcc, subject, rendered, "", atts); fbErr == nil {
+					if fbErr := platformProv.SendEmail(ctx, fromOverride, validTo, msg.Cc, msg.Bcc, replyTo, subject, rendered, "", atts); fbErr == nil {
 						logg.Info("email sent via platform fallback",
 							zap.String("provider", platformProv.Name()),
 							zap.String("template", msg.TemplateID),

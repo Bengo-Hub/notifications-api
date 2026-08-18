@@ -30,7 +30,7 @@ func NewBrevoProvider(cfg BrevoConfig) *BrevoProvider {
 
 func (p *BrevoProvider) Name() string { return "brevo" }
 
-func (p *BrevoProvider) SendEmail(ctx context.Context, from string, to []string, cc []string, bcc []string, subject string, htmlBody string, textBody string, attachments []Attachment) error {
+func (p *BrevoProvider) SendEmail(ctx context.Context, from string, to []string, cc []string, bcc []string, replyTo string, subject string, htmlBody string, textBody string, attachments []Attachment) error {
 	if p.cfg.APIKey == "" {
 		return fmt.Errorf("brevo: api key not configured")
 	}
@@ -70,6 +70,9 @@ func (p *BrevoProvider) SendEmail(ctx context.Context, from string, to []string,
 		Bcc:         bccRecipients,
 		Subject:     subject,
 		HTMLContent: htmlBody,
+	}
+	if replyTo != "" {
+		payload.ReplyTo = &brevoRecipient{Email: replyTo}
 	}
 	if textBody != "" && htmlBody == "" {
 		payload.TextContent = textBody
@@ -116,6 +119,7 @@ type brevoPayload struct {
 	To          []brevoRecipient  `json:"to"`
 	Cc          []brevoRecipient  `json:"cc,omitempty"`
 	Bcc         []brevoRecipient  `json:"bcc,omitempty"`
+	ReplyTo     *brevoRecipient   `json:"replyTo,omitempty"`
 	Subject     string            `json:"subject"`
 	HTMLContent string            `json:"htmlContent,omitempty"`
 	TextContent string            `json:"textContent,omitempty"`

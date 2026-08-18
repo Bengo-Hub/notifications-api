@@ -223,7 +223,7 @@ func (m *Manager) TestConnection(ctx context.Context, channel, providerName, to 
 		if err != nil {
 			return err
 		}
-		return prov.SendEmail(ctx, "", []string{to}, nil, nil, "Test connection", "<p>Test notification from Notifications API.</p>", "Test notification from Notifications API.", nil)
+		return prov.SendEmail(ctx, "", []string{to}, nil, nil, "", "Test connection", "<p>Test notification from Notifications API.</p>", "Test notification from Notifications API.", nil)
 	case "sms":
 		prov, err := m.GetSMSProvider(ctx, m.PlatformID, providerName)
 		if err != nil {
@@ -290,10 +290,14 @@ type sendGridAdapter struct {
 
 func (s *sendGridAdapter) Name() string { return "sendgrid" }
 
-func (s *sendGridAdapter) SendEmail(ctx context.Context, from string, to []string, cc []string, bcc []string, subject string, htmlBody string, textBody string, attachments []email.Attachment) error {
+func (s *sendGridAdapter) SendEmail(ctx context.Context, from string, to []string, cc []string, bcc []string, replyTo string, subject string, htmlBody string, textBody string, attachments []email.Attachment) error {
 	if from == "" {
 		from = s.from
 	}
+	// replyTo not yet threaded into SendWithSendGrid — dormant/inactive provider
+	// today (is_platform_managed=true, is_active=false in provider_settings),
+	// not worth extending its stub implementation until it's actually enabled.
+	_ = replyTo
 	return email.SendWithSendGrid(ctx, s.apiKey, from, to, cc, bcc, subject, htmlBody, textBody, attachments)
 }
 
