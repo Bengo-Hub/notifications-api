@@ -503,6 +503,13 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 			}
 		}
 		replyTo := msg.ReplyTo
+		// Platform-scope transactional email with no explicit reply-to defaults to
+		// info@ — decided explicitly (AskUserQuestion, 2026-08-18) rather than left
+		// as a silent no-reply-to gap; tenant-scope messages are unaffected (each
+		// tenant's own provider config/brand determines their reply behavior).
+		if replyTo == "" && msg.EffectiveSenderScope() == messaging.SenderScopePlatform {
+			replyTo = "info@codevertexafrica.com"
+		}
 		// Optional attachments (e.g. payslip PDFs the ERP sends on erp.email.requested).
 		var atts []email.Attachment
 		for _, a := range msg.Attachments {
