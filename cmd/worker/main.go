@@ -564,8 +564,13 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 			preferred = ""
 		}
 
+		// Real text/plain alternative, not "" — every email this worker sent
+		// was HTML-only with no multipart/alternative part at all, a real
+		// spam signal found in the 2026-08-19 deliverability audit.
+		plainTextBody := email.HTMLToPlainText(rendered)
+
 		emailProv, _ := pm.GetEmailProvider(ctx, providerTenantID, preferred)
-		err := emailProv.SendEmail(ctx, fromOverride, validTo, msg.Cc, msg.Bcc, replyTo, subject, rendered, "", atts)
+		err := emailProv.SendEmail(ctx, fromOverride, validTo, msg.Cc, msg.Bcc, replyTo, subject, rendered, plainTextBody, atts)
 		if err != nil {
 			if providerTenantID != pm.PlatformID && isAuthFailureError(err) {
 				eg.CoolProvider(providerTenantID, 30*time.Minute)
@@ -579,7 +584,7 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 			if providerTenantID != pm.PlatformID {
 				platformProv, pErr := pm.GetEmailProvider(ctx, pm.PlatformID, "")
 				if pErr == nil {
-					if fbErr := platformProv.SendEmail(ctx, fromOverride, validTo, msg.Cc, msg.Bcc, replyTo, subject, rendered, "", atts); fbErr == nil {
+					if fbErr := platformProv.SendEmail(ctx, fromOverride, validTo, msg.Cc, msg.Bcc, replyTo, subject, rendered, plainTextBody, atts); fbErr == nil {
 						logg.Info("email sent via platform fallback",
 							zap.String("provider", platformProv.Name()),
 							zap.String("template", msg.TemplateID),

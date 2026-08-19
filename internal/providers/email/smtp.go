@@ -2,13 +2,16 @@ package email
 
 import (
 	"context"
+	"crypto/rand"
 	"crypto/tls"
 	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"net"
 	"net/smtp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // chunk76 wraps a base64 string at 76 characters per line (RFC 2045).
@@ -81,6 +84,21 @@ func extractEmail(s string) string {
 	return strings.TrimSpace(s)
 }
 
+// generateMessageID builds an RFC 5322 §3.6.4 Message-ID using the sending
+// domain — a real MTA always sets one; its absence was found (2026-08-19
+// deliverability audit) to be a genuine, previously-unaddressed spam signal
+// on every outbound message this service ever sent (zero occurrences of
+// "Message-ID" found across 9 days of the receiving Stalwart server's own
+// logs). domain should be the envelope-from's domain part.
+func generateMessageID(domain string) string {
+	var buf [16]byte
+	_, _ = rand.Read(buf[:])
+	if domain == "" {
+		domain = "localhost"
+	}
+	return fmt.Sprintf("<%d.%s@%s>", time.Now().UnixNano(), hex.EncodeToString(buf[:]), domain)
+}
+
 func (p *SMTPProvider) SendEmail(ctx context.Context, from string, to []string, cc []string, bcc []string, replyTo string, subject string, htmlBody string, textBody string, attachments []Attachment) error {
 	if from == "" {
 		from = p.cfg.From
@@ -105,6 +123,12 @@ func (p *SMTPProvider) SendEmail(ctx context.Context, from string, to []string, 
 	htmlBody = normalizeCRLF(htmlBody)
 	textBody = normalizeCRLF(textBody)
 
+	// Domain part of the envelope sender, used as the Message-ID's right-hand side.
+	envelopeFromDomain := ""
+	if at := strings.LastIndex(envelopeFrom, "@"); at >= 0 {
+		envelopeFromDomain = envelopeFrom[at+1:]
+	}
+
 	// Build RFC 5322 message
 	var b strings.Builder
 	b.WriteString("From: " + from + "\r\n")
@@ -116,6 +140,20 @@ func (p *SMTPProvider) SendEmail(ctx context.Context, from string, to []string, 
 		b.WriteString("Reply-To: " + replyTo + "\r\n")
 	}
 	b.WriteString("Subject: " + subject + "\r\n")
+	// Date + Message-ID: every real MTA sets both; their absence was a
+	// confirmed, real spam signal (2026-08-19 deliverability audit) — this
+	// service never set either before. List-Unsubscribe is deliberately kept
+	// as a plain mailto (no List-Unsubscribe-Post, which RFC 8058 reserves
+	// for a real HTTPS one-click endpoint this service doesn't have) —
+	// present for the deliverability signal without pretending to be a
+	// functioning unsubscribe pipeline.
+	b.WriteString("Date: " + time.Now().Format(time.RFC1123Z) + "\r\n")
+	b.WriteString("Message-ID: " + generateMessageID(envelopeFromDomain) + "\r\n")
+	unsubTarget := replyTo
+	if unsubTarget == "" {
+		unsubTarget = envelopeFrom
+	}
+	b.WriteString("List-Unsubscribe: <mailto:" + extractEmail(unsubTarget) + "?subject=unsubscribe>\r\n")
 	b.WriteString("MIME-Version: 1.0\r\n")
 
 	// Build the body MIME part (with its own Content-Type) so it can be nested inside a
