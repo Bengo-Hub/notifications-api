@@ -179,8 +179,8 @@ func (h *NotificationHandler) Enqueue(w http.ResponseWriter, r *http.Request) {
 	// Normalize recipients: split any comma/semicolon/newline-joined elements into
 	// individual validated addresses so no address is dropped (and SMTP doesn't 501
 	// on a joined element). Runs before rate-limiting so the recipient count is accurate.
-	req.To = messaging.NormalizeRecipients(req.To)
-	req.Cc = messaging.NormalizeRecipients(req.Cc)
+	req.To = messaging.NormalizeRecipients(req.To, req.Channel)
+	req.Cc = messaging.NormalizeRecipients(req.Cc, req.Channel)
 	if req.Channel == "email" && len(req.To) == 0 {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)

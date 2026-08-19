@@ -129,14 +129,14 @@ func (s *Subscriber) handleERPEmailRequested(msg *nats.Msg) {
 		return
 	}
 
-	to := messaging.NormalizeRecipients(p.RecipientList)
+	to := messaging.NormalizeRecipients(p.RecipientList, "email")
 	if len(to) == 0 {
 		s.log.Warn("erp.email.requested: no valid recipients, dropping",
 			zap.String("tenant_id", env.TenantID), zap.String("event_id", env.ID))
 		_ = msg.Ack()
 		return
 	}
-	cc := messaging.NormalizeRecipients(p.CC)
+	cc := messaging.NormalizeRecipients(p.CC, "email")
 
 	subject := strings.TrimSpace(p.Subject)
 	if subject == "" {
@@ -162,7 +162,7 @@ func (s *Subscriber) handleERPEmailRequested(msg *nats.Msg) {
 		s.log.Warn("erp.email.requested: html_message ignored — pipeline renders plain message through generic template",
 			zap.String("tenant_id", env.TenantID))
 	}
-	bcc := messaging.NormalizeRecipients(p.BCC)
+	bcc := messaging.NormalizeRecipients(p.BCC, "email")
 	fromEmail := ""
 	if p.FromEmail != nil {
 		fromEmail = strings.TrimSpace(*p.FromEmail)
@@ -279,21 +279,21 @@ func (s *Subscriber) handleERPNotificationRequested(msg *nats.Msg) {
 		ch := strings.ToLower(strings.TrimSpace(raw))
 		switch ch {
 		case "email":
-			recips := messaging.NormalizeRecipients([]string{email})
+			recips := messaging.NormalizeRecipients([]string{email}, "email")
 			if len(recips) == 0 {
 				s.log.Warn("erp.notification.requested: email channel requested but no valid email, skipping",
 					zap.String("tenant_id", env.TenantID), zap.String("event_id", env.ID))
 				continue
 			}
 			m := messaging.Message{
-				TenantID:    env.TenantID,
-				Channel:     "email",
-				TemplateID:  resolveTemplate(p.Templates.Email, p.NotificationType, "email", genericEmailTemplate),
-				SenderScope: messaging.SenderScopeTenant,
-				Target:      messaging.TargetCustomer,
-				To:          recips,
-				Data:        data,
-				Metadata:    map[string]any{"subject": emailSubject},
+				TenantID:       env.TenantID,
+				Channel:        "email",
+				TemplateID:     resolveTemplate(p.Templates.Email, p.NotificationType, "email", genericEmailTemplate),
+				SenderScope:    messaging.SenderScopeTenant,
+				Target:         messaging.TargetCustomer,
+				To:             recips,
+				Data:           data,
+				Metadata:       map[string]any{"subject": emailSubject},
 				IdempotencyKey: erpIdempotencyKey("erp-notif", env.ID, "email"),
 			}
 			if err := s.publishMessage(m); err != nil {
@@ -305,7 +305,7 @@ func (s *Subscriber) handleERPNotificationRequested(msg *nats.Msg) {
 			published++
 
 		case "push":
-			recips := messaging.NormalizeRecipients([]string{email})
+			recips := messaging.NormalizeRecipients([]string{email}, "email")
 			if len(recips) == 0 {
 				s.log.Warn("erp.notification.requested: push channel requested but no recipient token/email, skipping",
 					zap.String("tenant_id", env.TenantID), zap.String("event_id", env.ID))
@@ -318,14 +318,14 @@ func (s *Subscriber) handleERPNotificationRequested(msg *nats.Msg) {
 				continue
 			}
 			m := messaging.Message{
-				TenantID:    env.TenantID,
-				Channel:     "push",
-				TemplateID:  tmpl,
-				SenderScope: messaging.SenderScopeTenant,
-				Target:      messaging.TargetCustomer,
-				To:          recips,
-				Data:        data,
-				Metadata:    map[string]any{"push_title": p.Title},
+				TenantID:       env.TenantID,
+				Channel:        "push",
+				TemplateID:     tmpl,
+				SenderScope:    messaging.SenderScopeTenant,
+				Target:         messaging.TargetCustomer,
+				To:             recips,
+				Data:           data,
+				Metadata:       map[string]any{"push_title": p.Title},
 				IdempotencyKey: erpIdempotencyKey("erp-notif", env.ID, "push"),
 			}
 			if err := s.publishMessage(m); err != nil {
