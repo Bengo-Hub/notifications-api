@@ -8,6 +8,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/bengobox/notifications-api/internal/http/handlers"
+	devauth "github.com/bengobox/notifications-api/internal/http/middleware"
 	"github.com/bengobox/notifications-api/internal/modules/identity"
 )
 
@@ -73,6 +74,13 @@ func claimsHasAllPermissions(claims *authclient.Claims, perms []identity.Permiss
 // skip the JWT+local-user requirement since permissions are checked downstream.
 func (a *Authenticator) RequireAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// A developer key (bng_*/bng_app_*) authenticates an App/tenant, not an
+		// individual human user — skip straight through rather than requiring a Bearer
+		// token that a developer-key caller was never going to have.
+		if devauth.IsDeveloperKeyRequest(r.Context()) {
+			next.ServeHTTP(w, r)
+			return
+		}
 		if existingClaims, ok := authclient.ClaimsFromContext(r.Context()); ok && existingClaims != nil {
 			if IsSuperuser(existingClaims) || IsAdmin(existingClaims) {
 				next.ServeHTTP(w, r)
@@ -203,6 +211,13 @@ func (a *Authenticator) RequireRoles(roles ...identity.Role) func(http.Handler) 
 func (a *Authenticator) RequirePermissions(perms ...identity.Permission) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// A validated developer key already proved it can act for its tenant (see
+			// RequireAuth above) — there's no local user/JWT permission set to check here,
+			// and requiring one would 403 every developer-key caller outright.
+			if devauth.IsDeveloperKeyRequest(r.Context()) {
+				next.ServeHTTP(w, r)
+				return
+			}
 			if claims, ok := authclient.ClaimsFromContext(r.Context()); ok {
 				if IsSuperuser(claims) || IsAdmin(claims) {
 					next.ServeHTTP(w, r)

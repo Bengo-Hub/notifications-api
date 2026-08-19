@@ -19,6 +19,8 @@ import (
 
 	"database/sql"
 
+	sharedcache "github.com/Bengo-Hub/cache"
+	ratelimit "github.com/Bengo-Hub/shared-ratelimit"
 	serviceclient "github.com/Bengo-Hub/shared-service-client"
 	"github.com/bengobox/notifications-api/internal/config"
 	entdb "github.com/bengobox/notifications-api/internal/database"
@@ -26,23 +28,23 @@ import (
 	"github.com/bengobox/notifications-api/internal/ent"
 	handlers "github.com/bengobox/notifications-api/internal/http/handlers"
 	identityhandler "github.com/bengobox/notifications-api/internal/http/handlers/identity"
+	devauth "github.com/bengobox/notifications-api/internal/http/middleware"
 	router "github.com/bengobox/notifications-api/internal/http/router"
-	sharedcache "github.com/Bengo-Hub/cache"
 	backupmod "github.com/bengobox/notifications-api/internal/modules/backup"
 	"github.com/bengobox/notifications-api/internal/modules/billing"
 	eventsmod "github.com/bengobox/notifications-api/internal/modules/events"
 	"github.com/bengobox/notifications-api/internal/modules/identity"
 	"github.com/bengobox/notifications-api/internal/modules/preferences"
 	"github.com/bengobox/notifications-api/internal/modules/rbac"
-	"github.com/bengobox/notifications-api/internal/modules/tenant"
 	templatesmod "github.com/bengobox/notifications-api/internal/modules/templates"
+	"github.com/bengobox/notifications-api/internal/modules/tenant"
 	"github.com/bengobox/notifications-api/internal/platform/cache"
 	"github.com/bengobox/notifications-api/internal/platform/database"
 	"github.com/bengobox/notifications-api/internal/platform/events"
 	"github.com/bengobox/notifications-api/internal/platform/templates"
 	"github.com/bengobox/notifications-api/internal/providers"
+	sandboxmod "github.com/bengobox/notifications-api/internal/sandbox"
 	"github.com/bengobox/notifications-api/internal/shared/logger"
-	ratelimit "github.com/Bengo-Hub/shared-ratelimit"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
@@ -287,7 +289,10 @@ func New(ctx context.Context) (*App, error) {
 		RetentionDays: cfg.Backup.RetentionDays,
 	}, log).Start(ctx)
 
-	httpRouter := router.New(log, healthHandler, notificationHandler, templateHandler, platformProviders, tenantProviders, analyticsHandler, billingHandler, platformBilling, settingsHandler, rbacHandler, authMeHandler, deviceTokenHandler, cfg.Security.APIKey, authMiddleware, authenticator, cfg.HTTP.AllowedOrigins, tenantSyncer, rateLimiter, serviceConfigHandler, whatsappSubsHandler, backupHandler, encryptionKeyHandler, backupDestHandler, notificationPrefsHandler)
+	developerKeyAuth := devauth.NewDeveloperKeyAuth(cfg.Services.AuthAPI, log)
+	notificationHandler.SetSandboxStore(sandboxmod.New(redisClient))
+
+	httpRouter := router.New(log, healthHandler, notificationHandler, templateHandler, platformProviders, tenantProviders, analyticsHandler, billingHandler, platformBilling, settingsHandler, rbacHandler, authMeHandler, deviceTokenHandler, cfg.Security.APIKey, authMiddleware, authenticator, cfg.HTTP.AllowedOrigins, tenantSyncer, rateLimiter, serviceConfigHandler, whatsappSubsHandler, backupHandler, encryptionKeyHandler, backupDestHandler, notificationPrefsHandler, developerKeyAuth)
 
 	httpServer := &http.Server{
 		Addr:              fmt.Sprintf("%s:%d", cfg.HTTP.Host, cfg.HTTP.Port),

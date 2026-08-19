@@ -15,16 +15,18 @@ import (
 	"go.uber.org/zap"
 
 	httpware "github.com/Bengo-Hub/httpware"
-	ratelimit "github.com/Bengo-Hub/shared-ratelimit"
 	authclient "github.com/Bengo-Hub/shared-auth-client"
 	eventslib "github.com/Bengo-Hub/shared-events"
+	ratelimit "github.com/Bengo-Hub/shared-ratelimit"
 
 	"github.com/google/uuid"
 
 	"github.com/bengobox/notifications-api/internal/config"
 	"github.com/bengobox/notifications-api/internal/ent"
+	devauth "github.com/bengobox/notifications-api/internal/http/middleware"
 	"github.com/bengobox/notifications-api/internal/messaging"
 	"github.com/bengobox/notifications-api/internal/modules/billing"
+	"github.com/bengobox/notifications-api/internal/sandbox"
 )
 
 type NotificationHandler struct {
@@ -37,7 +39,13 @@ type NotificationHandler struct {
 	upgradeURL     string
 	billingSvc     *billing.Service
 	whatsappSubSvc *billing.WhatsAppSubscriptionService
+	sandboxStore   *sandbox.Store
 }
+
+// SetSandboxStore wires the Redis-backed sandbox message store. Optional — a nil
+// store just means sandbox-mode requests are still accepted but their "sent" history
+// isn't retrievable (degrades safely if Redis isn't configured yet).
+func (h *NotificationHandler) SetSandboxStore(s *sandbox.Store) { h.sandboxStore = s }
 
 type CreateMessageRequest struct {
 	Channel  string         `json:"channel" binding:"required" example:"email"`
@@ -180,6 +188,17 @@ func (h *NotificationHandler) Enqueue(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Sandbox short-circuit: a sandbox App token never reaches a real provider, never
+	// touches the real DeliveryLog table, never counts against real billing/usage —
+	// it's saved to the ephemeral sandbox store instead and reported back identically
+	// to a real "queued" response, so integration code doesn't need an if/else for
+	// sandbox vs production. Skips every guard below (rate limit, credit balance,
+	// NATS publish, usage event, DeliveryLog) entirely on purpose.
+	if devauth.EnvironmentFromContext(r.Context()) == "sandbox" {
+		h.enqueueSandbox(w, r, tenant, req)
+		return
+	}
+
 	// Per-channel rate limiting based on subscription plan
 	if h.rateLimiter != nil {
 		limitKey := channelRateLimitKey(req.Channel)
@@ -250,9 +269,9 @@ func (h *NotificationHandler) Enqueue(w http.ResponseWriter, r *http.Request) {
 						errCode = "quota_exhausted"
 					}
 					json.NewEncoder(w).Encode(map[string]any{
-						"error":      errCode,
-						"message":    quotaErr.Error(),
-						"topup_url":  h.upgradeURL,
+						"error":     errCode,
+						"message":   quotaErr.Error(),
+						"topup_url": h.upgradeURL,
 					})
 					return
 				}
@@ -311,6 +330,63 @@ func (h *NotificationHandler) Enqueue(w http.ResponseWriter, r *http.Request) {
 	h.publishUsageEvent(r.Context(), tenant, req.Channel)
 
 	recordDeliveryLog(r.Context(), h.entClient, tenant, req.Template, req.Channel, req.To)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
+	json.NewEncoder(w).Encode(enqueueResponse{Status: "queued", RequestID: requestID})
+}
+
+// ListSandboxMessages handles GET /api/v1/sandbox/messages — lets a developer see what
+// their integration has "sent" while testing in sandbox mode. Scoped to the caller's own
+// tenant (resolved the same way every other route resolves it); a caller who has never
+// sent a sandbox message just gets an empty list, including any caller using a
+// production key, since sandbox sends are never stored under a production context.
+func (h *NotificationHandler) ListSandboxMessages(w http.ResponseWriter, r *http.Request) {
+	tenant := httpware.GetTenantID(r.Context())
+	if tenant == "" {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(errorResponse{Error: "tenant required"})
+		return
+	}
+	messages, err := h.sandboxStore.List(r.Context(), tenant)
+	if err != nil {
+		h.log.Warn("list sandbox messages failed", zap.Error(err), zap.String("tenant", tenant))
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(errorResponse{Error: "failed to list sandbox messages"})
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]any{"data": messages, "count": len(messages)})
+}
+
+// enqueueSandbox simulates sending req without ever touching a real provider, the
+// real DeliveryLog table, or real billing/usage counters. Saved to the ephemeral
+// Redis-backed sandbox store (see internal/sandbox) so the developer can inspect what
+// they "sent" via GET /api/v1/sandbox/messages.
+func (h *NotificationHandler) enqueueSandbox(w http.ResponseWriter, r *http.Request, tenant string, req CreateMessageRequest) {
+	requestID := httpware.GetRequestID(r.Context())
+	if requestID == "" {
+		requestID = "sandbox_" + uuid.NewString()
+	}
+
+	if h.sandboxStore != nil {
+		msg := sandbox.Message{
+			ID:            requestID,
+			Channel:       req.Channel,
+			Template:      req.Template,
+			To:            req.To,
+			Data:          req.Data,
+			Status:        "sandbox_simulated",
+			SentAt:        time.Now(),
+			SimulatedNote: "Sandbox mode — no real " + req.Channel + " was sent. This entry expires automatically.",
+		}
+		if err := h.sandboxStore.Save(r.Context(), tenant, msg); err != nil {
+			h.log.Warn("sandbox store save failed", zap.Error(err), zap.String("tenant", tenant))
+		}
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusAccepted)

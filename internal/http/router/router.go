@@ -11,15 +11,16 @@ import (
 	"go.uber.org/zap"
 
 	httpware "github.com/Bengo-Hub/httpware"
-	ratelimit "github.com/Bengo-Hub/shared-ratelimit"
 	authclient "github.com/Bengo-Hub/shared-auth-client"
+	ratelimit "github.com/Bengo-Hub/shared-ratelimit"
 	handlers "github.com/bengobox/notifications-api/internal/http/handlers"
 	identityhandler "github.com/bengobox/notifications-api/internal/http/handlers/identity"
+	devauth "github.com/bengobox/notifications-api/internal/http/middleware"
 	"github.com/bengobox/notifications-api/internal/modules/identity"
 	"github.com/bengobox/notifications-api/internal/modules/tenant"
 )
 
-func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handlers.NotificationHandler, templates *handlers.TemplateHandler, platformProviders *handlers.PlatformProviders, tenantProviders *handlers.TenantProviders, analytics *handlers.AnalyticsHandler, billing *handlers.BillingHandler, platformBilling *handlers.PlatformBilling, settings *handlers.SettingsHandler, rbacHandler *handlers.RBACHandler, authMeHandler *handlers.AuthMeHandler, deviceTokens *handlers.DeviceTokenHandler, apiKey string, authMiddleware *authclient.AuthMiddleware, authenticator *identityhandler.Authenticator, allowedOrigins []string, tenantSyncer *tenant.Syncer, rateLimiter *ratelimit.Quota, serviceConfig *handlers.ServiceConfigHandler, whatsappSubs *handlers.WhatsAppSubscriptionHandler, backups *handlers.BackupHandler, encryptionKey *handlers.EncryptionKeyHandler, backupDest *handlers.BackupDestinationHandler, notificationPrefs *handlers.PreferencesHandler) http.Handler {
+func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handlers.NotificationHandler, templates *handlers.TemplateHandler, platformProviders *handlers.PlatformProviders, tenantProviders *handlers.TenantProviders, analytics *handlers.AnalyticsHandler, billing *handlers.BillingHandler, platformBilling *handlers.PlatformBilling, settings *handlers.SettingsHandler, rbacHandler *handlers.RBACHandler, authMeHandler *handlers.AuthMeHandler, deviceTokens *handlers.DeviceTokenHandler, apiKey string, authMiddleware *authclient.AuthMiddleware, authenticator *identityhandler.Authenticator, allowedOrigins []string, tenantSyncer *tenant.Syncer, rateLimiter *ratelimit.Quota, serviceConfig *handlers.ServiceConfigHandler, whatsappSubs *handlers.WhatsAppSubscriptionHandler, backups *handlers.BackupHandler, encryptionKey *handlers.EncryptionKeyHandler, backupDest *handlers.BackupDestinationHandler, notificationPrefs *handlers.PreferencesHandler, developerKeyAuth *devauth.DeveloperKeyAuth) http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RealIP)
@@ -71,20 +72,34 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 		// No RequireActiveSubscription — subscription enforcement is NOT applied.
 		// Instead, email sending is rate-limited by subscription plan (max_emails_per_day).
 		api.Group(func(protected chi.Router) {
-			// Apply auth middleware if configured, otherwise allow API key
-			if authMiddleware != nil {
-				protected.Use(authMiddleware.RequireAuth)
-			} else if apiKey != "" {
-				protected.Use(func(next http.Handler) http.Handler {
-					return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Apply auth middleware if configured, otherwise allow API key.
+			// A developer bng_*/bng_app_* key is checked FIRST, independently of the two
+			// paths below — it's a distinct external-developer path (validated against
+			// auth-api, sandbox-capable), never the platform's own internal service key.
+			protected.Use(func(next http.Handler) http.Handler {
+				return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					if developerKeyAuth != nil {
+						if ctx, isDevKey := developerKeyAuth.TryDeveloperKey(w, r); isDevKey {
+							if ctx == nil {
+								return // TryDeveloperKey already wrote the error response
+							}
+							next.ServeHTTP(w, r.WithContext(ctx))
+							return
+						}
+					}
+					if authMiddleware != nil {
+						authMiddleware.RequireAuth(next).ServeHTTP(w, r)
+						return
+					}
+					if apiKey != "" {
 						if r.Header.Get("X-API-Key") != apiKey {
 							http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
 							return
 						}
-						next.ServeHTTP(w, r)
-					})
+					}
+					next.ServeHTTP(w, r)
 				})
-			}
+			})
 
 			// Layer 3: Identity — load/JIT-provision local user with roles & permissions
 			if authenticator != nil {
@@ -173,6 +188,15 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 					// route-level blanket limiter is intentionally NOT used here because it would
 					// also block SMS/push/WhatsApp once the email cap is hit, violating policy.
 					notif.Post("/messages", notifications.Enqueue)
+				})
+
+				// Sandbox: inspect what a sandbox App token has "sent" — same auth/permission
+				// stack as sending, since it's just a read view over the same tenant's activity.
+				tenantRouter.Route("/sandbox", func(sb chi.Router) {
+					if authenticator != nil {
+						sb.Use(authenticator.RequirePermissions(identity.PermNotificationsSend))
+					}
+					sb.Get("/messages", notifications.ListSandboxMessages)
 				})
 
 				// Tenant provider selection
