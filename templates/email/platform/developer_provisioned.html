@@ -1,0 +1,31 @@
+{{ define "content" }}
+  <h2>Your developer access is ready</h2>
+  <p>Hi {{ or .requester_name "there" }},</p>
+  <p>
+    Your request for developer access has been approved. We've set up a sandbox
+    environment for you — no real data, no real messages sent, no charges — so you can
+    start testing right away.
+  </p>
+
+  <table role="presentation" style="width:100%;border-collapse:collapse;margin:16px 0">
+    <tbody>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Tenant</strong></td><td style="padding:6px 0"><code>{{ .tenant_slug }}</code></td></tr>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Sandbox App key</strong></td><td style="padding:6px 0"><code style="word-break:break-all">{{ .sandbox_key }}</code></td></tr>
+    </tbody>
+  </table>
+
+  <p style="color:#6b7280;">
+    Keep this key secret — it's shown only once and can't be retrieved again (you can
+    always issue a new one from the developer portal). Send it as the
+    <code>X-API-Key</code> header on your requests. Anything you send in sandbox mode is
+    simulated: it's never delivered for real and never touches production data.
+  </p>
+
+  {{ if .docs_url }}
+  <p>
+    <a class="button" href="{{ .docs_url }}">Read the API docs</a>
+  </p>
+  {{ end }}
+
+  <p style="color:#6b7280;">Questions? Just reply to this email.</p>
+{{ end }}
