@@ -20,7 +20,7 @@ import (
 	"github.com/bengobox/notifications-api/internal/modules/tenant"
 )
 
-func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handlers.NotificationHandler, templates *handlers.TemplateHandler, platformProviders *handlers.PlatformProviders, tenantProviders *handlers.TenantProviders, analytics *handlers.AnalyticsHandler, billing *handlers.BillingHandler, platformBilling *handlers.PlatformBilling, settings *handlers.SettingsHandler, rbacHandler *handlers.RBACHandler, authMeHandler *handlers.AuthMeHandler, deviceTokens *handlers.DeviceTokenHandler, apiKey string, authMiddleware *authclient.AuthMiddleware, authenticator *identityhandler.Authenticator, allowedOrigins []string, tenantSyncer *tenant.Syncer, rateLimiter *ratelimit.Quota, serviceConfig *handlers.ServiceConfigHandler, whatsappSubs *handlers.WhatsAppSubscriptionHandler, backups *handlers.BackupHandler, encryptionKey *handlers.EncryptionKeyHandler, backupDest *handlers.BackupDestinationHandler, notificationPrefs *handlers.PreferencesHandler, developerKeyAuth *devauth.DeveloperKeyAuth) http.Handler {
+func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handlers.NotificationHandler, templates *handlers.TemplateHandler, platformProviders *handlers.PlatformProviders, tenantProviders *handlers.TenantProviders, analytics *handlers.AnalyticsHandler, billing *handlers.BillingHandler, platformBilling *handlers.PlatformBilling, settings *handlers.SettingsHandler, rbacHandler *handlers.RBACHandler, authMeHandler *handlers.AuthMeHandler, deviceTokens *handlers.DeviceTokenHandler, apiKey string, authMiddleware *authclient.AuthMiddleware, authenticator *identityhandler.Authenticator, allowedOrigins []string, tenantSyncer *tenant.Syncer, rateLimiter *ratelimit.Quota, serviceConfig *handlers.ServiceConfigHandler, whatsappSubs *handlers.WhatsAppSubscriptionHandler, backups *handlers.BackupHandler, encryptionKey *handlers.EncryptionKeyHandler, backupDest *handlers.BackupDestinationHandler, notificationPrefs *handlers.PreferencesHandler, developerKeyAuth *devauth.DeveloperKeyAuth, swaggerHandler *handlers.SwaggerHandler) http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RealIP)
@@ -38,7 +38,7 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 	}))
 
 	// Swagger UI
-	r.Get("/v1/docs/*", handlers.SwaggerUI)
+	r.Get("/v1/docs/*", swaggerHandler.SwaggerUI)
 
 	// Redirect root path to Swagger documentation
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
@@ -46,8 +46,9 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 	})
 
 	r.Route("/api/v1", func(api chi.Router) {
-		// Serve OpenAPI spec (public, no auth required)
-		api.Get("/openapi.json", handlers.OpenAPIJSON)
+		// Serve OpenAPI spec (public, no auth required; app-secret-gated internal view)
+		api.Get("/openapi.json", swaggerHandler.OpenAPIJSON)
+		api.Options("/openapi.json", swaggerHandler.OpenAPIJSON)
 
 		// Health endpoints (public)
 		api.Get("/healthz", health.Liveness)

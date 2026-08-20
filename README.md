@@ -33,7 +33,7 @@ Port mapping:
 
 - Local development serves the API on **https://notifications.codevertex.local:4002** (HTTPS with mkcert) or **http://localhost:4002** (HTTP).
 - In Kubernetes, the Helm chart overrides `NOTIFICATIONS_HTTP_PORT` to **4000** so all backend workloads expose a unified ingress port.
-- Production ingress: `https://notifications.codevrtexitsolutions.com`
+- Production ingress: `https://notificationsapi.codevertexafrica.com`
 - **API Base Path:** All API endpoints are under `/api/v1/`
 
 ### Environment Variables
