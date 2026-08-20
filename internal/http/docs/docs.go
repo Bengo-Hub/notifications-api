@@ -15,6 +15,39 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/analytics/delivery": {
+            "get": {
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Returns delivery statistics for the tenant. Query: range (e.g. 24h, 7d). tenantId may be omitted from the path (falls back to JWT claims or X-Tenant-ID header) for platform-context callers.",
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Delivery analytics",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Time range (e.g. 24h, 7d)",
+                        "name": "range",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.DeliveryStatsResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/analytics/delivery/{tenantId}": {
             "get": {
                 "security": [
@@ -25,7 +58,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Returns delivery statistics for the tenant. Query: range (e.g. 24h, 7d). Stub implementation; implement with real data when analytics store exists.",
+                "description": "Returns delivery statistics for the tenant. Query: range (e.g. 24h, 7d). tenantId may be omitted from the path (falls back to JWT claims or X-Tenant-ID header) for platform-context callers.",
                 "tags": [
                     "Analytics"
                 ],
@@ -35,8 +68,7 @@ const docTemplate = `{
                         "type": "string",
                         "description": "Tenant identifier",
                         "name": "tenantId",
-                        "in": "path",
-                        "required": true
+                        "in": "path"
                     },
                     {
                         "type": "string",
@@ -50,6 +82,120 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/internal_http_handlers.DeliveryStatsResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/analytics/logs": {
+            "get": {
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Returns paginated delivery log entries for the tenant. Query: limit, offset, channel, status, from, to. tenantId may be omitted from the path (falls back to JWT claims or X-Tenant-ID header) for platform-context callers.",
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Delivery log",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Max results (default 20)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset for pagination",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by channel",
+                        "name": "channel",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by status",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/internal_http_handlers.ActivityLogEntry"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/analytics/logs/{tenantId}": {
+            "get": {
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Returns paginated delivery log entries for the tenant. Query: limit, offset, channel, status, from, to. tenantId may be omitted from the path (falls back to JWT claims or X-Tenant-ID header) for platform-context callers.",
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Delivery log",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant identifier",
+                        "name": "tenantId",
+                        "in": "path"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Max results (default 20)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset for pagination",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by channel",
+                        "name": "channel",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by status",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/internal_http_handlers.ActivityLogEntry"
+                            }
                         }
                     }
                 }
@@ -95,6 +241,338 @@ const docTemplate = `{
                 }
             }
         },
+        "/platform/providers": {
+            "get": {
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "List all platform notification providers (no tenant filter). Platform admin sees all configs.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Platform"
+                ],
+                "summary": "List platform providers",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.listProvidersResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Create or replace a platform provider (Email: SMTP/SendGrid; SMS: Africa's Talking). Secrets stored encrypted at rest when ENCRYPTION_KEY is set.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Platform"
+                ],
+                "summary": "Configure platform provider",
+                "parameters": [
+                    {
+                        "description": "Provider configuration",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.configureProviderRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.configureProviderResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/platform/providers/settings": {
+            "get": {
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Returns non-secret settings for a platform provider (secret values are masked). Unlike the tenant endpoint, this always queries under tenant_id='platform'.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Platform"
+                ],
+                "summary": "Get platform provider settings",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Provider type (email|sms|push)",
+                        "name": "provider_type",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Provider name (smtp|sendgrid|twilio|...)",
+                        "name": "provider_name",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.providerSettingsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/platform/providers/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Deactivate platform provider.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Platform"
+                ],
+                "summary": "Deactivate platform provider",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Provider config ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.simpleMessageResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Update platform provider settings or active state.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Platform"
+                ],
+                "summary": "Update platform provider",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Provider config ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Fields to update",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.updateProviderRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.simpleMessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/platform/providers/{id}/test": {
+            "post": {
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Send a test message via the provider. Body: {\"to\": \"email@example.com\"} or {\"to\": \"+254700000000\"}.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Platform"
+                ],
+                "summary": "Test provider connection",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Provider config ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Test recipient",
+                        "name": "request",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.testProviderRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.testProviderResult"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.testProviderResult"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/platform/tenants": {
+            "get": {
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "description": "Returns a lightweight list of active tenants for use in selectors (e.g. test-send tenant picker).",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Platform"
+                ],
+                "summary": "List all tenants",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/internal_http_handlers.tenantListItem"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/readyz": {
             "get": {
                 "description": "Validates connectivity to Postgres, Redis, and NATS (when configured).",
@@ -116,6 +594,262 @@ const docTemplate = `{
                         "description": "Service Unavailable",
                         "schema": {
                             "$ref": "#/definitions/internal_http_handlers.readinessResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/templates": {
+            "get": {
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Returns paginated notification templates with optional channel/category/search filters.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Templates"
+                ],
+                "summary": "List notification templates",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page number (1-based)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Items per page (max 100)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by channel (email|sms|push|whatsapp)",
+                        "name": "channel",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by category (auth|finance|logistics|...)",
+                        "name": "category",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search by name",
+                        "name": "search",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pagination.Response-github_com_bengobox_notifications-api_internal_modules_templates_TemplateSummary"
+                        }
+                    }
+                }
+            }
+        },
+        "/templates/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Returns the raw template content for preview or client-side rendering.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Templates"
+                ],
+                "summary": "Get template content",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Template identifier",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Channel (email|sms|push|whatsapp)",
+                        "name": "channel",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.templateGetResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Updates the template content for the given id and channel. File-based storage.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Templates"
+                ],
+                "summary": "Update template content",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Template identifier",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Template content",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.templateUpdateRequest"
+                        }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Channel (email|sms|push|whatsapp)",
+                        "name": "channel",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.templateGetResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/templates/{id}/test": {
+            "post": {
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Sends a test notification using the template to a specific tenant. Message is queued for delivery.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Templates"
+                ],
+                "summary": "Send test notification for template",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID where the test notification will be sent",
+                        "name": "tenantId",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Template identifier",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Channel (email|sms|push); can also be in body",
+                        "name": "channel",
+                        "in": "query"
+                    },
+                    {
+                        "description": "Test send payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.templateTestSendRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Accepted",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.enqueueResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
                         }
                     }
                 }
@@ -175,103 +909,70 @@ const docTemplate = `{
                     }
                 }
             }
-        },
-        "/{tenantId}/templates": {
-            "get": {
-                "security": [
-                    {
-                        "bearerAuth": []
-                    },
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Returns the default set of notification templates available to the tenant.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Templates"
-                ],
-                "summary": "List notification templates",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Tenant identifier",
-                        "name": "tenantId",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/internal_http_handlers.templateListResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/{tenantId}/templates/{id}": {
-            "get": {
-                "security": [
-                    {
-                        "bearerAuth": []
-                    },
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Returns the raw template content for preview or client-side rendering.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Templates"
-                ],
-                "summary": "Get template content",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Tenant identifier",
-                        "name": "tenantId",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Template identifier",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Channel (email|sms|push)",
-                        "name": "channel",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/internal_http_handlers.templateGetResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
-                        }
-                    }
-                }
-            }
         }
     },
     "definitions": {
+        "github_com_bengobox_notifications-api_internal_modules_templates.TemplateSummary": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "type": "string"
+                },
+                "channel": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "filePath": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "mimeType": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "variables": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "internal_http_handlers.ActivityLogEntry": {
+            "type": "object",
+            "properties": {
+                "channel": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "recipient": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "templateName": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "string"
+                }
+            }
+        },
         "internal_http_handlers.CreateMessageRequest": {
             "type": "object"
         },
@@ -315,6 +1016,58 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_http_handlers.configureProviderRequest": {
+            "type": "object",
+            "properties": {
+                "environment": {
+                    "description": "sandbox, production",
+                    "type": "string"
+                },
+                "is_primary": {
+                    "type": "boolean"
+                },
+                "platform_managed_keys": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "provider_name": {
+                    "description": "smtp, sendgrid, twilio, etc.",
+                    "type": "string"
+                },
+                "provider_type": {
+                    "description": "email, sms, push",
+                    "type": "string"
+                },
+                "secret_keys": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "settings": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "internal_http_handlers.configureProviderResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "provider_name": {
+                    "type": "string"
+                },
+                "provider_type": {
+                    "type": "string"
+                }
+            }
+        },
         "internal_http_handlers.enqueueResponse": {
             "type": "object",
             "properties": {
@@ -337,6 +1090,17 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_http_handlers.listProvidersResponse": {
+            "type": "object",
+            "properties": {
+                "providers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_http_handlers.providerResponse"
+                    }
+                }
+            }
+        },
         "internal_http_handlers.livenessResponse": {
             "type": "object",
             "properties": {
@@ -347,6 +1111,49 @@ const docTemplate = `{
                 "status": {
                     "type": "string",
                     "example": "ok"
+                }
+            }
+        },
+        "internal_http_handlers.providerResponse": {
+            "type": "object",
+            "properties": {
+                "environment": {
+                    "description": "sandbox, production",
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "provider_name": {
+                    "description": "smtp, sendgrid, twilio, etc.",
+                    "type": "string"
+                },
+                "provider_type": {
+                    "description": "email, sms, push",
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_http_handlers.providerSettingsResponse": {
+            "type": "object",
+            "properties": {
+                "provider_name": {
+                    "type": "string"
+                },
+                "provider_type": {
+                    "type": "string"
+                },
+                "settings": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
                 }
             }
         },
@@ -362,6 +1169,14 @@ const docTemplate = `{
                 "status": {
                     "type": "string",
                     "example": "OK"
+                }
+            }
+        },
+        "internal_http_handlers.simpleMessageResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
                 }
             }
         },
@@ -382,27 +1197,115 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_http_handlers.templateListResponse": {
+        "internal_http_handlers.templateTestSendRequest": {
             "type": "object",
             "properties": {
-                "templates": {
+                "channel": {
+                    "description": "required if not in query",
+                    "type": "string"
+                },
+                "data": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "to": {
+                    "description": "required",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/internal_http_handlers.templateSummary"
+                        "type": "string"
                     }
                 }
             }
         },
-        "internal_http_handlers.templateSummary": {
+        "internal_http_handlers.templateUpdateRequest": {
             "type": "object",
             "properties": {
-                "channel": {
-                    "type": "string",
-                    "example": "email"
+                "content": {
+                    "type": "string"
                 },
+                "subject": {
+                    "description": "optional, for email channel",
+                    "type": "string"
+                }
+            }
+        },
+        "internal_http_handlers.tenantListItem": {
+            "type": "object",
+            "properties": {
                 "id": {
-                    "type": "string",
-                    "example": "payment_success"
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_http_handlers.testProviderRequest": {
+            "type": "object",
+            "properties": {
+                "to": {
+                    "description": "Email or phone for test message",
+                    "type": "string"
+                }
+            }
+        },
+        "internal_http_handlers.testProviderResult": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "provider_name": {
+                    "type": "string"
+                },
+                "provider_type": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "internal_http_handlers.updateProviderRequest": {
+            "type": "object",
+            "properties": {
+                "is_active": {
+                    "type": "boolean"
+                },
+                "settings": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "pagination.Response-github_com_bengobox_notifications-api_internal_modules_templates_TemplateSummary": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_bengobox_notifications-api_internal_modules_templates.TemplateSummary"
+                    }
+                },
+                "hasMore": {
+                    "type": "boolean"
+                },
+                "limit": {
+                    "type": "integer"
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
                 }
             }
         }

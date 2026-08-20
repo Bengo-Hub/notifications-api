@@ -60,7 +60,44 @@ type updateProviderRequest struct {
 	IsActive *bool             `json:"is_active,omitempty"`
 }
 
+type listProvidersResponse struct {
+	Providers []providerResponse `json:"providers"`
+}
+
+type configureProviderResponse struct {
+	Message      string `json:"message"`
+	ProviderType string `json:"provider_type"`
+	ProviderName string `json:"provider_name"`
+}
+
+type simpleMessageResponse struct {
+	Message string `json:"message"`
+}
+
+type testProviderResult struct {
+	Success      bool   `json:"success"`
+	ProviderType string `json:"provider_type"`
+	ProviderName string `json:"provider_name"`
+	Message      string `json:"message"`
+	Error        string `json:"error,omitempty"`
+}
+
+type providerSettingsResponse struct {
+	ProviderType string            `json:"provider_type"`
+	ProviderName string            `json:"provider_name"`
+	Settings     map[string]string `json:"settings"`
+}
+
 // ListProviders lists platform notification providers.
+// @Summary List platform providers
+// @Description List all platform notification providers (no tenant filter). Platform admin sees all configs.
+// @Tags Platform
+// @Produce json
+// @Success 200 {object} listProvidersResponse
+// @Failure 500 {object} errorResponse
+// @Security bearerAuth
+// @Security ApiKeyAuth
+// @Router /platform/providers [get]
 func (h *PlatformProviders) ListProviders(w http.ResponseWriter, r *http.Request) {
 	settings, err := h.client.ProviderSetting.Query().
 		Where(
@@ -92,6 +129,17 @@ func (h *PlatformProviders) ListProviders(w http.ResponseWriter, r *http.Request
 }
 
 // ConfigureProvider creates or updates a platform notification provider.
+// @Summary Configure platform provider
+// @Description Create or replace a platform provider (Email: SMTP/SendGrid; SMS: Africa's Talking). Secrets stored encrypted at rest when ENCRYPTION_KEY is set.
+// @Tags Platform
+// @Accept json
+// @Produce json
+// @Param request body configureProviderRequest true "Provider configuration"
+// @Success 201 {object} configureProviderResponse
+// @Failure 400 {object} errorResponse
+// @Security bearerAuth
+// @Security ApiKeyAuth
+// @Router /platform/providers [post]
 func (h *PlatformProviders) ConfigureProvider(w http.ResponseWriter, r *http.Request) {
 	var req configureProviderRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -276,6 +324,19 @@ func (h *PlatformProviders) ConfigureProvider(w http.ResponseWriter, r *http.Req
 }
 
 // UpdateProvider updates a platform provider's settings or active state.
+// @Summary Update platform provider
+// @Description Update platform provider settings or active state.
+// @Tags Platform
+// @Accept json
+// @Produce json
+// @Param id path int true "Provider config ID"
+// @Param request body updateProviderRequest true "Fields to update"
+// @Success 200 {object} simpleMessageResponse
+// @Failure 400 {object} errorResponse
+// @Failure 404 {object} errorResponse
+// @Security bearerAuth
+// @Security ApiKeyAuth
+// @Router /platform/providers/{id} [patch]
 func (h *PlatformProviders) UpdateProvider(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	if idStr == "" {
@@ -338,6 +399,16 @@ func (h *PlatformProviders) UpdateProvider(w http.ResponseWriter, r *http.Reques
 }
 
 // DeactivateProvider deactivates a platform provider.
+// @Summary Deactivate platform provider
+// @Description Deactivate platform provider.
+// @Tags Platform
+// @Produce json
+// @Param id path int true "Provider config ID"
+// @Success 200 {object} simpleMessageResponse
+// @Failure 404 {object} errorResponse
+// @Security bearerAuth
+// @Security ApiKeyAuth
+// @Router /platform/providers/{id} [delete]
 func (h *PlatformProviders) DeactivateProvider(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id := 0
@@ -370,6 +441,19 @@ func (h *PlatformProviders) DeactivateProvider(w http.ResponseWriter, r *http.Re
 }
 
 // TestProvider sends a test notification via the specified provider. Body may include {"to": "email@example.com"} or {"to": "+254700000000"}.
+// @Summary Test provider connection
+// @Description Send a test message via the provider. Body: {"to": "email@example.com"} or {"to": "+254700000000"}.
+// @Tags Platform
+// @Accept json
+// @Produce json
+// @Param id path int true "Provider config ID"
+// @Param request body testProviderRequest false "Test recipient"
+// @Success 200 {object} testProviderResult
+// @Failure 400 {object} testProviderResult
+// @Failure 404 {object} errorResponse
+// @Security bearerAuth
+// @Security ApiKeyAuth
+// @Router /platform/providers/{id}/test [post]
 func (h *PlatformProviders) TestProvider(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id := 0
@@ -480,6 +564,18 @@ func (h *PlatformProviders) ListTenants(w http.ResponseWriter, r *http.Request) 
 
 // GetPlatformProviderSettings returns the settings for a specific platform provider.
 // Unlike the tenant endpoint, this always queries under tenant_id='platform'.
+// @Summary Get platform provider settings
+// @Description Returns non-secret settings for a platform provider (secret values are masked). Unlike the tenant endpoint, this always queries under tenant_id='platform'.
+// @Tags Platform
+// @Produce json
+// @Param provider_type query string true "Provider type (email|sms|push)"
+// @Param provider_name query string true "Provider name (smtp|sendgrid|twilio|...)"
+// @Success 200 {object} providerSettingsResponse
+// @Failure 400 {object} errorResponse
+// @Failure 500 {object} errorResponse
+// @Security bearerAuth
+// @Security ApiKeyAuth
+// @Router /platform/providers/settings [get]
 func (h *PlatformProviders) GetPlatformProviderSettings(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	providerType := r.URL.Query().Get("provider_type")

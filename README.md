@@ -24,10 +24,16 @@ For step-by-step local setup (Redis + NATS + Postgres), see:
 ### API Documentation
 
 - Swagger UI: `https://notifications.codevertex.local:4002/v1/docs/` (local HTTPS) or `http://localhost:4002/v1/docs/` (local HTTP)
-- Regenerate the OpenAPI spec after updating handler annotations:
+- Regenerate the OpenAPI spec after updating handler annotations, then copy the result over the
+  served copy (`swagger.go` embeds `internal/http/handlers/swagger.json`, not the generated
+  `internal/http/docs/swagger.json` directly):
   ```bash
-  swag init -g cmd/api/main.go -o internal/http/docs
+  swag init -g cmd/api/main.go -o internal/http/docs --parseDependency
+  cp internal/http/docs/swagger.json internal/http/handlers/swagger.json
   ```
+  `--parseDependency` is required — without it, swag fails outright on the generic
+  `pagination.Response[T]` type used by `templates.go`'s `@Success` annotation (it can't resolve a
+  generic struct from an external module without being told to actually parse into dependencies).
 
 Port mapping:
 

@@ -1,5 +1,45 @@
 basePath: /api/v1
 definitions:
+  github_com_bengobox_notifications-api_internal_modules_templates.TemplateSummary:
+    properties:
+      category:
+        type: string
+      channel:
+        type: string
+      description:
+        type: string
+      filePath:
+        type: string
+      id:
+        type: string
+      mimeType:
+        type: string
+      name:
+        type: string
+      tags:
+        items:
+          type: string
+        type: array
+      variables:
+        items:
+          type: string
+        type: array
+    type: object
+  internal_http_handlers.ActivityLogEntry:
+    properties:
+      channel:
+        type: string
+      id:
+        type: string
+      recipient:
+        type: string
+      status:
+        type: string
+      templateName:
+        type: string
+      timestamp:
+        type: string
+    type: object
   internal_http_handlers.CreateMessageRequest:
     type: object
   internal_http_handlers.DeliveryStatsResponse:
@@ -28,6 +68,41 @@ definitions:
       sent:
         type: integer
     type: object
+  internal_http_handlers.configureProviderRequest:
+    properties:
+      environment:
+        description: sandbox, production
+        type: string
+      is_primary:
+        type: boolean
+      platform_managed_keys:
+        items:
+          type: string
+        type: array
+      provider_name:
+        description: smtp, sendgrid, twilio, etc.
+        type: string
+      provider_type:
+        description: email, sms, push
+        type: string
+      secret_keys:
+        items:
+          type: string
+        type: array
+      settings:
+        additionalProperties:
+          type: string
+        type: object
+    type: object
+  internal_http_handlers.configureProviderResponse:
+    properties:
+      message:
+        type: string
+      provider_name:
+        type: string
+      provider_type:
+        type: string
+    type: object
   internal_http_handlers.enqueueResponse:
     properties:
       requestId:
@@ -43,6 +118,13 @@ definitions:
         example: validation failed
         type: string
     type: object
+  internal_http_handlers.listProvidersResponse:
+    properties:
+      providers:
+        items:
+          $ref: '#/definitions/internal_http_handlers.providerResponse'
+        type: array
+    type: object
   internal_http_handlers.livenessResponse:
     properties:
       service:
@@ -52,6 +134,35 @@ definitions:
         example: ok
         type: string
     type: object
+  internal_http_handlers.providerResponse:
+    properties:
+      environment:
+        description: sandbox, production
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      provider_name:
+        description: smtp, sendgrid, twilio, etc.
+        type: string
+      provider_type:
+        description: email, sms, push
+        type: string
+      status:
+        type: string
+    type: object
+  internal_http_handlers.providerSettingsResponse:
+    properties:
+      provider_name:
+        type: string
+      provider_type:
+        type: string
+      settings:
+        additionalProperties:
+          type: string
+        type: object
+    type: object
   internal_http_handlers.readinessResponse:
     properties:
       dependencies:
@@ -60,6 +171,11 @@ definitions:
         type: object
       status:
         example: OK
+        type: string
+    type: object
+  internal_http_handlers.simpleMessageResponse:
+    properties:
+      message:
         type: string
     type: object
   internal_http_handlers.templateGetResponse:
@@ -73,21 +189,79 @@ definitions:
       mimeType:
         type: string
     type: object
-  internal_http_handlers.templateListResponse:
-    properties:
-      templates:
-        items:
-          $ref: '#/definitions/internal_http_handlers.templateSummary'
-        type: array
-    type: object
-  internal_http_handlers.templateSummary:
+  internal_http_handlers.templateTestSendRequest:
     properties:
       channel:
-        example: email
+        description: required if not in query
         type: string
+      data:
+        additionalProperties: {}
+        type: object
+      to:
+        description: required
+        items:
+          type: string
+        type: array
+    type: object
+  internal_http_handlers.templateUpdateRequest:
+    properties:
+      content:
+        type: string
+      subject:
+        description: optional, for email channel
+        type: string
+    type: object
+  internal_http_handlers.tenantListItem:
+    properties:
       id:
-        example: payment_success
         type: string
+      name:
+        type: string
+      slug:
+        type: string
+    type: object
+  internal_http_handlers.testProviderRequest:
+    properties:
+      to:
+        description: Email or phone for test message
+        type: string
+    type: object
+  internal_http_handlers.testProviderResult:
+    properties:
+      error:
+        type: string
+      message:
+        type: string
+      provider_name:
+        type: string
+      provider_type:
+        type: string
+      success:
+        type: boolean
+    type: object
+  internal_http_handlers.updateProviderRequest:
+    properties:
+      is_active:
+        type: boolean
+      settings:
+        additionalProperties:
+          type: string
+        type: object
+    type: object
+  pagination.Response-github_com_bengobox_notifications-api_internal_modules_templates_TemplateSummary:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/github_com_bengobox_notifications-api_internal_modules_templates.TemplateSummary'
+        type: array
+      hasMore:
+        type: boolean
+      limit:
+        type: integer
+      page:
+        type: integer
+      total:
+        type: integer
     type: object
 host: notificationsapi.codevertexafrica.com
 info:
@@ -130,75 +304,36 @@ paths:
       summary: Queue notification message
       tags:
       - Notifications
-  /{tenantId}/templates:
+  /analytics/delivery:
     get:
-      description: Returns the default set of notification templates available to
-        the tenant.
+      description: 'Returns delivery statistics for the tenant. Query: range (e.g.
+        24h, 7d). tenantId may be omitted from the path (falls back to JWT claims
+        or X-Tenant-ID header) for platform-context callers.'
       parameters:
-      - description: Tenant identifier
-        in: path
-        name: tenantId
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/internal_http_handlers.templateListResponse'
-      security:
-      - bearerAuth: []
-      - ApiKeyAuth: []
-      summary: List notification templates
-      tags:
-      - Templates
-  /{tenantId}/templates/{id}:
-    get:
-      description: Returns the raw template content for preview or client-side rendering.
-      parameters:
-      - description: Tenant identifier
-        in: path
-        name: tenantId
-        required: true
-        type: string
-      - description: Template identifier
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Channel (email|sms|push)
+      - description: Time range (e.g. 24h, 7d)
         in: query
-        name: channel
-        required: true
+        name: range
         type: string
-      produces:
-      - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_http_handlers.templateGetResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/internal_http_handlers.errorResponse'
+            $ref: '#/definitions/internal_http_handlers.DeliveryStatsResponse'
       security:
       - bearerAuth: []
       - ApiKeyAuth: []
-      summary: Get template content
+      summary: Delivery analytics
       tags:
-      - Templates
+      - Analytics
   /analytics/delivery/{tenantId}:
     get:
       description: 'Returns delivery statistics for the tenant. Query: range (e.g.
-        24h, 7d). Stub implementation; implement with real data when analytics store
-        exists.'
+        24h, 7d). tenantId may be omitted from the path (falls back to JWT claims
+        or X-Tenant-ID header) for platform-context callers.'
       parameters:
       - description: Tenant identifier
         in: path
         name: tenantId
-        required: true
         type: string
       - description: Time range (e.g. 24h, 7d)
         in: query
@@ -213,6 +348,82 @@ paths:
       - bearerAuth: []
       - ApiKeyAuth: []
       summary: Delivery analytics
+      tags:
+      - Analytics
+  /analytics/logs:
+    get:
+      description: 'Returns paginated delivery log entries for the tenant. Query:
+        limit, offset, channel, status, from, to. tenantId may be omitted from the
+        path (falls back to JWT claims or X-Tenant-ID header) for platform-context
+        callers.'
+      parameters:
+      - description: Max results (default 20)
+        in: query
+        name: limit
+        type: integer
+      - description: Offset for pagination
+        in: query
+        name: offset
+        type: integer
+      - description: Filter by channel
+        in: query
+        name: channel
+        type: string
+      - description: Filter by status
+        in: query
+        name: status
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/internal_http_handlers.ActivityLogEntry'
+            type: array
+      security:
+      - bearerAuth: []
+      - ApiKeyAuth: []
+      summary: Delivery log
+      tags:
+      - Analytics
+  /analytics/logs/{tenantId}:
+    get:
+      description: 'Returns paginated delivery log entries for the tenant. Query:
+        limit, offset, channel, status, from, to. tenantId may be omitted from the
+        path (falls back to JWT claims or X-Tenant-ID header) for platform-context
+        callers.'
+      parameters:
+      - description: Tenant identifier
+        in: path
+        name: tenantId
+        type: string
+      - description: Max results (default 20)
+        in: query
+        name: limit
+        type: integer
+      - description: Offset for pagination
+        in: query
+        name: offset
+        type: integer
+      - description: Filter by channel
+        in: query
+        name: channel
+        type: string
+      - description: Filter by status
+        in: query
+        name: status
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/internal_http_handlers.ActivityLogEntry'
+            type: array
+      security:
+      - bearerAuth: []
+      - ApiKeyAuth: []
+      summary: Delivery log
       tags:
       - Analytics
   /healthz:
@@ -241,6 +452,216 @@ paths:
       summary: Prometheus metrics
       tags:
       - Health
+  /platform/providers:
+    get:
+      description: List all platform notification providers (no tenant filter). Platform
+        admin sees all configs.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_http_handlers.listProvidersResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
+      security:
+      - bearerAuth: []
+      - ApiKeyAuth: []
+      summary: List platform providers
+      tags:
+      - Platform
+    post:
+      consumes:
+      - application/json
+      description: 'Create or replace a platform provider (Email: SMTP/SendGrid; SMS:
+        Africa''s Talking). Secrets stored encrypted at rest when ENCRYPTION_KEY is
+        set.'
+      parameters:
+      - description: Provider configuration
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_http_handlers.configureProviderRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_http_handlers.configureProviderResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
+      security:
+      - bearerAuth: []
+      - ApiKeyAuth: []
+      summary: Configure platform provider
+      tags:
+      - Platform
+  /platform/providers/{id}:
+    delete:
+      description: Deactivate platform provider.
+      parameters:
+      - description: Provider config ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_http_handlers.simpleMessageResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
+      security:
+      - bearerAuth: []
+      - ApiKeyAuth: []
+      summary: Deactivate platform provider
+      tags:
+      - Platform
+    patch:
+      consumes:
+      - application/json
+      description: Update platform provider settings or active state.
+      parameters:
+      - description: Provider config ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Fields to update
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_http_handlers.updateProviderRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_http_handlers.simpleMessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
+      security:
+      - bearerAuth: []
+      - ApiKeyAuth: []
+      summary: Update platform provider
+      tags:
+      - Platform
+  /platform/providers/{id}/test:
+    post:
+      consumes:
+      - application/json
+      description: 'Send a test message via the provider. Body: {"to": "email@example.com"}
+        or {"to": "+254700000000"}.'
+      parameters:
+      - description: Provider config ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Test recipient
+        in: body
+        name: request
+        schema:
+          $ref: '#/definitions/internal_http_handlers.testProviderRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_http_handlers.testProviderResult'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_http_handlers.testProviderResult'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
+      security:
+      - bearerAuth: []
+      - ApiKeyAuth: []
+      summary: Test provider connection
+      tags:
+      - Platform
+  /platform/providers/settings:
+    get:
+      description: Returns non-secret settings for a platform provider (secret values
+        are masked). Unlike the tenant endpoint, this always queries under tenant_id='platform'.
+      parameters:
+      - description: Provider type (email|sms|push)
+        in: query
+        name: provider_type
+        required: true
+        type: string
+      - description: Provider name (smtp|sendgrid|twilio|...)
+        in: query
+        name: provider_name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_http_handlers.providerSettingsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
+      security:
+      - bearerAuth: []
+      - ApiKeyAuth: []
+      summary: Get platform provider settings
+      tags:
+      - Platform
+  /platform/tenants:
+    get:
+      description: Returns a lightweight list of active tenants for use in selectors
+        (e.g. test-send tenant picker).
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/internal_http_handlers.tenantListItem'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
+      security:
+      - bearerAuth: []
+      summary: List all tenants
+      tags:
+      - Platform
   /readyz:
     get:
       description: Validates connectivity to Postgres, Redis, and NATS (when configured).
@@ -258,6 +679,170 @@ paths:
       summary: Readiness probe
       tags:
       - Health
+  /templates:
+    get:
+      description: Returns paginated notification templates with optional channel/category/search
+        filters.
+      parameters:
+      - description: Page number (1-based)
+        in: query
+        name: page
+        type: integer
+      - description: Items per page (max 100)
+        in: query
+        name: limit
+        type: integer
+      - description: Filter by channel (email|sms|push|whatsapp)
+        in: query
+        name: channel
+        type: string
+      - description: Filter by category (auth|finance|logistics|...)
+        in: query
+        name: category
+        type: string
+      - description: Search by name
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pagination.Response-github_com_bengobox_notifications-api_internal_modules_templates_TemplateSummary'
+      security:
+      - bearerAuth: []
+      - ApiKeyAuth: []
+      summary: List notification templates
+      tags:
+      - Templates
+  /templates/{id}:
+    get:
+      description: Returns the raw template content for preview or client-side rendering.
+      parameters:
+      - description: Template identifier
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Channel (email|sms|push|whatsapp)
+        in: query
+        name: channel
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_http_handlers.templateGetResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
+      security:
+      - bearerAuth: []
+      - ApiKeyAuth: []
+      summary: Get template content
+      tags:
+      - Templates
+    put:
+      consumes:
+      - application/json
+      description: Updates the template content for the given id and channel. File-based
+        storage.
+      parameters:
+      - description: Template identifier
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Template content
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_http_handlers.templateUpdateRequest'
+      - description: Channel (email|sms|push|whatsapp)
+        in: query
+        name: channel
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_http_handlers.templateGetResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
+      security:
+      - bearerAuth: []
+      - ApiKeyAuth: []
+      summary: Update template content
+      tags:
+      - Templates
+  /templates/{id}/test:
+    post:
+      consumes:
+      - application/json
+      description: Sends a test notification using the template to a specific tenant.
+        Message is queued for delivery.
+      parameters:
+      - description: Tenant ID where the test notification will be sent
+        in: query
+        name: tenantId
+        required: true
+        type: string
+      - description: Template identifier
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Channel (email|sms|push); can also be in body
+        in: query
+        name: channel
+        type: string
+      - description: Test send payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_http_handlers.templateTestSendRequest'
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Accepted
+          schema:
+            $ref: '#/definitions/internal_http_handlers.enqueueResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
+      security:
+      - bearerAuth: []
+      - ApiKeyAuth: []
+      summary: Send test notification for template
+      tags:
+      - Templates
 schemes:
 - http
 - https

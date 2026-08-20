@@ -45,11 +45,12 @@ type TimeSeriesPoint struct {
 // Delivery returns delivery stats for a tenant from delivery_log store.
 //
 // @Summary      Delivery analytics
-// @Description  Returns delivery statistics for the tenant. Query: range (e.g. 24h, 7d).
+// @Description  Returns delivery statistics for the tenant. Query: range (e.g. 24h, 7d). tenantId may be omitted from the path (falls back to JWT claims or X-Tenant-ID header) for platform-context callers.
 // @Tags         Analytics
-// @Param        tenantId  path      string  true   "Tenant identifier"
+// @Param        tenantId  path      string  false  "Tenant identifier"
 // @Param        range     query     string  false  "Time range (e.g. 24h, 7d)"
 // @Success      200       {object}  DeliveryStatsResponse
+// @Router       /analytics/delivery [get]
 // @Router       /analytics/delivery/{tenantId} [get]
 // @Security     bearerAuth
 // @Security     ApiKeyAuth
@@ -159,14 +160,15 @@ type ActivityLogEntry struct {
 // Logs returns delivery log entries for the UI monitoring page.
 //
 // @Summary      Delivery log
-// @Description  Returns paginated delivery log entries for the tenant. Query: limit, offset, channel, status, from, to.
+// @Description  Returns paginated delivery log entries for the tenant. Query: limit, offset, channel, status, from, to. tenantId may be omitted from the path (falls back to JWT claims or X-Tenant-ID header) for platform-context callers.
 // @Tags         Analytics
-// @Param        tenantId  path      string  true   "Tenant identifier"
+// @Param        tenantId  path      string  false  "Tenant identifier"
 // @Param        limit     query     int     false  "Max results (default 20)"
 // @Param        offset    query     int     false  "Offset for pagination"
 // @Param        channel   query     string  false  "Filter by channel"
 // @Param        status    query     string  false  "Filter by status"
 // @Success      200       {array}   ActivityLogEntry
+// @Router       /analytics/logs [get]
 // @Router       /analytics/logs/{tenantId} [get]
 // @Security     bearerAuth
 // @Security     ApiKeyAuth
