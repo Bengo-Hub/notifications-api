@@ -9,7 +9,7 @@ The Notifications Service is a centralized communications platform for all Codev
 ## Table of Contents
 
 1. [Integration Patterns](#integration-patterns)
-2. [Internal Codevertex Service Integrations](#internal-bengobox-service-integrations)
+2. [Internal Codevertex Service Integrations](#internal-codevertex-service-integrations)
 3. [External Provider Integrations](#external-provider-integrations)
 4. [Event-Driven Architecture](#event-driven-architecture)
 5. [Two-Tier Configuration Management](#two-tier-configuration-management)
