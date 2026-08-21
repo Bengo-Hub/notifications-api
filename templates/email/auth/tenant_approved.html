@@ -1,0 +1,8 @@
+{{ define "content" }}
+  <p>Hi {{ .name }},</p>
+  <p>Good news — your organization <strong>{{ .org_name }}</strong> has been reviewed and approved. You can sign in now.</p>
+  <p>
+    <a href="{{ .login_url }}" style="background:{{ or .brand_primary_color "#0F766E" }};color:#ffffff !important;text-decoration:none;padding:10px 16px;border-radius:6px;display:inline-block;">Sign In</a>
+  </p>
+  <p style="color:#6b7280;">Cheers,<br/>{{ or .brand_name .brand }}</p>
+{{ end }}

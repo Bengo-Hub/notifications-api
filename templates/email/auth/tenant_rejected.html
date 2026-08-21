@@ -1,0 +1,9 @@
+{{ define "content" }}
+  <p>Hi {{ .name }},</p>
+  <p>Thanks for registering <strong>{{ .org_name }}</strong>. After review, we're not able to approve this registration at this time.</p>
+  {{ if .reason }}
+    <p style="color:#6b7280;">Reason: {{ .reason }}</p>
+  {{ end }}
+  <p>If you believe this was a mistake or would like more information, please reply to this email.</p>
+  <p style="color:#6b7280;">Cheers,<br/>{{ or .brand_name .brand }}</p>
+{{ end }}

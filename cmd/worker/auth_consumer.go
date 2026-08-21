@@ -301,4 +301,74 @@ func startAuthNotificationConsumer(ctx context.Context, nc *nats.Conn, cfg *conf
 	subscribeWithRetry(ctx, nil, logg, "auth otp consumer", true, func() (*nats.Subscription, error) {
 		return eventslib.QueueSubscribe(logg, nc, "auth.user.otp.requested", "notif-otp", otpHandler)
 	})
+
+	// Tenant registration approved/declined — emailed to the org's founding user (auth-api's
+	// AdminHandler.notifyFounder), a DEDICATED event separate from the generic
+	// auth.tenant.{approved,rejected} lifecycle event so it carries exactly the recipient/
+	// template fields this handler needs (email, name, org_name, login_url, reason).
+	tenantDecisionHandler := func(templateID, defaultSubject string) nats.MsgHandler {
+		return func(m *nats.Msg) {
+			var envelope struct {
+				Payload map[string]any `json:"payload"`
+			}
+			if err := json.Unmarshal(m.Data, &envelope); err != nil {
+				logg.Error("auth tenant decision: unmarshal failed", zap.Error(err))
+				return
+			}
+			payload := envelope.Payload
+			if payload == nil {
+				logg.Warn("auth tenant decision: no payload")
+				return
+			}
+			email, _ := payload["email"].(string)
+			if email == "" {
+				logg.Warn("auth tenant decision: no email in payload")
+				return
+			}
+			name, _ := payload["name"].(string)
+			if name == "" {
+				name = email
+			}
+			orgName, _ := payload["org_name"].(string)
+			loginURL, _ := payload["login_url"].(string)
+			reason, _ := payload["reason"].(string)
+			tenantID, _ := payload["tenant_id"].(string)
+
+			data := map[string]any{"name": name, "org_name": orgName, "login_url": loginURL}
+			if reason != "" {
+				data["reason"] = reason
+			}
+
+			msg := messaging.Message{
+				TenantID:    tenantID,
+				Channel:     "email",
+				TemplateID:  templateID,
+				SenderScope: messaging.SenderScopePlatform,
+				Target:      messaging.TargetCustomer,
+				To:          []string{email},
+				Data:        data,
+				Metadata:    map[string]any{"subject": defaultSubject},
+				RequestID:      uuid.New().String(),
+				IdempotencyKey: fmt.Sprintf("auth-tenant-%s-%s", templateID, tenantID),
+				QueuedAt:       time.Now(),
+			}
+
+			if _, err := messaging.Publish(ctx, nc, cfg.Events, msg); err != nil {
+				logg.Error("auth tenant decision: failed to dispatch email",
+					zap.String("template", templateID), zap.String("email", email), zap.Error(err))
+				return
+			}
+			logg.Info("tenant decision email dispatched", zap.String("template", templateID), zap.String("to", email))
+		}
+	}
+
+	subscribeWithRetry(ctx, nil, logg, "auth tenant approved consumer", true, func() (*nats.Subscription, error) {
+		return eventslib.QueueSubscribe(logg, nc, "auth.tenant.approved.notify", "notif-tenant-approved",
+			tenantDecisionHandler("auth/tenant_approved", "Your organization has been approved"))
+	})
+
+	subscribeWithRetry(ctx, nil, logg, "auth tenant rejected consumer", true, func() (*nats.Subscription, error) {
+		return eventslib.QueueSubscribe(logg, nc, "auth.tenant.rejected.notify", "notif-tenant-rejected",
+			tenantDecisionHandler("auth/tenant_rejected", "Update on your organization registration"))
+	})
 }
