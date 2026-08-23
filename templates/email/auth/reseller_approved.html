@@ -1,0 +1,6 @@
+{{ define "content" }}
+  <p>Hi {{ .name }},</p>
+  <p>Congratulations — <strong>{{ .business_name }}</strong> has been reviewed and certified as a Codevertex Reseller Partner.</p>
+  <p>Your reseller portal will show your certification status, your linked clients, and your commission statement as they become available.</p>
+  <p style="color:#6b7280;">Cheers,<br/>{{ or .brand_name .brand }}</p>
+{{ end }}

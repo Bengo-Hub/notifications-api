@@ -270,6 +270,10 @@ func main() {
 	// Start auth notification consumer (auth-service → welcome emails, plain NATS)
 	startAuthNotificationConsumer(ctx, nc, cfg, tr, logg)
 
+	// Start reseller application decision consumer (auth-service → Certified Reseller
+	// Program applicant approve/reject emails, plain NATS)
+	startResellerApplicationNotificationConsumer(ctx, nc, cfg, logg)
+
 	// Start treasury event consumer (treasury-service → payment/invoice notifications + credit top-ups)
 	startTreasuryConsumer(ctx, nc, js, cfg, tr, billingSvc, whatsappSubsSvc, logg)
 

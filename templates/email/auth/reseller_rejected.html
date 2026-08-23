@@ -1,0 +1,6 @@
+{{ define "content" }}
+  <p>Hi {{ .name }},</p>
+  <p>Thanks for applying to the Codevertex Certified Reseller &amp; Partner Program as <strong>{{ .business_name }}</strong>. After review, we're not able to approve this application at this time.</p>
+  <p>If you believe this was a mistake or would like more information, please reply to this email.</p>
+  <p style="color:#6b7280;">Cheers,<br/>{{ or .brand_name .brand }}</p>
+{{ end }}
