@@ -148,7 +148,7 @@ func (h *ServiceConfigHandler) UpsertPlatformSetting(w http.ResponseWriter, r *h
 }
 
 // ListTenantSettings returns merged tenant+platform service configs.
-// GET /api/v1/config
+// GET /api/v1/platform/tenant-config/{tenantId}
 func (h *ServiceConfigHandler) ListTenantSettings(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -199,7 +199,7 @@ func (h *ServiceConfigHandler) ListTenantSettings(w http.ResponseWriter, r *http
 }
 
 // UpsertTenantSetting creates or updates a tenant-specific config override.
-// PUT /api/v1/config/{tenantId}/{key}
+// PUT /api/v1/platform/tenant-config/{tenantId}/{key}
 func (h *ServiceConfigHandler) UpsertTenantSetting(w http.ResponseWriter, r *http.Request) {
 	tenantIDStr := chi.URLParam(r, "tenantId")
 	tenantID, err := uuid.Parse(tenantIDStr)
@@ -277,9 +277,15 @@ func (h *ServiceConfigHandler) RegisterPlatformRoutes(r chi.Router) {
 	r.Put("/config/{key}", h.UpsertPlatformSetting)
 }
 
-// RegisterTenantRoutes registers tenant-scoped settings routes.
+// RegisterTenantRoutes registers platform-admin routes for viewing/overriding a SPECIFIC tenant's
+// config (as opposed to RegisterPlatformRoutes' platform-wide defaults). Deliberately mounted under
+// a DISTINCT prefix ("/tenant-config/{tenantId}", not "/config/{tenantId}") — sharing "/config/*"
+// with RegisterPlatformRoutes' "/config/{key}" put two differently-named wildcards ({tenantId} vs
+// {key}) at the identical chi routing node, which silently shadowed the platform-defaults PUT route
+// (PUT /platform/config/{key} 405'd; found and documented but left unfixed in an earlier pass of
+// this same audit — fixing now since new UI was just built directly on top of the broken route).
 func (h *ServiceConfigHandler) RegisterTenantConfigRoutes(r chi.Router) {
-	r.Route("/config/{tenantId}", func(s chi.Router) {
+	r.Route("/tenant-config/{tenantId}", func(s chi.Router) {
 		s.Get("/", h.ListTenantSettings)
 		s.Put("/{key}", h.UpsertTenantSetting)
 	})
