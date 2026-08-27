@@ -131,6 +131,36 @@ var treasuryMappings = map[string]treasuryNotificationMapping{
 			}
 		},
 	},
+	// Invoice issuance: treasury's SendInvoice publishes this on every "Send" action, but until
+	// now nothing in this table handled it — the event was silently dropped ("unhandled type,
+	// skipping"), so a document showing status "sent" was never actually emailed to the
+	// customer even though the finance/invoice_sent template already existed unused. pdf_url is
+	// the public, unauthenticated branded PDF (SendInvoice's own comment: "serves the branded
+	// invoice without auth"); pay_url is the public Paystack checkout link — both only present
+	// when treasury's PUBLIC_UI_BASE/PUBLIC_API_BASE are configured, hence the template's own
+	// `{{ if .payment_link }}` guard and invoice_link falling back to a treasury-ui deep link.
+	"invoice_sent": {
+		TemplateID:   "finance/invoice_sent",
+		EmailSubject: "Invoice sent",
+		DataBuilder: func(payload map[string]any, tenantWebsite string) map[string]any {
+			name, _ := payload["customer_name"].(string)
+			if name == "" {
+				name = "Customer"
+			}
+			invoiceLink, _ := payload["pdf_url"].(string)
+			if invoiceLink == "" {
+				invoiceLink = fmt.Sprintf("%s/invoices/%s", serviceURL("NOTIFICATIONS_TREASURY_APP_URL", tenantWebsite), payload["invoice_id"])
+			}
+			return map[string]any{
+				"name":           name,
+				"invoice_number": payload["invoice_number"],
+				"amount":         fmt.Sprintf("%v %v", payload["currency"], payload["amount"]),
+				"due_date":       formatEventDate(payload["due_date"]),
+				"invoice_link":   invoiceLink,
+				"payment_link":   payload["pay_url"],
+			}
+		},
+	},
 	// AR dunning: treasury's dunning worker emits one reminder per invoice per overdue tier.
 	// Reuses the existing invoice_overdue template (same fields). Recipient is the invoice's
 	// customer_email (carried in the event payload).
