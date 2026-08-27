@@ -2,7 +2,9 @@ package sms
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -62,8 +64,46 @@ func (p *africasTalkingProvider) SendSMS(ctx context.Context, from string, to []
 		return err
 	}
 	defer resp.Body.Close()
+	respBody, _ := io.ReadAll(resp.Body)
 	if resp.StatusCode >= 300 {
-		return fmt.Errorf("africastalking error: %s", resp.Status)
+		return fmt.Errorf("africastalking error: %s: %s", resp.Status, string(respBody))
+	}
+	// A 2xx here only means AT accepted the REQUEST — the actual per-recipient send result
+	// is a separate field inside the body, and can independently fail (invalid/unregistered
+	// sender id, insufficient account balance, blacklisted/DND number, invalid phone number,
+	// etc.) while the HTTP call itself still returns 200. Previously this was never checked,
+	// so every one of those failure modes was silently swallowed as a "successful" send.
+	var parsed struct {
+		SMSMessageData struct {
+			Message    string `json:"Message"`
+			Recipients []struct {
+				Number     string `json:"number"`
+				Status     string `json:"status"`
+				StatusCode int    `json:"statusCode"`
+				Cost       string `json:"cost"`
+			} `json:"Recipients"`
+		} `json:"SMSMessageData"`
+	}
+	if jerr := json.Unmarshal(respBody, &parsed); jerr != nil {
+		// Response wasn't the shape we expect — don't claim success over an unparseable body.
+		return fmt.Errorf("africastalking: unexpected response body: %s", string(respBody))
+	}
+	recipients := parsed.SMSMessageData.Recipients
+	if len(recipients) == 0 {
+		return fmt.Errorf("africastalking: no recipients in response (message: %q, raw: %s)", parsed.SMSMessageData.Message, string(respBody))
+	}
+	var failures []string
+	for _, r := range recipients {
+		// AT's documented success codes are 100/101/102; everything else (401 risky number,
+		// 402 invalid sender id, 403/406 insufficient balance, 404 invalid phone number,
+		// 405 unsupported number type, 407 blacklisted, 408 could not route, 409 do-not-
+		// disturb rejection, 500/501/502 gateway errors, etc.) is a real failure.
+		if r.StatusCode < 100 || r.StatusCode > 102 {
+			failures = append(failures, fmt.Sprintf("%s: %s (code %d)", r.Number, r.Status, r.StatusCode))
+		}
+	}
+	if len(failures) > 0 {
+		return fmt.Errorf("africastalking: %d/%d recipient(s) failed: %s", len(failures), len(recipients), strings.Join(failures, "; "))
 	}
 	return nil
 }
