@@ -42,7 +42,7 @@ type availableProviderResponse struct {
 
 type selectProviderRequest struct {
 	ProviderType string `json:"provider_type"` // email, sms
-	ProviderName string `json:"provider_name"` // smtp, sendgrid, twilio, etc.
+	ProviderName string `json:"provider_name"` // smtp, brevo, africastalking, meta_cloud, fcm
 	Environment  string `json:"environment"`   // sandbox, production
 }
 

@@ -117,7 +117,6 @@ func seedPlatformProviders(ctx context.Context, client *ent.Client) {
 		envKey       string // if set, check env to determine active status
 	}{
 		{"email", "smtp", ""},
-		{"email", "sendgrid", "SENDGRID_API_KEY"},
 		{"sms", "africastalking", "AFRICAS_TALKING_KEY"},
 		{"whatsapp", "meta_cloud", "META_WHATSAPP_ACCESS_TOKEN"},
 		{"push", "fcm", "FCM_SERVICE_ACCOUNT"},

@@ -8,9 +8,12 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 )
 
 const brevoEndpoint = "https://api.brevo.com/v3/smtp/email"
+
+var providerHTTPClient = &http.Client{Timeout: 15 * time.Second}
 
 // BrevoConfig holds Brevo (ex-Sendinblue) configuration.
 type BrevoConfig struct {

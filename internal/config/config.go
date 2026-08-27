@@ -98,18 +98,11 @@ type EventsConfig struct {
 }
 
 type ProviderConfig struct {
-	SendGridAPIKey         string `envconfig:"PROVIDERS_SENDGRID_API_KEY"`
 	BrevoAPIKey            string `envconfig:"PROVIDERS_BREVO_API_KEY"`
 	MailgunDomain          string `envconfig:"PROVIDERS_MAILGUN_DOMAIN"`
 	MailgunAPIKey          string `envconfig:"PROVIDERS_MAILGUN_API_KEY"`
-	TwilioAccountSID       string `envconfig:"PROVIDERS_TWILIO_ACCOUNT_SID"`
-	TwilioAuthToken        string `envconfig:"PROVIDERS_TWILIO_AUTH_TOKEN"`
 	AfricasTalkingKey      string `envconfig:"PROVIDERS_AFRICAS_TALKING_KEY"`
 	AfricasTalkingUsername string `envconfig:"PROVIDERS_AFRICAS_TALKING_USERNAME"`
-	VonageAPIKey           string `envconfig:"PROVIDERS_VONAGE_API_KEY"`
-	VonageAPISecret        string `envconfig:"PROVIDERS_VONAGE_API_SECRET"`
-	PlivoAuthID            string `envconfig:"PROVIDERS_PLIVO_AUTH_ID"`
-	PlivoAuthToken         string `envconfig:"PROVIDERS_PLIVO_AUTH_TOKEN"`
 	SMTPHost               string `envconfig:"PROVIDERS_SMTP_HOST"`
 	SMTPPort               int    `envconfig:"PROVIDERS_SMTP_PORT" default:"587"`
 	SMTPUsername           string `envconfig:"PROVIDERS_SMTP_USERNAME"`

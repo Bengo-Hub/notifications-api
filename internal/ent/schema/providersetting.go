@@ -17,11 +17,11 @@ func (ProviderSetting) Fields() []ent.Field {
 		field.String("tenant_id"),
 		field.String("channel"). // email, sms, push
 						Optional(),
-		field.String("provider"). // smtp, sendgrid, twilio, etc.
+		field.String("provider"). // smtp, brevo, africastalking, meta_cloud, fcm
 						Optional(),
 		field.String("provider_type"). // email, sms, push
 						Optional(),
-		field.String("provider_name"). // smtp, sendgrid, twilio, etc.
+		field.String("provider_name"). // smtp, brevo, africastalking, meta_cloud, fcm
 						Optional(),
 		field.String("key").
 			Optional(),

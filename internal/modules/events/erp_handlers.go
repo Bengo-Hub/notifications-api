@@ -96,7 +96,7 @@ func (s *Subscriber) publishMessage(msg messaging.Message) error {
 // passthrough).
 //
 // attachments ARE supported: base64 content is decoded and carried through
-// messaging.Message.Attachments to every email provider (SMTP/Brevo/SendGrid).
+// messaging.Message.Attachments to every email provider (SMTP/Brevo).
 // cc/bcc/from_email/reply_to are ALL supported (messaging.Message.Cc/Bcc/From/ReplyTo,
 // threaded through EmailProvider.SendEmail — fixed 2026-08-18; an earlier version of
 // this comment claimed these were dropped, which was stale even before that fix: bcc

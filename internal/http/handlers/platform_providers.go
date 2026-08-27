@@ -39,7 +39,7 @@ type testProviderRequest struct {
 type providerResponse struct {
 	ID           int    `json:"id"`
 	ProviderType string `json:"provider_type"` // email, sms, push
-	ProviderName string `json:"provider_name"` // smtp, sendgrid, twilio, etc.
+	ProviderName string `json:"provider_name"` // smtp, brevo, africastalking, meta_cloud, fcm
 	Environment  string `json:"environment"`   // sandbox, production
 	IsActive     bool   `json:"is_active"`
 	Status       string `json:"status"`
@@ -47,7 +47,7 @@ type providerResponse struct {
 
 type configureProviderRequest struct {
 	ProviderType        string            `json:"provider_type"` // email, sms, push
-	ProviderName        string            `json:"provider_name"` // smtp, sendgrid, twilio, etc.
+	ProviderName        string            `json:"provider_name"` // smtp, brevo, africastalking, meta_cloud, fcm
 	Environment         string            `json:"environment"`   // sandbox, production
 	Settings            map[string]string `json:"settings"`
 	PlatformManagedKeys []string          `json:"platform_managed_keys,omitempty"`
@@ -130,7 +130,7 @@ func (h *PlatformProviders) ListProviders(w http.ResponseWriter, r *http.Request
 
 // ConfigureProvider creates or updates a platform notification provider.
 // @Summary Configure platform provider
-// @Description Create or replace a platform provider (Email: SMTP/SendGrid; SMS: Africa's Talking). Secrets stored encrypted at rest when ENCRYPTION_KEY is set.
+// @Description Create or replace a platform provider (Email: SMTP/Brevo; SMS: Africa's Talking). Secrets stored encrypted at rest when ENCRYPTION_KEY is set.
 // @Tags Platform
 // @Accept json
 // @Produce json
@@ -575,7 +575,7 @@ func (h *PlatformProviders) ListTenants(w http.ResponseWriter, r *http.Request) 
 // @Tags Platform
 // @Produce json
 // @Param provider_type query string true "Provider type (email|sms|push)"
-// @Param provider_name query string true "Provider name (smtp|sendgrid|twilio|...)"
+// @Param provider_name query string true "Provider name (smtp|brevo|africastalking|meta_cloud|fcm)"
 // @Success 200 {object} providerSettingsResponse
 // @Failure 400 {object} errorResponse
 // @Failure 500 {object} errorResponse
