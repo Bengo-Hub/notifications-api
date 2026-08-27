@@ -230,6 +230,20 @@ func (m *Manager) TestConnection(ctx context.Context, channel, providerName, to 
 			return err
 		}
 		return prov.SendSMS(ctx, "", []string{to}, "Test SMS from Notifications API.")
+	case "whatsapp":
+		// Previously silently returned nil ("success") without attempting anything — a platform
+		// admin testing a WhatsApp provider from the UI saw a false "test message sent
+		// successfully". A free-form text body only works inside an active 24h reply window, so
+		// the test uses "hello_world" — the sample template Meta pre-approves by default on every
+		// WhatsApp Business Account specifically for this kind of connectivity check.
+		prov, err := m.GetWhatsAppProvider(ctx, m.PlatformID, providerName)
+		if err != nil {
+			return err
+		}
+		return prov.SendWhatsApp(ctx, "", []string{to}, "", map[string]interface{}{
+			"template_name":     "hello_world",
+			"template_language": "en_US",
+		})
 	default:
 		return nil
 	}

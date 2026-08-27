@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 )
@@ -50,27 +51,56 @@ func (p *MetaCloudProvider) Name() string {
 	return "meta_cloud"
 }
 
-// SendWhatsApp sends a text-body WhatsApp message to each recipient via the
-// Cloud API. metadata may carry "preview_url" (bool) for link previews.
+// SendWhatsApp sends a WhatsApp message to each recipient via the Cloud API.
+//
+// Meta only allows a free-form "text" message within an active 24h customer-service window (the
+// recipient messaged the business first, or replied within the last 24h) — any business-initiated
+// message outside that window (which is the overwhelming majority of this platform's use cases:
+// order confirmations, invoice notices, OTPs, reminders) MUST use a pre-approved message template
+// instead, or Meta rejects it outright. metadata therefore supports two modes:
+//   - metadata["template_name"] set (string): sends a template message. metadata["template_language"]
+//     (default "en_US") and metadata["template_params"] ([]string, substituted in order into the
+//     template's body placeholders {{1}}, {{2}}, ...) configure it.
+//   - metadata["template_name"] absent: falls back to the original free-form text body (only valid
+//     inside an open reply window). metadata["preview_url"] (bool) still applies to that path.
 func (p *MetaCloudProvider) SendWhatsApp(ctx context.Context, from string, to []string, body string, metadata map[string]interface{}) error {
 	if p.accessToken == "" || p.phoneNumberID == "" {
 		return fmt.Errorf("meta_cloud not configured")
 	}
-	previewURL := false
-	if v, ok := metadata["preview_url"].(bool); ok {
-		previewURL = v
-	}
+	templateName, _ := metadata["template_name"].(string)
 	for _, recipient := range to {
-		if err := p.sendSingle(ctx, recipient, body, previewURL); err != nil {
+		var err error
+		if templateName != "" {
+			language, _ := metadata["template_language"].(string)
+			if language == "" {
+				language = "en_US"
+			}
+			var params []string
+			if raw, ok := metadata["template_params"].([]string); ok {
+				params = raw
+			} else if raw, ok := metadata["template_params"].([]interface{}); ok {
+				for _, v := range raw {
+					if s, ok := v.(string); ok {
+						params = append(params, s)
+					}
+				}
+			}
+			err = p.sendTemplate(ctx, recipient, templateName, language, params)
+		} else {
+			previewURL := false
+			if v, ok := metadata["preview_url"].(bool); ok {
+				previewURL = v
+			}
+			err = p.sendText(ctx, recipient, body, previewURL)
+		}
+		if err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (p *MetaCloudProvider) sendSingle(ctx context.Context, to, body string, previewURL bool) error {
-	url := fmt.Sprintf("https://graph.facebook.com/%s/%s/messages", p.apiVersion, p.phoneNumberID)
-
+func (p *MetaCloudProvider) sendText(ctx context.Context, to, body string, previewURL bool) error {
 	payload := map[string]interface{}{
 		"messaging_product": "whatsapp",
 		"recipient_type":    "individual",
@@ -81,6 +111,41 @@ func (p *MetaCloudProvider) sendSingle(ctx context.Context, to, body string, pre
 			"body":        body,
 		},
 	}
+	return p.post(ctx, payload)
+}
+
+// sendTemplate sends a pre-approved WhatsApp message template (the only way to reach a recipient
+// outside an active 24h reply window). params are substituted positionally into the template
+// body's {{1}}, {{2}}, ... placeholders — Meta does its own server-side rendering from the
+// template it already has on file, so no local template body is sent here, only the name +
+// language + ordered parameter values.
+func (p *MetaCloudProvider) sendTemplate(ctx context.Context, to, templateName, language string, params []string) error {
+	components := []map[string]interface{}{}
+	if len(params) > 0 {
+		bodyParams := make([]map[string]interface{}, 0, len(params))
+		for _, v := range params {
+			bodyParams = append(bodyParams, map[string]interface{}{"type": "text", "text": v})
+		}
+		components = append(components, map[string]interface{}{"type": "body", "parameters": bodyParams})
+	}
+	template := map[string]interface{}{
+		"name":     templateName,
+		"language": map[string]interface{}{"code": language},
+	}
+	if len(components) > 0 {
+		template["components"] = components
+	}
+	payload := map[string]interface{}{
+		"messaging_product": "whatsapp",
+		"to":                to,
+		"type":              "template",
+		"template":          template,
+	}
+	return p.post(ctx, payload)
+}
+
+func (p *MetaCloudProvider) post(ctx context.Context, payload map[string]interface{}) error {
+	url := fmt.Sprintf("https://graph.facebook.com/%s/%s/messages", p.apiVersion, p.phoneNumberID)
 
 	data, err := json.Marshal(payload)
 	if err != nil {
@@ -100,8 +165,9 @@ func (p *MetaCloudProvider) sendSingle(ctx context.Context, to, body string, pre
 	}
 	defer resp.Body.Close()
 
+	respBody, _ := io.ReadAll(resp.Body)
 	if resp.StatusCode >= 400 {
-		return fmt.Errorf("meta_cloud error: status %d", resp.StatusCode)
+		return fmt.Errorf("meta_cloud error: status %d: %s", resp.StatusCode, string(respBody))
 	}
 	return nil
 }
