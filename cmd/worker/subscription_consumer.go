@@ -13,6 +13,7 @@ import (
 
 	"github.com/bengobox/notifications-api/internal/config"
 	"github.com/bengobox/notifications-api/internal/messaging"
+	"github.com/bengobox/notifications-api/internal/modules/billing"
 )
 
 // subscriptionEvent is the outbox envelope from subscriptions-service.
@@ -163,6 +164,75 @@ var subscriptionMappings = map[string]subscriptionNotificationMapping{
 	},
 }
 
+// fulfillCustomAddon handles a subscriptions-api CustomAddon activation that needs provisioning
+// inside THIS service — service_addon_type "sms_bundle" grants SMS credits, "whatsapp_plan"
+// activates a WhatsApp subscription plan. Payload shape (set by subscriptions-api's
+// CustomAddonHandler): {tenant_id, service_code, service_addon_type, quantity, metadata}, where
+// metadata carries {"sms_credits": N} or {"whatsapp_plan_id": "<uuid>"}. Best-effort: any
+// malformed/unrecognized payload just logs and returns — this must never crash the worker over an
+// admin data-entry mistake on the subscriptions-api side.
+func fulfillCustomAddon(ctx context.Context, evt subscriptionEvent, billingSvc *billing.Service, whatsappSubsSvc *billing.WhatsAppSubscriptionService, logg *zap.Logger) {
+	tenantIDStr := evt.TenantID
+	if tenantIDStr == "" {
+		if tid, ok := evt.Payload["tenant_id"].(string); ok {
+			tenantIDStr = tid
+		}
+	}
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		logg.Warn("custom_addon.activated: invalid/missing tenant_id, skipping", zap.String("raw", tenantIDStr))
+		return
+	}
+
+	serviceAddonType, _ := evt.Payload["service_addon_type"].(string)
+	metadata, _ := evt.Payload["metadata"].(map[string]any)
+
+	switch serviceAddonType {
+	case "sms_bundle":
+		if billingSvc == nil {
+			logg.Warn("custom_addon.activated: sms_bundle received but billing service unavailable")
+			return
+		}
+		credits, ok := metadata["sms_credits"].(float64)
+		if !ok || credits <= 0 {
+			logg.Warn("custom_addon.activated: sms_bundle missing/invalid sms_credits in metadata",
+				zap.String("tenant_id", tenantIDStr))
+			return
+		}
+		if err := billingSvc.TopUpCredits(ctx, tenantID, "SMS", credits, "addon-"+evt.AggregateID); err != nil {
+			logg.Error("custom_addon.activated: sms credit grant failed",
+				zap.String("tenant_id", tenantIDStr), zap.Error(err))
+			return
+		}
+		logg.Info("custom_addon.activated: sms credits granted",
+			zap.String("tenant_id", tenantIDStr), zap.Float64("credits", credits))
+
+	case "whatsapp_plan":
+		if whatsappSubsSvc == nil {
+			logg.Warn("custom_addon.activated: whatsapp_plan received but whatsapp subscription service unavailable")
+			return
+		}
+		planIDStr, _ := metadata["whatsapp_plan_id"].(string)
+		planID, perr := uuid.Parse(planIDStr)
+		if perr != nil {
+			logg.Warn("custom_addon.activated: whatsapp_plan missing/invalid whatsapp_plan_id in metadata",
+				zap.String("tenant_id", tenantIDStr), zap.String("raw", planIDStr))
+			return
+		}
+		if err := whatsappSubsSvc.ActivateSubscription(ctx, tenantID, planID, "addon-"+evt.AggregateID); err != nil {
+			logg.Error("custom_addon.activated: whatsapp plan activation failed",
+				zap.String("tenant_id", tenantIDStr), zap.Error(err))
+			return
+		}
+		logg.Info("custom_addon.activated: whatsapp plan activated",
+			zap.String("tenant_id", tenantIDStr), zap.String("plan_id", planIDStr))
+
+	default:
+		logg.Debug("custom_addon.activated: unhandled service_addon_type, skipping",
+			zap.String("service_addon_type", serviceAddonType))
+	}
+}
+
 // firstNonEmpty returns the first argument that is a non-empty string, else "".
 func firstNonEmpty(vals ...any) string {
 	for _, v := range vals {
@@ -175,7 +245,13 @@ func firstNonEmpty(vals ...any) string {
 
 // startSubscriptionConsumer subscribes to subscription.> events from the
 // subscriptions-service and dispatches notification emails to tenant admins.
-func startSubscriptionConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamContext, cfg *config.Config, tr *tenantResolver, logg *zap.Logger) {
+// billingSvc/whatsappSubsSvc fulfill "custom_addon.activated" events (a tenant's admin attached
+// an SMS-credit or WhatsApp-plan addon to their platform subscription in subscriptions-ui) —
+// reuses the exact same in-process call shapes treasury_consumer.go already uses for real payment
+// top-ups/activations, on the "subscription" stream this consumer already binds to, so this needs
+// no new HTTP route or auth surface between the two services. Either may be nil (fulfillment then
+// just logs and skips, matching every other best-effort branch in this worker).
+func startSubscriptionConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamContext, cfg *config.Config, tr *tenantResolver, billingSvc *billing.Service, whatsappSubsSvc *billing.WhatsAppSubscriptionService, logg *zap.Logger) {
 	if nc == nil || js == nil {
 		logg.Warn("skipping subscription consumer: NATS not available")
 		return
@@ -185,6 +261,12 @@ func startSubscriptionConsumer(ctx context.Context, nc *nats.Conn, js nats.JetSt
 		var evt subscriptionEvent
 		if err := json.Unmarshal(m.Data, &evt); err != nil {
 			logg.Error("subscription event: unmarshal failed", zap.Error(err))
+			_ = m.Ack()
+			return
+		}
+
+		if evt.EventType == "custom_addon.activated" {
+			fulfillCustomAddon(ctx, evt, billingSvc, whatsappSubsSvc, logg)
 			_ = m.Ack()
 			return
 		}

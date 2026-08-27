@@ -264,8 +264,9 @@ func main() {
 	// Start order status event consumer (ordering-service → customer notifications)
 	startOrderConsumer(ctx, nc, js, cfg, tr, logg)
 
-	// Start subscription lifecycle event consumer (subscriptions-service → tenant admin notifications)
-	startSubscriptionConsumer(ctx, nc, js, cfg, tr, logg)
+	// Start subscription lifecycle event consumer (subscriptions-service → tenant admin
+	// notifications, and custom-addon fulfillment for SMS credits / WhatsApp plans)
+	startSubscriptionConsumer(ctx, nc, js, cfg, tr, billingSvc, whatsappSubsSvc, logg)
 
 	// Start auth notification consumer (auth-service → welcome emails, plain NATS)
 	startAuthNotificationConsumer(ctx, nc, cfg, tr, logg)

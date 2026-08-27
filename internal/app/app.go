@@ -160,9 +160,14 @@ func New(ctx context.Context) (*App, error) {
 	platformBilling := handlers.NewPlatformBilling(entClient, log, billingService, whatsappSubsService)
 	settingsHandler := handlers.NewSettingsHandler(log, keyProvider)
 
+	// Initialize RBAC module (constructed before identity so identity.NewService can merge
+	// locally-assigned permissions into every resolved user — see identity.Service.GetUser).
+	rbacRepo := rbac.NewEntRepository(entClient)
+	rbacService := rbac.NewService(rbacRepo, log.Named("rbac"))
+
 	// Initialize identity module (RBAC)
 	identityRepo := identity.NewEntRepository(entClient)
-	identityService := identity.NewService(identityRepo, log, tenantSyncer)
+	identityService := identity.NewService(identityRepo, log, tenantSyncer, rbacService)
 
 	// Subscribe to auth-service events for user sync (if NATS available)
 	if natsConn != nil {
@@ -258,10 +263,7 @@ func New(ctx context.Context) (*App, error) {
 		}
 	}
 
-	// Initialize RBAC module
-	rbacRepo := rbac.NewEntRepository(entClient)
-	rbacService := rbac.NewService(rbacRepo, log.Named("rbac"))
-	rbacHandler := handlers.NewRBACHandler(log.Named("rbac.handler"), rbacService, rbacRepo)
+	rbacHandler := handlers.NewRBACHandler(log.Named("rbac.handler"), rbacService, rbacRepo, identityService)
 	authMeHandler := handlers.NewAuthMeHandler(rbacService, log.Named("auth.me"), platformIDStr)
 
 	// Initialize Redis-backed rate limiter for email sending by subscription plan

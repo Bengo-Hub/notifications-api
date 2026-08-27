@@ -9,23 +9,61 @@ import (
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 
+	"github.com/bengobox/notifications-api/internal/modules/identity"
 	"github.com/bengobox/notifications-api/internal/modules/rbac"
 )
 
 // RBACHandler handles RBAC-related operations.
 type RBACHandler struct {
-	logger      *zap.Logger
-	rbacService *rbac.Service
-	rbacRepo    rbac.Repository
+	logger          *zap.Logger
+	rbacService     *rbac.Service
+	rbacRepo        rbac.Repository
+	identityService *identity.Service
 }
 
-// NewRBACHandler creates a new RBAC handler.
-func NewRBACHandler(logger *zap.Logger, rbacService *rbac.Service, rbacRepo rbac.Repository) *RBACHandler {
+// NewRBACHandler creates a new RBAC handler. identityService is used by ListTenantUsers to back
+// the assignment picker with this tenant's real, locally-known user directory.
+func NewRBACHandler(logger *zap.Logger, rbacService *rbac.Service, rbacRepo rbac.Repository, identityService *identity.Service) *RBACHandler {
 	return &RBACHandler{
-		logger:      logger,
-		rbacService: rbacService,
-		rbacRepo:    rbacRepo,
+		logger:          logger,
+		rbacService:     rbacService,
+		rbacRepo:        rbacRepo,
+		identityService: identityService,
 	}
+}
+
+// tenantUser is the minimal, non-sensitive user projection returned by ListTenantUsers — just
+// enough to search/identify someone in a picker, no permissions/roles/metadata.
+type tenantUser struct {
+	ID       string `json:"id"`
+	Email    string `json:"email"`
+	FullName string `json:"full_name"`
+}
+
+// ListTenantUsers returns this tenant's locally-known users (anyone who has authenticated at
+// least once), for the role-assignment picker.
+// GET /rbac/users
+func (h *RBACHandler) ListTenantUsers(w http.ResponseWriter, r *http.Request) {
+	tenantID, err := resolveTenantID(r)
+	if err != nil {
+		RespondError(w, http.StatusBadRequest, "invalid tenant ID")
+		return
+	}
+	if h.identityService == nil {
+		respondJSON(w, http.StatusOK, map[string]any{"users": []tenantUser{}})
+		return
+	}
+	users, err := h.identityService.ListUsersByTenant(r.Context(), tenantID)
+	if err != nil {
+		h.logger.Error("failed to list tenant users", zap.Error(err))
+		RespondError(w, http.StatusInternalServerError, "failed to list users")
+		return
+	}
+	out := make([]tenantUser, 0, len(users))
+	for _, u := range users {
+		out = append(out, tenantUser{ID: u.ID.String(), Email: u.Email, FullName: u.FullName})
+	}
+	respondJSON(w, http.StatusOK, map[string]any{"users": out})
 }
 
 // AssignRoleRequest represents a request to assign a role.
@@ -227,6 +265,7 @@ func (h *RBACHandler) RegisterRoutes(r chi.Router) {
 	r.Route("/rbac", func(rbacRouter chi.Router) {
 		rbacRouter.Get("/roles", h.ListRoles)
 		rbacRouter.Get("/permissions", h.ListPermissions)
+		rbacRouter.Get("/users", h.ListTenantUsers)
 		rbacRouter.Get("/assignments", h.ListAssignments)
 		rbacRouter.Post("/assignments", h.AssignRole)
 		rbacRouter.Delete("/assignments/{id}", h.RevokeRole)

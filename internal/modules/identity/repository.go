@@ -22,6 +22,7 @@ type Repository interface {
 	FindUserByID(ctx context.Context, id uuid.UUID) (*User, error)
 	FindUserByAuthServiceID(ctx context.Context, authServiceUserID uuid.UUID) (*User, error)
 	ListUsers(ctx context.Context) ([]*User, error)
+	ListUsersByTenant(ctx context.Context, tenantID uuid.UUID) ([]*User, error)
 
 	FindTenantBySlug(ctx context.Context, slug string) (*Tenant, error)
 	FindTenantByID(ctx context.Context, id uuid.UUID) (*Tenant, error)

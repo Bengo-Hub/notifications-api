@@ -152,6 +152,25 @@ func (r *EntRepository) ListUsers(ctx context.Context) ([]*User, error) {
 	return out, nil
 }
 
+// ListUsersByTenant returns every locally-known user for one tenant — the directory backing the
+// Settings > Users & Roles assignment picker. Only users who have authenticated at least once are
+// present (this is the JIT-synced local cache, not a live query against auth-service).
+func (r *EntRepository) ListUsersByTenant(ctx context.Context, tenantID uuid.UUID) ([]*User, error) {
+	records, err := r.client.User.
+		Query().
+		Where(user.TenantID(tenantID)).
+		Order(ent.Asc(user.FieldEmail)).
+		All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("identity: list users by tenant: %w", err)
+	}
+	out := make([]*User, 0, len(records))
+	for _, u := range records {
+		out = append(out, mapEntUser(u))
+	}
+	return out, nil
+}
+
 // FindTenantBySlug finds a tenant by its slug.
 func (r *EntRepository) FindTenantBySlug(ctx context.Context, slug string) (*Tenant, error) {
 	tenantEntity, err := r.client.Tenant.Query().

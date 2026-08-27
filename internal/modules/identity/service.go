@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 
+	"github.com/bengobox/notifications-api/internal/modules/rbac"
 	"github.com/bengobox/notifications-api/internal/modules/tenant"
 )
 
@@ -20,16 +21,56 @@ type Service struct {
 	logger       *zap.Logger
 	now          func() time.Time
 	tenantSyncer *tenant.Syncer
+	// rbacSvc resolves this service's OWN local role assignments (Settings > Users & Roles,
+	// UserRoleAssignment) — optional (nil-tolerant); when set, GetUser merges their permissions
+	// into the returned user. This is the FALLBACK/local-addition tier only: auth-service's own
+	// JWT-embedded roles/permissions (checked first, in authenticator.go's RequireRoles/
+	// RequirePermissions) always take precedence when present — local assignments can only ADD
+	// notifications-specific capability on top, never override or reduce what auth-service grants,
+	// and can never reach platform-wide permissions (no seeded local role includes
+	// notifications.platform.* — see cmd/seed's rolePermissions).
+	rbacSvc *rbac.Service
 }
 
-// NewService constructs the identity service with provided dependencies.
-func NewService(repo Repository, logger *zap.Logger, tenantSyncer *tenant.Syncer) *Service {
+// NewService constructs the identity service with provided dependencies. rbacSvc is optional.
+func NewService(repo Repository, logger *zap.Logger, tenantSyncer *tenant.Syncer, rbacSvc *rbac.Service) *Service {
 	return &Service{
 		repo:         repo,
 		logger:       logger.Named("identity.Service"),
 		now:          time.Now,
 		tenantSyncer: tenantSyncer,
+		rbacSvc:      rbacSvc,
 	}
+}
+
+// mergeLocalRolePermissions augments user.Permissions with whatever this service's own local RBAC
+// module (Settings > Users & Roles) has assigned for user.TenantID — additive only, never removes
+// anything auth-service already granted. Best-effort: any lookup failure just leaves the user
+// unchanged rather than failing the request over a local-permission enrichment step.
+func (s *Service) mergeLocalRolePermissions(ctx context.Context, user *User) *User {
+	if s.rbacSvc == nil || user == nil {
+		return user
+	}
+	tenantID, err := uuid.Parse(user.TenantID)
+	if err != nil {
+		return user
+	}
+	perms, err := s.rbacSvc.GetUserPermissions(ctx, tenantID, user.ID)
+	if err != nil || len(perms) == 0 {
+		return user
+	}
+	have := make(map[Permission]bool, len(user.Permissions))
+	for _, p := range user.Permissions {
+		have[p] = true
+	}
+	for _, p := range perms {
+		perm := Permission(p.PermissionCode)
+		if !have[perm] {
+			user.Permissions = append(user.Permissions, perm)
+			have[perm] = true
+		}
+	}
+	return user
 }
 
 // SyncUserFromAuthService syncs user data from auth-service to local database.
@@ -42,7 +83,7 @@ func (s *Service) SyncUserFromAuthService(ctx context.Context, authServiceUserID
 func (s *Service) EnsureUserFromToken(ctx context.Context, authServiceUserID uuid.UUID, tenantIDOrSlug string, authUserData map[string]interface{}) (*User, error) {
 	user, err := s.repo.FindUserByAuthServiceID(ctx, authServiceUserID)
 	if err == nil && user != nil {
-		return user, nil
+		return s.mergeLocalRolePermissions(ctx, user), nil
 	}
 	tenantID := tenantIDOrSlug
 	if tenantIDOrSlug != "" {
@@ -73,9 +114,23 @@ func (s *Service) EnsureUserFromToken(ctx context.Context, authServiceUserID uui
 	return s.createUserFromAuthService(ctx, authServiceUserID, tenantID, authUserData)
 }
 
-// GetUser returns a user by identifier.
+// ListUsersByTenant returns the local user directory for one tenant — used by Settings > Users &
+// Roles to populate the role-assignment picker (see repository_ent.go's ListUsersByTenant for the
+// "JIT-synced local cache" caveat).
+func (s *Service) ListUsersByTenant(ctx context.Context, tenantID uuid.UUID) ([]*User, error) {
+	return s.repo.ListUsersByTenant(ctx, tenantID)
+}
+
+// GetUser returns a user by identifier, with local RBAC-assigned permissions merged in (see
+// mergeLocalRolePermissions) — called on every authenticated request via RequireAuth, so a role
+// assigned/revoked via Settings > Users & Roles takes effect on the user's very next request, no
+// re-login required.
 func (s *Service) GetUser(ctx context.Context, id uuid.UUID) (*User, error) {
-	return s.repo.FindUserByID(ctx, id)
+	user, err := s.repo.FindUserByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return s.mergeLocalRolePermissions(ctx, user), nil
 }
 
 func (s *Service) syncUserFromAuthService(ctx context.Context, authServiceUserID uuid.UUID, tenantID string, authUserData map[string]interface{}) (*User, error) {
