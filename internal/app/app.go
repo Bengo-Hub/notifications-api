@@ -304,7 +304,8 @@ func New(ctx context.Context) (*App, error) {
 	}
 
 	webhookHandler := handlers.NewWebhookHandler(entClient, log)
-	httpRouter := router.New(log, healthHandler, notificationHandler, templateHandler, platformProviders, tenantProviders, analyticsHandler, billingHandler, platformBilling, settingsHandler, rbacHandler, authMeHandler, deviceTokenHandler, cfg.Security.APIKey, authMiddleware, authenticator, cfg.HTTP.AllowedOrigins, tenantSyncer, rateLimiter, serviceConfigHandler, whatsappSubsHandler, backupHandler, encryptionKeyHandler, backupDestHandler, notificationPrefsHandler, developerKeyAuth, swaggerHandler, webhookHandler)
+	whatsappEmbeddedSignupHandler := handlers.NewWhatsAppEmbeddedSignupHandler(entClient, log, providerManager)
+	httpRouter := router.New(log, healthHandler, notificationHandler, templateHandler, platformProviders, tenantProviders, analyticsHandler, billingHandler, platformBilling, settingsHandler, rbacHandler, authMeHandler, deviceTokenHandler, cfg.Security.APIKey, authMiddleware, authenticator, cfg.HTTP.AllowedOrigins, tenantSyncer, rateLimiter, serviceConfigHandler, whatsappSubsHandler, backupHandler, encryptionKeyHandler, backupDestHandler, notificationPrefsHandler, developerKeyAuth, swaggerHandler, webhookHandler, whatsappEmbeddedSignupHandler)
 
 	httpServer := &http.Server{
 		Addr:              fmt.Sprintf("%s:%d", cfg.HTTP.Host, cfg.HTTP.Port),

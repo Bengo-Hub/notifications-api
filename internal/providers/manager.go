@@ -35,6 +35,14 @@ func NewManager(db *pgxpool.Pool, dbCfg config.PostgresConfig, cfg config.Provid
 	return &Manager{db: db, dbCfg: dbCfg, cfg: cfg, decryptionKey: decryptionKey, env: env, PlatformID: platformID}
 }
 
+// LoadPlatformMetaCredentials resolves the platform's own meta_cloud access_token/api_version —
+// used for Graph API management calls made on a tenant's behalf (e.g. Embedded Signup completion:
+// subscribing our webhook to a newly connected WABA, registering a newly connected phone number)
+// where the platform's Tech Provider access, not any per-tenant credential, is what's needed.
+func (m *Manager) LoadPlatformMetaCredentials(ctx context.Context) (pcfg.Settings, error) {
+	return pcfg.LoadTenantProviderSettings(ctx, m.dbCfg, "platform", m.env, "whatsapp", "meta_cloud", m.decryptionKey)
+}
+
 func (m *Manager) GetWhatsAppProvider(ctx context.Context, tenantID string, preferred string) (WhatsAppProvider, error) {
 	// meta_cloud (official Meta WhatsApp Cloud API) is the preferred provider —
 	// no BSP per-message markup, Meta-hosted reliability. apiwap is kept as fallback.
