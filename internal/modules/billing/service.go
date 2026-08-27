@@ -31,6 +31,22 @@ type Service struct {
 // identical param — InitiateTopUp calls the exact same treasury payment-intents endpoint and
 // needs the same auth, which it was never given: a live top-up attempt 401'd at treasury with
 // "missing bearer token or API key" before this was wired in).
+// resolveTenantName looks up the paying tenant's display name from the local tenant projection
+// (already populated for any tenant actively using the platform — see tenant.Syncer) so the
+// treasury payment intent carries a real customer_name instead of showing blank on the
+// Transactions page. Platform-owner-initiated purchases (SMS top-up, WhatsApp subscription) are
+// billed to whichever tenantID the caller actually resolved — including a tenant a platform admin
+// is acting on behalf of via the tenant switcher — so this always reflects the real payer, never
+// the acting admin's own identity. Best-effort: an unsynced/unknown tenant just leaves the intent
+// without a customer_name, same as before this existed.
+func resolveTenantName(ctx context.Context, client *ent.Client, tenantID uuid.UUID) string {
+	t, err := client.Tenant.Get(ctx, tenantID)
+	if err != nil || t == nil {
+		return ""
+	}
+	return t.Name
+}
+
 func NewService(client *ent.Client, log *zap.Logger, treasuryClient *serviceclient.Client, treasuryAPIKey string) *Service {
 	return &Service{
 		client:         client,
@@ -65,6 +81,17 @@ func (s *Service) InitiateTopUp(ctx context.Context, in TopUpInput) (*TopUpResul
 		return nil, fmt.Errorf("invalid amount: %s", in.Amount)
 	}
 
+	metadata := map[string]any{
+		"tenant_id":   in.TenantID.String(),
+		"credit_type": in.CreditType,
+	}
+	// customer_name is how the Transactions page's list resolves who a payment was for
+	// (intentCustomerName probes this exact metadata key) — without it, a platform-scoped
+	// purchase like this one shows a blank "—" customer. Resolves whichever tenant is actually
+	// paying, including a tenant a platform admin is acting on behalf of via the tenant switcher.
+	if name := resolveTenantName(ctx, s.client, in.TenantID); name != "" {
+		metadata["customer_name"] = name
+	}
 	req := map[string]any{
 		"amount":         in.Amount,
 		"currency":       "KES",
@@ -74,10 +101,7 @@ func (s *Service) InitiateTopUp(ctx context.Context, in TopUpInput) (*TopUpResul
 		"source_service": "notifications-service",
 		"description":    fmt.Sprintf("Credit top-up for %s", in.CreditType),
 		"callback_url":   in.ReturnURL,
-		"metadata": map[string]any{
-			"tenant_id":   in.TenantID.String(),
-			"credit_type": in.CreditType,
-		},
+		"metadata":       metadata,
 	}
 
 	var treasuryHeaders map[string]string

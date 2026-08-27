@@ -113,6 +113,18 @@ func (s *WhatsAppSubscriptionService) InitiateSubscription(ctx context.Context, 
 	}
 
 	amount := decimal.NewFromFloat(plan.PriceMonthly)
+	metadata := map[string]any{
+		"tenant_id": tenantID.String(),
+		"plan_id":   planID.String(),
+		"plan_slug": plan.Slug,
+	}
+	// customer_name is how the Transactions page's list resolves who a payment was for
+	// (intentCustomerName probes this exact metadata key) — without it, a platform-scoped
+	// purchase like this one shows a blank "—" customer. Resolves whichever tenant is actually
+	// paying, including a tenant a platform admin is acting on behalf of via the tenant switcher.
+	if name := resolveTenantName(ctx, s.client, tenantID); name != "" {
+		metadata["customer_name"] = name
+	}
 	req := map[string]any{
 		"amount":         amount,
 		"currency":       "KES",
@@ -122,11 +134,7 @@ func (s *WhatsAppSubscriptionService) InitiateSubscription(ctx context.Context, 
 		"source_service": "notifications-service",
 		"description":    fmt.Sprintf("WhatsApp %s plan subscription", plan.Name),
 		"callback_url":   returnURL,
-		"metadata": map[string]any{
-			"tenant_id": tenantID.String(),
-			"plan_id":   planID.String(),
-			"plan_slug": plan.Slug,
-		},
+		"metadata":       metadata,
 	}
 
 	var treasuryHeaders map[string]string
