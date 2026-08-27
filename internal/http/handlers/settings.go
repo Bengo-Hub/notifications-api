@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"net/http"
 
-	httpware "github.com/Bengo-Hub/httpware"
 	"go.uber.org/zap"
 
 	"github.com/bengobox/notifications-api/internal/encryption"
@@ -33,7 +32,7 @@ type securitySettingsResponse struct {
 // GetSecuritySettings returns the tenant's webhook signing secret.
 // GET /api/v1/settings/security
 func (h *SettingsHandler) GetSecuritySettings(w http.ResponseWriter, r *http.Request) {
-	tenantID := httpware.GetTenantID(r.Context())
+	tenantID := resolveActingTenantID(r)
 	if tenantID == "" {
 		http.Error(w, `{"error":"tenant_id required"}`, http.StatusBadRequest)
 		return

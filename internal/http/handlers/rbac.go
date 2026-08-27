@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	authclient "github.com/Bengo-Hub/shared-auth-client"
-	httpware "github.com/Bengo-Hub/httpware"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -236,9 +235,11 @@ func (h *RBACHandler) RegisterRoutes(r chi.Router) {
 	})
 }
 
-// resolveTenantID extracts tenant ID from the httpware context (set by TenantV2 middleware).
+// resolveTenantID extracts the tenant ID this RBAC request should act on — honoring the
+// platform-admin tenant-switcher (X-Tenant-ID header, then legacy ?tenantId=) via
+// resolveActingTenantID, falling back to a URL param if present.
 func resolveTenantID(r *http.Request) (uuid.UUID, error) {
-	tenantIDStr := httpware.GetTenantID(r.Context())
+	tenantIDStr := resolveActingTenantID(r)
 	if tenantIDStr == "" {
 		// Try URL param as fallback
 		tenantIDStr = chi.URLParam(r, "tenant")

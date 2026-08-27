@@ -169,7 +169,7 @@ func (h *NotificationHandler) Enqueue(w http.ResponseWriter, r *http.Request) {
 
 	tenant := req.Tenant
 	if tenant == "" {
-		tenant = httpware.GetTenantID(r.Context())
+		tenant = resolveActingTenantID(r)
 	}
 	if tenant == "" {
 		w.Header().Set("Content-Type", "application/json")
@@ -346,7 +346,7 @@ func (h *NotificationHandler) Enqueue(w http.ResponseWriter, r *http.Request) {
 // sent a sandbox message just gets an empty list, including any caller using a
 // production key, since sandbox sends are never stored under a production context.
 func (h *NotificationHandler) ListSandboxMessages(w http.ResponseWriter, r *http.Request) {
-	tenant := httpware.GetTenantID(r.Context())
+	tenant := resolveActingTenantID(r)
 	if tenant == "" {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)

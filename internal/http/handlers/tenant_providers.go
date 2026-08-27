@@ -87,15 +87,9 @@ func (h *TenantProviders) ListAvailable(w http.ResponseWriter, r *http.Request) 
 // SelectProvider sets the tenant's preferred provider for a channel.
 func (h *TenantProviders) SelectProvider(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID := httpware.GetTenantID(ctx)
-
-	// Platform owners can override via query param, or fall back to their own tenant
-	if httpware.IsPlatformOwner(ctx) {
-		if q := r.URL.Query().Get("tenantId"); q != "" {
-			tenantID = q
-		} else if tenantID == "" {
-			tenantID = h.PlatformID
-		}
+	tenantID := resolveActingTenantID(r)
+	if tenantID == "" && httpware.IsPlatformOwner(ctx) {
+		tenantID = h.PlatformID
 	}
 
 	if tenantID == "" {
@@ -177,15 +171,7 @@ func (h *TenantProviders) SelectProvider(w http.ResponseWriter, r *http.Request)
 
 // GetSelected returns the tenant's currently selected providers.
 func (h *TenantProviders) GetSelected(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	tenantID := httpware.GetTenantID(ctx)
-
-	// Platform owners can override via query param
-	if httpware.IsPlatformOwner(ctx) {
-		if q := r.URL.Query().Get("tenantId"); q != "" {
-			tenantID = q
-		}
-	}
+	tenantID := resolveActingTenantID(r)
 
 	if tenantID == "" {
 		jsonError(w, http.StatusBadRequest, "tenant ID required")
@@ -218,14 +204,7 @@ func (h *TenantProviders) GetSelected(w http.ResponseWriter, r *http.Request) {
 // Branding data (logo, colors, contact info) is managed exclusively by auth-api.
 func (h *TenantProviders) GetBranding(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID := httpware.GetTenantID(ctx)
-
-	// Platform owners can override via query param
-	if httpware.IsPlatformOwner(ctx) {
-		if q := r.URL.Query().Get("tenantId"); q != "" {
-			tenantID = q
-		}
-	}
+	tenantID := resolveActingTenantID(r)
 
 	if tenantID == "" {
 		jsonError(w, http.StatusBadRequest, "tenant ID required")
@@ -263,13 +242,9 @@ func (h *TenantProviders) UpdateBranding(w http.ResponseWriter, r *http.Request)
 // GetProviderSettings returns the tenant's settings for a specific provider (non-secret values only).
 func (h *TenantProviders) GetProviderSettings(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID := httpware.GetTenantID(ctx)
-	if httpware.IsPlatformOwner(ctx) {
-		if q := r.URL.Query().Get("tenantId"); q != "" {
-			tenantID = q
-		} else if tenantID == "" {
-			tenantID = h.PlatformID
-		}
+	tenantID := resolveActingTenantID(r)
+	if tenantID == "" && httpware.IsPlatformOwner(ctx) {
+		tenantID = h.PlatformID
 	}
 	if tenantID == "" {
 		jsonError(w, http.StatusBadRequest, "tenant ID required")
@@ -327,13 +302,9 @@ type saveTenantSettingsRequest struct {
 // SaveProviderSettings saves tenant-level provider settings.
 func (h *TenantProviders) SaveProviderSettings(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID := httpware.GetTenantID(ctx)
-	if httpware.IsPlatformOwner(ctx) {
-		if q := r.URL.Query().Get("tenantId"); q != "" {
-			tenantID = q
-		} else if tenantID == "" {
-			tenantID = h.PlatformID
-		}
+	tenantID := resolveActingTenantID(r)
+	if tenantID == "" && httpware.IsPlatformOwner(ctx) {
+		tenantID = h.PlatformID
 	}
 	if tenantID == "" {
 		jsonError(w, http.StatusBadRequest, "tenant ID required")
@@ -474,7 +445,7 @@ func (h *TenantProviders) TestProvider(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ctx := r.Context()
-	tenantID := httpware.GetTenantID(ctx)
+	tenantID := resolveActingTenantID(r)
 	if tenantID == "" {
 		jsonError(w, http.StatusBadRequest, "tenant_id required")
 		return

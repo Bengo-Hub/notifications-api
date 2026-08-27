@@ -9,7 +9,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 
-	httpware "github.com/Bengo-Hub/httpware"
 	authclient "github.com/Bengo-Hub/shared-auth-client"
 
 	"github.com/bengobox/notifications-api/internal/ent"
@@ -56,9 +55,10 @@ type TimeSeriesPoint struct {
 // @Security     ApiKeyAuth
 func (h *AnalyticsHandler) Delivery(w http.ResponseWriter, r *http.Request) {
 	tenantID := chi.URLParam(r, "tenantId")
-	// Fall back to JWT claims or X-Tenant-ID header when no URL param (non-platform users)
+	// Fall back to the acting-tenant resolution (X-Tenant-ID header / ?tenantId= / JWT claims)
+	// when no URL param is present.
 	if tenantID == "" {
-		tenantID = httpware.GetTenantID(r.Context())
+		tenantID = resolveActingTenantID(r)
 	}
 	if tenantID == "" {
 		if claims, ok := authclient.ClaimsFromContext(r.Context()); ok {
@@ -174,9 +174,10 @@ type ActivityLogEntry struct {
 // @Security     ApiKeyAuth
 func (h *AnalyticsHandler) Logs(w http.ResponseWriter, r *http.Request) {
 	tenantID := chi.URLParam(r, "tenantId")
-	// Fall back to JWT claims or X-Tenant-ID header when no URL param (non-platform users)
+	// Fall back to the acting-tenant resolution (X-Tenant-ID header / ?tenantId= / JWT claims)
+	// when no URL param is present.
 	if tenantID == "" {
-		tenantID = httpware.GetTenantID(r.Context())
+		tenantID = resolveActingTenantID(r)
 	}
 	if tenantID == "" {
 		if claims, ok := authclient.ClaimsFromContext(r.Context()); ok {

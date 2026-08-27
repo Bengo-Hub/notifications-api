@@ -7,8 +7,6 @@ import (
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 
-	httpware "github.com/Bengo-Hub/httpware"
-
 	"github.com/bengobox/notifications-api/internal/modules/billing"
 )
 
@@ -40,7 +38,7 @@ func (h *WhatsAppSubscriptionHandler) ListPlans(w http.ResponseWriter, r *http.R
 // GetSubscription returns the current subscription for the authenticated tenant.
 func (h *WhatsAppSubscriptionHandler) GetSubscription(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantIDStr := httpware.GetTenantID(ctx)
+	tenantIDStr := resolveActingTenantID(r)
 	if tenantIDStr == "" {
 		jsonError(w, http.StatusBadRequest, "tenant_id required")
 		return
@@ -70,7 +68,7 @@ func (h *WhatsAppSubscriptionHandler) GetSubscription(w http.ResponseWriter, r *
 // Subscribe initiates a Treasury payment for a WhatsApp subscription plan.
 func (h *WhatsAppSubscriptionHandler) Subscribe(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantIDStr := httpware.GetTenantID(ctx)
+	tenantIDStr := resolveActingTenantID(r)
 	if tenantIDStr == "" {
 		jsonError(w, http.StatusBadRequest, "tenant_id required")
 		return
@@ -110,7 +108,7 @@ func (h *WhatsAppSubscriptionHandler) Subscribe(w http.ResponseWriter, r *http.R
 // Cancel cancels the tenant's active WhatsApp subscription.
 func (h *WhatsAppSubscriptionHandler) Cancel(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantIDStr := httpware.GetTenantID(ctx)
+	tenantIDStr := resolveActingTenantID(r)
 	if tenantIDStr == "" {
 		jsonError(w, http.StatusBadRequest, "tenant_id required")
 		return

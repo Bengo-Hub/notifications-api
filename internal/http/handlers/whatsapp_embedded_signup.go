@@ -11,8 +11,6 @@ import (
 
 	"go.uber.org/zap"
 
-	httpware "github.com/Bengo-Hub/httpware"
-
 	"github.com/bengobox/notifications-api/internal/ent"
 	"github.com/bengobox/notifications-api/internal/ent/providersetting"
 	"github.com/bengobox/notifications-api/internal/providers"
@@ -62,7 +60,7 @@ type completeSignupRequest struct {
 // against Meta's current Graph API reference.
 func (h *WhatsAppEmbeddedSignupHandler) Complete(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantID := httpware.GetTenantID(ctx)
+	tenantID := resolveActingTenantID(r)
 	if tenantID == "" {
 		jsonError(w, http.StatusBadRequest, "tenant_id required")
 		return

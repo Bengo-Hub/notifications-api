@@ -10,8 +10,6 @@ import (
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 
-	httpware "github.com/Bengo-Hub/httpware"
-
 	"github.com/bengobox/notifications-api/internal/modules/backup"
 )
 
@@ -83,18 +81,11 @@ func (h *BackupHandler) UpdateSettings(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, settings)
 }
 
-// tenantUUID resolves the requesting tenant from context (TenantV2 middleware), with a
-// platform-owner ?tenantId= override.
+// tenantUUID resolves the requesting tenant from context (TenantV2 middleware), honoring the
+// platform-admin tenant-switcher (X-Tenant-ID header, then legacy ?tenantId=) via
+// resolveActingTenantID.
 func tenantUUID(r *http.Request) (uuid.UUID, bool) {
-	ctx := r.Context()
-	if httpware.IsPlatformOwner(ctx) {
-		if q := r.URL.Query().Get("tenantId"); q != "" {
-			if id, err := uuid.Parse(q); err == nil {
-				return id, true
-			}
-		}
-	}
-	if s := httpware.GetTenantID(ctx); s != "" {
+	if s := resolveActingTenantID(r); s != "" {
 		if id, err := uuid.Parse(s); err == nil && id != uuid.Nil {
 			return id, true
 		}

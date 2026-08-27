@@ -30,15 +30,7 @@ func NewBillingHandler(log *zap.Logger, service *billing.Service) *BillingHandle
 
 // GetBalance returns the credit balance for a tenant.
 func (h *BillingHandler) GetBalance(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	tenantIDStr := httpware.GetTenantID(ctx)
-
-	// Platform owners can override via query param
-	if httpware.IsPlatformOwner(ctx) {
-		if q := r.URL.Query().Get("tenantId"); q != "" {
-			tenantIDStr = q
-		}
-	}
+	tenantIDStr := resolveActingTenantID(r)
 
 	if tenantIDStr == "" {
 		h.respondWithError(w, http.StatusBadRequest, "tenant_id required")
@@ -102,10 +94,21 @@ func (h *BillingHandler) Initiate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-	tenantIDStr := httpware.GetTenantID(ctx)
-	if tenantIDStr != "" && !httpware.IsPlatformOwner(ctx) {
-		tid, _ := uuid.Parse(tenantIDStr)
-		in.TenantID = tid
+	if !httpware.IsPlatformOwner(ctx) {
+		if tenantIDStr := httpware.GetTenantID(ctx); tenantIDStr != "" {
+			tid, _ := uuid.Parse(tenantIDStr)
+			in.TenantID = tid
+		}
+	}
+	// Platform owner: honor an explicit tenant_id in the body first (existing admin flows already
+	// pass it directly); otherwise fall back to the acting-tenant resolution (tenant-switcher header
+	// or ?tenantId=) so an admin who has selected a tenant in the top nav doesn't have to also pass
+	// tenant_id in the request body.
+	if in.TenantID == uuid.Nil {
+		if tenantIDStr := resolveActingTenantID(r); tenantIDStr != "" {
+			tid, _ := uuid.Parse(tenantIDStr)
+			in.TenantID = tid
+		}
 	}
 
 	if in.TenantID == uuid.Nil {
@@ -126,13 +129,7 @@ func (h *BillingHandler) Initiate(w http.ResponseWriter, r *http.Request) {
 // GetTransactions returns paginated credit transaction history for a tenant.
 func (h *BillingHandler) GetTransactions(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	tenantIDStr := httpware.GetTenantID(ctx)
-
-	if httpware.IsPlatformOwner(ctx) {
-		if q := r.URL.Query().Get("tenantId"); q != "" {
-			tenantIDStr = q
-		}
-	}
+	tenantIDStr := resolveActingTenantID(r)
 
 	if tenantIDStr == "" {
 		if claims, ok := authclient.ClaimsFromContext(ctx); ok {

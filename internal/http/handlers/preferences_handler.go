@@ -172,11 +172,12 @@ func (h *PreferencesHandler) Upsert(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// tenantUUID resolves the caller's tenant UUID from the request context, falling back
-// to a slug lookup against the local tenant projection (JIT-synced by the router).
+// tenantUUID resolves the tenant UUID this request should act on — honoring the platform-admin
+// tenant-switcher (X-Tenant-ID header, then legacy ?tenantId=) via resolveActingTenantID, then
+// falling back to a slug lookup against the local tenant projection (JIT-synced by the router).
 func (h *PreferencesHandler) tenantUUID(r *http.Request) (uuid.UUID, bool) {
 	ctx := r.Context()
-	if s := httpware.GetTenantID(ctx); s != "" {
+	if s := resolveActingTenantID(r); s != "" {
 		if id, err := uuid.Parse(s); err == nil && id != uuid.Nil {
 			return id, true
 		}
