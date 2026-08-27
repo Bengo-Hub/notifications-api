@@ -334,6 +334,14 @@ func (a *africasTalkingAdapter) SendSMS(ctx context.Context, from string, to []s
 	return provider.SendSMS(ctx, from, to, body)
 }
 
+// GetBalance exposes the real Africa's Talking account balance. Callers type-assert for this
+// optional method (not part of the generic SMSProvider interface, since Twilio/Vonage/Plivo have
+// no equivalent concept wired up today) — see cmd/worker's platform-scope SMS dispatch.
+func (a *africasTalkingAdapter) GetBalance(ctx context.Context) (float64, error) {
+	provider := sms.NewAfricasTalking(sms.AfricasTalkingConfig{Username: a.username, APIKey: a.apiKey, From: a.from})
+	return provider.GetBalance(ctx)
+}
+
 // vonageAdapter bridges to our existing stub implementation.
 type vonageAdapter struct {
 	apiKey    string

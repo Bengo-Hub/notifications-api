@@ -9,12 +9,14 @@ import (
 
 	eventslib "github.com/Bengo-Hub/shared-events"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
 
 	"github.com/bengobox/notifications-api/internal/config"
 	"github.com/bengobox/notifications-api/internal/messaging"
 	"github.com/bengobox/notifications-api/internal/modules/billing"
+	"github.com/bengobox/notifications-api/internal/providers"
 )
 
 // treasuryEvent is the outbox envelope from treasury-api.
@@ -202,7 +204,7 @@ func formatEventDate(v any) string {
 // JetStream stream and dispatches payment notification emails. It also handles
 // credit top-up (reference_type=topup) and WhatsApp subscription activation
 // (reference_type=whatsapp_subscription).
-func startTreasuryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamContext, cfg *config.Config, tr *tenantResolver, billingSvc *billing.Service, whatsappSubsSvc *billing.WhatsAppSubscriptionService, logg *zap.Logger) {
+func startTreasuryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamContext, cfg *config.Config, tr *tenantResolver, billingSvc *billing.Service, whatsappSubsSvc *billing.WhatsAppSubscriptionService, pm *providers.Manager, dbPool *pgxpool.Pool, logg *zap.Logger) {
 	if nc == nil || js == nil {
 		logg.Warn("skipping treasury consumer: NATS not available")
 		return
@@ -303,6 +305,14 @@ func startTreasuryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStream
 					zap.Float64("amount", amount),
 					zap.String("reference_id", referenceID),
 				)
+				// A tenant is never blocked from buying more SMS credit than the platform's own
+				// real Africa's Talking wallet currently covers — but if this purchase pushes
+				// total outstanding tenant demand past what that real wallet can fund, alert the
+				// platform owner to recharge it. Best-effort: never fails/retries the topup itself
+				// over an alert-check hiccup.
+				if creditType == "SMS" {
+					checkSMSWalletCapacityAndAlert(ctx, nc, cfg, billingSvc, pm, dbPool, logg)
+				}
 			} else {
 				logg.Warn("treasury topup: zero or missing amount in payload", zap.String("tenant_id", tenantID))
 			}
@@ -501,5 +511,94 @@ func startTreasuryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStream
 		nats.ManualAck(),
 		nats.AckWait(30*time.Second),
 		nats.MaxDeliver(3),
+	)
+}
+
+// checkSMSWalletCapacityAndAlert compares total outstanding tenant SMS-credit demand (every
+// tenant's purchased-but-unspent balance, converted to a real SMS count at the tenant-facing
+// rate) against how many real SMS the platform's own Africa's Talking account balance can
+// currently fund (at the real provider cost). A tenant purchase is NEVER blocked by this — it
+// only decides whether to alert the platform owner that the real wallet needs recharging to
+// cover what's now been sold. Best-effort throughout: every failure just skips the alert
+// silently rather than risking any impact on the topup that already succeeded.
+func checkSMSWalletCapacityAndAlert(ctx context.Context, nc *nats.Conn, cfg *config.Config, billingSvc *billing.Service, pm *providers.Manager, dbPool *pgxpool.Pool, logg *zap.Logger) {
+	smsProv, err := pm.GetSMSProvider(ctx, pm.PlatformID, "")
+	if err != nil {
+		logg.Debug("sms wallet capacity check: no sms provider resolved, skipping", zap.Error(err))
+		return
+	}
+	balProv, ok := smsProv.(interface{ GetBalance(context.Context) (float64, error) })
+	if !ok {
+		return // active provider has no real-balance concept (e.g. Twilio) — nothing to compare
+	}
+	realBalance, err := balProv.GetBalance(ctx)
+	if err != nil {
+		logg.Warn("sms wallet capacity check: real balance lookup failed, skipping", zap.Error(err))
+		return
+	}
+
+	providerCost := billingSvc.PlatformProviderCost(ctx, "SMS")
+	tenantRate := billingSvc.PlatformCostPerSms(ctx)
+	if providerCost <= 0 || tenantRate <= 0 {
+		return
+	}
+
+	outstandingKES, err := billingSvc.TotalOutstandingBalance(ctx, "SMS")
+	if err != nil {
+		logg.Warn("sms wallet capacity check: outstanding balance query failed, skipping", zap.Error(err))
+		return
+	}
+
+	outstandingSMSCount := outstandingKES / tenantRate
+	supportableSMSCount := realBalance / providerCost
+	if outstandingSMSCount <= supportableSMSCount {
+		return // real wallet still covers everything already sold — nothing to alert
+	}
+
+	shortfallSMS := outstandingSMSCount - supportableSMSCount
+	shortfallKES := shortfallSMS * providerCost
+
+	ccEmail := platformCCEmail(ctx, dbPool)
+	if ccEmail == "" {
+		logg.Warn("sms wallet capacity shortfall detected but no platform alert email configured",
+			zap.Float64("outstanding_sms", outstandingSMSCount), zap.Float64("supportable_sms", supportableSMSCount))
+		return
+	}
+
+	msg := messaging.Message{
+		TenantID:    pm.PlatformID,
+		Channel:     "email",
+		TemplateID:  "shared/generic_notification",
+		SenderScope: messaging.SenderScopePlatform,
+		Target:      messaging.TargetPlatformAdmin,
+		To:          []string{ccEmail},
+		Data: map[string]any{
+			"name":  "Platform Owner",
+			"title": "Africa's Talking wallet needs recharging",
+			"message": fmt.Sprintf(
+				"Tenants have now purchased more SMS credit than the platform's real Africa's Talking account balance can currently fund.",
+			),
+			"details": fmt.Sprintf(
+				"Real AT balance: KES %.2f (supports ~%.0f SMS at KES %.2f/SMS)<br>"+
+					"Outstanding tenant-purchased credit: KES %.2f (~%.0f SMS owed at KES %.2f/SMS)<br>"+
+					"Shortfall: ~%.0f SMS (recharge the AT wallet by at least KES %.2f to cover it)",
+				realBalance, supportableSMSCount, providerCost,
+				outstandingKES, outstandingSMSCount, tenantRate,
+				shortfallSMS, shortfallKES,
+			),
+		},
+		Metadata:       map[string]any{"subject": "Action needed: recharge Africa's Talking SMS wallet"},
+		RequestID:      uuid.New().String(),
+		IdempotencyKey: fmt.Sprintf("sms-wallet-shortfall-%s", time.Now().Format("2006-01-02T15")), // at most once/hour
+		QueuedAt:       time.Now(),
+	}
+	if _, err := messaging.Publish(ctx, nc, cfg.Events, msg); err != nil {
+		logg.Warn("sms wallet capacity alert: failed to publish", zap.Error(err))
+		return
+	}
+	logg.Info("sms wallet capacity shortfall alert sent",
+		zap.Float64("outstanding_sms", outstandingSMSCount),
+		zap.Float64("supportable_sms", supportableSMSCount),
+		zap.Float64("shortfall_kes", shortfallKES),
 	)
 }

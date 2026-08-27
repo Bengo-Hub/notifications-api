@@ -195,6 +195,51 @@ func (s *Service) DeductWhatsAppCredits(ctx context.Context, tenantID uuid.UUID,
 	return s.deductCreditsWithCost(ctx, tenantID, "WHATSAPP", totalAmount, providerCost, description)
 }
 
+// TotalOutstandingBalance sums every tenant's wallet balance for a credit type (e.g. "SMS") —
+// the platform's total outstanding, purchased-but-not-yet-spent obligation. Compared against the
+// real provider account balance (converted to a KES-equivalent via getRateInfo's provider cost)
+// this tells us whether tenant demand has outgrown what the platform's own real wallet can cover.
+func (s *Service) TotalOutstandingBalance(ctx context.Context, creditType string) (float64, error) {
+	rows, err := s.client.TenantCredit.Query().
+		Where(tenantcredit.TypeEQ(tenantcredit.Type(creditType))).
+		All(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("sum outstanding balances: %w", err)
+	}
+	var total float64
+	for _, r := range rows {
+		total += r.Balance
+	}
+	return total, nil
+}
+
+// PlatformCostPerSms returns the current platform-wide tenant-facing SMS rate (KES/SMS), falling
+// back to the same hardcoded default getRateInfo uses when no PlatformBilling row exists yet.
+func (s *Service) PlatformCostPerSms(ctx context.Context) float64 {
+	pb, err := s.client.PlatformBilling.Query().First(ctx)
+	if err != nil {
+		return 1.0
+	}
+	return pb.CostPerSms
+}
+
+// PlatformProviderCost returns the current platform-wide provider cost per unit for a credit type
+// (e.g. the real ~KES 0.8/SMS Africa's Talking charges), falling back to the same hardcoded
+// defaults getRateInfo uses when no PlatformBilling row exists yet.
+func (s *Service) PlatformProviderCost(ctx context.Context, creditType string) float64 {
+	pb, err := s.client.PlatformBilling.Query().First(ctx)
+	if err != nil {
+		if creditType == "SMS" {
+			return 0.5
+		}
+		return 0.8
+	}
+	if creditType == "SMS" {
+		return pb.ProviderCostPerSms
+	}
+	return pb.ProviderCostPerWhatsapp
+}
+
 // GetBalance retrieves the balance for a tenant and credit type.
 func (s *Service) GetBalance(ctx context.Context, tenantID uuid.UUID, creditType string) (float64, error) {
 	tc, err := s.client.TenantCredit.Query().

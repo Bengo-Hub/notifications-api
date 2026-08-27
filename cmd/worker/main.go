@@ -276,7 +276,7 @@ func main() {
 	startResellerApplicationNotificationConsumer(ctx, nc, cfg, logg)
 
 	// Start treasury event consumer (treasury-service → payment/invoice notifications + credit top-ups)
-	startTreasuryConsumer(ctx, nc, js, cfg, tr, billingSvc, whatsappSubsSvc, logg)
+	startTreasuryConsumer(ctx, nc, js, cfg, tr, billingSvc, whatsappSubsSvc, pm, dbPool, logg)
 
 	// Start delivery task event consumer (logistics-service → delivery status notifications)
 	startDeliveryConsumer(ctx, nc, js, cfg, tr, logg)
@@ -660,11 +660,39 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 		return nil
 
 	case "sms":
-		// Pre-send credit gate (applies to BOTH HTTP-enqueued and event-sourced sends).
-		// FAIL-CLOSED: never send SMS unless we can positively confirm the tenant has
-		// credit. A missing credit account returns balance 0 (-> skip); a balance-check
-		// error also skips (we must not send uncharged). Skip+ack rather than error so the
-		// single-attempt worker doesn't noisily dead-letter; the tenant must top up.
+		smsProv, _ := pm.GetSMSProvider(ctx, providerTenantID, preferred)
+
+		// Platform-scope sends (OTPs, admin/ops alerts — see messaging.SenderScopePlatform) are
+		// never billed to a tenant's own credit wallet, so gating them on a TenantCredit row
+		// makes no sense — there's no tenant to charge. Instead, check the REAL provider account
+		// balance directly (fail-open on a balance-check error: a monitoring hiccup must not
+		// block an OTP or a security alert; the send itself would still fail cleanly if the real
+		// balance is genuinely insufficient, now correctly surfaced instead of silently swallowed).
+		if msg.EffectiveSenderScope() == messaging.SenderScopePlatform {
+			if balProv, ok := smsProv.(interface{ GetBalance(context.Context) (float64, error) }); ok {
+				if bal, balErr := balProv.GetBalance(ctx); balErr == nil && bal <= 0 {
+					logg.Warn("sms send skipped: real provider account balance is zero (platform-scope, not tenant-billed)",
+						zap.String("template", msg.TemplateID))
+					return nil
+				}
+			}
+			if err := smsProv.SendSMS(ctx, cfg.Providers.DefaultSMSSender, msg.To, rendered); err != nil {
+				return err
+			}
+			logg.Info("sms sent (platform-scope, billed to the real provider account, not a tenant wallet)",
+				zap.String("provider", smsProv.Name()), zap.Strings("to", msg.To))
+			return nil
+		}
+
+		// Tenant-scope sends (everything else — the overwhelming majority): every tenant must
+		// have purchased SMS credit, billed in KES via PlatformBilling.CostPerSms, REGARDLESS of
+		// whether their send ends up using their own configured provider or silently falls back
+		// to the platform's shared credentials (the gate below is keyed purely on tenantID, before
+		// provider resolution, so the fallback case is charged identically — never send for free).
+		// FAIL-CLOSED: never send SMS unless we can positively confirm the tenant has credit. A
+		// missing credit account returns balance 0 (-> skip); a balance-check error also skips (we
+		// must not send uncharged). Skip+ack rather than error so the single-attempt worker
+		// doesn't noisily dead-letter; the tenant must top up.
 		balance, balErr := billingSvc.GetBalance(ctx, tenantID, "SMS")
 		if balErr != nil {
 			logg.Warn("sms send skipped: credit balance check failed (fail-closed)",
@@ -683,7 +711,6 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 			return nil // ack: nothing to retry until the tenant tops up
 		}
 
-		smsProv, _ := pm.GetSMSProvider(ctx, providerTenantID, preferred)
 		if err := smsProv.SendSMS(ctx, cfg.Providers.DefaultSMSSender, msg.To, rendered); err != nil {
 			return err
 		}

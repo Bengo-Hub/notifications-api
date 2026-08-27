@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -31,6 +32,16 @@ func NewAfricasTalking(cfg AfricasTalkingConfig) *africasTalkingProvider {
 
 func (p *africasTalkingProvider) Name() string { return "africastalking" }
 
+// apiHost picks the production vs. sandbox host. The sandbox app username is always literally
+// "sandbox", which only exists on the separate api.sandbox.* host — a sandbox-configured provider
+// hitting the production host fails auth regardless of what else is correct.
+func (p *africasTalkingProvider) apiHost() string {
+	if p.cfg.Username == "sandbox" {
+		return "https://api.sandbox.africastalking.com"
+	}
+	return "https://api.africastalking.com"
+}
+
 func (p *africasTalkingProvider) SendSMS(ctx context.Context, from string, to []string, body string) error {
 	if p.cfg.APIKey == "" || p.cfg.Username == "" {
 		return fmt.Errorf("africastalking not configured")
@@ -48,14 +59,8 @@ func (p *africasTalkingProvider) SendSMS(ctx context.Context, from string, to []
 	// Africa's Talking's /version1/messaging endpoint only accepts
 	// application/x-www-form-urlencoded (confirmed directly against their live API — a
 	// JSON body is rejected outright with 415 before auth is even checked, so this was
-	// silently failing every real send). The sandbox app username is always literally
-	// "sandbox", which only exists on the separate api.sandbox.* host — a sandbox-configured
-	// provider hitting the production host would fail auth even with the fix above.
-	apiHost := "https://api.africastalking.com"
-	if p.cfg.Username == "sandbox" {
-		apiHost = "https://api.sandbox.africastalking.com"
-	}
-	req, _ := http.NewRequestWithContext(ctx, http.MethodPost, apiHost+"/version1/messaging", strings.NewReader(form.Encode()))
+	// silently failing every real send).
+	req, _ := http.NewRequestWithContext(ctx, http.MethodPost, p.apiHost()+"/version1/messaging", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("apiKey", p.cfg.APIKey)
@@ -106,4 +111,44 @@ func (p *africasTalkingProvider) SendSMS(ctx context.Context, from string, to []
 		return fmt.Errorf("africastalking: %d/%d recipient(s) failed: %s", len(failures), len(recipients), strings.Join(failures, "; "))
 	}
 	return nil
+}
+
+// GetBalance queries Africa's Talking's real account wallet balance (GET /version1/user),
+// parsing the "KES 110.0000"-style string AT returns into a plain float. Used to gate
+// platform-scope sends (OTPs, admin alerts — never billed to a tenant's own credit wallet)
+// directly against the real provider balance instead of a TenantCredit row.
+func (p *africasTalkingProvider) GetBalance(ctx context.Context) (float64, error) {
+	if p.cfg.APIKey == "" || p.cfg.Username == "" {
+		return 0, fmt.Errorf("africastalking not configured")
+	}
+	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, p.apiHost()+"/version1/user?username="+url.QueryEscape(p.cfg.Username), nil)
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("apiKey", p.cfg.APIKey)
+	resp, err := p.cl.Do(req)
+	if err != nil {
+		return 0, err
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode >= 300 {
+		return 0, fmt.Errorf("africastalking balance check error: %s: %s", resp.Status, string(body))
+	}
+	var parsed struct {
+		UserData struct {
+			Balance string `json:"balance"`
+		} `json:"UserData"`
+	}
+	if jerr := json.Unmarshal(body, &parsed); jerr != nil {
+		return 0, fmt.Errorf("africastalking: unexpected balance response: %s", string(body))
+	}
+	// "KES 110.0000" -> 110.0000; fall back to parsing the whole string if there's no prefix.
+	raw := parsed.UserData.Balance
+	if fields := strings.Fields(raw); len(fields) == 2 {
+		raw = fields[1]
+	}
+	bal, perr := strconv.ParseFloat(raw, 64)
+	if perr != nil {
+		return 0, fmt.Errorf("africastalking: could not parse balance %q", parsed.UserData.Balance)
+	}
+	return bal, nil
 }
