@@ -16,15 +16,14 @@ import (
 	"github.com/bengobox/notifications-api/internal/providers/whatsapp"
 )
 
-
 // Manager resolves providers per-tenant.
 type Manager struct {
-	cfg            config.ProviderConfig
-	db             *pgxpool.Pool
-	dbCfg          config.PostgresConfig
-	decryptionKey  []byte
-	env            string
-	PlatformID     string
+	cfg           config.ProviderConfig
+	db            *pgxpool.Pool
+	dbCfg         config.PostgresConfig
+	decryptionKey []byte
+	env           string
+	PlatformID    string
 }
 
 // NewManager creates a provider manager. decryptionKey is optional (32 bytes) for decrypting provider secrets at rest.
@@ -72,11 +71,11 @@ func (m *Manager) GetWhatsAppProvider(ctx context.Context, tenantID string, pref
 			apiKey := s["api_key"]
 			instanceID := s["instance_id"]
 			env := firstNonEmpty(s["environment"], m.env)
-			
+
 			if apiKey == "" || instanceID == "" {
 				continue // Try next or fallback
 			}
-			
+
 			return whatsapp.NewAPIWAPProvider(whatsapp.APIWAPConfig{
 				APIKey:      apiKey,
 				InstanceID:  instanceID,
@@ -221,39 +220,63 @@ func (m *Manager) GetPushProvider(ctx context.Context) (PushProvider, error) {
 }
 
 // TestConnection loads platform config for the given channel/provider, builds the provider, and sends a test message to the given recipient.
-func (m *Manager) TestConnection(ctx context.Context, channel, providerName, to string) error {
-	if to == "" {
-		return nil // callers should validate
-	}
+// TestConnection confirms tenantID's resolved provider config (tenant override, falling back to
+// the platform-wide config per LoadTenantProviderSettings's hierarchy — the same resolution a real
+// send for that tenant would use) actually works. Platform-admin callers pass m.PlatformID to test
+// the platform's own shared config; tenant-scoped callers pass their own tenant ID so "Test"
+// actually exercises what that tenant configured, not the platform's.
+//
+// Prefers a non-billable AccountInfoProvider query (account balance, sender identity, phone
+// number quality rating) over sending a real message — cheaper and doesn't require a recipient.
+// Falls back to an actual test send only for providers that don't implement it (to is then
+// required); email always sends a real test message, since there's no equivalent "check the
+// credentials without sending" concept for SMTP/SendGrid/Brevo. Returns provider-reported info
+// (nil for the plain test-send fallback) so the caller can show it to the admin.
+func (m *Manager) TestConnection(ctx context.Context, tenantID, channel, providerName, to string) (map[string]interface{}, error) {
 	switch channel {
 	case "email":
-		prov, err := m.GetEmailProvider(ctx, m.PlatformID, providerName)
-		if err != nil {
-			return err
+		if to == "" {
+			return nil, fmt.Errorf("to is required to test an email provider")
 		}
-		return prov.SendEmail(ctx, "", []string{to}, nil, nil, "", "Test connection", "<p>Test notification from Notifications API.</p>", "Test notification from Notifications API.", nil)
+		prov, err := m.GetEmailProvider(ctx, tenantID, providerName)
+		if err != nil {
+			return nil, err
+		}
+		return nil, prov.SendEmail(ctx, "", []string{to}, nil, nil, "", "Test connection", "<p>Test notification from Notifications API.</p>", "Test notification from Notifications API.", nil)
 	case "sms":
-		prov, err := m.GetSMSProvider(ctx, m.PlatformID, providerName)
+		prov, err := m.GetSMSProvider(ctx, tenantID, providerName)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		return prov.SendSMS(ctx, "", []string{to}, "Test SMS from Notifications API.")
+		if infoProv, ok := prov.(AccountInfoProvider); ok {
+			return infoProv.AccountInfo(ctx)
+		}
+		if to == "" {
+			return nil, fmt.Errorf("to is required to test this SMS provider (no account-info check available)")
+		}
+		return nil, prov.SendSMS(ctx, "", []string{to}, "Test SMS from Notifications API.")
 	case "whatsapp":
+		prov, err := m.GetWhatsAppProvider(ctx, tenantID, providerName)
+		if err != nil {
+			return nil, err
+		}
+		if infoProv, ok := prov.(AccountInfoProvider); ok {
+			return infoProv.AccountInfo(ctx)
+		}
 		// Previously silently returned nil ("success") without attempting anything — a platform
 		// admin testing a WhatsApp provider from the UI saw a false "test message sent
 		// successfully". A free-form text body only works inside an active 24h reply window, so
 		// the test uses "hello_world" — the sample template Meta pre-approves by default on every
 		// WhatsApp Business Account specifically for this kind of connectivity check.
-		prov, err := m.GetWhatsAppProvider(ctx, m.PlatformID, providerName)
-		if err != nil {
-			return err
+		if to == "" {
+			return nil, fmt.Errorf("to is required to test this WhatsApp provider (no account-info check available)")
 		}
-		return prov.SendWhatsApp(ctx, "", []string{to}, "", map[string]interface{}{
+		return nil, prov.SendWhatsApp(ctx, "", []string{to}, "", map[string]interface{}{
 			"template_name":     "hello_world",
 			"template_language": "en_US",
 		})
 	default:
-		return nil
+		return nil, nil
 	}
 }
 
@@ -362,6 +385,12 @@ func (a *africasTalkingAdapter) SendSMS(ctx context.Context, from string, to []s
 func (a *africasTalkingAdapter) GetBalance(ctx context.Context) (float64, error) {
 	provider := sms.NewAfricasTalking(sms.AfricasTalkingConfig{Username: a.username, APIKey: a.apiKey, From: a.from})
 	return provider.GetBalance(ctx)
+}
+
+// AccountInfo implements providers.AccountInfoProvider (see TestConnection).
+func (a *africasTalkingAdapter) AccountInfo(ctx context.Context) (map[string]interface{}, error) {
+	provider := sms.NewAfricasTalking(sms.AfricasTalkingConfig{Username: a.username, APIKey: a.apiKey, From: a.from})
+	return provider.AccountInfo(ctx)
 }
 
 // vonageAdapter bridges to our existing stub implementation.

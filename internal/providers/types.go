@@ -34,3 +34,11 @@ type PushProvider interface {
 	SendPush(ctx context.Context, tokens []string, title, body string, data map[string]string) error
 	Name() string
 }
+
+// AccountInfoProvider is an optional capability: a provider that can confirm its credentials are
+// valid by querying the provider's own API for account/integration status (balance, sender
+// identity, number quality rating, etc.) instead of sending a real, billable test message.
+// TestConnection prefers this when the concrete provider implements it.
+type AccountInfoProvider interface {
+	AccountInfo(ctx context.Context) (map[string]interface{}, error)
+}

@@ -144,6 +144,36 @@ func (p *MetaCloudProvider) sendTemplate(ctx context.Context, to, templateName, 
 	return p.post(ctx, payload)
 }
 
+// AccountInfo confirms the configured credentials are valid by querying Meta's Graph API for the
+// connected phone number's own status (verified display name, quality rating, platform type) —
+// implements providers.AccountInfoProvider so "Test Connection" can confirm connectivity without
+// sending a real WhatsApp message.
+func (p *MetaCloudProvider) AccountInfo(ctx context.Context) (map[string]interface{}, error) {
+	if p.accessToken == "" || p.phoneNumberID == "" {
+		return nil, fmt.Errorf("meta_cloud not configured")
+	}
+	url := fmt.Sprintf("https://graph.facebook.com/%s/%s?fields=verified_name,display_phone_number,quality_rating,platform_type,code_verification_status", p.apiVersion, p.phoneNumberID)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "Bearer "+p.accessToken)
+	resp, err := p.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("meta_cloud account info error: status %d: %s", resp.StatusCode, string(body))
+	}
+	var info map[string]interface{}
+	if jerr := json.Unmarshal(body, &info); jerr != nil {
+		return nil, fmt.Errorf("meta_cloud: unexpected account info response: %s", string(body))
+	}
+	return info, nil
+}
+
 func (p *MetaCloudProvider) post(ctx context.Context, payload map[string]interface{}) error {
 	url := fmt.Sprintf("https://graph.facebook.com/%s/%s/messages", p.apiVersion, p.phoneNumberID)
 

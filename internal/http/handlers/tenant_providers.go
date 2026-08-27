@@ -8,11 +8,12 @@ import (
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 
+	httpware "github.com/Bengo-Hub/httpware"
 	"github.com/bengobox/notifications-api/internal/encryption"
 	"github.com/bengobox/notifications-api/internal/ent"
 	"github.com/bengobox/notifications-api/internal/ent/providersetting"
 	"github.com/bengobox/notifications-api/internal/ent/tenant"
-	httpware "github.com/Bengo-Hub/httpware"
+	"github.com/bengobox/notifications-api/internal/providers"
 )
 
 // TenantProviders handles tenant-level notification provider selection.
@@ -21,13 +22,15 @@ type TenantProviders struct {
 	logger      *zap.Logger
 	PlatformID  string
 	keyProvider *encryption.KeyProvider
+	manager     *providers.Manager
 }
 
 // NewTenantProviders creates a new TenantProviders handler.
 // keyProvider resolves the provider-credential encryption key (DB-first, env fallback);
-// when a key is available, secret values are encrypted at rest.
-func NewTenantProviders(client *ent.Client, logger *zap.Logger, platformID string, keyProvider *encryption.KeyProvider) *TenantProviders {
-	return &TenantProviders{client: client, logger: logger, PlatformID: platformID, keyProvider: keyProvider}
+// when a key is available, secret values are encrypted at rest. manager is optional, used
+// for the test-connection endpoint (mirrors PlatformProviders.TestProvider, tenant-scoped).
+func NewTenantProviders(client *ent.Client, logger *zap.Logger, platformID string, keyProvider *encryption.KeyProvider, manager *providers.Manager) *TenantProviders {
+	return &TenantProviders{client: client, logger: logger, PlatformID: platformID, keyProvider: keyProvider, manager: manager}
 }
 
 type availableProviderResponse struct {
@@ -456,6 +459,62 @@ func (h *TenantProviders) SaveProviderSettings(w http.ResponseWriter, r *http.Re
 	jsonResponse(w, http.StatusOK, map[string]string{"message": "settings saved"})
 }
 
+type testTenantProviderRequest struct {
+	ProviderType string `json:"provider_type"`
+	ProviderName string `json:"provider_name"`
+	To           string `json:"to"` // Email or phone for test message
+}
+
+// TestProvider sends a live test message through the calling tenant's own configured provider
+// (mirrors PlatformProviders.TestProvider, but resolved via LoadTenantProviderSettings's
+// tenant-over-platform hierarchy so it tests exactly what a real send for this tenant would use).
+func (h *TenantProviders) TestProvider(w http.ResponseWriter, r *http.Request) {
+	if h.manager == nil {
+		jsonError(w, http.StatusServiceUnavailable, "test connection is not available")
+		return
+	}
+	ctx := r.Context()
+	tenantID := httpware.GetTenantID(ctx)
+	if tenantID == "" {
+		jsonError(w, http.StatusBadRequest, "tenant_id required")
+		return
+	}
+
+	var req testTenantProviderRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.ProviderType == "" || req.ProviderName == "" {
+		jsonError(w, http.StatusBadRequest, "provider_type and provider_name are required")
+		return
+	}
+	if req.ProviderType == "email" && req.To == "" {
+		jsonError(w, http.StatusBadRequest, "to is required to test an email provider")
+		return
+	}
+
+	info, err := h.manager.TestConnection(ctx, tenantID, req.ProviderType, req.ProviderName, req.To)
+	if err != nil {
+		h.logger.Warn("tenant provider test failed",
+			zap.String("tenant_id", tenantID), zap.String("provider", req.ProviderName), zap.Error(err))
+		jsonResponse(w, http.StatusBadRequest, map[string]any{
+			"success": false,
+			"error":   err.Error(),
+			"message": "test connection failed",
+		})
+		return
+	}
+
+	message := "test message sent successfully"
+	if info != nil {
+		message = "connection verified"
+	}
+	jsonResponse(w, http.StatusOK, map[string]any{
+		"success":       true,
+		"provider_type": req.ProviderType,
+		"provider_name": req.ProviderName,
+		"message":       message,
+		"info":          info,
+	})
+}
+
 func parseUUID(s string) uuid.UUID {
 	u, _ := uuid.Parse(s)
 	return u
@@ -469,6 +528,7 @@ func (h *TenantProviders) RegisterTenantProviderRoutes(r chi.Router) {
 		prov.Get("/selected", h.GetSelected)
 		prov.Get("/settings", h.GetProviderSettings)
 		prov.Post("/settings", h.SaveProviderSettings)
+		prov.Post("/test", h.TestProvider)
 	})
 	r.Get("/branding", h.GetBranding)
 	r.Put("/branding", h.UpdateBranding)

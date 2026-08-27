@@ -150,7 +150,7 @@ func New(ctx context.Context) (*App, error) {
 	// decryption at rest; seed it with the resolved primary key.
 	providerManager := providers.NewManager(dbPool, cfg.Postgres, cfg.Providers, keyProvider.Primary(ctx), cfg.App.Env, platformIDStr)
 	platformProviders := handlers.NewPlatformProviders(entClient, log, keyProvider, providerManager)
-	tenantProviders := handlers.NewTenantProviders(entClient, log, platformIDStr, keyProvider)
+	tenantProviders := handlers.NewTenantProviders(entClient, log, platformIDStr, keyProvider, providerManager)
 	encryptionKeyHandler := handlers.NewEncryptionKeyHandler(entClient, log, keyProvider)
 	analyticsHandler := handlers.NewAnalyticsHandler(entClient, log)
 
@@ -303,7 +303,7 @@ func New(ctx context.Context) (*App, error) {
 		return nil, fmt.Errorf("build swagger handler: %w", err)
 	}
 
-	webhookHandler := handlers.NewWebhookHandler(entClient, log)
+	webhookHandler := handlers.NewWebhookHandler(entClient, log, cfg.HTTP.PublicBaseURL)
 	whatsappEmbeddedSignupHandler := handlers.NewWhatsAppEmbeddedSignupHandler(entClient, log, providerManager)
 	httpRouter := router.New(log, healthHandler, notificationHandler, templateHandler, platformProviders, tenantProviders, analyticsHandler, billingHandler, platformBilling, settingsHandler, rbacHandler, authMeHandler, deviceTokenHandler, cfg.Security.APIKey, authMiddleware, authenticator, cfg.HTTP.AllowedOrigins, tenantSyncer, rateLimiter, serviceConfigHandler, whatsappSubsHandler, backupHandler, encryptionKeyHandler, backupDestHandler, notificationPrefsHandler, developerKeyAuth, swaggerHandler, webhookHandler, whatsappEmbeddedSignupHandler)
 

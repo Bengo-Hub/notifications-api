@@ -18,13 +18,28 @@ import (
 // /webhooks/{provider}/... convention for the same reason: the provider calls these directly with
 // no tenant JWT to attach.
 type WebhookHandler struct {
-	client *ent.Client
-	log    *zap.Logger
+	client        *ent.Client
+	log           *zap.Logger
+	publicBaseURL string
 }
 
-// NewWebhookHandler creates the webhook handler.
-func NewWebhookHandler(client *ent.Client, log *zap.Logger) *WebhookHandler {
-	return &WebhookHandler{client: client, log: log.Named("webhooks")}
+// NewWebhookHandler creates the webhook handler. publicBaseURL is this service's own externally
+// reachable base URL, used to compose the callback URLs shown to admins (see Config).
+func NewWebhookHandler(client *ent.Client, log *zap.Logger, publicBaseURL string) *WebhookHandler {
+	return &WebhookHandler{client: client, log: log.Named("webhooks"), publicBaseURL: publicBaseURL}
+}
+
+// Config returns the provider-facing callback URLs and the WhatsApp verify token, so a tenant or
+// platform admin can copy-paste them directly into Meta's WhatsApp Manager / Africa's Talking
+// dashboard instead of having to know or guess these values. Not a secret in the credential sense
+// (it's a handshake string Meta echoes back during webhook verification, not an access token) but
+// still gated behind auth like the rest of Settings, matching GetSecuritySettings.
+func (h *WebhookHandler) Config(w http.ResponseWriter, r *http.Request) {
+	jsonResponse(w, http.StatusOK, map[string]string{
+		"whatsapp_callback_url":           h.publicBaseURL + "/api/v1/webhooks/whatsapp/meta",
+		"whatsapp_verify_token":           metaWebhookVerifyToken(),
+		"africastalking_dlr_callback_url": h.publicBaseURL + "/api/v1/webhooks/africastalking/dlr",
+	})
 }
 
 // AfricasTalkingDLR receives Africa's Talking's SMS delivery report callback (form-encoded: id,

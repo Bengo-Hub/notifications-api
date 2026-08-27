@@ -59,6 +59,10 @@ type HTTPConfig struct {
 	TLSCertFile    string        `envconfig:"HTTP_TLS_CERT_FILE"`
 	TLSKeyFile     string        `envconfig:"HTTP_TLS_KEY_FILE"`
 	AllowedOrigins []string      `envconfig:"HTTP_ALLOWED_ORIGINS" default:"https://notifications.codevertexafrica.com,https://ordering.codevertexafrica.com,https://accounts.codevertexafrica.com,https://theurbanloftcafe.com,http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000"`
+	// PublicBaseURL is this service's own externally-reachable base URL — used to compose
+	// provider-facing callback URLs (WhatsApp/Meta webhook, Africa's Talking DLR) shown to
+	// admins in Settings so they never have to be hand-typed/guessed.
+	PublicBaseURL string `envconfig:"PUBLIC_BASE_URL" default:"https://notificationsapi.codevertexafrica.com"`
 }
 
 type PostgresConfig struct {

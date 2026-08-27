@@ -263,6 +263,9 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 						s.Use(authenticator.RequirePermissions(identity.PermSettingsRead))
 					}
 					s.Get("/security", settings.GetSecuritySettings)
+					if webhooks != nil {
+						s.Get("/webhooks", webhooks.Config)
+					}
 				})
 
 				// Notification-type preferences (per-tenant toggles feeding the worker's

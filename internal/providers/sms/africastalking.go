@@ -152,3 +152,19 @@ func (p *africasTalkingProvider) GetBalance(ctx context.Context) (float64, error
 	}
 	return bal, nil
 }
+
+// AccountInfo confirms the configured credentials are valid by querying Africa's Talking's real
+// account balance (the same call GetBalance makes) — implements providers.AccountInfoProvider so
+// "Test Connection" can confirm connectivity without spending a real SMS.
+func (p *africasTalkingProvider) AccountInfo(ctx context.Context) (map[string]interface{}, error) {
+	balance, err := p.GetBalance(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return map[string]interface{}{
+		"username":    p.cfg.Username,
+		"sender_id":   p.cfg.From,
+		"balance_kes": balance,
+		"environment": p.apiHost(),
+	}, nil
+}

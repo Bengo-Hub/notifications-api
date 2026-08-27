@@ -8,10 +8,10 @@ import (
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 
+	"github.com/bengobox/notifications-api/internal/encryption"
 	"github.com/bengobox/notifications-api/internal/ent"
 	"github.com/bengobox/notifications-api/internal/ent/providersetting"
 	enttenant "github.com/bengobox/notifications-api/internal/ent/tenant"
-	"github.com/bengobox/notifications-api/internal/encryption"
 	"github.com/bengobox/notifications-api/internal/providers"
 )
 
@@ -479,8 +479,8 @@ func (h *PlatformProviders) TestProvider(w http.ResponseWriter, r *http.Request)
 	var req testProviderRequest
 	_ = json.NewDecoder(r.Body).Decode(&req)
 	to := strings.TrimSpace(req.To)
-	if (setting.ProviderType == "email" || setting.ProviderType == "sms") && to == "" {
-		jsonError(w, http.StatusBadRequest, "test endpoint requires \"to\" (email or phone) in request body")
+	if setting.ProviderType == "email" && to == "" {
+		jsonError(w, http.StatusBadRequest, "test endpoint requires \"to\" (email address) in request body")
 		return
 	}
 
@@ -494,7 +494,8 @@ func (h *PlatformProviders) TestProvider(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if err := h.manager.TestConnection(ctx, setting.ProviderType, setting.ProviderName, to); err != nil {
+	info, err := h.manager.TestConnection(ctx, h.manager.PlatformID, setting.ProviderType, setting.ProviderName, to)
+	if err != nil {
 		h.logger.Warn("provider test failed", zap.String("provider", setting.ProviderName), zap.Error(err))
 		jsonResponse(w, http.StatusBadRequest, map[string]any{
 			"success": false,
@@ -504,11 +505,16 @@ func (h *PlatformProviders) TestProvider(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	message := "test message sent successfully"
+	if info != nil {
+		message = "connection verified"
+	}
 	jsonResponse(w, http.StatusOK, map[string]any{
 		"success":       true,
 		"provider_type": setting.ProviderType,
 		"provider_name": setting.ProviderName,
-		"message":       "test message sent successfully",
+		"message":       message,
+		"info":          info,
 	})
 }
 
@@ -619,4 +625,3 @@ func (h *PlatformProviders) GetPlatformProviderSettings(w http.ResponseWriter, r
 		"settings":      result,
 	})
 }
-
