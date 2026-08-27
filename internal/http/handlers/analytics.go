@@ -84,7 +84,7 @@ func (h *AnalyticsHandler) Delivery(w http.ResponseWriter, r *http.Request) {
 		TotalSent:        0,
 		DeliveryRate:     0,
 		ErrorRate:        0,
-		ChannelBreakdown: map[string]int{"email": 0, "sms": 0, "push": 0},
+		ChannelBreakdown: map[string]int{"email": 0, "sms": 0, "whatsapp": 0, "push": 0},
 		TimeSeries:       []TimeSeriesPoint{},
 	}
 
@@ -157,6 +157,13 @@ type ActivityLogEntry struct {
 	Timestamp    string `json:"timestamp"`
 }
 
+// ActivityLogsResponse wraps a page of log entries with the total matching count, so the UI's
+// DataTable can render a real page count instead of guessing from a capped-at-100 page size.
+type ActivityLogsResponse struct {
+	Logs  []ActivityLogEntry `json:"logs"`
+	Total int                `json:"total"`
+}
+
 // Logs returns delivery log entries for the UI monitoring page.
 //
 // @Summary      Delivery log
@@ -167,7 +174,7 @@ type ActivityLogEntry struct {
 // @Param        offset    query     int     false  "Offset for pagination"
 // @Param        channel   query     string  false  "Filter by channel"
 // @Param        status    query     string  false  "Filter by status"
-// @Success      200       {array}   ActivityLogEntry
+// @Success      200       {object}  ActivityLogsResponse
 // @Router       /analytics/logs [get]
 // @Router       /analytics/logs/{tenantId} [get]
 // @Security     bearerAuth
@@ -198,35 +205,42 @@ func (h *AnalyticsHandler) Logs(w http.ResponseWriter, r *http.Request) {
 	channel := r.URL.Query().Get("channel")
 	status := r.URL.Query().Get("status")
 
-	entries := []ActivityLogEntry{}
+	resp := ActivityLogsResponse{Logs: []ActivityLogEntry{}}
 	if h.client == nil {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(entries)
+		json.NewEncoder(w).Encode(resp)
 		return
 	}
 
 	ctx := r.Context()
-	q := h.client.DeliveryLog.Query().
-		Where(deliverylog.TenantID(tenantID)).
-		Order(ent.Desc(deliverylog.FieldCreatedAt)).
-		Offset(offset).
-		Limit(limit)
+	baseQ := h.client.DeliveryLog.Query().Where(deliverylog.TenantID(tenantID))
 	if channel != "" {
-		q = q.Where(deliverylog.Channel(channel))
+		baseQ = baseQ.Where(deliverylog.Channel(channel))
 	}
 	if status != "" {
-		q = q.Where(deliverylog.Status(status))
+		baseQ = baseQ.Where(deliverylog.Status(status))
 	}
-	logs, err := q.All(ctx)
+
+	total, err := baseQ.Clone().Count(ctx)
+	if err != nil {
+		h.log.Warn("delivery logs count failed", zap.Error(err))
+	}
+	resp.Total = total
+
+	logs, err := baseQ.Clone().
+		Order(ent.Desc(deliverylog.FieldCreatedAt)).
+		Offset(offset).
+		Limit(limit).
+		All(ctx)
 	if err != nil {
 		h.log.Warn("delivery logs query failed", zap.Error(err))
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(entries)
+		json.NewEncoder(w).Encode(resp)
 		return
 	}
 
 	for _, l := range logs {
-		entries = append(entries, ActivityLogEntry{
+		resp.Logs = append(resp.Logs, ActivityLogEntry{
 			ID:           l.ID.String(),
 			TemplateName: l.TemplateID,
 			Channel:      l.Channel,
@@ -237,5 +251,5 @@ func (h *AnalyticsHandler) Logs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(entries)
+	json.NewEncoder(w).Encode(resp)
 }
