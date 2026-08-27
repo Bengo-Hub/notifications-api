@@ -55,6 +55,28 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 		api.Get("/readyz", health.Readiness)
 		api.Get("/metrics", health.Metrics)
 
+		// Provider delivery-report webhooks (public — the provider calls these directly, no
+		// tenant JWT to attach). Same convention as treasury-api's /webhooks/{provider}/...
+		// public callback routes. Africa's Talking POSTs delivery reports form-encoded
+		// (id, status, phoneNumber, networkCode, failureReason, retryCount) once a message's
+		// final carrier status is known — logged for now (best-effort visibility only; not yet
+		// correlated back to a delivery_logs row, since that table doesn't store AT's message id
+		// today). AT requires a 200 response or it will retry the callback.
+		api.Route("/webhooks", func(wh chi.Router) {
+			wh.Post("/africastalking/dlr", func(w http.ResponseWriter, r *http.Request) {
+				_ = r.ParseForm()
+				log.Info("africastalking delivery report",
+					zap.String("message_id", r.FormValue("id")),
+					zap.String("status", r.FormValue("status")),
+					zap.String("phone_number", r.FormValue("phoneNumber")),
+					zap.String("network_code", r.FormValue("networkCode")),
+					zap.String("failure_reason", r.FormValue("failureReason")),
+					zap.String("retry_count", r.FormValue("retryCount")),
+				)
+				w.WriteHeader(http.StatusOK)
+			})
+		})
+
 		// Templates — public platform-wide resource (no authentication required)
 		api.Route("/templates", func(tmpl chi.Router) {
 			tmpl.Get("/", templates.List)
