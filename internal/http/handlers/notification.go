@@ -40,6 +40,7 @@ type NotificationHandler struct {
 	billingSvc     *billing.Service
 	whatsappSubSvc *billing.WhatsAppSubscriptionService
 	sandboxStore   *sandbox.Store
+	platformID     string
 }
 
 // SetSandboxStore wires the Redis-backed sandbox message store. Optional — a nil
@@ -83,7 +84,7 @@ func decodeAttachments(in []MessageAttachmentRequest) []messaging.Attachment {
 	return out
 }
 
-func NewNotificationHandler(log *zap.Logger, natsConn *nats.Conn, cache *redis.Client, eventsCfg config.EventsConfig, entClient *ent.Client, upgradeURL string, billingSvc *billing.Service, whatsappSubSvc *billing.WhatsAppSubscriptionService) *NotificationHandler {
+func NewNotificationHandler(log *zap.Logger, natsConn *nats.Conn, cache *redis.Client, eventsCfg config.EventsConfig, entClient *ent.Client, upgradeURL string, billingSvc *billing.Service, whatsappSubSvc *billing.WhatsAppSubscriptionService, platformID string) *NotificationHandler {
 	var rl *ratelimit.Quota
 	if cache != nil {
 		rl = ratelimit.NewQuota(cache)
@@ -98,6 +99,7 @@ func NewNotificationHandler(log *zap.Logger, natsConn *nats.Conn, cache *redis.C
 		upgradeURL:     upgradeURL,
 		billingSvc:     billingSvc,
 		whatsappSubSvc: whatsappSubSvc,
+		platformID:     platformID,
 	}
 }
 
@@ -254,8 +256,10 @@ func (h *NotificationHandler) Enqueue(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Pre-send WhatsApp guard — tenant must have active subscription + quota remaining.
-	if req.Channel == "whatsapp" {
+	// Pre-send WhatsApp guard — tenant must have active subscription + quota remaining. The
+	// platform tenant itself is exempt (see cmd/worker's identical exemption for the real gate);
+	// this is just the early synchronous pre-check for HTTP-enqueued sends.
+	if req.Channel == "whatsapp" && tenant != h.platformID {
 		if tid, err := uuid.Parse(tenant); err == nil {
 			if h.whatsappSubSvc != nil {
 				// Read-only pre-check for the synchronous 402 response. The actual quota counter

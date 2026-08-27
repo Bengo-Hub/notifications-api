@@ -127,7 +127,7 @@ func New(ctx context.Context) (*App, error) {
 	}
 
 	whatsappSubsHandler := handlers.NewWhatsAppSubscriptionHandler(log, whatsappSubsService)
-	notificationHandler := handlers.NewNotificationHandler(log, natsConn, redisClient, cfg.Events, entClient, cfg.Services.SubscriptionsURL, billingService, whatsappSubsService)
+	notificationHandler := handlers.NewNotificationHandler(log, natsConn, redisClient, cfg.Events, entClient, cfg.Services.SubscriptionsURL, billingService, whatsappSubsService, platformIDStr)
 	// Template repository backed by DB + Redis cache (2h TTL)
 	var templateCache *sharedcache.Aside
 	if redisClient != nil {

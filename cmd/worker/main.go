@@ -722,26 +722,34 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 		return nil
 
 	case "whatsapp":
-		// Pre-send subscription/quota gate (applies to BOTH HTTP-enqueued and event-sourced sends).
-		// Skip+ack when the tenant has no active WhatsApp subscription or has exhausted its quota.
-		// CheckQuota also increments the monthly message counter on success.
-		// FAIL-CLOSED: never send WhatsApp without an active subscription/quota. If the
-		// subscription service isn't wired, skip rather than send unmetered.
-		if whatsappSubsSvc == nil {
-			logg.Warn("whatsapp send skipped: subscription service unavailable (fail-closed)",
-				zap.String("tenant_id", tenantID.String()), zap.String("template", msg.TemplateID))
-			return nil
-		}
-		if quotaErr := whatsappSubsSvc.CheckQuota(ctx, tenantID); quotaErr != nil {
-			logg.Warn("whatsapp send skipped: no active subscription/quota",
-				zap.String("tenant_id", tenantID.String()),
-				zap.String("template", msg.TemplateID),
-				zap.Error(quotaErr),
-			)
-			return nil // ack: nothing to retry until the tenant subscribes / quota resets
-		}
-		if err := billingSvc.DeductWhatsAppCredits(ctx, tenantID, len(msg.To), "WhatsApp Delivery"); err != nil {
-			return fmt.Errorf("billing: %w", err)
+		// The platform tenant (codevertex itself) is explicitly exempt from needing a purchased
+		// WhatsApp subscription — every OTHER tenant must have one, active, to send at all. The
+		// platform sends against its own real Meta WhatsApp Business Account directly; there's no
+		// "subscription" to buy from itself, and no separate per-message credit charge either
+		// (mirrors the SMS platform-scope precedent: real-provider-billed, not tenant-wallet-billed).
+		isPlatformTenant := tenantID.String() == pm.PlatformID
+		if !isPlatformTenant {
+			// Pre-send subscription/quota gate (applies to BOTH HTTP-enqueued and event-sourced
+			// sends). Skip+ack when the tenant has no active WhatsApp subscription or has
+			// exhausted its quota. CheckQuota also increments the monthly message counter on
+			// success. FAIL-CLOSED: never send WhatsApp without an active subscription/quota. If
+			// the subscription service isn't wired, skip rather than send unmetered.
+			if whatsappSubsSvc == nil {
+				logg.Warn("whatsapp send skipped: subscription service unavailable (fail-closed)",
+					zap.String("tenant_id", tenantID.String()), zap.String("template", msg.TemplateID))
+				return nil
+			}
+			if quotaErr := whatsappSubsSvc.CheckQuota(ctx, tenantID); quotaErr != nil {
+				logg.Warn("whatsapp send skipped: no active subscription/quota",
+					zap.String("tenant_id", tenantID.String()),
+					zap.String("template", msg.TemplateID),
+					zap.Error(quotaErr),
+				)
+				return nil // ack: nothing to retry until the tenant subscribes / quota resets
+			}
+			if err := billingSvc.DeductWhatsAppCredits(ctx, tenantID, len(msg.To), "WhatsApp Delivery"); err != nil {
+				return fmt.Errorf("billing: %w", err)
+			}
 		}
 
 		waProv, err := pm.GetWhatsAppProvider(ctx, providerTenantID, preferred)
