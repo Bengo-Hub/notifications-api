@@ -101,6 +101,13 @@ func (h *PreferencesHandler) List(w http.ResponseWriter, r *http.Request) {
 			enabled = parsePrefBool(v, def)
 			overridden = true
 		}
+		channels := channelsByKey[t.Key]
+		if channels == nil {
+			// A nil slice marshals to JSON `null`, not `[]` — the frontend iterates/joins/
+			// .includes()'s this field unconditionally, so `null` would throw client-side for
+			// any type with no matching template file found.
+			channels = []string{}
+		}
 		out = append(out, preferenceRow{
 			Key:        t.Key,
 			Label:      t.Label,
@@ -109,7 +116,7 @@ func (h *PreferencesHandler) List(w http.ResponseWriter, r *http.Request) {
 			Default:    def,
 			Enabled:    enabled,
 			Overridden: overridden,
-			Channels:   channelsByKey[t.Key],
+			Channels:   channels,
 		})
 	}
 	respondJSON(w, http.StatusOK, map[string]any{"data": out, "total": len(out)})
