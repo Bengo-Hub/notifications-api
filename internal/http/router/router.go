@@ -20,7 +20,7 @@ import (
 	"github.com/bengobox/notifications-api/internal/modules/tenant"
 )
 
-func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handlers.NotificationHandler, templates *handlers.TemplateHandler, platformProviders *handlers.PlatformProviders, tenantProviders *handlers.TenantProviders, analytics *handlers.AnalyticsHandler, billing *handlers.BillingHandler, platformBilling *handlers.PlatformBilling, settings *handlers.SettingsHandler, rbacHandler *handlers.RBACHandler, authMeHandler *handlers.AuthMeHandler, deviceTokens *handlers.DeviceTokenHandler, apiKey string, authMiddleware *authclient.AuthMiddleware, authenticator *identityhandler.Authenticator, allowedOrigins []string, tenantSyncer *tenant.Syncer, rateLimiter *ratelimit.Quota, serviceConfig *handlers.ServiceConfigHandler, whatsappSubs *handlers.WhatsAppSubscriptionHandler, backups *handlers.BackupHandler, encryptionKey *handlers.EncryptionKeyHandler, backupDest *handlers.BackupDestinationHandler, notificationPrefs *handlers.PreferencesHandler, developerKeyAuth *devauth.DeveloperKeyAuth, swaggerHandler *handlers.SwaggerHandler) http.Handler {
+func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handlers.NotificationHandler, templates *handlers.TemplateHandler, platformProviders *handlers.PlatformProviders, tenantProviders *handlers.TenantProviders, analytics *handlers.AnalyticsHandler, billing *handlers.BillingHandler, platformBilling *handlers.PlatformBilling, settings *handlers.SettingsHandler, rbacHandler *handlers.RBACHandler, authMeHandler *handlers.AuthMeHandler, deviceTokens *handlers.DeviceTokenHandler, apiKey string, authMiddleware *authclient.AuthMiddleware, authenticator *identityhandler.Authenticator, allowedOrigins []string, tenantSyncer *tenant.Syncer, rateLimiter *ratelimit.Quota, serviceConfig *handlers.ServiceConfigHandler, whatsappSubs *handlers.WhatsAppSubscriptionHandler, backups *handlers.BackupHandler, encryptionKey *handlers.EncryptionKeyHandler, backupDest *handlers.BackupDestinationHandler, notificationPrefs *handlers.PreferencesHandler, developerKeyAuth *devauth.DeveloperKeyAuth, swaggerHandler *handlers.SwaggerHandler, webhooks *handlers.WebhookHandler) http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RealIP)
@@ -55,27 +55,17 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 		api.Get("/readyz", health.Readiness)
 		api.Get("/metrics", health.Metrics)
 
-		// Provider delivery-report webhooks (public — the provider calls these directly, no
-		// tenant JWT to attach). Same convention as treasury-api's /webhooks/{provider}/...
-		// public callback routes. Africa's Talking POSTs delivery reports form-encoded
-		// (id, status, phoneNumber, networkCode, failureReason, retryCount) once a message's
-		// final carrier status is known — logged for now (best-effort visibility only; not yet
-		// correlated back to a delivery_logs row, since that table doesn't store AT's message id
-		// today). AT requires a 200 response or it will retry the callback.
-		api.Route("/webhooks", func(wh chi.Router) {
-			wh.Post("/africastalking/dlr", func(w http.ResponseWriter, r *http.Request) {
-				_ = r.ParseForm()
-				log.Info("africastalking delivery report",
-					zap.String("message_id", r.FormValue("id")),
-					zap.String("status", r.FormValue("status")),
-					zap.String("phone_number", r.FormValue("phoneNumber")),
-					zap.String("network_code", r.FormValue("networkCode")),
-					zap.String("failure_reason", r.FormValue("failureReason")),
-					zap.String("retry_count", r.FormValue("retryCount")),
-				)
-				w.WriteHeader(http.StatusOK)
+		// Provider-initiated webhooks (public — the provider calls these directly, no tenant JWT
+		// to attach). Same convention as treasury-api's /webhooks/{provider}/... public callback
+		// routes. See handlers.WebhookHandler for AT's SMS delivery-report format and Meta's
+		// WhatsApp verification handshake + incoming message/status notification format.
+		if webhooks != nil {
+			api.Route("/webhooks", func(wh chi.Router) {
+				wh.Post("/africastalking/dlr", webhooks.AfricasTalkingDLR)
+				wh.Get("/whatsapp/meta", webhooks.WhatsAppVerify)
+				wh.Post("/whatsapp/meta", webhooks.WhatsAppIncoming)
 			})
-		})
+		}
 
 		// Templates — public platform-wide resource (no authentication required)
 		api.Route("/templates", func(tmpl chi.Router) {
