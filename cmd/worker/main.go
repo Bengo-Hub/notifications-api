@@ -20,6 +20,7 @@ import (
 	serviceclient "github.com/Bengo-Hub/shared-service-client"
 
 	entdb "github.com/bengobox/notifications-api/internal/database"
+	"github.com/bengobox/notifications-api/internal/ent"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
@@ -39,6 +40,30 @@ import (
 	"github.com/bengobox/notifications-api/internal/modules/preferences"
 	"github.com/bengobox/notifications-api/internal/modules/tenant"
 )
+
+// recordDeliveryLog writes an audit-trail row for a message this worker just attempted to
+// deliver — mirrors internal/http/handlers/notification.go's recordDeliveryLog exactly (same
+// table/status vocabulary: "sent"/"failed"), but that function is unexported and lives in a
+// different package, and this is the ONLY other place a real send is attempted (every
+// domain-event consumer in this binary funnels through deliver()), so before this the async path
+// had zero persistent record of what it actually did — only an ephemeral log line, gone once the
+// pod's log buffer rotated. Best-effort: a logging failure must never affect ack/nak decisions.
+func recordDeliveryLog(ctx context.Context, client *ent.Client, tenantID, templateID, channel, status string, to []string) {
+	if client == nil || len(to) == 0 {
+		return
+	}
+	for _, recipient := range to {
+		if _, err := client.DeliveryLog.Create().
+			SetTenantID(tenantID).
+			SetTemplateID(templateID).
+			SetChannel(channel).
+			SetRecipient(recipient).
+			SetStatus(status).
+			Save(ctx); err != nil {
+			return
+		}
+	}
+}
 
 // maxDeliveryAttempts caps how many times the worker tries to DELIVER a single
 // notification before dead-lettering it. One attempt only: the deliver() path
@@ -233,6 +258,7 @@ func main() {
 					zap.Uint64("attempts", attempt),
 					zap.Error(deliverErr),
 				)
+				recordDeliveryLog(ctx, client, msg.TenantID, msg.TemplateID, msg.Channel, "failed", msg.To)
 				_ = m.Ack() // dead-letter: do not redeliver and hammer a blocked/rate-limited provider
 			} else {
 				// NAck triggers redelivery after AckWait (30s) — only reachable if maxDeliveryAttempts is raised >1
@@ -241,6 +267,7 @@ func main() {
 			return
 		}
 
+		recordDeliveryLog(ctx, client, msg.TenantID, msg.TemplateID, msg.Channel, "sent", msg.To)
 		logg.Info("message delivered",
 			zap.String("channel", msg.Channel),
 			zap.String("template", msg.TemplateID),
