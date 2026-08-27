@@ -311,18 +311,48 @@ func (s *WhatsAppSubscriptionService) CheckQuota(ctx context.Context, tenantID u
 	return nil
 }
 
-// SeedDefaultPlans creates the 3 default plans if they don't exist.
+// metaWhatsAppCostPerMessageKES is the ONE centralized estimate of what Meta actually charges per
+// business-initiated (template) WhatsApp message sent to a Kenyan recipient — every WhatsAppPlan's
+// ProviderCost is derived from this single number rather than being independently guessed per
+// plan, so a real-rate correction only ever needs to change one value.
+//
+// This is a documented ESTIMATE, not a verified live figure: Meta's WhatsApp Business Platform
+// bills per business-initiated message (marketing/utility/authentication categories; customer-
+// initiated "service" replies within an open 24h window are free), the exact rate varies by the
+// RECIPIENT's country (not the sending business's), and Meta revises pricing periodically. Verify
+// the current real rate from WhatsApp Manager → your WABA → Overview (or Meta's published pricing
+// page) before treating this as final, and update it here if it's materially off — every plan's
+// ProviderCost recomputes from this single constant via RecomputeProviderCosts.
+const metaWhatsAppCostPerMessageKES = 0.90
+
+// proWhatsAppTypicalMonthlyMessages is the assumed typical usage used to estimate the Pro plan's
+// provider cost, since Pro's MessagesPerMonth is 0 (unlimited) and there's no fixed quota to
+// multiply by. Purely for cost-tracking/margin visibility — Pro's actual real cost varies with
+// each tenant's real usage and is not itself gated by this number.
+const proWhatsAppTypicalMonthlyMessages = 2000
+
+// planProviderCost derives a plan's estimated monthly provider cost from the single centralized
+// per-message rate above — the ONE place this computation happens, so every caller (seeding a new
+// plan, recomputing an existing one) always agrees.
+func planProviderCost(messagesPerMonth int) float64 {
+	if messagesPerMonth <= 0 { // 0 = unlimited
+		return proWhatsAppTypicalMonthlyMessages * metaWhatsAppCostPerMessageKES
+	}
+	return float64(messagesPerMonth) * metaWhatsAppCostPerMessageKES
+}
+
+// SeedDefaultPlans creates the 3 default plans if they don't exist. Provider cost is always
+// derived from planProviderCost (the centralized Meta-rate estimate), never hardcoded per plan.
 func (s *WhatsAppSubscriptionService) SeedDefaultPlans(ctx context.Context) error {
 	defaults := []struct {
-		name     string
-		slug     string
-		price    float64
-		provCost float64
-		msgs     int
+		name  string
+		slug  string
+		price float64
+		msgs  int
 	}{
-		{"Basic", "basic", 500, 300, 100},
-		{"Standard", "standard", 1000, 600, 500},
-		{"Pro", "pro", 2000, 1200, 0},
+		{"Basic", "basic", 500, 100},
+		{"Standard", "standard", 1000, 500},
+		{"Pro", "pro", 2000, 0},
 	}
 
 	for _, d := range defaults {
@@ -339,7 +369,7 @@ func (s *WhatsAppSubscriptionService) SeedDefaultPlans(ctx context.Context) erro
 			SetName(d.name).
 			SetSlug(d.slug).
 			SetPriceMonthly(d.price).
-			SetProviderCost(d.provCost).
+			SetProviderCost(planProviderCost(d.msgs)).
 			SetMessagesPerMonth(d.msgs).
 			SetIsActive(true).
 			Save(ctx)
@@ -347,6 +377,29 @@ func (s *WhatsAppSubscriptionService) SeedDefaultPlans(ctx context.Context) erro
 			return fmt.Errorf("seed plan %s: %w", d.slug, err)
 		}
 		s.log.Info("seeded whatsapp plan", zap.String("slug", d.slug))
+	}
+	return nil
+}
+
+// RecomputeProviderCosts re-derives every existing plan's ProviderCost from the current
+// metaWhatsAppCostPerMessageKES estimate — the one place to re-sync live plan rows after that
+// constant is corrected against a real verified Meta rate (SeedDefaultPlans only ever creates
+// missing plans, it never updates ones that already exist).
+func (s *WhatsAppSubscriptionService) RecomputeProviderCosts(ctx context.Context) error {
+	plans, err := s.client.WhatsAppPlan.Query().All(ctx)
+	if err != nil {
+		return fmt.Errorf("list plans: %w", err)
+	}
+	for _, p := range plans {
+		cost := planProviderCost(p.MessagesPerMonth)
+		if cost == p.ProviderCost {
+			continue
+		}
+		if _, err := p.Update().SetProviderCost(cost).Save(ctx); err != nil {
+			return fmt.Errorf("update plan %s provider cost: %w", p.Slug, err)
+		}
+		s.log.Info("recomputed whatsapp plan provider cost",
+			zap.String("slug", p.Slug), zap.Float64("old_cost", p.ProviderCost), zap.Float64("new_cost", cost))
 	}
 	return nil
 }

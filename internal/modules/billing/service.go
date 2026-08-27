@@ -111,13 +111,17 @@ type rateInfo struct {
 	ProviderCost float64
 }
 
-// getRateInfo resolves rate + provider cost for a channel.
-func (s *Service) getRateInfo(ctx context.Context, tenantID uuid.UUID, creditType string) (rateInfo, error) {
+// getSMSRateInfo resolves the SMS rate + provider cost for a tenant (tenant-specific TenantCredit
+// override, else the platform PlatformBilling default, else a hardcoded last-resort fallback).
+// Credits are an SMS-only wallet — WhatsApp is billed via subscription plans instead (see
+// WhatsAppSubscriptionService / docs/sprints/notifications-billing-sprint.md), never a per-message
+// credit deduction, so this is SMS-specific rather than generically parameterized by channel.
+func (s *Service) getSMSRateInfo(ctx context.Context, tenantID uuid.UUID) (rateInfo, error) {
 	// Try tenant-specific rate first
 	tc, err := s.client.TenantCredit.Query().
 		Where(
 			tenantcredit.TenantIDEQ(tenantID),
-			tenantcredit.TypeEQ(tenantcredit.Type(creditType)),
+			tenantcredit.TypeEQ(tenantcredit.TypeSMS),
 		).
 		Only(ctx)
 	if err == nil && tc.Rate > 0 {
@@ -125,11 +129,7 @@ func (s *Service) getRateInfo(ctx context.Context, tenantID uuid.UUID, creditTyp
 		pb, _ := s.client.PlatformBilling.Query().First(ctx)
 		var provCost float64
 		if pb != nil {
-			if creditType == "SMS" {
-				provCost = pb.ProviderCostPerSms
-			} else {
-				provCost = pb.ProviderCostPerWhatsapp
-			}
+			provCost = pb.ProviderCostPerSms
 		}
 		return rateInfo{Rate: tc.Rate, ProviderCost: provCost}, nil
 	}
@@ -137,22 +137,15 @@ func (s *Service) getRateInfo(ctx context.Context, tenantID uuid.UUID, creditTyp
 	// Platform default
 	pb, err := s.client.PlatformBilling.Query().First(ctx)
 	if err != nil {
-		if creditType == "SMS" {
-			return rateInfo{Rate: 1.0, ProviderCost: 0.5}, nil
-		}
-		return rateInfo{Rate: 2.0, ProviderCost: 0.8}, nil
+		return rateInfo{Rate: 1.0, ProviderCost: 0.5}, nil
 	}
-
-	if creditType == "SMS" {
-		return rateInfo{Rate: pb.CostPerSms, ProviderCost: pb.ProviderCostPerSms}, nil
-	}
-	return rateInfo{Rate: pb.CostPerWhatsapp, ProviderCost: pb.ProviderCostPerWhatsapp}, nil
+	return rateInfo{Rate: pb.CostPerSms, ProviderCost: pb.ProviderCostPerSms}, nil
 }
 
 // DeductSMSCredits calculates segments and deducts credits for SMS delivery using resolved rates.
 func (s *Service) DeductSMSCredits(ctx context.Context, tenantID uuid.UUID, body string, recipientCount int, description string) error {
 	segments := s.segment.CountSMSSegments(body)
-	ri, err := s.getRateInfo(ctx, tenantID, "SMS")
+	ri, err := s.getSMSRateInfo(ctx, tenantID)
 	if err != nil {
 		return fmt.Errorf("resolve rate: %w", err)
 	}
@@ -171,28 +164,6 @@ func (s *Service) DeductSMSCredits(ctx context.Context, tenantID uuid.UUID, body
 	)
 
 	return s.deductCreditsWithCost(ctx, tenantID, "SMS", totalAmount, providerCost, description)
-}
-
-// DeductWhatsAppCredits deducts credits for WhatsApp delivery using resolved rates.
-func (s *Service) DeductWhatsAppCredits(ctx context.Context, tenantID uuid.UUID, recipientCount int, description string) error {
-	ri, err := s.getRateInfo(ctx, tenantID, "WHATSAPP")
-	if err != nil {
-		return fmt.Errorf("resolve rate: %w", err)
-	}
-
-	units := float64(recipientCount)
-	totalAmount := ri.Rate * units
-	providerCost := ri.ProviderCost * units
-
-	s.log.Debug("deducting whatsapp credits",
-		zap.String("tenant_id", tenantID.String()),
-		zap.Int("recipients", recipientCount),
-		zap.Float64("rate", ri.Rate),
-		zap.Float64("total_amount", totalAmount),
-		zap.Float64("provider_cost", providerCost),
-	)
-
-	return s.deductCreditsWithCost(ctx, tenantID, "WHATSAPP", totalAmount, providerCost, description)
 }
 
 // TotalOutstandingBalance sums every tenant's wallet balance for a credit type (e.g. "SMS") —

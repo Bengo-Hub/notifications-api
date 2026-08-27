@@ -121,9 +121,15 @@ func New(ctx context.Context) (*App, error) {
 	billingService := billing.NewService(entClient, log, treasuryClient)
 	whatsappSubsService := billing.NewWhatsAppSubscriptionService(entClient, log, treasuryClient, cfg.Security.APIKey)
 
-	// Seed default WhatsApp plans on startup
+	// Seed default WhatsApp plans on startup, then re-sync their provider-cost estimates against
+	// the current centralized Meta-rate constant (SeedDefaultPlans only creates missing plans, it
+	// never updates ones that already exist — this is the idempotent self-correction step so a
+	// rate-constant fix takes effect on already-seeded plans without a manual one-off run).
 	if seedErr := whatsappSubsService.SeedDefaultPlans(ctx); seedErr != nil {
 		log.Warn("failed to seed default whatsapp plans", zap.Error(seedErr))
+	}
+	if recomputeErr := whatsappSubsService.RecomputeProviderCosts(ctx); recomputeErr != nil {
+		log.Warn("failed to recompute whatsapp plan provider costs", zap.Error(recomputeErr))
 	}
 
 	whatsappSubsHandler := handlers.NewWhatsAppSubscriptionHandler(log, whatsappSubsService)

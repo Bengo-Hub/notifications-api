@@ -12,7 +12,6 @@ import (
 	"sync"
 	"syscall"
 	"time"
-	"fmt"
 
 	"github.com/google/uuid"
 
@@ -739,6 +738,15 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 					zap.String("tenant_id", tenantID.String()), zap.String("template", msg.TemplateID))
 				return nil
 			}
+			// The WhatsAppPlan subscription (checked above) is the ONE, centralized billing
+			// mechanism for WhatsApp — a monthly fee for a bundled message quota, matching how
+			// this platform's plan pricing is actually set (see docs/sprints/notifications-billing-
+			// sprint.md). There used to ALSO be a per-message TenantCredit/PlatformBilling
+			// deduction here (billingSvc.DeductWhatsAppCredits) — a second, independent charge a
+			// tenant would need to separately fund on top of their subscription, which nothing
+			// ever surfaced as a real product (no tenant has ever had a WHATSAPP-type TenantCredit
+			// balance) and which the platform tenant's exemption above would have made
+			// inconsistent to reason about. Removed rather than left redundant.
 			if quotaErr := whatsappSubsSvc.CheckQuota(ctx, tenantID); quotaErr != nil {
 				logg.Warn("whatsapp send skipped: no active subscription/quota",
 					zap.String("tenant_id", tenantID.String()),
@@ -746,9 +754,6 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 					zap.Error(quotaErr),
 				)
 				return nil // ack: nothing to retry until the tenant subscribes / quota resets
-			}
-			if err := billingSvc.DeductWhatsAppCredits(ctx, tenantID, len(msg.To), "WhatsApp Delivery"); err != nil {
-				return fmt.Errorf("billing: %w", err)
 			}
 		}
 

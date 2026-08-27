@@ -1,7 +1,23 @@
 # Sprint Doc: Credit-Based Notifications (SMS/WhatsApp)
 
+> **Superseded for WhatsApp (2026-08-27):** this sprint's original plan billed WhatsApp through the
+> same per-message `TenantCredit` wallet as SMS. That was actually built (`DeductWhatsAppCredits`,
+> a `WHATSAPP` `TenantCredit`/`CreditTransaction` type) but never became the real product — a
+> separate `WhatsAppPlan`/`TenantWhatsAppSubscription` system (monthly fee, bundled message quota,
+> `CheckQuota` gate) was built later and became the actual enforced gate, leaving two parallel,
+> redundant WhatsApp billing mechanisms live at once (no tenant ever had a `WHATSAPP`-type credit
+> balance, so the wallet path was silently inert). Removed the redundant credit-deduction call and
+> the credits-page WhatsApp tile so there's exactly one real WhatsApp billing model. **Current,
+> correct state: SMS is credit-wallet billed (this doc, still accurate for SMS); WhatsApp is
+> subscription-plan billed (`internal/modules/billing/whatsapp_subscription.go`,
+> `/billing/whatsapp` in notifications-ui) — every tenant needs an active subscription to send
+> WhatsApp at all, except the platform tenant itself, which is fully exempt (sends directly against
+> the platform's own real Meta WhatsApp Business Account, no subscription or credit charge).** The
+> rest of this document is left as the historical SMS-credit design record; read `WHATSAPP` in the
+> schema/UI sections below as no longer how WhatsApp is actually billed.
+
 ## Overview
-Implement a credit-based billing system for SMS and WhatsApp notifications. Tenants must purchase credits at platform-set rates to send messages. Email remains free.
+Implement a credit-based billing system for SMS notifications. Tenants must purchase credits at platform-set rates to send messages. Email remains free. (WhatsApp was originally planned to share this same wallet — see the superseded-by note above for why that changed.)
 
 ## Objectives
 1.  **Backend (Subscriptions-API)**:
