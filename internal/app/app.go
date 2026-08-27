@@ -118,7 +118,7 @@ func New(ctx context.Context) (*App, error) {
 	platformIDStr := platformID.String()
 
 	healthHandler := handlers.NewHealthHandler(log, dbPool, redisClient, natsConn)
-	billingService := billing.NewService(entClient, log, treasuryClient)
+	billingService := billing.NewService(entClient, log, treasuryClient, cfg.Security.APIKey)
 	whatsappSubsService := billing.NewWhatsAppSubscriptionService(entClient, log, treasuryClient, cfg.Security.APIKey)
 
 	// Seed default WhatsApp plans on startup, then re-sync their provider-cost estimates against

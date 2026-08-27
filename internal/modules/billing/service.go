@@ -23,15 +23,21 @@ type Service struct {
 	log            *zap.Logger
 	segment        *SegmentService
 	treasuryClient *serviceclient.Client
+	treasuryAPIKey string
 }
 
-// NewService creates a new billing service.
-func NewService(client *ent.Client, log *zap.Logger, treasuryClient *serviceclient.Client) *Service {
+// NewService creates a new billing service. treasuryAPIKey is the shared INTERNAL_SERVICE_KEY
+// sent as X-API-Key on S2S calls to treasury-api (mirrors NewWhatsAppSubscriptionService's
+// identical param — InitiateTopUp calls the exact same treasury payment-intents endpoint and
+// needs the same auth, which it was never given: a live top-up attempt 401'd at treasury with
+// "missing bearer token or API key" before this was wired in).
+func NewService(client *ent.Client, log *zap.Logger, treasuryClient *serviceclient.Client, treasuryAPIKey string) *Service {
 	return &Service{
 		client:         client,
 		log:            log.Named("billing.service"),
 		segment:        NewSegmentService(),
 		treasuryClient: treasuryClient,
+		treasuryAPIKey: treasuryAPIKey,
 	}
 }
 
@@ -74,7 +80,11 @@ func (s *Service) InitiateTopUp(ctx context.Context, in TopUpInput) (*TopUpResul
 		},
 	}
 
-	resp, err := s.treasuryClient.Post(ctx, fmt.Sprintf("/api/v1/%s/payments/intents", in.TenantID), req, nil)
+	var treasuryHeaders map[string]string
+	if s.treasuryAPIKey != "" {
+		treasuryHeaders = map[string]string{"X-API-Key": s.treasuryAPIKey}
+	}
+	resp, err := s.treasuryClient.Post(ctx, fmt.Sprintf("/api/v1/%s/payments/intents", in.TenantID), req, treasuryHeaders)
 	if err != nil {
 		return nil, fmt.Errorf("treasury api error: %w", err)
 	}

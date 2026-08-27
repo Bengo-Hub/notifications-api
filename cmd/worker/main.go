@@ -59,7 +59,7 @@ func subscribeWithRetry(ctx context.Context, js nats.JetStreamContext, logg *zap
 		for attempt := 1; attempt <= maxAttempts; attempt++ {
 			_, err := subscribeFn()
 			if err == nil {
-				logg.Info(name+" subscription established")
+				logg.Info(name + " subscription established")
 				return
 			}
 			if attempt == maxAttempts {
@@ -137,7 +137,7 @@ func main() {
 	treasuryCfg := serviceclient.DefaultConfig(cfg.Services.TreasuryAPI, "treasury-api", logg)
 	treasuryClient := serviceclient.New(treasuryCfg)
 
-	billingSvc := billing.NewService(client, logg, treasuryClient)
+	billingSvc := billing.NewService(client, logg, treasuryClient, cfg.Security.APIKey)
 	whatsappSubsSvc := billing.NewWhatsAppSubscriptionService(client, logg, treasuryClient, cfg.Security.APIKey)
 	dbPool, err := database.NewPool(ctx, cfg.Postgres)
 	if err != nil {
@@ -668,7 +668,9 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 		// block an OTP or a security alert; the send itself would still fail cleanly if the real
 		// balance is genuinely insufficient, now correctly surfaced instead of silently swallowed).
 		if msg.EffectiveSenderScope() == messaging.SenderScopePlatform {
-			if balProv, ok := smsProv.(interface{ GetBalance(context.Context) (float64, error) }); ok {
+			if balProv, ok := smsProv.(interface {
+				GetBalance(context.Context) (float64, error)
+			}); ok {
 				if bal, balErr := balProv.GetBalance(ctx); balErr == nil && bal <= 0 {
 					logg.Warn("sms send skipped: real provider account balance is zero (platform-scope, not tenant-billed)",
 						zap.String("template", msg.TemplateID))
@@ -761,7 +763,7 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 		if err != nil {
 			return err
 		}
-		
+
 		waMetadata := make(map[string]interface{})
 		for k, v := range msg.Metadata {
 			waMetadata[k] = v
