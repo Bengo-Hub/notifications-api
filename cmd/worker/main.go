@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 	"fmt"
@@ -440,6 +441,39 @@ func verificationExemptTemplate(templateID string) bool {
 // unverifiedUserRecipients returns the subset of `to` that map to a KNOWN local user whose
 // email is not verified. Addresses with no user row (end customers, tenant contact_email,
 // suppliers) are never returned — user-level gating must not touch them.
+var (
+	platformCCEmailMu      sync.Mutex
+	platformCCEmailValue   string
+	platformCCEmailExpires time.Time
+)
+
+// platformCCEmail returns the platform-wide BCC address (config key
+// notifications.platform_cc_email, tenant_id=nil), cached in-process for 60s so the hot
+// send path isn't a DB round-trip per email. Fail-open (empty string, no BCC applied) on
+// any lookup error or when the setting hasn't been configured — this is a monitoring
+// nice-to-have, never something that should block or retry a real send.
+func platformCCEmail(ctx context.Context, db *pgxpool.Pool) string {
+	platformCCEmailMu.Lock()
+	defer platformCCEmailMu.Unlock()
+	if time.Now().Before(platformCCEmailExpires) {
+		return platformCCEmailValue
+	}
+	platformCCEmailExpires = time.Now().Add(60 * time.Second)
+	platformCCEmailValue = ""
+	if db == nil {
+		return ""
+	}
+	var val string
+	err := db.QueryRow(ctx,
+		`SELECT config_value FROM service_configs WHERE config_key = 'notifications.platform_cc_email' AND tenant_id IS NULL`,
+	).Scan(&val)
+	if err != nil {
+		return ""
+	}
+	platformCCEmailValue = strings.TrimSpace(val)
+	return platformCCEmailValue
+}
+
 func unverifiedUserRecipients(ctx context.Context, db *pgxpool.Pool, to []string) map[string]bool {
 	drop := map[string]bool{}
 	if db == nil || len(to) == 0 {
@@ -573,8 +607,25 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 		// spam signal found in the 2026-08-19 deliverability audit.
 		plainTextBody := email.HTMLToPlainText(rendered)
 
+		// Platform oversight copy: every client/tenant-facing email also gets a silent BCC to
+		// the platform's own notifications inbox (config key notifications.platform_cc_email,
+		// tenant_id=nil — platform admin-settable via PUT /platform/config/{key}), so the team
+		// keeps visibility on what actually goes out to tenants/customers, on top of the
+		// existing per-template professional From/Reply-To addresses. BCC, not a visible CC —
+		// a customer-facing invoice/receipt should not expose an internal monitoring address in
+		// its headers. Never applied to Locked-class templates (OTP/password-reset/welcome):
+		// those already exist specifically to carry a live credential/reset link, so copying
+		// them into a second, more broadly-accessible inbox would be a real security regression,
+		// not an oversight improvement.
+		outboundBcc := msg.Bcc
+		if !preferences.IsLocked(msg.TemplateID) {
+			if ccEmail := platformCCEmail(ctx, dbPool); ccEmail != "" {
+				outboundBcc = append(append([]string{}, msg.Bcc...), ccEmail)
+			}
+		}
+
 		emailProv, _ := pm.GetEmailProvider(ctx, providerTenantID, preferred)
-		err := emailProv.SendEmail(ctx, fromOverride, validTo, msg.Cc, msg.Bcc, replyTo, subject, rendered, plainTextBody, atts)
+		err := emailProv.SendEmail(ctx, fromOverride, validTo, msg.Cc, outboundBcc, replyTo, subject, rendered, plainTextBody, atts)
 		if err != nil {
 			if providerTenantID != pm.PlatformID && isAuthFailureError(err) {
 				eg.CoolProvider(providerTenantID, 30*time.Minute)

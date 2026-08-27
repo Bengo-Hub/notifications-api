@@ -701,6 +701,7 @@ func seedServiceConfigs(ctx context.Context, client *ent.Client) {
 		{"notifications.daily_send_limit", "10000", "int", "Default daily send limit per tenant", false},
 		{"notifications.webhook_timeout_seconds", "10", "int", "Timeout for webhook deliveries", false},
 		{"notifications.log_retention_days", "90", "int", "Number of days to retain delivery logs", false},
+		{"notifications.platform_cc_email", "", "string", "Platform inbox silently BCC'd on every client/tenant-facing email (blank = disabled). Never applied to security-critical templates (OTP, password reset, welcome).", false},
 	}
 
 	for _, c := range configs {
