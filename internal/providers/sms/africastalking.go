@@ -1,11 +1,11 @@
 package sms
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
+	"strings"
 	"time"
 )
 
@@ -36,17 +36,26 @@ func (p *africasTalkingProvider) SendSMS(ctx context.Context, from string, to []
 	if from == "" {
 		from = p.cfg.From
 	}
-	payload := map[string]any{
-		"username": p.cfg.Username,
-		"to":       to,
-		"message":  body,
-	}
+	form := url.Values{}
+	form.Set("username", p.cfg.Username)
+	form.Set("to", strings.Join(to, ","))
+	form.Set("message", body)
 	if from != "" {
-		payload["from"] = from
+		form.Set("from", from)
 	}
-	b, _ := json.Marshal(payload)
-	req, _ := http.NewRequestWithContext(ctx, http.MethodPost, "https://api.africastalking.com/version1/messaging", bytes.NewReader(b))
-	req.Header.Set("Content-Type", "application/json")
+	// Africa's Talking's /version1/messaging endpoint only accepts
+	// application/x-www-form-urlencoded (confirmed directly against their live API — a
+	// JSON body is rejected outright with 415 before auth is even checked, so this was
+	// silently failing every real send). The sandbox app username is always literally
+	// "sandbox", which only exists on the separate api.sandbox.* host — a sandbox-configured
+	// provider hitting the production host would fail auth even with the fix above.
+	apiHost := "https://api.africastalking.com"
+	if p.cfg.Username == "sandbox" {
+		apiHost = "https://api.sandbox.africastalking.com"
+	}
+	req, _ := http.NewRequestWithContext(ctx, http.MethodPost, apiHost+"/version1/messaging", strings.NewReader(form.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Accept", "application/json")
 	req.Header.Set("apiKey", p.cfg.APIKey)
 	resp, err := p.cl.Do(req)
 	if err != nil {
