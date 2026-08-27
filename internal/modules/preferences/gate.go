@@ -37,10 +37,13 @@ func NewGate(client *ent.Client, cache *redis.Client, log *zap.Logger) *Gate {
 	return &Gate{client: client, cache: cache, log: log.Named("notification-gate")}
 }
 
-// Enabled reports whether templateID may be delivered for the tenant. tenantID should
-// be the resolved tenant UUID string; an empty/unparseable tenant skips the tenant
-// override layer (platform default + registry still apply).
-func (g *Gate) Enabled(ctx context.Context, tenantID, templateID string) bool {
+// Enabled reports whether templateID may be delivered for the tenant on the given channel.
+// tenantID should be the resolved tenant UUID string; an empty/unparseable tenant skips the
+// tenant override layer (platform default + registry still apply). channel is optional — pass
+// "" to check only the type-level toggle (e.g. the settings UI, which shows channel selection
+// separately); the worker's real dispatch path always passes the message's actual channel so a
+// tenant that unchecked, say, SMS for a type that also sends email doesn't get gated entirely.
+func (g *Gate) Enabled(ctx context.Context, tenantID, templateID, channel string) bool {
 	if templateID == "" {
 		return true
 	}
@@ -51,7 +54,10 @@ func (g *Gate) Enabled(ctx context.Context, tenantID, templateID string) bool {
 	cacheKey := "notifprefs:" + tenantID + ":" + templateID
 	if g.cache != nil {
 		if v, err := g.cache.Get(ctx, cacheKey).Result(); err == nil {
-			return v == "1"
+			if v != "1" {
+				return false
+			}
+			return g.channelEnabled(ctx, tenantID, templateID, channel)
 		}
 	}
 
@@ -64,7 +70,50 @@ func (g *Gate) Enabled(ctx context.Context, tenantID, templateID string) bool {
 		}
 		_ = g.cache.Set(ctx, cacheKey, v, cacheTTL).Err()
 	}
-	return enabled
+	if !enabled {
+		return false
+	}
+	return g.channelEnabled(ctx, tenantID, templateID, channel)
+}
+
+// channelEnabled checks the tenant's chosen channel SUBSET for templateID (see
+// ChannelsConfigKey) — absence of any override row means every channel is enabled, the
+// pre-existing behavior before per-channel selection existed. Fails open (true) on any
+// storage error or when channel is "" (caller only cares about the type-level toggle).
+func (g *Gate) channelEnabled(ctx context.Context, tenantID, templateID, channel string) bool {
+	if channel == "" || g.client == nil {
+		return true
+	}
+	key := ChannelsConfigKey(templateID)
+
+	if tid, err := uuid.Parse(tenantID); err == nil && tid != uuid.Nil {
+		row, err := g.client.ServiceConfig.Query().
+			Where(serviceconfig.ConfigKeyEQ(key), serviceconfig.TenantIDEQ(tid)).
+			First(ctx)
+		if err == nil {
+			return channelInList(row.ConfigValue, channel)
+		}
+		if !ent.IsNotFound(err) {
+			return true // fail open
+		}
+	}
+
+	row, err := g.client.ServiceConfig.Query().
+		Where(serviceconfig.ConfigKeyEQ(key), serviceconfig.TenantIDIsNil()).
+		First(ctx)
+	if err == nil {
+		return channelInList(row.ConfigValue, channel)
+	}
+	return true // no override at any level — every channel enabled
+}
+
+func channelInList(csv, channel string) bool {
+	for _, c := range strings.Split(csv, ",") {
+		if strings.EqualFold(strings.TrimSpace(c), channel) {
+			return true
+		}
+	}
+	return false
 }
 
 func (g *Gate) resolve(ctx context.Context, tenantID, templateID string) bool {

@@ -283,6 +283,7 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 							prefWrite.Use(authenticator.RequirePermissions(identity.PermSettingsManage))
 						}
 						prefWrite.Put("/notification-preferences", notificationPrefs.Upsert)
+						prefWrite.Delete("/notification-preferences/*", notificationPrefs.Reset)
 					})
 				}
 

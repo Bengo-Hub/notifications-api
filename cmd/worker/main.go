@@ -215,7 +215,7 @@ func main() {
 				gateTenant = t.ID.String()
 			}
 		}
-		if !prefGate.Enabled(ctx, gateTenant, msg.TemplateID) {
+		if !prefGate.Enabled(ctx, gateTenant, msg.TemplateID, msg.Channel) {
 			logg.Info("notification disabled by tenant preferences, dropping",
 				zap.String("template", msg.TemplateID),
 				zap.String("tenant_id", msg.TenantID),

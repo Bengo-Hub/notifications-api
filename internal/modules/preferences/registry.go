@@ -34,9 +34,16 @@ type Type struct {
 	Class Class  `json:"class"`
 }
 
-// ConfigKey returns the ServiceConfig key storing the toggle for a template id.
+// ConfigKey returns the ServiceConfig key storing the enabled/disabled toggle for a template id.
 func ConfigKey(templateID string) string {
 	return "notifications.type." + templateID + ".enabled"
+}
+
+// ChannelsConfigKey returns the ServiceConfig key storing the tenant's chosen SUBSET of a
+// template's available channels (comma-separated, e.g. "email,sms") — absence means "all
+// available channels enabled", the pre-existing behavior before per-channel selection existed.
+func ChannelsConfigKey(templateID string) string {
+	return "notifications.type." + templateID + ".channels"
 }
 
 // Registry is the authoritative classification of every notification type the worker

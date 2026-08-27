@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"strings"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 
@@ -37,14 +39,16 @@ func NewPreferencesHandler(log *zap.Logger, client *ent.Client, gate *preference
 }
 
 type preferenceRow struct {
-	Key        string   `json:"key"`
-	Label      string   `json:"label"`
-	Group      string   `json:"group"`
-	Class      string   `json:"class"`   // locked | essential | optional
-	Default    bool     `json:"default"` // registry/platform default when no tenant override
-	Enabled    bool     `json:"enabled"` // effective value for this tenant
-	Overridden bool     `json:"overridden"`
-	Channels   []string `json:"channels"` // which channels (email/sms/whatsapp/push) this type has a template for
+	Key                string   `json:"key"`
+	Label              string   `json:"label"`
+	Group              string   `json:"group"`
+	Class              string   `json:"class"`   // locked | essential | optional
+	Default            bool     `json:"default"` // registry/platform default when no tenant override
+	Enabled            bool     `json:"enabled"` // effective value for this tenant
+	Overridden         bool     `json:"overridden"`
+	Channels           []string `json:"channels"`        // which channels (email/sms/whatsapp/push) this type HAS A TEMPLATE for (the maximum available)
+	EnabledChannels    []string `json:"enabledChannels"` // which of Channels the tenant actually wants delivered — defaults to all of Channels until customized
+	ChannelsOverridden bool     `json:"channelsOverridden"`
 }
 
 // List returns every registered notification type with its effective per-tenant value.
@@ -108,15 +112,35 @@ func (h *PreferencesHandler) List(w http.ResponseWriter, r *http.Request) {
 			// any type with no matching template file found.
 			channels = []string{}
 		}
+
+		// Enabled-channel SUBSET: tenant override -> platform override -> "every available
+		// channel" (the behavior every type had before per-channel selection existed). Locked
+		// types always get every channel — a tenant must not be able to silently drop the SMS
+		// leg of an OTP by unchecking it, the same reasoning that already forces Enabled=true.
+		enabledChannels := channels
+		channelsOverridden := false
+		chKey := preferences.ChannelsConfigKey(t.Key)
+		if t.Class != preferences.ClassLocked {
+			if v, ok := platformByKey[chKey]; ok {
+				enabledChannels = intersectCSV(v, channels)
+			}
+			if v, ok := tenantByKey[chKey]; ok {
+				enabledChannels = intersectCSV(v, channels)
+				channelsOverridden = true
+			}
+		}
+
 		out = append(out, preferenceRow{
-			Key:        t.Key,
-			Label:      t.Label,
-			Group:      t.Group,
-			Class:      string(t.Class),
-			Default:    def,
-			Enabled:    enabled,
-			Overridden: overridden,
-			Channels:   channels,
+			Key:                t.Key,
+			Label:              t.Label,
+			Group:              t.Group,
+			Class:              string(t.Class),
+			Default:            def,
+			Enabled:            enabled,
+			Overridden:         overridden,
+			Channels:           channels,
+			EnabledChannels:    enabledChannels,
+			ChannelsOverridden: channelsOverridden,
 		})
 	}
 	respondJSON(w, http.StatusOK, map[string]any{"data": out, "total": len(out)})
@@ -145,11 +169,33 @@ func (h *PreferencesHandler) loadChannelsByKey(ctx context.Context) map[string][
 }
 
 type upsertPreferenceRequest struct {
-	Key     string `json:"key"`
-	Enabled bool   `json:"enabled"`
+	Key      string    `json:"key"`
+	Enabled  *bool     `json:"enabled,omitempty"`
+	Channels *[]string `json:"channels,omitempty"`
 }
 
-// Upsert sets the tenant's toggle for one notification type.
+// upsertConfigValue creates or updates one ServiceConfig row for (tenantID, key).
+func (h *PreferencesHandler) upsertConfigValue(ctx context.Context, tenantID uuid.UUID, key, value, configType, description string) error {
+	existing, _ := h.client.ServiceConfig.Query().
+		Where(serviceconfig.ConfigKeyEQ(key), serviceconfig.TenantIDEQ(tenantID)).
+		First(ctx)
+	if existing != nil {
+		_, err := existing.Update().SetConfigValue(value).Save(ctx)
+		return err
+	}
+	_, err := h.client.ServiceConfig.Create().
+		SetTenantID(tenantID).
+		SetConfigKey(key).
+		SetConfigValue(value).
+		SetConfigType(configType).
+		SetDescription(description).
+		Save(ctx)
+	return err
+}
+
+// Upsert sets the tenant's toggle and/or channel selection for one notification type. Either
+// field may be omitted to leave it untouched — the channel-selection modal sends only
+// {key, channels}, the simple on/off switch sends only {key, enabled}.
 // PUT /api/v1/notification-preferences  body: {"key":"finance/payment_success","enabled":false}
 func (h *PreferencesHandler) Upsert(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -174,31 +220,35 @@ func (h *PreferencesHandler) Upsert(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	key := preferences.ConfigKey(req.Key)
-	value := "false"
-	if req.Enabled {
-		value = "true"
+	if req.Enabled != nil {
+		value := "false"
+		if *req.Enabled {
+			value = "true"
+		}
+		if err := h.upsertConfigValue(ctx, tenantID, preferences.ConfigKey(req.Key), value, "bool", t.Label+" (notification toggle)"); err != nil {
+			h.log.Error("upsert notification pref failed", zap.String("key", req.Key), zap.Error(err))
+			respondJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to save preference"})
+			return
+		}
 	}
 
-	existing, _ := h.client.ServiceConfig.Query().
-		Where(serviceconfig.ConfigKeyEQ(key), serviceconfig.TenantIDEQ(tenantID)).
-		First(ctx)
-	var err error
-	if existing != nil {
-		_, err = existing.Update().SetConfigValue(value).Save(ctx)
-	} else {
-		_, err = h.client.ServiceConfig.Create().
-			SetTenantID(tenantID).
-			SetConfigKey(key).
-			SetConfigValue(value).
-			SetConfigType("bool").
-			SetDescription(t.Label + " (notification toggle)").
-			Save(ctx)
-	}
-	if err != nil {
-		h.log.Error("upsert notification pref failed", zap.String("key", key), zap.Error(err))
-		respondJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to save preference"})
-		return
+	if req.Channels != nil {
+		available := h.loadChannelsByKey(ctx)[req.Key]
+		availableSet := make(map[string]bool, len(available))
+		for _, c := range available {
+			availableSet[c] = true
+		}
+		for _, c := range *req.Channels {
+			if !availableSet[c] {
+				respondJSON(w, http.StatusBadRequest, map[string]string{"error": "channel \"" + c + "\" has no template for this notification type"})
+				return
+			}
+		}
+		if err := h.upsertConfigValue(ctx, tenantID, preferences.ChannelsConfigKey(req.Key), strings.Join(*req.Channels, ","), "string", t.Label+" (enabled channels)"); err != nil {
+			h.log.Error("upsert notification pref channels failed", zap.String("key", req.Key), zap.Error(err))
+			respondJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to save channel selection"})
+			return
+		}
 	}
 
 	if h.gate != nil {
@@ -206,9 +256,46 @@ func (h *PreferencesHandler) Upsert(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondJSON(w, http.StatusOK, map[string]any{
-		"key":     req.Key,
-		"enabled": req.Enabled,
+		"key":      req.Key,
+		"enabled":  req.Enabled,
+		"channels": req.Channels,
 	})
+}
+
+// Reset clears the tenant's overrides (both the enabled toggle and the channel selection) for
+// one notification type, reverting it to the platform default / registry default.
+// DELETE /api/v1/notification-preferences/{key}
+func (h *PreferencesHandler) Reset(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	tenantID, ok := h.tenantUUID(r)
+	if !ok {
+		respondJSON(w, http.StatusBadRequest, map[string]string{"error": "tenant context required"})
+		return
+	}
+	key := chi.URLParam(r, "*")
+	t, known := preferences.Lookup(key)
+	if !known {
+		respondJSON(w, http.StatusBadRequest, map[string]string{"error": "unknown notification type"})
+		return
+	}
+
+	_, err := h.client.ServiceConfig.Delete().
+		Where(
+			serviceconfig.TenantIDEQ(tenantID),
+			serviceconfig.ConfigKeyIn(preferences.ConfigKey(key), preferences.ChannelsConfigKey(key)),
+		).
+		Exec(ctx)
+	if err != nil {
+		h.log.Error("reset notification pref failed", zap.String("key", key), zap.Error(err))
+		respondJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to reset preference"})
+		return
+	}
+
+	if h.gate != nil {
+		h.gate.Invalidate(ctx, tenantID.String(), key)
+	}
+
+	respondJSON(w, http.StatusOK, map[string]string{"key": key, "label": t.Label, "status": "reset"})
 }
 
 // tenantUUID resolves the tenant UUID this request should act on — honoring the platform-admin
@@ -227,6 +314,25 @@ func (h *PreferencesHandler) tenantUUID(r *http.Request) (uuid.UUID, bool) {
 		}
 	}
 	return uuid.Nil, false
+}
+
+// intersectCSV parses a comma-separated channel list and returns only the values that are
+// also in available — guards against a stale override naming a channel this type no longer
+// has a template for (e.g. a template was removed after the override was saved).
+func intersectCSV(csv string, available []string) []string {
+	want := map[string]bool{}
+	for _, c := range strings.Split(csv, ",") {
+		if c = strings.TrimSpace(c); c != "" {
+			want[c] = true
+		}
+	}
+	out := make([]string, 0, len(available))
+	for _, c := range available {
+		if want[c] {
+			out = append(out, c)
+		}
+	}
+	return out
 }
 
 func parsePrefBool(raw string, fallback bool) bool {
