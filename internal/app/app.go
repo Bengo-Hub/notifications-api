@@ -157,7 +157,7 @@ func New(ctx context.Context) (*App, error) {
 	deviceTokenHandler := handlers.NewDeviceTokenHandler(log, entClient)
 
 	billingHandler := handlers.NewBillingHandler(log, billingService)
-	platformBilling := handlers.NewPlatformBilling(entClient, log)
+	platformBilling := handlers.NewPlatformBilling(entClient, log, billingService, whatsappSubsService)
 	settingsHandler := handlers.NewSettingsHandler(log, keyProvider)
 
 	// Initialize identity module (RBAC)

@@ -4,22 +4,75 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/bengobox/notifications-api/internal/ent"
+	"github.com/bengobox/notifications-api/internal/modules/billing"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
 type PlatformBilling struct {
-	client *ent.Client
-	logger *zap.Logger
+	client       *ent.Client
+	logger       *zap.Logger
+	billingSvc   *billing.Service
+	whatsappSubs *billing.WhatsAppSubscriptionService
 }
 
-func NewPlatformBilling(client *ent.Client, logger *zap.Logger) *PlatformBilling {
+func NewPlatformBilling(client *ent.Client, logger *zap.Logger, billingSvc *billing.Service, whatsappSubs *billing.WhatsAppSubscriptionService) *PlatformBilling {
 	return &PlatformBilling{
-		client: client,
-		logger: logger.Named("platform_billing"),
+		client:       client,
+		logger:       logger.Named("platform_billing"),
+		billingSvc:   billingSvc,
+		whatsappSubs: whatsappSubs,
 	}
+}
+
+// marginResponse combines realized SMS and WhatsApp margin for the platform admin billing view —
+// what tenants are actually charged vs. the platform's real provider cost, captured per-transaction
+// (SMS) or per-active-subscription (WhatsApp) but never surfaced anywhere until now.
+type marginResponse struct {
+	SMS      billing.SMSMarginSummary      `json:"sms"`
+	WhatsApp billing.WhatsAppMarginSummary `json:"whatsapp"`
+}
+
+// GetMargin returns realized SMS + WhatsApp margin, optionally bounded by ?from=&to= (RFC3339;
+// SMS only — WhatsApp margin is always a live snapshot of active subscriptions, not historical).
+// GET /platform/billing/margin
+func (h *PlatformBilling) GetMargin(w http.ResponseWriter, r *http.Request) {
+	var from, to *time.Time
+	if v := r.URL.Query().Get("from"); v != "" {
+		if t, err := time.Parse(time.RFC3339, v); err == nil {
+			from = &t
+		}
+	}
+	if v := r.URL.Query().Get("to"); v != "" {
+		if t, err := time.Parse(time.RFC3339, v); err == nil {
+			to = &t
+		}
+	}
+
+	resp := marginResponse{}
+	if h.billingSvc != nil {
+		sms, err := h.billingSvc.GetSMSMargin(r.Context(), nil, from, to)
+		if err != nil {
+			h.logger.Error("failed to compute sms margin", zap.Error(err))
+			jsonError(w, http.StatusInternalServerError, "failed to compute sms margin")
+			return
+		}
+		resp.SMS = sms
+	}
+	if h.whatsappSubs != nil {
+		wa, err := h.whatsappSubs.GetMargin(r.Context())
+		if err != nil {
+			h.logger.Error("failed to compute whatsapp margin", zap.Error(err))
+			jsonError(w, http.StatusInternalServerError, "failed to compute whatsapp margin")
+			return
+		}
+		resp.WhatsApp = wa
+	}
+
+	jsonResponse(w, http.StatusOK, resp)
 }
 
 type updateBillingRequest struct {

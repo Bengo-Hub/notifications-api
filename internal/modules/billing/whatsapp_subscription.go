@@ -246,6 +246,40 @@ func (s *WhatsAppSubscriptionService) CancelSubscription(ctx context.Context, te
 	return nil
 }
 
+// WhatsAppMarginSummary summarizes realized WhatsApp subscription margin across active
+// subscriptions: what tenants are paying monthly vs. WhatsAppPlan.ProviderCost's estimated real
+// Meta cost per plan (a monthly estimate, not a per-message figure — see the schema comment on
+// WhatsAppPlan.ProviderCost). Platform-admin only, same reasoning as SMSMarginSummary.
+type WhatsAppMarginSummary struct {
+	Revenue             float64 `json:"revenue"`       // sum of active subscriptions' price_monthly
+	ProviderCost        float64 `json:"provider_cost"` // sum of active subscriptions' plan provider_cost
+	Margin              float64 `json:"margin"`        // revenue - provider_cost
+	ActiveSubscriptions int     `json:"active_subscriptions"`
+}
+
+// GetMargin sums estimated realized WhatsApp margin across every currently-active subscription.
+func (s *WhatsAppSubscriptionService) GetMargin(ctx context.Context) (WhatsAppMarginSummary, error) {
+	subs, err := s.client.TenantWhatsAppSubscription.Query().
+		Where(tenantwhatsappsubscription.StatusEQ(tenantwhatsappsubscription.StatusActive)).
+		WithPlan().
+		All(ctx)
+	if err != nil {
+		return WhatsAppMarginSummary{}, fmt.Errorf("query active subscriptions: %w", err)
+	}
+
+	var summary WhatsAppMarginSummary
+	for _, sub := range subs {
+		if sub.Edges.Plan == nil {
+			continue
+		}
+		summary.Revenue += sub.Edges.Plan.PriceMonthly
+		summary.ProviderCost += sub.Edges.Plan.ProviderCost
+	}
+	summary.Margin = summary.Revenue - summary.ProviderCost
+	summary.ActiveSubscriptions = len(subs)
+	return summary, nil
+}
+
 // IsWhatsAppEnabled returns true if the tenant has an active subscription that has not expired.
 func (s *WhatsAppSubscriptionService) IsWhatsAppEnabled(ctx context.Context, tenantID uuid.UUID) (bool, error) {
 	sub, err := s.getActiveSub(ctx, tenantID)

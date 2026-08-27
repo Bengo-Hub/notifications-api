@@ -142,6 +142,7 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 					}
 					pb.Get("/", platformBilling.GetSettings)
 					pb.Post("/", platformBilling.UpdateSettings)
+					pb.Get("/margin", platformBilling.GetMargin)
 				})
 			})
 

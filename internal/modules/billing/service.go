@@ -296,6 +296,51 @@ func (s *Service) deductCreditsWithCost(ctx context.Context, tenantID uuid.UUID,
 	return tx.Commit()
 }
 
+// SMSMarginSummary summarizes realized SMS margin (what tenants were charged vs. the real
+// Africa's Talking provider cost) over a period — the data was always captured per-transaction
+// (ProviderCost/PlatformFee, see deductCreditsWithCost) but never surfaced anywhere; this is the
+// first reader.
+type SMSMarginSummary struct {
+	Revenue          float64 `json:"revenue"`       // sum of amount charged to tenants
+	ProviderCost     float64 `json:"provider_cost"` // sum of the real Africa's Talking cost
+	Margin           float64 `json:"margin"`        // revenue - provider_cost
+	TransactionCount int     `json:"transaction_count"`
+}
+
+// GetSMSMargin sums realized SMS margin over [from, to) (both optional — nil means unbounded)
+// across all tenants, or a single tenant when tenantID is non-nil. Platform-admin only; the
+// underlying figures reveal the platform's real cost basis, not something a tenant should see.
+func (s *Service) GetSMSMargin(ctx context.Context, tenantID *uuid.UUID, from, to *time.Time) (SMSMarginSummary, error) {
+	q := s.client.CreditTransaction.Query().
+		Where(
+			credittransaction.TypeEQ(credittransaction.TypeSMS),
+			credittransaction.ActionEQ(credittransaction.ActionDEDUCTION),
+		)
+	if tenantID != nil {
+		q = q.Where(credittransaction.TenantIDEQ(*tenantID))
+	}
+	if from != nil {
+		q = q.Where(credittransaction.CreatedAtGTE(*from))
+	}
+	if to != nil {
+		q = q.Where(credittransaction.CreatedAtLT(*to))
+	}
+
+	txs, err := q.All(ctx)
+	if err != nil {
+		return SMSMarginSummary{}, fmt.Errorf("query sms deductions: %w", err)
+	}
+
+	var summary SMSMarginSummary
+	for _, tx := range txs {
+		summary.Revenue += tx.Amount
+		summary.ProviderCost += tx.ProviderCost
+	}
+	summary.Margin = summary.Revenue - summary.ProviderCost
+	summary.TransactionCount = len(txs)
+	return summary, nil
+}
+
 // CreditTransactionEntry is a summarized credit transaction for the API.
 type CreditTransactionEntry struct {
 	ID          string    `json:"id"`

@@ -62,8 +62,20 @@ func (h *BillingHandler) GetBalance(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// TopUp (Internal-only or secured) adds credits to a tenant.
+// TopUp is a platform-admin-only manual override that credits a wallet with NO payment
+// collection step (unlike Initiate, which always goes through a real treasury payment intent).
+// The only legitimate caller was meant to be the internal treasury-webhook consumer
+// (cmd/worker/treasury_consumer.go calls billingSvc.TopUpCredits directly, in-process — never
+// over HTTP), but this route had no platform-owner gate, so any tenant user with billing:manage
+// permission on their own tenant could mint themselves unlimited free credits by calling it
+// directly. Restricted to platform owners here (e.g. a genuine support/goodwill credit), same
+// gate as /platform/* admin routes.
 func (h *BillingHandler) TopUp(w http.ResponseWriter, r *http.Request) {
+	if !httpware.IsPlatformOwner(r.Context()) {
+		h.respondWithError(w, http.StatusForbidden, "platform admin access required")
+		return
+	}
+
 	var in struct {
 		TenantID    uuid.UUID `json:"tenant_id"`
 		Type        string    `json:"type"`
