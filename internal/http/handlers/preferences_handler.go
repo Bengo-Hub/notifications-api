@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/bengobox/notifications-api/internal/ent/serviceconfig"
 	enttenant "github.com/bengobox/notifications-api/internal/ent/tenant"
 	"github.com/bengobox/notifications-api/internal/modules/preferences"
+	"github.com/bengobox/notifications-api/internal/platform/templates"
 )
 
 // PreferencesHandler exposes the tenant-scoped notification-type toggles that feed the
@@ -23,21 +25,26 @@ type PreferencesHandler struct {
 	log    *zap.Logger
 	client *ent.Client
 	gate   *preferences.Gate
+	tpl    *templates.Loader
 }
 
-// NewPreferencesHandler builds the handler. gate may be nil (no cache invalidation).
-func NewPreferencesHandler(log *zap.Logger, client *ent.Client, gate *preferences.Gate) *PreferencesHandler {
-	return &PreferencesHandler{log: log.Named("notification-preferences"), client: client, gate: gate}
+// NewPreferencesHandler builds the handler. gate may be nil (no cache invalidation). tpl is
+// used to derive which channels (email/sms/whatsapp/push) each notification type actually has a
+// template for, so the settings UI can group/filter by channel — nil is tolerated (Channels
+// simply comes back empty).
+func NewPreferencesHandler(log *zap.Logger, client *ent.Client, gate *preferences.Gate, tpl *templates.Loader) *PreferencesHandler {
+	return &PreferencesHandler{log: log.Named("notification-preferences"), client: client, gate: gate, tpl: tpl}
 }
 
 type preferenceRow struct {
-	Key        string `json:"key"`
-	Label      string `json:"label"`
-	Group      string `json:"group"`
-	Class      string `json:"class"`   // locked | essential | optional
-	Default    bool   `json:"default"` // registry/platform default when no tenant override
-	Enabled    bool   `json:"enabled"` // effective value for this tenant
-	Overridden bool   `json:"overridden"`
+	Key        string   `json:"key"`
+	Label      string   `json:"label"`
+	Group      string   `json:"group"`
+	Class      string   `json:"class"`   // locked | essential | optional
+	Default    bool     `json:"default"` // registry/platform default when no tenant override
+	Enabled    bool     `json:"enabled"` // effective value for this tenant
+	Overridden bool     `json:"overridden"`
+	Channels   []string `json:"channels"` // which channels (email/sms/whatsapp/push) this type has a template for
 }
 
 // List returns every registered notification type with its effective per-tenant value.
@@ -76,6 +83,8 @@ func (h *PreferencesHandler) List(w http.ResponseWriter, r *http.Request) {
 		platformByKey[row.ConfigKey] = row.ConfigValue
 	}
 
+	channelsByKey := h.loadChannelsByKey(ctx)
+
 	out := make([]preferenceRow, 0, len(preferences.Registry))
 	for _, t := range preferences.Registry {
 		key := preferences.ConfigKey(t.Key)
@@ -100,9 +109,32 @@ func (h *PreferencesHandler) List(w http.ResponseWriter, r *http.Request) {
 			Default:    def,
 			Enabled:    enabled,
 			Overridden: overridden,
+			Channels:   channelsByKey[t.Key],
 		})
 	}
 	respondJSON(w, http.StatusOK, map[string]any{"data": out, "total": len(out)})
+}
+
+// loadChannelsByKey derives, for every notification type, which channels (email/sms/whatsapp/
+// push) it actually has a template file for — by listing the template directory at request time
+// (cheap: a filesystem walk over a few hundred small files, not a hot path) rather than hand-
+// maintaining a second parallel list that would drift from the real templates on disk. Best-
+// effort: a nil loader or a listing error just means every row comes back with no channels
+// (never fails the whole preferences list over this).
+func (h *PreferencesHandler) loadChannelsByKey(ctx context.Context) map[string][]string {
+	out := make(map[string][]string)
+	if h.tpl == nil {
+		return out
+	}
+	summaries, err := h.tpl.List(ctx)
+	if err != nil {
+		h.log.Warn("failed to list templates for channel derivation", zap.Error(err))
+		return out
+	}
+	for _, s := range summaries {
+		out[s.ID] = append(out[s.ID], s.Channel)
+	}
+	return out
 }
 
 type upsertPreferenceRequest struct {

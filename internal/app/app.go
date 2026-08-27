@@ -277,7 +277,7 @@ func New(ctx context.Context) (*App, error) {
 	// Per-tenant notification-type toggles (feed the worker's dispatch gate; the gate
 	// instance here is only used to invalidate the Redis cache on settings writes).
 	prefGate := preferences.NewGate(entClient, redisClient, log)
-	notificationPrefsHandler := handlers.NewPreferencesHandler(log, entClient, prefGate)
+	notificationPrefsHandler := handlers.NewPreferencesHandler(log, entClient, prefGate, templateLoader)
 
 	// Pluggable backup destination (OneDrive/GDrive/S3/WebDAV/SFTP/SMB) — encrypted
 	// at rest with a SECRET_KEY-derived AES-256 key. The handler owns the destination
