@@ -3,7 +3,7 @@ module github.com/bengobox/notifications-api
 go 1.26.0
 
 // Map module path to correct GitHub repository
-replace github.com/Bengo-Hub/shared-auth-client => github.com/Bengo-Hub/auth-client v0.12.0
+replace github.com/Bengo-Hub/shared-auth-client => github.com/Bengo-Hub/auth-client v0.13.0
 
 require (
 	ariga.io/atlas v1.1.0
