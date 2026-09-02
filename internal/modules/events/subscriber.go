@@ -15,6 +15,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/bengobox/notifications-api/internal/config"
+	"github.com/bengobox/notifications-api/internal/ent"
 	"github.com/bengobox/notifications-api/internal/messaging"
 )
 
@@ -25,10 +26,11 @@ const (
 
 // Subscriber listens to cross-service NATS events and dispatches notifications.
 type Subscriber struct {
-	nc      *nats.Conn
-	cfg     config.EventsConfig
-	log     *zap.Logger
-	authAPI string
+	nc        *nats.Conn
+	cfg       config.EventsConfig
+	log       *zap.Logger
+	authAPI   string
+	entClient *ent.Client
 }
 
 // New creates a new cross-service event subscriber.
@@ -40,6 +42,15 @@ func New(nc *nats.Conn, cfg config.EventsConfig, log *zap.Logger) *Subscriber {
 // registrant's contact details, which the auth.tenant.created event does not carry.
 func (s *Subscriber) WithAuthAPI(url string) *Subscriber {
 	s.authAPI = strings.TrimRight(url, "/")
+	return s
+}
+
+// WithEntClient wires the Ent client used to resolve a recipient at send time — currently
+// only the hospital critical-lab-result alert needs this, to look up the ordering
+// clinician's phone (ent.User) and push device tokens (ent.DeviceToken) by auth-service
+// user id. See handleHospitalLabOrderCriticalResult.
+func (s *Subscriber) WithEntClient(client *ent.Client) *Subscriber {
+	s.entClient = client
 	return s
 }
 
@@ -74,6 +85,7 @@ func (s *Subscriber) Start(ctx context.Context) error {
 		"marketflow": {"marketflow.>"},
 		"isp":        {"isp.>"},
 		"auth":       {"auth.>"},
+		"hospital":   {"hospital.>"},
 	}
 	for stream, subjects := range streams {
 		if _, err := js.StreamInfo(stream); err != nil {
@@ -114,6 +126,12 @@ func (s *Subscriber) Start(ctx context.Context) error {
 		// identity module's own auth.tenant.created consumer, so projection and alerting retry
 		// independently.
 		{"auth", "auth.tenant.created", "notif-platform-new-tenant", s.handleNewTenantRegistered},
+		// Hospital: a Joint Commission National Patient Safety Goal alert — urgent SMS/push
+		// straight to the ordering clinician the instant a lab result comes back flagged
+		// critical, distinct from the routine "results ready" event (hospital.lab_order.resulted,
+		// not consumed here — that one is a normal, non-urgent notification and has no consumer
+		// yet either; add it separately if/when needed).
+		{"hospital", "hospital.lab_order.critical_result", "notif-hospital-lab-critical-result", s.handleHospitalLabOrderCriticalResult},
 	}
 
 	for _, s2 := range subs {

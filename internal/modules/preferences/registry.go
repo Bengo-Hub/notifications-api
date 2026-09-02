@@ -54,6 +54,10 @@ var Registry = []Type{
 	{Key: "auth/password_reset", Label: "Password reset", Group: "Account & Security", Class: ClassLocked},
 	{Key: "auth/otp_verification", Label: "One-time passcodes (OTP)", Group: "Account & Security", Class: ClassLocked},
 
+	// ── Hospital (LOCKED — Joint Commission National Patient Safety Goal alert; a
+	//    critical lab value must always reach the ordering clinician) ────────────
+	{Key: "hospital/lab_order_critical_result", Label: "Critical lab result alert", Group: "Hospital", Class: ClassLocked},
+
 	// ── Billing & payments ───────────────────────────────────────────────────
 	{Key: "finance/payment_success", Label: "Payment successful", Group: "Billing & Payments", Class: ClassEssential},
 	{Key: "finance/payment_failed", Label: "Payment failed", Group: "Billing & Payments", Class: ClassEssential},

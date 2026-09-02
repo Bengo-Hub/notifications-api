@@ -1,0 +1,1 @@
+URGENT - Critical lab result - {{ .test_name }}: {{ .result_value }}{{ if .unit }} {{ .unit }}{{ end }}{{ if .reference_range }} (ref: {{ .reference_range }}){{ end }}. Review immediately.
