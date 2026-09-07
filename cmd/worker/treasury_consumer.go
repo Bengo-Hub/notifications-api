@@ -165,7 +165,11 @@ var treasuryMappings = map[string]treasuryNotificationMapping{
 	},
 	// AR dunning: treasury's dunning worker emits one reminder per invoice per overdue tier.
 	// Reuses the existing invoice_overdue template (same fields). Recipient is the invoice's
-	// customer_email (carried in the event payload).
+	// customer_email (carried in the event payload). pay_url/pdf_url are the same durable public
+	// links treasury.invoice_sent carries (only present once treasury's PUBLIC_UI_BASE/
+	// PUBLIC_API_BASE are configured) — prefer them so the reminder, the one message most in need
+	// of a working "pay now" link, doesn't fall back to an authenticated treasury-ui route the
+	// customer can't actually open.
 	"dunning.reminder_sent": {
 		TemplateID:   "finance/invoice_overdue",
 		EmailSubject: "Payment reminder: invoice overdue",
@@ -174,13 +178,18 @@ var treasuryMappings = map[string]treasuryNotificationMapping{
 			if name == "" {
 				name = "Customer"
 			}
+			paymentLink, _ := payload["pay_url"].(string)
+			if paymentLink == "" {
+				paymentLink = fmt.Sprintf("%s/invoices/%s", serviceURL("NOTIFICATIONS_TREASURY_APP_URL", tenantWebsite), payload["invoice_id"])
+			}
 			return map[string]any{
 				"name":           name,
 				"invoice_number": payload["invoice_number"],
 				"amount":         payload["amount"],
 				"due_date":       payload["due_date"],
 				"days_overdue":   payload["days_overdue"],
-				"payment_link":   fmt.Sprintf("%s/invoices/%s", serviceURL("NOTIFICATIONS_TREASURY_APP_URL", tenantWebsite), payload["invoice_id"]),
+				"payment_link":   paymentLink,
+				"invoice_link":   payload["pdf_url"],
 			}
 		},
 	},
