@@ -1,0 +1,216 @@
+[
+  {
+    "name": "auth_otp",
+    "category": "AUTHENTICATION",
+    "language": "en_US",
+    "source": "whatsapp/auth/otp.txt"
+  },
+  {
+    "name": "auth_password_reset",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/auth/password_reset.txt",
+    "body": "{{1}}: Password reset requested for {{2}}. Your reset code is {{3}}. Expires in {{4}} minutes. If you didn't request this, ignore this message.",
+    "example": ["CodeVertex", "Amina", "71-KTV9", "15"]
+  },
+  {
+    "name": "ordering_order_placed",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/ordering/order_placed.txt",
+    "body": "{{1}}: Order {{2}} confirmed! Total: {{3}}. Estimated delivery: {{4}}. Track: {{5}}",
+    "example": ["Urban Loft Cafe", "#ULC-2291", "KES 2,450", "35 min", "cdvtx.co/t/2291"]
+  },
+  {
+    "name": "ordering_order_delivered",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/ordering/order_delivered.txt",
+    "body": "{{1}}: Your order {{2}} has been delivered! We hope you enjoy it. Share your feedback: {{3}}",
+    "example": ["Urban Loft Cafe", "#ULC-2291", "cdvtx.co/f/2291"]
+  },
+  {
+    "name": "pos_receipt_share",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/pos/receipt_share.txt",
+    "body": "Thank you for your purchase, {{1}}! Order: {{2}}. Total: {{3}}. View or download your receipt: {{4}}",
+    "example": ["David", "POS-88213", "KES 1,180", "cdvtx.co/r/88213"]
+  },
+  {
+    "name": "logistics_delivery_arriving",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/logistics/delivery_arriving.txt",
+    "body": "{{1}}: Your delivery is arriving! Order {{2}}. ETA: {{3}}. Track here: {{4}}",
+    "example": ["TruLoad", "TL-40217", "12 min", "cdvtx.co/t/40217"]
+  },
+  {
+    "name": "logistics_delivery_completed",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/logistics/delivery_completed.txt",
+    "body": "{{1}}: Your order {{2}} has been delivered! Thank you for choosing us. Rate your experience: {{3}}",
+    "example": ["TruLoad", "TL-40217", "cdvtx.co/f/40217"]
+  },
+  {
+    "name": "ispbilling_expiry_reminder",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/ispbilling/expiry_reminder.txt",
+    "body": "Hi {{1}}, your {{2}} subscription expires on {{3}} ({{4}} day(s) left). Renew via Paybill {{5}}, Account {{6}}.",
+    "example": ["Peter", "Home 20Mbps", "12 Sep", "2", "400200", "0712345678"]
+  },
+  {
+    "name": "ispbilling_hotspot_welcome",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/ispbilling/hotspot_welcome.txt",
+    "body": "Welcome {{1}}! Your hotspot account is ready. Login: {{2}}, Password: {{3}}, Package: {{4}}, Valid: {{5}} day(s).",
+    "example": ["Grace", "grace254", "hx82ke", "Daily 5GB", "1"]
+  },
+  {
+    "name": "ispbilling_pppoe_welcome",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/ispbilling/pppoe_welcome.txt",
+    "body": "Welcome {{1}}! Your PPPoE connection is active. Username: {{2}}, Password: {{3}}, Package: {{4}} ({{5}}/{{6}} Mbps). Support: {{7}}",
+    "example": ["John", "john.k", "qz91mp", "Business 50", "50", "20", "0700111222"]
+  },
+  {
+    "name": "ispbilling_subscription_credentials",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/ispbilling/subscription_credentials.txt",
+    "body": "Hi {{1}}, your {{2}} ({{3}}) is now active. Username: {{4}}, Password: {{5}}, Valid until: {{6}}",
+    "example": ["Mary", "Family 30Mbps", "PPPoE", "mary.w", "7fkd2a", "30 Sep 2026"]
+  },
+  {
+    "name": "ispbilling_subscription_renewal",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/ispbilling/subscription_renewal.txt",
+    "body": "Hi {{1}}, your {{2}} ({{3}}) has been renewed. Valid until: {{4}}. Thank you for staying with us.",
+    "example": ["Mary", "Family 30Mbps", "PPPoE", "30 Oct 2026"]
+  },
+  {
+    "name": "ispbilling_subscription_expiring",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/ispbilling/isp_subscription_expiring.txt",
+    "body": "Hi {{1}}, your {{2}} is about to expire. Expires: {{3}}. {{4}} remaining. Renew now to stay connected.",
+    "example": ["Grace", "Daily 5GB", "07 Sep, 18:00", "3 hour(s)"]
+  },
+  {
+    "name": "ispbilling_payment_received",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/ispbilling/payment_received.txt",
+    "body": "Payment received. Thank you {{1}}! Amount: {{2}}. Package: {{3}}. Active until: {{4}}",
+    "example": ["Peter", "KES 1,500", "Home 20Mbps", "12 Oct 2026"]
+  },
+  {
+    "name": "ispbilling_payment_receipt",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/ispbilling/payment_receipt.txt",
+    "body": "Payment received, thank you {{1}}! Amount: {{2}}. Receipt: {{3}}. Package: {{4}}. Active until: {{5}}",
+    "example": ["Peter", "KES 1,500", "RCT-88214", "Home 20Mbps", "12 Oct 2026"]
+  },
+  {
+    "name": "finance_payment_success",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "proposed: whatsapp/finance/payment_success.txt",
+    "body": "{{1}}: We've received your payment of {{2}} for order {{3}}. Thank you!",
+    "example": ["Urban Loft Cafe", "KES 8,400", "ULC-3310"]
+  },
+  {
+    "name": "finance_payment_receipt",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "proposed: whatsapp/finance/payment_receipt.txt",
+    "body": "Hi {{1}}, your payment receipt is ready. Amount: {{2}}, paid via {{3}}. Invoice: {{4}}",
+    "example": ["Samuel", "KES 42,000", "Bank Transfer", "INV-260907-014"]
+  },
+  {
+    "name": "finance_invoice_sent",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "proposed: whatsapp/finance/invoice_sent.txt",
+    "body": "Hi {{1}}, invoice {{2}} for {{3}} is now available. Due date: {{4}}.",
+    "example": ["Samuel", "INV-260907-014", "KES 42,000", "21 Sep 2026"]
+  },
+  {
+    "name": "finance_invoice_overdue",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "proposed: whatsapp/finance/invoice_overdue.txt",
+    "body": "Hi {{1}}, invoice {{2}} for {{3}} was due on {{4}} and is now overdue. Please settle at your earliest convenience.",
+    "example": ["Samuel", "INV-260826-009", "KES 15,500", "02 Sep 2026"]
+  },
+  {
+    "name": "finance_refund_completed",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "proposed: whatsapp/finance/refund_completed.txt",
+    "body": "Hi {{1}}, your refund of {{2}} has been completed. Reference: {{3}}",
+    "example": ["Samuel", "KES 3,200", "RFD-004821"]
+  },
+  {
+    "name": "inventory_low_stock_alert",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "proposed: whatsapp/inventory/low_stock_alert.txt",
+    "body": "Stock Alert: {{1}} (SKU {{2}}) is low at {{3}} — only {{4}} {{5}} remaining. Reorder recommended.",
+    "example": ["Arabica Beans 1kg", "BEAN-1KG", "Kilimani Outlet", "4", "unit(s)"]
+  },
+  {
+    "name": "inventory_stock_out",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "proposed: whatsapp/inventory/stock_out.txt",
+    "body": "Stock Alert: {{1}} (SKU {{2}}) is now OUT OF STOCK at {{3}}. {{4}} order(s) affected.",
+    "example": ["Arabica Beans 1kg", "BEAN-1KG", "Kilimani Outlet", "3"]
+  },
+  {
+    "name": "library_overdue_notice",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "proposed: whatsapp/library/overdue_notice.txt",
+    "body": "Hi {{1}}, your loan (ID {{2}}) was due on {{3}}. Please return or renew it soon.",
+    "example": ["Wanjiru", "LN-01822", "05 Sep 2026"]
+  },
+  {
+    "name": "library_hold_ready",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "proposed: whatsapp/library/hold_ready.txt",
+    "body": "Hi {{1}}, your hold on \"{{2}}\" is ready for pickup. Please collect before {{3}}.",
+    "example": ["Wanjiru", "Things Fall Apart", "10 Sep 2026"]
+  },
+  {
+    "name": "library_fine_assessed",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "proposed: whatsapp/library/fine_assessed.txt",
+    "body": "Hi {{1}}, a fine of {{2}} has been assessed on your account ({{3}}).",
+    "example": ["Wanjiru", "KES 150", "overdue return"]
+  },
+  {
+    "name": "hrm_leave_approved",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "proposed: whatsapp/hrm/leave_approved.txt",
+    "body": "Hi {{1}}, your {{2}} leave request ({{3}} to {{4}}) has been approved.",
+    "example": ["Brian", "Annual", "16 Sep", "20 Sep"]
+  },
+  {
+    "name": "payroll_payslip_ready",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "proposed: whatsapp/payroll/payslip_ready.txt",
+    "body": "Hi {{1}}, your payslip for {{2}} {{3}} is ready. Net pay: {{4}}.",
+    "example": ["Brian", "August", "2026", "KES 68,200"]
+  }
+]
