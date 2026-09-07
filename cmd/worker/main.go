@@ -258,7 +258,7 @@ func main() {
 					zap.Uint64("attempts", attempt),
 					zap.Error(deliverErr),
 				)
-				recordDeliveryLog(ctx, client, msg.TenantID, msg.TemplateID, msg.Channel, "failed", msg.To)
+				recordDeliveryLog(ctx, client, gateTenant, msg.TemplateID, msg.Channel, "failed", msg.To)
 				_ = m.Ack() // dead-letter: do not redeliver and hammer a blocked/rate-limited provider
 			} else {
 				// NAck triggers redelivery after AckWait (30s) — only reachable if maxDeliveryAttempts is raised >1
@@ -267,7 +267,7 @@ func main() {
 			return
 		}
 
-		recordDeliveryLog(ctx, client, msg.TenantID, msg.TemplateID, msg.Channel, "sent", msg.To)
+		recordDeliveryLog(ctx, client, gateTenant, msg.TemplateID, msg.Channel, "sent", msg.To)
 		logg.Info("message delivered",
 			zap.String("channel", msg.Channel),
 			zap.String("template", msg.TemplateID),
