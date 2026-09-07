@@ -365,10 +365,19 @@ func (h *PlatformProviders) UpdateProvider(w http.ResponseWriter, r *http.Reques
 	}
 
 	if req.IsActive != nil {
-		// Update all settings for this provider
+		// Scoped to this row's own environment + IsPlatform(true) — without this, toggling one
+		// environment's provider (e.g. sandbox) silently flipped every environment sharing the
+		// same provider_type+provider_name (production included), and could touch a tenant-
+		// scoped row of the same name too. This mismatch is also the root cause of a previously
+		// cosmetic-looking bug where a provider's _config marker showed is_active=false while its
+		// own credential rows were true: a broad update from one environment's toggle could leave
+		// a DIFFERENT environment's marker stale after a later ConfigureProvider (which IS
+		// correctly environment-scoped) refreshed only that other environment's rows.
 		_, err := h.client.ProviderSetting.Update().
 			Where(
 				providersetting.TenantID(platformTenantID),
+				providersetting.IsPlatform(true),
+				providersetting.EnvironmentEQ(setting.Environment),
 				providersetting.ProviderType(setting.ProviderType),
 				providersetting.ProviderName(setting.ProviderName),
 			).
@@ -387,6 +396,8 @@ func (h *PlatformProviders) UpdateProvider(w http.ResponseWriter, r *http.Reques
 		_, _ = h.client.ProviderSetting.Update().
 			Where(
 				providersetting.TenantID(platformTenantID),
+				providersetting.IsPlatform(true),
+				providersetting.EnvironmentEQ(setting.Environment),
 				providersetting.ProviderType(setting.ProviderType),
 				providersetting.ProviderName(setting.ProviderName),
 				providersetting.KeyEQ("_config"),
@@ -423,9 +434,14 @@ func (h *PlatformProviders) DeactivateProvider(w http.ResponseWriter, r *http.Re
 		return
 	}
 
+	// Scoped to this row's own environment + IsPlatform(true) — see UpdateProvider's comment on
+	// why the missing scoping here previously let deactivating one environment silently affect
+	// every environment sharing the same provider_type+provider_name.
 	_, err = h.client.ProviderSetting.Update().
 		Where(
 			providersetting.TenantID(platformTenantID),
+			providersetting.IsPlatform(true),
+			providersetting.EnvironmentEQ(setting.Environment),
 			providersetting.ProviderType(setting.ProviderType),
 			providersetting.ProviderName(setting.ProviderName),
 		).
