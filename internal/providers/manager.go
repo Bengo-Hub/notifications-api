@@ -192,10 +192,12 @@ func (m *Manager) GetPushProvider(ctx context.Context) (PushProvider, error) {
 //
 // Prefers a non-billable AccountInfoProvider query (account balance, sender identity, phone
 // number quality rating) over sending a real message — cheaper and doesn't require a recipient.
-// Falls back to an actual test send only for providers that don't implement it (to is then
-// required); email always sends a real test message, since there's no equivalent "check the
-// credentials without sending" concept for SMTP/SendGrid/Brevo. Returns provider-reported info
-// (nil for the plain test-send fallback) so the caller can show it to the admin.
+// A recipient (to) means the caller wants proof of an actual send — used for a real
+// message-sending test, e.g. Meta App Review's "record a video of your app sending a message"
+// evidence requirement, which an account-info-only check can't satisfy. No recipient means a
+// lightweight credential check only, for providers that support one (AccountInfoProvider).
+// Email has no such check, so it always requires `to` and always sends. Returns provider-reported
+// info (nil for a real test send) so the caller can show it to the admin.
 func (m *Manager) TestConnection(ctx context.Context, tenantID, channel, providerName, to string) (map[string]interface{}, error) {
 	switch channel {
 	case "email":
@@ -212,33 +214,31 @@ func (m *Manager) TestConnection(ctx context.Context, tenantID, channel, provide
 		if err != nil {
 			return nil, err
 		}
+		if to != "" {
+			return nil, prov.SendSMS(ctx, "", []string{to}, "Test SMS from Notifications API.")
+		}
 		if infoProv, ok := prov.(AccountInfoProvider); ok {
 			return infoProv.AccountInfo(ctx)
 		}
-		if to == "" {
-			return nil, fmt.Errorf("to is required to test this SMS provider (no account-info check available)")
-		}
-		return nil, prov.SendSMS(ctx, "", []string{to}, "Test SMS from Notifications API.")
+		return nil, fmt.Errorf("to is required to test this SMS provider (no account-info check available)")
 	case "whatsapp":
 		prov, err := m.GetWhatsAppProvider(ctx, tenantID, providerName)
 		if err != nil {
 			return nil, err
 		}
+		// A free-form text body only works inside an active 24h reply window, so the test uses
+		// "hello_world" — the sample template Meta pre-approves by default on every WhatsApp
+		// Business Account specifically for this kind of connectivity/send check.
+		if to != "" {
+			return nil, prov.SendWhatsApp(ctx, "", []string{to}, "", map[string]interface{}{
+				"template_name":     "hello_world",
+				"template_language": "en_US",
+			})
+		}
 		if infoProv, ok := prov.(AccountInfoProvider); ok {
 			return infoProv.AccountInfo(ctx)
 		}
-		// Previously silently returned nil ("success") without attempting anything — a platform
-		// admin testing a WhatsApp provider from the UI saw a false "test message sent
-		// successfully". A free-form text body only works inside an active 24h reply window, so
-		// the test uses "hello_world" — the sample template Meta pre-approves by default on every
-		// WhatsApp Business Account specifically for this kind of connectivity check.
-		if to == "" {
-			return nil, fmt.Errorf("to is required to test this WhatsApp provider (no account-info check available)")
-		}
-		return nil, prov.SendWhatsApp(ctx, "", []string{to}, "", map[string]interface{}{
-			"template_name":     "hello_world",
-			"template_language": "en_US",
-		})
+		return nil, fmt.Errorf("to is required to test this WhatsApp provider (no account-info check available)")
 	default:
 		return nil, nil
 	}
