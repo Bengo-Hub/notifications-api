@@ -12,7 +12,10 @@ import (
 // SecretKeys are provider setting keys that must be stored encrypted at rest.
 var SecretKeys = map[string]bool{
 	"api_key": true, "password": true, "auth_token": true, "api_secret": true,
-	"auth_id": true, // Plivo
+	"auth_id":      true, // Plivo
+	"access_token": true, // Meta WhatsApp Cloud API permanent system-user token
+	"app_secret":   true, // Meta app secret (webhook signature verification)
+	"private_key":  true, // FCM service-account key
 }
 
 // IsSecret returns true if the setting key should be encrypted.
