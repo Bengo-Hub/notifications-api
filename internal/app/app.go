@@ -152,7 +152,7 @@ func New(ctx context.Context) (*App, error) {
 	// decryption at rest; seed it with the resolved primary key.
 	providerManager := providers.NewManager(dbPool, cfg.Postgres, cfg.Providers, keyProvider.Primary(ctx), cfg.App.Env, platformIDStr)
 	platformProviders := handlers.NewPlatformProviders(entClient, log, keyProvider, providerManager)
-	tenantProviders := handlers.NewTenantProviders(entClient, log, platformIDStr, keyProvider, providerManager)
+	tenantProviders := handlers.NewTenantProviders(entClient, log, platformIDStr, keyProvider, providerManager, whatsappSubsService)
 	encryptionKeyHandler := handlers.NewEncryptionKeyHandler(entClient, log, keyProvider)
 	analyticsHandler := handlers.NewAnalyticsHandler(entClient, log)
 

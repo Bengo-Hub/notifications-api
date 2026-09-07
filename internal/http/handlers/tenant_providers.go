@@ -13,24 +13,26 @@ import (
 	"github.com/bengobox/notifications-api/internal/ent"
 	"github.com/bengobox/notifications-api/internal/ent/providersetting"
 	"github.com/bengobox/notifications-api/internal/ent/tenant"
+	"github.com/bengobox/notifications-api/internal/modules/billing"
 	"github.com/bengobox/notifications-api/internal/providers"
 )
 
 // TenantProviders handles tenant-level notification provider selection.
 type TenantProviders struct {
-	client      *ent.Client
-	logger      *zap.Logger
-	PlatformID  string
-	keyProvider *encryption.KeyProvider
-	manager     *providers.Manager
+	client         *ent.Client
+	logger         *zap.Logger
+	PlatformID     string
+	keyProvider    *encryption.KeyProvider
+	manager        *providers.Manager
+	whatsappSubSvc *billing.WhatsAppSubscriptionService
 }
 
 // NewTenantProviders creates a new TenantProviders handler.
 // keyProvider resolves the provider-credential encryption key (DB-first, env fallback);
 // when a key is available, secret values are encrypted at rest. manager is optional, used
 // for the test-connection endpoint (mirrors PlatformProviders.TestProvider, tenant-scoped).
-func NewTenantProviders(client *ent.Client, logger *zap.Logger, platformID string, keyProvider *encryption.KeyProvider, manager *providers.Manager) *TenantProviders {
-	return &TenantProviders{client: client, logger: logger, PlatformID: platformID, keyProvider: keyProvider, manager: manager}
+func NewTenantProviders(client *ent.Client, logger *zap.Logger, platformID string, keyProvider *encryption.KeyProvider, manager *providers.Manager, whatsappSubSvc *billing.WhatsAppSubscriptionService) *TenantProviders {
+	return &TenantProviders{client: client, logger: logger, PlatformID: platformID, keyProvider: keyProvider, manager: manager, whatsappSubSvc: whatsappSubSvc}
 }
 
 type availableProviderResponse struct {
@@ -459,6 +461,29 @@ func (h *TenantProviders) TestProvider(w http.ResponseWriter, r *http.Request) {
 	if req.ProviderType == "email" && req.To == "" {
 		jsonError(w, http.StatusBadRequest, "to is required to test an email provider")
 		return
+	}
+
+	// A recipient for a whatsapp test means a real send is about to happen (see
+	// Manager.TestConnection) — gate it the same way cmd/worker's real dispatch path does, so this
+	// button can't be used to send WhatsApp messages without an active subscription. The
+	// account-info-only check (to == "") doesn't send anything, so it's exempt.
+	if req.ProviderType == "whatsapp" && req.To != "" && tenantID != h.PlatformID {
+		if h.whatsappSubSvc == nil {
+			jsonResponse(w, http.StatusBadRequest, map[string]any{
+				"success": false,
+				"error":   "whatsapp subscription service unavailable",
+				"message": "test connection failed",
+			})
+			return
+		}
+		if quotaErr := h.whatsappSubSvc.VerifyQuota(ctx, parseUUID(tenantID)); quotaErr != nil {
+			jsonResponse(w, http.StatusBadRequest, map[string]any{
+				"success": false,
+				"error":   quotaErr.Error(),
+				"message": "test connection failed",
+			})
+			return
+		}
 	}
 
 	info, err := h.manager.TestConnection(ctx, tenantID, req.ProviderType, req.ProviderName, req.To)
