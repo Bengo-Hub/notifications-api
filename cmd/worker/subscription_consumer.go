@@ -98,20 +98,9 @@ var subscriptionMappings = map[string]subscriptionNotificationMapping{
 			}
 		},
 	},
-	"expiring": {
-		TemplateID:   "subscription/subscription_expiring",
-		EmailSubject: "Your subscription is expiring soon",
-		DataBuilder: func(payload map[string]any, tenantWebsite string) map[string]any {
-			return map[string]any{
-				"name":           "Admin",
-				"plan_name":      payload["plan_code"],
-				"expiry_date":    payload["expiry_date"],
-				"renewal_amount": payload["renewal_amount"],
-				"currency":       payload["currency"],
-				"action_link":    fmt.Sprintf("%s/settings/subscription", tenantWebsite),
-			}
-		},
-	},
+	// "expiring" removed — subscriptions-api never publishes it (grep-verified), and the
+	// pre-expiry warning it would have sent is already superseded by invoice_generated (which
+	// fires 7 days before expiry with a real invoice + pay link, not a second redundant notice).
 	// invoice_generated fires when subscriptions issues a subscription invoice (7 days
 	// before expiry or via manual platform-owner generation). Emails the tenant the
 	// invoice with a durable pay link + PDF. Reuses the finance/invoice_sent template.

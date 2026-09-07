@@ -56,7 +56,7 @@
     "category": "UTILITY",
     "language": "en_US",
     "source": "whatsapp/ispbilling/expiry_reminder.txt",
-    "body": "Hi {{1}}, this is a reminder that your {{2}} subscription is expiring on {{3}}, with only {{4}} day(s) remaining. To renew and stay connected, please pay via Paybill {{5}}, Account Number {{6}}.",
+    "body": "Hi {{1}}, this is a reminder that your {{2}} subscription is expiring on {{3}}, with only {{4}} day(s) remaining. To renew and stay connected, please pay via Paybill {{5}}, Account Number {{6}}. Thank you for staying with us!",
     "example": ["Peter", "Home 20Mbps", "12 Sep", "2", "400200", "0712345678"]
   },
   {

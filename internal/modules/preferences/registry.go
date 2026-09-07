@@ -71,7 +71,6 @@ var Registry = []Type{
 	{Key: "finance/payout_completed", Label: "Payout completed", Group: "Billing & Payments", Class: ClassOptional},
 
 	// ── Subscription lifecycle ───────────────────────────────────────────────
-	{Key: "subscription/subscription_expiring", Label: "Subscription expiring", Group: "Subscription", Class: ClassEssential},
 	{Key: "subscription/grace_reminder", Label: "Grace-period reminder", Group: "Subscription", Class: ClassEssential},
 	{Key: "platform/plan_expiry_warning", Label: "Plan expiry warning", Group: "Subscription", Class: ClassEssential},
 	// Internal platform-ops alert (goes to Codevertex staff, never to a tenant), so it is
