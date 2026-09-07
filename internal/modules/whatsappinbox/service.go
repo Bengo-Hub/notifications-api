@@ -294,6 +294,22 @@ func (s *Service) Reply(ctx context.Context, tenantID, conversationID, senderUse
 		return nil, fmt.Errorf("save outbound message: %w", err)
 	}
 
+	// WhatsApp inbox replies send directly through the provider (not the standard
+	// messaging.Publish -> worker dispatch pipeline, since a reply must go out synchronously
+	// within the request), so cmd/worker's recordDeliveryLog never sees them — without this, the
+	// Monitoring page's stats/channel-distribution would never reflect real WhatsApp traffic no
+	// matter how much inbox activity occurs. Best-effort: a logging failure must never fail the
+	// reply itself, the message already sent successfully.
+	if _, dlErr := s.client.DeliveryLog.Create().
+		SetTenantID(tenantID.String()).
+		SetTemplateID("whatsapp/inbox_reply").
+		SetChannel("whatsapp").
+		SetRecipient(conv.CustomerWaID).
+		SetStatus("sent").
+		Save(ctx); dlErr != nil {
+		s.log.Warn("failed to record delivery log for whatsapp reply", zap.Error(dlErr))
+	}
+
 	preview := body
 	if len(preview) > 140 {
 		preview = preview[:140]

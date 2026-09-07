@@ -220,6 +220,22 @@ func (h *AnalyticsHandler) Logs(w http.ResponseWriter, r *http.Request) {
 	if status != "" {
 		baseQ = baseQ.Where(deliverylog.Status(status))
 	}
+	// from/to (RFC3339) — documented but previously unimplemented, which left this endpoint
+	// always unbounded while Delivery (the KPI cards above it on the Monitoring page) is always
+	// windowed by `range`, making the two panels look inconsistent (cards show 0 while the feed
+	// below still lists older activity). The frontend passes the same window it requests stats
+	// for. Invalid/absent values are silently ignored (unbounded), matching every other optional
+	// filter on this endpoint.
+	if from := r.URL.Query().Get("from"); from != "" {
+		if t, err := time.Parse(time.RFC3339, from); err == nil {
+			baseQ = baseQ.Where(deliverylog.CreatedAtGTE(t))
+		}
+	}
+	if to := r.URL.Query().Get("to"); to != "" {
+		if t, err := time.Parse(time.RFC3339, to); err == nil {
+			baseQ = baseQ.Where(deliverylog.CreatedAtLTE(t))
+		}
+	}
 
 	total, err := baseQ.Clone().Count(ctx)
 	if err != nil {
