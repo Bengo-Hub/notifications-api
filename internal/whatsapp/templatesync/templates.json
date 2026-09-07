@@ -10,31 +10,31 @@
     "category": "UTILITY",
     "language": "en_US",
     "source": "whatsapp/auth/password_reset.txt",
-    "body": "{{1}}: Password reset requested for {{2}}. Your reset code is {{3}}. Expires in {{4}} minutes. If you didn't request this, ignore this message.",
-    "example": ["CodeVertex", "Amina", "71-KTV9", "15"]
+    "body": "Hi {{1}}, a password reset was requested for your account. Your reset code is {{2}}, valid for {{3}} minutes. If you didn't request this, please ignore this message.",
+    "example": ["Amina", "71-KTV9", "15"]
   },
   {
     "name": "ordering_order_placed",
     "category": "UTILITY",
     "language": "en_US",
     "source": "whatsapp/ordering/order_placed.txt",
-    "body": "{{1}}: Order {{2}} confirmed! Total: {{3}}. Estimated delivery: {{4}}. Track: {{5}}",
-    "example": ["Urban Loft Cafe", "#ULC-2291", "KES 2,450", "35 min", "cdvtx.co/t/2291"]
+    "body": "Your order {{1}} has been confirmed! Total: {{2}}. Estimated delivery: {{3}}. Track your order here: {{4}}. Thanks for ordering with us!",
+    "example": ["#ULC-2291", "KES 2,450", "35 min", "cdvtx.co/t/2291"]
   },
   {
     "name": "ordering_order_delivered",
     "category": "UTILITY",
     "language": "en_US",
     "source": "whatsapp/ordering/order_delivered.txt",
-    "body": "{{1}}: Your order {{2}} has been delivered! We hope you enjoy it. Share your feedback: {{3}}",
-    "example": ["Urban Loft Cafe", "#ULC-2291", "cdvtx.co/f/2291"]
+    "body": "Your order {{1}} has been delivered! We hope you enjoy it. Share your feedback here: {{2}}. Thank you for choosing us!",
+    "example": ["#ULC-2291", "cdvtx.co/f/2291"]
   },
   {
     "name": "pos_receipt_share",
     "category": "UTILITY",
     "language": "en_US",
     "source": "whatsapp/pos/receipt_share.txt",
-    "body": "Thank you for your purchase, {{1}}! Order: {{2}}. Total: {{3}}. View or download your receipt: {{4}}",
+    "body": "Thank you for your purchase, {{1}}! Order: {{2}}. Total: {{3}}. View or download your receipt here: {{4}}. We appreciate your business!",
     "example": ["David", "POS-88213", "KES 1,180", "cdvtx.co/r/88213"]
   },
   {
@@ -42,23 +42,23 @@
     "category": "UTILITY",
     "language": "en_US",
     "source": "whatsapp/logistics/delivery_arriving.txt",
-    "body": "{{1}}: Your delivery is arriving! Order {{2}}. ETA: {{3}}. Track here: {{4}}",
-    "example": ["TruLoad", "TL-40217", "12 min", "cdvtx.co/t/40217"]
+    "body": "Your delivery is arriving! Order {{1}}. ETA: {{2}}. Track your delivery here: {{3}}. See you soon!",
+    "example": ["TL-40217", "12 min", "cdvtx.co/t/40217"]
   },
   {
     "name": "logistics_delivery_completed",
     "category": "UTILITY",
     "language": "en_US",
     "source": "whatsapp/logistics/delivery_completed.txt",
-    "body": "{{1}}: Your order {{2}} has been delivered! Thank you for choosing us. Rate your experience: {{3}}",
-    "example": ["TruLoad", "TL-40217", "cdvtx.co/f/40217"]
+    "body": "Your order {{1}} has been delivered! Thank you for choosing us. Rate your experience here: {{2}}. We hope to serve you again soon!",
+    "example": ["TL-40217", "cdvtx.co/f/40217"]
   },
   {
     "name": "ispbilling_expiry_reminder",
     "category": "UTILITY",
     "language": "en_US",
     "source": "whatsapp/ispbilling/expiry_reminder.txt",
-    "body": "Hi {{1}}, your {{2}} subscription expires on {{3}} ({{4}} day(s) left). Renew via Paybill {{5}}, Account {{6}}.",
+    "body": "Hi {{1}}, this is a reminder that your {{2}} subscription is expiring on {{3}}, with only {{4}} day(s) remaining. To renew and stay connected, please pay via Paybill {{5}}, Account Number {{6}}.",
     "example": ["Peter", "Home 20Mbps", "12 Sep", "2", "400200", "0712345678"]
   },
   {
@@ -66,7 +66,7 @@
     "category": "UTILITY",
     "language": "en_US",
     "source": "whatsapp/ispbilling/hotspot_welcome.txt",
-    "body": "Welcome {{1}}! Your hotspot account is ready. Login: {{2}}, Password: {{3}}, Package: {{4}}, Valid: {{5}} day(s).",
+    "body": "Welcome {{1}}! Your hotspot account is now ready to use. Login: {{2}}, Password: {{3}}, Package: {{4}}, valid for {{5}} day(s). Enjoy your connection!",
     "example": ["Grace", "grace254", "hx82ke", "Daily 5GB", "1"]
   },
   {
@@ -74,15 +74,15 @@
     "category": "UTILITY",
     "language": "en_US",
     "source": "whatsapp/ispbilling/pppoe_welcome.txt",
-    "body": "Welcome {{1}}! Your PPPoE connection is active. Username: {{2}}, Password: {{3}}, Package: {{4}} ({{5}}/{{6}} Mbps). Support: {{7}}",
-    "example": ["John", "john.k", "qz91mp", "Business 50", "50", "20", "0700111222"]
+    "body": "Welcome {{1}}! Your PPPoE connection is now active and ready to use. Username: {{2}}, Password: {{3}}, Package: {{4}} at {{5}} speed. For help, contact support: {{6}}. Thank you for choosing us!",
+    "example": ["John", "john.k", "qz91mp", "Business 50", "50/20 Mbps", "0700111222"]
   },
   {
     "name": "ispbilling_subscription_credentials",
     "category": "UTILITY",
     "language": "en_US",
     "source": "whatsapp/ispbilling/subscription_credentials.txt",
-    "body": "Hi {{1}}, your {{2}} ({{3}}) is now active. Username: {{4}}, Password: {{5}}, Valid until: {{6}}",
+    "body": "Hi {{1}}, your {{2}} ({{3}}) package is now active and ready to use. Username: {{4}}, Password: {{5}}. This subscription is valid until {{6}}. Enjoy your service!",
     "example": ["Mary", "Family 30Mbps", "PPPoE", "mary.w", "7fkd2a", "30 Sep 2026"]
   },
   {
@@ -90,7 +90,7 @@
     "category": "UTILITY",
     "language": "en_US",
     "source": "whatsapp/ispbilling/subscription_renewal.txt",
-    "body": "Hi {{1}}, your {{2}} ({{3}}) has been renewed. Valid until: {{4}}. Thank you for staying with us.",
+    "body": "Hi {{1}}, your {{2}} ({{3}}) subscription has been renewed successfully. It is now valid until {{4}}. Thank you for staying with us!",
     "example": ["Mary", "Family 30Mbps", "PPPoE", "30 Oct 2026"]
   },
   {
@@ -98,7 +98,7 @@
     "category": "UTILITY",
     "language": "en_US",
     "source": "whatsapp/ispbilling/isp_subscription_expiring.txt",
-    "body": "Hi {{1}}, your {{2}} is about to expire. Expires: {{3}}. {{4}} remaining. Renew now to stay connected.",
+    "body": "Hi {{1}}, your {{2}} subscription is about to expire on {{3}}, with {{4}} remaining. Renew now to stay connected without interruption.",
     "example": ["Grace", "Daily 5GB", "07 Sep, 18:00", "3 hour(s)"]
   },
   {
@@ -106,7 +106,7 @@
     "category": "UTILITY",
     "language": "en_US",
     "source": "whatsapp/ispbilling/payment_received.txt",
-    "body": "Payment received. Thank you {{1}}! Amount: {{2}}. Package: {{3}}. Active until: {{4}}",
+    "body": "Payment received, thank you {{1}}! Amount: {{2}}. Package: {{3}}. Your subscription is active until {{4}}. We appreciate your business!",
     "example": ["Peter", "KES 1,500", "Home 20Mbps", "12 Oct 2026"]
   },
   {
@@ -114,7 +114,7 @@
     "category": "UTILITY",
     "language": "en_US",
     "source": "whatsapp/ispbilling/payment_receipt.txt",
-    "body": "Payment received, thank you {{1}}! Amount: {{2}}. Receipt: {{3}}. Package: {{4}}. Active until: {{5}}",
+    "body": "Payment received, thank you {{1}}! Amount: {{2}}. Receipt: {{3}}. Package: {{4}}. Your subscription is active until {{5}}. Thank you for your payment!",
     "example": ["Peter", "KES 1,500", "RCT-88214", "Home 20Mbps", "12 Oct 2026"]
   },
   {
@@ -122,15 +122,15 @@
     "category": "UTILITY",
     "language": "en_US",
     "source": "proposed: whatsapp/finance/payment_success.txt",
-    "body": "{{1}}: We've received your payment of {{2}} for order {{3}}. Thank you!",
-    "example": ["Urban Loft Cafe", "KES 8,400", "ULC-3310"]
+    "body": "Payment received! We've received your payment of {{1}} for order {{2}}. Thank you for your business.",
+    "example": ["KES 8,400", "ULC-3310"]
   },
   {
     "name": "finance_payment_receipt",
     "category": "UTILITY",
     "language": "en_US",
     "source": "proposed: whatsapp/finance/payment_receipt.txt",
-    "body": "Hi {{1}}, your payment receipt is ready. Amount: {{2}}, paid via {{3}}. Invoice: {{4}}",
+    "body": "Hi {{1}}, your payment receipt is ready. Amount: {{2}}, paid via {{3}}. Invoice number: {{4}}. Thank you!",
     "example": ["Samuel", "KES 42,000", "Bank Transfer", "INV-260907-014"]
   },
   {
@@ -138,7 +138,7 @@
     "category": "UTILITY",
     "language": "en_US",
     "source": "proposed: whatsapp/finance/invoice_sent.txt",
-    "body": "Hi {{1}}, invoice {{2}} for {{3}} is now available. Due date: {{4}}.",
+    "body": "Hi {{1}}, your invoice {{2}} for {{3}} is now ready to view. Please settle it by {{4}} to avoid any late fees.",
     "example": ["Samuel", "INV-260907-014", "KES 42,000", "21 Sep 2026"]
   },
   {
@@ -154,7 +154,7 @@
     "category": "UTILITY",
     "language": "en_US",
     "source": "proposed: whatsapp/finance/refund_completed.txt",
-    "body": "Hi {{1}}, your refund of {{2}} has been completed. Reference: {{3}}",
+    "body": "Hi {{1}}, your refund of {{2}} has been completed successfully. Reference number: {{3}}. Thank you for your patience.",
     "example": ["Samuel", "KES 3,200", "RFD-004821"]
   },
   {
@@ -162,15 +162,15 @@
     "category": "UTILITY",
     "language": "en_US",
     "source": "proposed: whatsapp/inventory/low_stock_alert.txt",
-    "body": "Stock Alert: {{1}} (SKU {{2}}) is low at {{3}} — only {{4}} {{5}} remaining. Reorder recommended.",
-    "example": ["Arabica Beans 1kg", "BEAN-1KG", "Kilimani Outlet", "4", "unit(s)"]
+    "body": "Stock Alert: {{1}} (SKU: {{2}}) is running low at {{3}} — only {{4}} left in stock. Please consider reordering soon.",
+    "example": ["Arabica Beans 1kg", "BEAN-1KG", "Kilimani Outlet", "4 unit(s)"]
   },
   {
     "name": "inventory_stock_out",
     "category": "UTILITY",
     "language": "en_US",
     "source": "proposed: whatsapp/inventory/stock_out.txt",
-    "body": "Stock Alert: {{1}} (SKU {{2}}) is now OUT OF STOCK at {{3}}. {{4}} order(s) affected.",
+    "body": "Stock Alert: {{1}} (SKU: {{2}}) is now completely out of stock at {{3}}. This affects {{4}} pending order(s) — please restock as soon as possible.",
     "example": ["Arabica Beans 1kg", "BEAN-1KG", "Kilimani Outlet", "3"]
   },
   {
@@ -178,7 +178,7 @@
     "category": "UTILITY",
     "language": "en_US",
     "source": "proposed: whatsapp/library/overdue_notice.txt",
-    "body": "Hi {{1}}, your loan (ID {{2}}) was due on {{3}}. Please return or renew it soon.",
+    "body": "Hi {{1}}, your loan (ID {{2}}) was due back on {{3}}. Please return or renew it as soon as possible to avoid a fine.",
     "example": ["Wanjiru", "LN-01822", "05 Sep 2026"]
   },
   {
@@ -186,7 +186,7 @@
     "category": "UTILITY",
     "language": "en_US",
     "source": "proposed: whatsapp/library/hold_ready.txt",
-    "body": "Hi {{1}}, your hold on \"{{2}}\" is ready for pickup. Please collect before {{3}}.",
+    "body": "Hi {{1}}, your hold on \"{{2}}\" is ready for pickup. Please collect it before {{3}}, or it will be released to the next patron.",
     "example": ["Wanjiru", "Things Fall Apart", "10 Sep 2026"]
   },
   {
@@ -194,15 +194,15 @@
     "category": "UTILITY",
     "language": "en_US",
     "source": "proposed: whatsapp/library/fine_assessed.txt",
-    "body": "Hi {{1}}, a fine of {{2}} has been assessed on your account ({{3}}).",
-    "example": ["Wanjiru", "KES 150", "overdue return"]
+    "body": "Hi {{1}}, a fine of {{2}} has been assessed on your account for {{3}}. Please settle it at your earliest convenience.",
+    "example": ["Wanjiru", "KES 150", "an overdue return"]
   },
   {
     "name": "hrm_leave_approved",
     "category": "UTILITY",
     "language": "en_US",
     "source": "proposed: whatsapp/hrm/leave_approved.txt",
-    "body": "Hi {{1}}, your {{2}} leave request ({{3}} to {{4}}) has been approved.",
+    "body": "Hi {{1}}, your {{2}} leave request from {{3}} to {{4}} has been approved. Enjoy your time off!",
     "example": ["Brian", "Annual", "16 Sep", "20 Sep"]
   },
   {
@@ -210,7 +210,7 @@
     "category": "UTILITY",
     "language": "en_US",
     "source": "proposed: whatsapp/payroll/payslip_ready.txt",
-    "body": "Hi {{1}}, your payslip for {{2}} {{3}} is ready. Net pay: {{4}}.",
+    "body": "Hi {{1}}, your payslip for {{2}} {{3}} is now ready. Net pay: {{4}}. Thank you for your hard work this month!",
     "example": ["Brian", "August", "2026", "KES 68,200"]
   }
 ]

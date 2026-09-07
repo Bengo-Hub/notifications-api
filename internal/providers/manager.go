@@ -42,6 +42,27 @@ func (m *Manager) LoadPlatformMetaCredentials(ctx context.Context) (pcfg.Setting
 	return pcfg.LoadTenantProviderSettings(ctx, m.dbCfg, "platform", m.env, "whatsapp", "meta_cloud", m.decryptionKey)
 }
 
+// LoadWhatsAppTemplateCredentials resolves the WABA ID + access token used for template
+// management (create/list message_templates), read from the platform tenant's own whatsapp/
+// meta_cloud settings — the same tenant-only row GetWhatsAppProvider resolves for real sends (see
+// LoadTenantOnlyProviderSettings), not the separate literal-"platform" fallback tier. Returns a
+// clear error if either piece is missing rather than a confusing downstream Meta 400.
+func (m *Manager) LoadWhatsAppTemplateCredentials(ctx context.Context) (wabaID, accessToken string, err error) {
+	s, loadErr := pcfg.LoadTenantOnlyProviderSettings(ctx, m.dbCfg, m.PlatformID, m.env, "whatsapp", "meta_cloud", m.decryptionKey)
+	if loadErr != nil {
+		return "", "", loadErr
+	}
+	wabaID = s["waba_id"]
+	accessToken = s["access_token"]
+	if wabaID == "" {
+		return "", "", fmt.Errorf("no waba_id configured on the platform's whatsapp/meta_cloud settings")
+	}
+	if accessToken == "" {
+		return "", "", fmt.Errorf("no access_token configured on the platform's whatsapp/meta_cloud settings")
+	}
+	return wabaID, accessToken, nil
+}
+
 func (m *Manager) GetWhatsAppProvider(ctx context.Context, tenantID string, preferred string) (WhatsAppProvider, error) {
 	// meta_cloud (official Meta WhatsApp Cloud API) is the ONLY supported provider — no BSP
 	// per-message markup, Meta-hosted reliability. apiwap was removed (never used in production,
