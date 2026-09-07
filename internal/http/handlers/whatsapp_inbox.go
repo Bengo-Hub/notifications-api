@@ -7,12 +7,12 @@ import (
 	"time"
 
 	"github.com/Bengo-Hub/pagination"
+	authclient "github.com/Bengo-Hub/shared-auth-client"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 	"nhooyr.io/websocket"
 
-	httpware "github.com/Bengo-Hub/httpware"
 	"github.com/bengobox/notifications-api/internal/ent"
 	"github.com/bengobox/notifications-api/internal/modules/whatsappinbox"
 )
@@ -170,7 +170,12 @@ func (h *WhatsAppInboxHandler) Reply(w http.ResponseWriter, r *http.Request) {
 		jsonError(w, http.StatusBadRequest, "invalid conversation id")
 		return
 	}
-	userID, uerr := uuid.Parse(httpware.GetUserID(r.Context()))
+	claims, ok := authclient.ClaimsFromContext(r.Context())
+	if !ok {
+		jsonError(w, http.StatusUnauthorized, "user identity required")
+		return
+	}
+	userID, uerr := claims.UserID()
 	if uerr != nil {
 		jsonError(w, http.StatusUnauthorized, "user identity required")
 		return
