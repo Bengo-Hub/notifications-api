@@ -28,6 +28,54 @@
     "example": ["#ULC-2291", "cdvtx.co/f/2291"]
   },
   {
+    "name": "ordering_order_ready",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/ordering/order_ready.txt",
+    "body": "Hi {{1}}, your order {{2}} is ready! View details here: {{3}}. Thank you for your order!",
+    "example": ["Amina", "#ULC-2299", "cdvtx.co/o/2299"]
+  },
+  {
+    "name": "ordering_order_out_for_delivery",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/ordering/order_out_for_delivery.txt",
+    "body": "Hi {{1}}, your order {{2}} is out for delivery with {{3}} ({{4}}). Track it here: {{5}}. Thank you for your order!",
+    "example": ["Amina", "#ULC-2299", "James K.", "0711223344", "cdvtx.co/t/2299"]
+  },
+  {
+    "name": "ordering_order_cancelled",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/ordering/order_cancelled.txt",
+    "body": "Hi {{1}}, your order {{2}} has been cancelled. Reason: {{3}}. View details here: {{4}}. We're sorry for the inconvenience.",
+    "example": ["Amina", "#ULC-2299", "Item out of stock", "cdvtx.co/o/2299"]
+  },
+  {
+    "name": "ordering_order_refunded",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/ordering/order_refunded.txt",
+    "body": "Hi {{1}}, your refund of {{2}} for order {{3}} has been processed. Reason: {{4}}. Thank you for your patience!",
+    "example": ["Amina", "KES 2,450", "#ULC-2299", "Order cancelled by customer"]
+  },
+  {
+    "name": "ordering_order_scheduled",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/ordering/order_scheduled.txt",
+    "body": "Hi {{1}}, your order {{2}} has been scheduled for {{3}}. Total: {{4}}. View details here: {{5}}. Thank you for your order!",
+    "example": ["Amina", "#ULC-2299", "9 Sep, 6:00 PM", "KES 3,200", "cdvtx.co/o/2299"]
+  },
+  {
+    "name": "ordering_order_for_pickup",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/ordering/order_for_pickup.txt",
+    "body": "Hi {{1}}, your order {{2}} is ready for pickup at {{3}}, {{4}}. View details here: {{5}}. See you soon!",
+    "example": ["Amina", "#ULC-2299", "Westlands Branch", "5:30 PM today", "cdvtx.co/o/2299"]
+  },
+  {
     "name": "pos_receipt_share",
     "category": "UTILITY",
     "language": "en_US",
@@ -122,6 +170,14 @@
     "source": "proposed: whatsapp/finance/payment_success.txt",
     "body": "Payment received! We've received your payment of {{1}} for order {{2}}. Thank you for your business.",
     "example": ["KES 8,400", "ULC-3310"]
+  },
+  {
+    "name": "finance_payment_failed",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "proposed: whatsapp/finance/payment_failed.txt",
+    "body": "Hi {{1}}, your payment for order {{2}} was unsuccessful. Please try again here: {{3}}. Need help? Contact our support team.",
+    "example": ["Samuel", "#ULC-3310", "cdvtx.co/o/3310/pay"]
   },
   {
     "name": "finance_payment_receipt",

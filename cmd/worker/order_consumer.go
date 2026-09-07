@@ -14,6 +14,7 @@ import (
 
 	"github.com/bengobox/notifications-api/internal/config"
 	"github.com/bengobox/notifications-api/internal/messaging"
+	"github.com/bengobox/notifications-api/internal/modules/preferences"
 )
 
 // orderEvent is the CloudEvents envelope from ordering-service.
@@ -229,7 +230,7 @@ var orderMappings = map[string]orderNotificationMapping{
 
 // startOrderConsumer subscribes to ordering.order.> events and dispatches
 // customer notifications for order status changes.
-func startOrderConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamContext, cfg *config.Config, tr *tenantResolver, logg *zap.Logger) {
+func startOrderConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamContext, cfg *config.Config, tr *tenantResolver, gate *preferences.Gate, templateChannels map[string][]string, logg *zap.Logger) {
 	if nc == nil || js == nil {
 		logg.Warn("skipping order consumer: NATS not available")
 		return
@@ -254,10 +255,14 @@ func startOrderConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 			return
 		}
 
-		// Extract customer email from event data
+		// Extract customer contact info from event data — ordering-service's publisher
+		// includes customer_phone on every order event alongside customer_email (verified
+		// against internal/platform/events/publisher.go), so SMS/WhatsApp fan-out has a real
+		// recipient to use, not a guessed field.
 		email, _ := evtData["customer_email"].(string)
-		if email == "" {
-			logg.Warn("order event: no customer_email in data, skipping", zap.String("type", evtType))
+		phone, _ := evtData["customer_phone"].(string)
+		if email == "" && phone == "" {
+			logg.Warn("order event: no customer contact info in data, skipping", zap.String("type", evtType))
 			_ = m.Ack()
 			return
 		}
@@ -294,22 +299,31 @@ func startOrderConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 			evtData["tenant_slug"] = tenantSlug
 		}
 
-		msg := messaging.Message{
+		// Fan out to every channel the tenant has enabled for this notification type that
+		// also has a drafted template and a recipient contact — not just email. A tenant that
+		// only enabled WhatsApp for order updates gets only WhatsApp; one that enabled both
+		// gets both. See fanOutTargets/publishFanOut (cmd/worker/fanout.go).
+		recipients := map[string]string{}
+		if email != "" {
+			recipients["email"] = email
+		}
+		if phone != "" {
+			recipients["sms"] = phone
+			recipients["whatsapp"] = phone
+		}
+		base := messaging.Message{
 			TenantID:    evtTenantID,
-			Channel:     "email",
 			TemplateID:  mapping.TemplateID,
 			SenderScope: messaging.SenderScopeTenant,
 			Target:      messaging.TargetCustomer,
-			To:          []string{email},
 			Data:        mapping.DataBuilder(evtData, appURL),
 			Metadata: map[string]interface{}{
 				"subject":    mapping.EmailSubject,
 				"service_id": "ordering",
 			},
-			RequestID:      uuid.New().String(),
 			IdempotencyKey: idempotencyKey,
-			QueuedAt:       time.Now(),
 		}
+		targets := fanOutTargets(ctx, gate, templateChannels, evtTenantID, mapping.TemplateID, recipients)
 
 		// On a brand-new online order, send the tenant/outlet a dedicated, actionable
 		// "new order arrived" alert — a SEPARATE email to the tenant contact address, using
@@ -347,13 +361,13 @@ func startOrderConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 			}
 		}
 
-		if _, err := messaging.Publish(ctx, nc, cfg.Events, msg); err != nil {
-			logg.Error("order event: failed to dispatch notification",
+		sentChannels := publishFanOut(ctx, nc, cfg, base, targets, logg)
+		if len(sentChannels) == 0 {
+			logg.Warn("order event: no channel dispatched (none enabled/templated for this tenant+type)",
 				zap.String("type", evtType),
 				zap.String("order_id", orderID),
-				zap.Error(err),
 			)
-			_ = m.Nak()
+			_ = m.Ack()
 			return
 		}
 
@@ -361,7 +375,7 @@ func startOrderConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 			zap.String("type", evtType),
 			zap.String("template", mapping.TemplateID),
 			zap.String("order_id", orderID),
-			zap.String("to", email),
+			zap.Strings("channels", sentChannels),
 		)
 		_ = m.Ack()
 	}

@@ -146,6 +146,8 @@ func main() {
 	}
 
 	tpl := templates.New(cfg.Templates)
+	// Built once at startup, not per-message — see buildTemplateChannels' own comment.
+	templateChannels := buildTemplateChannels(ctx, tpl, logg)
 
 	// DB for provider overrides and billing
 	client, err := entdb.NewClient(ctx, cfg.Postgres)
@@ -289,7 +291,7 @@ func main() {
 	startLibraryConsumer(ctx, nc, js, cfg, tr, logg)
 
 	// Start order status event consumer (ordering-service → customer notifications)
-	startOrderConsumer(ctx, nc, js, cfg, tr, logg)
+	startOrderConsumer(ctx, nc, js, cfg, tr, prefGate, templateChannels, logg)
 
 	// Start subscription lifecycle event consumer (subscriptions-service → tenant admin
 	// notifications, and custom-addon fulfillment for SMS credits / WhatsApp plans)
@@ -303,7 +305,7 @@ func main() {
 	startResellerApplicationNotificationConsumer(ctx, nc, cfg, logg)
 
 	// Start treasury event consumer (treasury-service → payment/invoice notifications + credit top-ups)
-	startTreasuryConsumer(ctx, nc, js, cfg, tr, billingSvc, whatsappSubsSvc, pm, dbPool, logg)
+	startTreasuryConsumer(ctx, nc, js, cfg, tr, billingSvc, whatsappSubsSvc, pm, dbPool, prefGate, templateChannels, logg)
 
 	// Start delivery task event consumer (logistics-service → delivery status notifications)
 	startDeliveryConsumer(ctx, nc, js, cfg, tr, logg)

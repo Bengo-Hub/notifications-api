@@ -16,6 +16,7 @@ import (
 	"github.com/bengobox/notifications-api/internal/config"
 	"github.com/bengobox/notifications-api/internal/messaging"
 	"github.com/bengobox/notifications-api/internal/modules/billing"
+	"github.com/bengobox/notifications-api/internal/modules/preferences"
 	"github.com/bengobox/notifications-api/internal/providers"
 )
 
@@ -213,7 +214,7 @@ func formatEventDate(v any) string {
 // JetStream stream and dispatches payment notification emails. It also handles
 // credit top-up (reference_type=topup) and WhatsApp subscription activation
 // (reference_type=whatsapp_subscription).
-func startTreasuryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamContext, cfg *config.Config, tr *tenantResolver, billingSvc *billing.Service, whatsappSubsSvc *billing.WhatsAppSubscriptionService, pm *providers.Manager, dbPool *pgxpool.Pool, logg *zap.Logger) {
+func startTreasuryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamContext, cfg *config.Config, tr *tenantResolver, billingSvc *billing.Service, whatsappSubsSvc *billing.WhatsAppSubscriptionService, pm *providers.Manager, dbPool *pgxpool.Pool, gate *preferences.Gate, templateChannels map[string][]string, logg *zap.Logger) {
 	if nc == nil || js == nil {
 		logg.Warn("skipping treasury consumer: NATS not available")
 		return
@@ -468,6 +469,48 @@ func startTreasuryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStream
 		target := messaging.TargetCustomer
 		if eventType == "payout.completed" || eventType == "approval_otp_requested" {
 			target = messaging.TargetTenantAdmin
+		}
+
+		// Payment success/failure/refund are the genuinely customer-facing payment events —
+		// fan out to every channel the tenant has enabled, using the phone number treasury-api
+		// already threads into intent.Metadata (and now, since the payment.succeeded/failed
+		// metadata-forwarding fix, into this event's payload) when the payment intent was
+		// created with one. Deliberately NOT applied to payouts (tenant-admin, email is the
+		// right channel), approval OTPs (must go to the specific approver's email, not a
+		// broadcast), or dunning (its own escalation-tier template logic below) — those stay
+		// email-only, unchanged.
+		if eventType == "payment.succeeded" || eventType == "payment.failed" || eventType == "refund.completed" {
+			phone := ""
+			if meta, _ := payload["metadata"].(map[string]any); meta != nil {
+				phone, _ = meta["customer_phone"].(string)
+			}
+			recipients := map[string]string{"email": customerEmail}
+			if phone != "" {
+				recipients["sms"] = phone
+				recipients["whatsapp"] = phone
+			}
+			base := messaging.Message{
+				TenantID:    tenantID,
+				TemplateID:  mapping.TemplateID,
+				SenderScope: senderScope,
+				Target:      target,
+				Data:        mapping.DataBuilder(payload, tenantWebsite),
+				Metadata: map[string]any{
+					"subject": mapping.EmailSubject,
+				},
+				IdempotencyKey: fmt.Sprintf("treasury-%s-%s", eventType, aggregateID),
+			}
+			targets := fanOutTargets(ctx, gate, templateChannels, tenantID, mapping.TemplateID, recipients)
+			sentChannels := publishFanOut(ctx, nc, cfg, base, targets, logg)
+			if len(sentChannels) == 0 {
+				logg.Warn("treasury event: no channel dispatched (none enabled/templated for this tenant+type)",
+					zap.String("type", eventType), zap.String("tenant_id", tenantID))
+			} else {
+				logg.Info("treasury notification dispatched",
+					zap.String("type", eventType), zap.String("template", mapping.TemplateID), zap.Strings("channels", sentChannels))
+			}
+			_ = m.Ack()
+			return
 		}
 
 		msg := messaging.Message{
