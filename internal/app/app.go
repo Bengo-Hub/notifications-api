@@ -309,7 +309,7 @@ func New(ctx context.Context) (*App, error) {
 
 	whatsappInboxHub := whatsappinbox.NewHub(log)
 	whatsappInboxHub.SetRedis(redisClient)
-	whatsappInboxService := whatsappinbox.NewService(entClient, providerManager, whatsappInboxHub, log)
+	whatsappInboxService := whatsappinbox.NewService(entClient, providerManager, whatsappInboxHub, natsConn, cfg.Events, log)
 	whatsappInboxHandler := handlers.NewWhatsAppInboxHandler(whatsappInboxService, whatsappInboxHub, cfg.HTTP.AllowedOrigins, log)
 	webhookHandler := handlers.NewWebhookHandler(entClient, log, cfg.HTTP.PublicBaseURL, whatsappInboxService)
 	whatsappEmbeddedSignupHandler := handlers.NewWhatsAppEmbeddedSignupHandler(entClient, log, providerManager)

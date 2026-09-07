@@ -171,6 +171,97 @@ func (s *WhatsAppSubscriptionService) InitiateSubscription(ctx context.Context, 
 	}, nil
 }
 
+// RecordManualPayment lets a platform admin reconcile a WhatsApp subscription payment received
+// outside the normal checkout flow (bank transfer, cash, till) — chains InitiateSubscription
+// (creates the payment intent in treasury) with treasury's confirm-manual endpoint (marks it
+// succeeded and publishes payment.succeeded), which the treasury event consumer picks up to
+// actually activate/renew the subscription — the same async path a real gateway payment takes,
+// just without a customer-facing checkout step. reference is an optional note (e.g. a bank
+// transaction ID) recorded on the intent for audit.
+func (s *WhatsAppSubscriptionService) RecordManualPayment(ctx context.Context, tenantID uuid.UUID, planID uuid.UUID, reference string) (*TopUpResult, error) {
+	result, err := s.InitiateSubscription(ctx, tenantID, planID, "")
+	if err != nil {
+		return nil, fmt.Errorf("create payment intent: %w", err)
+	}
+
+	var treasuryHeaders map[string]string
+	if s.treasuryAPIKey != "" {
+		treasuryHeaders = map[string]string{"X-API-Key": s.treasuryAPIKey}
+	}
+	confirmBody := map[string]any{"reference": reference}
+	resp, err := s.treasuryClient.Post(ctx, fmt.Sprintf("/api/v1/%s/payments/intents/%s/confirm-manual", tenantID, result.IntentID), confirmBody, treasuryHeaders)
+	if err != nil {
+		return nil, fmt.Errorf("confirm manual payment: %w", err)
+	}
+	if !resp.IsSuccess() {
+		return nil, fmt.Errorf("treasury confirm-manual failed with status %d: %s", resp.StatusCode, string(resp.Body))
+	}
+
+	result.Status = "succeeded"
+	return result, nil
+}
+
+// SubscriptionAdminRow is a platform-admin view of one tenant's WhatsApp subscription — every
+// tenant that has EVER subscribed (any status: active/cancelled/expired/trial), so the admin
+// management table can show renewal state and offer "Record & Mark Paid" regardless of whether
+// the subscription is currently active. Tenants that have never subscribed at all are out of
+// scope here (nothing to renew or reconcile).
+type SubscriptionAdminRow struct {
+	TenantID         string      `json:"tenant_id"`
+	TenantName       string      `json:"tenant_name"`
+	TenantSlug       string      `json:"tenant_slug"`
+	Plan             PlanSummary `json:"plan"`
+	Status           string      `json:"status"`
+	StartedAt        time.Time   `json:"started_at"`
+	ExpiresAt        time.Time   `json:"expires_at"`
+	AutoRenew        bool        `json:"auto_renew"`
+	MessagesUsed     int         `json:"messages_used"`
+	PaymentReference string      `json:"payment_reference,omitempty"`
+}
+
+// ListAllSubscriptions returns every tenant's WhatsApp subscription for the platform-admin
+// management table. Tenant name/slug are resolved from the local Tenant projection (JIT-synced
+// whenever a tenant has touched this service, which every subscribing tenant necessarily has).
+func (s *WhatsAppSubscriptionService) ListAllSubscriptions(ctx context.Context) ([]SubscriptionAdminRow, error) {
+	subs, err := s.client.TenantWhatsAppSubscription.Query().
+		WithPlan().
+		Order(ent.Desc(tenantwhatsappsubscription.FieldExpiresAt)).
+		All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("query subscriptions: %w", err)
+	}
+
+	out := make([]SubscriptionAdminRow, 0, len(subs))
+	for _, sub := range subs {
+		if sub.Edges.Plan == nil {
+			continue
+		}
+		row := SubscriptionAdminRow{
+			TenantID: sub.TenantID.String(),
+			Plan: PlanSummary{
+				ID:               sub.Edges.Plan.ID.String(),
+				Name:             sub.Edges.Plan.Name,
+				Slug:             sub.Edges.Plan.Slug,
+				PriceMonthly:     sub.Edges.Plan.PriceMonthly,
+				MessagesPerMonth: sub.Edges.Plan.MessagesPerMonth,
+				IsActive:         sub.Edges.Plan.IsActive,
+			},
+			Status:           string(sub.Status),
+			StartedAt:        sub.StartedAt,
+			ExpiresAt:        sub.ExpiresAt,
+			AutoRenew:        sub.AutoRenew,
+			MessagesUsed:     sub.MessagesUsed,
+			PaymentReference: sub.PaymentReference,
+		}
+		if t, err := s.client.Tenant.Get(ctx, sub.TenantID); err == nil && t != nil {
+			row.TenantName = t.Name
+			row.TenantSlug = t.Slug
+		}
+		out = append(out, row)
+	}
+	return out, nil
+}
+
 // ActivateSubscription sets or renews a tenant's WhatsApp subscription after payment.
 func (s *WhatsAppSubscriptionService) ActivateSubscription(ctx context.Context, tenantID uuid.UUID, planID uuid.UUID, paymentRef string) error {
 	now := time.Now()

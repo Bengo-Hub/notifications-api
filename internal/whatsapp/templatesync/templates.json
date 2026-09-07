@@ -7,11 +7,9 @@
   },
   {
     "name": "auth_password_reset",
-    "category": "UTILITY",
+    "category": "AUTHENTICATION",
     "language": "en_US",
-    "source": "whatsapp/auth/password_reset.txt",
-    "body": "Hi {{1}}, a password reset was requested for your account. Your reset code is {{2}}, valid for {{3}} minutes. If you didn't request this, please ignore this message.",
-    "example": ["Amina", "71-KTV9", "15"]
+    "source": "whatsapp/auth/password_reset.txt"
   },
   {
     "name": "ordering_order_placed",
@@ -46,11 +44,11 @@
     "example": ["TL-40217", "12 min", "cdvtx.co/t/40217"]
   },
   {
-    "name": "logistics_delivery_completed",
+    "name": "logistics_delivery_completed_v2",
     "category": "UTILITY",
     "language": "en_US",
     "source": "whatsapp/logistics/delivery_completed.txt",
-    "body": "Your order {{1}} has been delivered! Thank you for choosing us. Rate your experience here: {{2}}. We hope to serve you again soon!",
+    "body": "Your order {{1}} has been delivered. Share your feedback on this delivery here: {{2}}. Thank you for choosing us!",
     "example": ["TL-40217", "cdvtx.co/f/40217"]
   },
   {
@@ -66,24 +64,24 @@
     "category": "UTILITY",
     "language": "en_US",
     "source": "whatsapp/ispbilling/hotspot_welcome.txt",
-    "body": "Welcome {{1}}! Your hotspot account is now ready to use. Login: {{2}}, Password: {{3}}, Package: {{4}}, valid for {{5}} day(s). Enjoy your connection!",
-    "example": ["Grace", "grace254", "hx82ke", "Daily 5GB", "1"]
+    "body": "Welcome {{1}}! Your hotspot account is now ready to use. Login: {{2}}, Package: {{3}}, valid for {{4}} day(s). Check your account portal for your password. Enjoy your connection!",
+    "example": ["Grace", "grace254", "Daily 5GB", "1"]
   },
   {
     "name": "ispbilling_pppoe_welcome",
     "category": "UTILITY",
     "language": "en_US",
     "source": "whatsapp/ispbilling/pppoe_welcome.txt",
-    "body": "Welcome {{1}}! Your PPPoE connection is now active and ready to use. Username: {{2}}, Password: {{3}}, Package: {{4}} at {{5}} speed. For help, contact support: {{6}}. Thank you for choosing us!",
-    "example": ["John", "john.k", "qz91mp", "Business 50", "50/20 Mbps", "0700111222"]
+    "body": "Welcome {{1}}! Your PPPoE connection is now active and ready to use. Username: {{2}}, Package: {{3}} at {{4}} speed. Check your account portal for your password. For help, contact support: {{5}}.",
+    "example": ["John", "john.k", "Business 50", "50/20 Mbps", "0700111222"]
   },
   {
     "name": "ispbilling_subscription_credentials",
     "category": "UTILITY",
     "language": "en_US",
     "source": "whatsapp/ispbilling/subscription_credentials.txt",
-    "body": "Hi {{1}}, your {{2}} ({{3}}) package is now active and ready to use. Username: {{4}}, Password: {{5}}. This subscription is valid until {{6}}. Enjoy your service!",
-    "example": ["Mary", "Family 30Mbps", "PPPoE", "mary.w", "7fkd2a", "30 Sep 2026"]
+    "body": "Hi {{1}}, your {{2}} ({{3}}) package is now active and ready to use. Username: {{4}}. Check your account portal for your password. This subscription is valid until {{5}}.",
+    "example": ["Mary", "Family 30Mbps", "PPPoE", "mary.w", "30 Sep 2026"]
   },
   {
     "name": "ispbilling_subscription_renewal",

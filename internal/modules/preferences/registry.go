@@ -58,6 +58,9 @@ var Registry = []Type{
 	//    critical lab value must always reach the ordering clinician) ────────────
 	{Key: "hospital/lab_order_critical_result", Label: "Critical lab result alert", Group: "Hospital", Class: ClassLocked},
 
+	// ── WhatsApp Inbox (push fan-out when a new customer message arrives) ────────
+	{Key: "whatsapp/new_message", Label: "New WhatsApp message (push)", Group: "WhatsApp Inbox", Class: ClassEssential},
+
 	// ── Billing & payments ───────────────────────────────────────────────────
 	{Key: "finance/payment_success", Label: "Payment successful", Group: "Billing & Payments", Class: ClassEssential},
 	{Key: "finance/payment_failed", Label: "Payment failed", Group: "Billing & Payments", Class: ClassEssential},

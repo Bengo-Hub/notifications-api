@@ -173,6 +173,10 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 					pb.Get("/", platformBilling.GetSettings)
 					pb.Post("/", platformBilling.UpdateSettings)
 					pb.Get("/margin", platformBilling.GetMargin)
+					if whatsappSubs != nil {
+						pb.Get("/whatsapp/subscriptions", whatsappSubs.ListAllSubscriptions)
+						pb.Post("/whatsapp/subscriptions/{tenantId}/record-payment", whatsappSubs.RecordPayment)
+					}
 				})
 			})
 

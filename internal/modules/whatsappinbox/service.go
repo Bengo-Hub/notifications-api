@@ -13,11 +13,15 @@ import (
 
 	"github.com/Bengo-Hub/pagination"
 	"github.com/google/uuid"
+	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
 
+	"github.com/bengobox/notifications-api/internal/config"
 	"github.com/bengobox/notifications-api/internal/ent"
+	"github.com/bengobox/notifications-api/internal/ent/devicetoken"
 	"github.com/bengobox/notifications-api/internal/ent/whatsappconversation"
 	"github.com/bengobox/notifications-api/internal/ent/whatsappmessage"
+	"github.com/bengobox/notifications-api/internal/messaging"
 	"github.com/bengobox/notifications-api/internal/providers"
 	"github.com/bengobox/notifications-api/internal/providers/whatsapp"
 )
@@ -37,11 +41,56 @@ type Service struct {
 	client      *ent.Client
 	providerMgr *providers.Manager
 	hub         *Hub
+	nc          *nats.Conn
+	eventsCfg   config.EventsConfig
 	log         *zap.Logger
 }
 
-func NewService(client *ent.Client, providerMgr *providers.Manager, hub *Hub, log *zap.Logger) *Service {
-	return &Service{client: client, providerMgr: providerMgr, hub: hub, log: log.Named("whatsapp-inbox")}
+func NewService(client *ent.Client, providerMgr *providers.Manager, hub *Hub, nc *nats.Conn, eventsCfg config.EventsConfig, log *zap.Logger) *Service {
+	return &Service{client: client, providerMgr: providerMgr, hub: hub, nc: nc, eventsCfg: eventsCfg, log: log.Named("whatsapp-inbox")}
+}
+
+// notifyStaff fans a push notification out to every active device token for the tenant (tenant-
+// wide, matching the inbox's own RBAC scoping — no per-assignee targeting). Best-effort: a
+// tenant with no registered devices, or push not configured, just means no push goes out; the
+// message is already persisted and visible in the inbox regardless.
+func (s *Service) notifyStaff(ctx context.Context, tenantID uuid.UUID, customerName, customerWaID, preview string) {
+	if s.nc == nil {
+		return
+	}
+	tokens, err := s.client.DeviceToken.Query().
+		Where(devicetoken.TenantID(tenantID), devicetoken.IsActive(true)).
+		All(ctx)
+	if err != nil {
+		s.log.Warn("whatsapp inbox: device token lookup failed", zap.Error(err))
+		return
+	}
+	if len(tokens) == 0 {
+		return
+	}
+	toks := make([]string, 0, len(tokens))
+	for _, t := range tokens {
+		toks = append(toks, t.Token)
+	}
+	msg := messaging.Message{
+		TenantID:    tenantID.String(),
+		Channel:     "push",
+		TemplateID:  "whatsapp/new_message",
+		SenderScope: messaging.SenderScopeTenant,
+		Target:      messaging.TargetStaff,
+		To:          messaging.NormalizeRecipients(toks, "push"),
+		Data: map[string]any{
+			"customer_name": customerName,
+			"customer_wa_id": customerWaID,
+			"preview":       preview,
+		},
+		Metadata:  map[string]any{"push_title": "New WhatsApp message"},
+		RequestID: uuid.New().String(),
+		QueuedAt:  time.Now(),
+	}
+	if _, err := messaging.Publish(ctx, s.nc, s.eventsCfg, msg); err != nil {
+		s.log.Warn("whatsapp inbox: push publish failed", zap.Error(err))
+	}
 }
 
 // broadcast is nil-safe — the hub is optional so this package still works if it's never wired.
@@ -110,6 +159,7 @@ func (s *Service) RecordInbound(ctx context.Context, tenantID uuid.UUID, phoneNu
 		return fmt.Errorf("update conversation: %w", err)
 	}
 	s.broadcast(tenantID, conv.ID)
+	s.notifyStaff(ctx, tenantID, contactName, fromWaID, preview)
 	return nil
 }
 

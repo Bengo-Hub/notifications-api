@@ -1,0 +1,1 @@
+{{ if .customer_name }}{{ .customer_name }}{{ else }}{{ .customer_wa_id }}{{ end }}: {{ .preview }}
