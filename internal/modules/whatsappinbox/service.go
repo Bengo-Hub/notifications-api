@@ -36,11 +36,23 @@ var ErrNotFound = errors.New("conversation not found")
 type Service struct {
 	client      *ent.Client
 	providerMgr *providers.Manager
+	hub         *Hub
 	log         *zap.Logger
 }
 
-func NewService(client *ent.Client, providerMgr *providers.Manager, log *zap.Logger) *Service {
-	return &Service{client: client, providerMgr: providerMgr, log: log.Named("whatsapp-inbox")}
+func NewService(client *ent.Client, providerMgr *providers.Manager, hub *Hub, log *zap.Logger) *Service {
+	return &Service{client: client, providerMgr: providerMgr, hub: hub, log: log.Named("whatsapp-inbox")}
+}
+
+// broadcast is nil-safe — the hub is optional so this package still works if it's never wired.
+func (s *Service) broadcast(tenantID uuid.UUID, conversationID uuid.UUID) {
+	if s.hub == nil {
+		return
+	}
+	s.hub.BroadcastToTenant(tenantID, StreamMessage{
+		Type:    "whatsapp_message",
+		Payload: map[string]any{"conversation_id": conversationID.String()},
+	})
 }
 
 // RecordInbound persists one inbound customer message, idempotent on waMessageID — Meta redelivers
@@ -97,6 +109,7 @@ func (s *Service) RecordInbound(ctx context.Context, tenantID uuid.UUID, phoneNu
 	if _, err := update.Save(ctx); err != nil {
 		return fmt.Errorf("update conversation: %w", err)
 	}
+	s.broadcast(tenantID, conv.ID)
 	return nil
 }
 
@@ -238,6 +251,7 @@ func (s *Service) Reply(ctx context.Context, tenantID, conversationID, senderUse
 	if _, err := conv.Update().SetLastMessageAt(time.Now()).SetLastMessagePreview(preview).Save(ctx); err != nil {
 		s.log.Warn("failed to update conversation after reply", zap.Error(err))
 	}
+	s.broadcast(tenantID, conv.ID)
 	return msg, nil
 }
 

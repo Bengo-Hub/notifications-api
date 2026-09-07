@@ -10,6 +10,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
+	"nhooyr.io/websocket"
 
 	httpware "github.com/Bengo-Hub/httpware"
 	"github.com/bengobox/notifications-api/internal/ent"
@@ -20,12 +21,14 @@ import (
 // read a thread, mark read, and reply. All routes read the tenant from the JWT (never a client-
 // supplied value) via httpware.GetTenantID, same convention as every other tenant-scoped route.
 type WhatsAppInboxHandler struct {
-	service *whatsappinbox.Service
-	log     *zap.Logger
+	service        *whatsappinbox.Service
+	hub            *whatsappinbox.Hub
+	allowedOrigins []string
+	log            *zap.Logger
 }
 
-func NewWhatsAppInboxHandler(service *whatsappinbox.Service, log *zap.Logger) *WhatsAppInboxHandler {
-	return &WhatsAppInboxHandler{service: service, log: log.Named("whatsapp-inbox-handler")}
+func NewWhatsAppInboxHandler(service *whatsappinbox.Service, hub *whatsappinbox.Hub, allowedOrigins []string, log *zap.Logger) *WhatsAppInboxHandler {
+	return &WhatsAppInboxHandler{service: service, hub: hub, allowedOrigins: allowedOrigins, log: log.Named("whatsapp-inbox-handler")}
 }
 
 type conversationResponse struct {
@@ -205,4 +208,32 @@ func (h *WhatsAppInboxHandler) Reply(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// StreamInbox upgrades to a WebSocket and pushes a lightweight "whatsapp_message" event whenever
+// any conversation in the caller's tenant changes (new inbound message or a staff reply) — the
+// client re-fetches the affected conversation/thread rather than receiving the full payload over
+// the socket, keeping this hub simple. Tenant-scoped: a connection only ever receives its own
+// tenant's events (see whatsappinbox.Hub.BroadcastToTenant).
+func (h *WhatsAppInboxHandler) StreamInbox(w http.ResponseWriter, r *http.Request) {
+	if h.hub == nil {
+		jsonError(w, http.StatusServiceUnavailable, "live updates are not configured")
+		return
+	}
+	tenantID, ok := tenantUUID(r)
+	if !ok {
+		jsonError(w, http.StatusBadRequest, "tenant ID required")
+		return
+	}
 
+	origins := h.allowedOrigins
+	if len(origins) == 0 {
+		origins = []string{"*"}
+	}
+	conn, err := websocket.Accept(w, r, &websocket.AcceptOptions{OriginPatterns: origins})
+	if err != nil {
+		h.log.Warn("whatsapp inbox: websocket upgrade failed", zap.Error(err))
+		return
+	}
+	defer conn.Close(websocket.StatusNormalClosure, "")
+
+	h.hub.ServeWS(r.Context(), conn, tenantID)
+}

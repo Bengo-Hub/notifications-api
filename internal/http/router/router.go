@@ -3,6 +3,7 @@ package router
 import (
 	"context"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -20,14 +21,32 @@ import (
 	"github.com/bengobox/notifications-api/internal/modules/tenant"
 )
 
+// bypassForWebsocket skips a middleware for a WebSocket upgrade request. Compress/Logging/Timeout
+// (chi/httpware) all wrap http.ResponseWriter in a way that breaks http.Hijacker, which a raw
+// WebSocket upgrade needs — see .claude/memory/reference_websocket_hijack_middleware_bugs.md and
+// pos-api/internal/http/router/router.go, which this is copied from verbatim. This router doesn't
+// use middleware.Compress, so only Logging and Timeout need the wrap.
+func bypassForWebsocket(mw func(http.Handler) http.Handler) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		wrapped := mw(next)
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if strings.EqualFold(r.Header.Get("Upgrade"), "websocket") {
+				next.ServeHTTP(w, r)
+				return
+			}
+			wrapped.ServeHTTP(w, r)
+		})
+	}
+}
+
 func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handlers.NotificationHandler, templates *handlers.TemplateHandler, platformProviders *handlers.PlatformProviders, tenantProviders *handlers.TenantProviders, analytics *handlers.AnalyticsHandler, billing *handlers.BillingHandler, platformBilling *handlers.PlatformBilling, settings *handlers.SettingsHandler, rbacHandler *handlers.RBACHandler, authMeHandler *handlers.AuthMeHandler, deviceTokens *handlers.DeviceTokenHandler, apiKey string, authMiddleware *authclient.AuthMiddleware, authenticator *identityhandler.Authenticator, allowedOrigins []string, tenantSyncer *tenant.Syncer, rateLimiter *ratelimit.Quota, serviceConfig *handlers.ServiceConfigHandler, whatsappSubs *handlers.WhatsAppSubscriptionHandler, backups *handlers.BackupHandler, encryptionKey *handlers.EncryptionKeyHandler, backupDest *handlers.BackupDestinationHandler, notificationPrefs *handlers.PreferencesHandler, developerKeyAuth *devauth.DeveloperKeyAuth, swaggerHandler *handlers.SwaggerHandler, webhooks *handlers.WebhookHandler, whatsappEmbeddedSignup *handlers.WhatsAppEmbeddedSignupHandler, whatsappTemplates *handlers.WhatsAppTemplates, whatsappInbox *handlers.WhatsAppInboxHandler) http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RealIP)
 	r.Use(httpware.RequestID)
-	r.Use(httpware.Logging(log))
+	r.Use(bypassForWebsocket(httpware.Logging(log)))
 	r.Use(httpware.Recover(log))
-	r.Use(middleware.Timeout(30 * time.Second))
+	r.Use(bypassForWebsocket(middleware.Timeout(30 * time.Second)))
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   allowedOrigins,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
@@ -91,6 +110,14 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 			// auth-api, sandbox-capable), never the platform's own internal service key.
 			protected.Use(func(next http.Handler) http.Handler {
 				return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					// A browser WebSocket handshake can't set an Authorization header, so the
+					// WhatsApp inbox stream route passes the token as ?access_token= instead.
+					// No-op for every other call, which already sets the header.
+					if r.Header.Get("Authorization") == "" {
+						if qt := r.URL.Query().Get("access_token"); qt != "" {
+							r.Header.Set("Authorization", "Bearer "+qt)
+						}
+					}
 					if developerKeyAuth != nil {
 						if ctx, isDevKey := developerKeyAuth.TryDeveloperKey(w, r); isDevKey {
 							if ctx == nil {
@@ -224,6 +251,7 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 							wa.Use(authenticator.RequirePermissions(identity.PermWhatsAppInboxRead))
 						}
 						wa.Get("/", whatsappInbox.ListConversations)
+						wa.Get("/stream", whatsappInbox.StreamInbox)
 						wa.Get("/{conversationId}/messages", whatsappInbox.ListMessages)
 						wa.Post("/{conversationId}/read", whatsappInbox.MarkRead)
 						wa.Group(func(reply chi.Router) {

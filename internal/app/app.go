@@ -61,6 +61,7 @@ type App struct {
 	outboxPublisher        *eventslib.Publisher
 	treasuryClient         *serviceclient.Client
 	crossServiceSubscriber *eventsmod.Subscriber
+	whatsappInboxHub       *whatsappinbox.Hub
 }
 
 func New(ctx context.Context) (*App, error) {
@@ -306,8 +307,10 @@ func New(ctx context.Context) (*App, error) {
 		return nil, fmt.Errorf("build swagger handler: %w", err)
 	}
 
-	whatsappInboxService := whatsappinbox.NewService(entClient, providerManager, log)
-	whatsappInboxHandler := handlers.NewWhatsAppInboxHandler(whatsappInboxService, log)
+	whatsappInboxHub := whatsappinbox.NewHub(log)
+	whatsappInboxHub.SetRedis(redisClient)
+	whatsappInboxService := whatsappinbox.NewService(entClient, providerManager, whatsappInboxHub, log)
+	whatsappInboxHandler := handlers.NewWhatsAppInboxHandler(whatsappInboxService, whatsappInboxHub, cfg.HTTP.AllowedOrigins, log)
 	webhookHandler := handlers.NewWebhookHandler(entClient, log, cfg.HTTP.PublicBaseURL, whatsappInboxService)
 	whatsappEmbeddedSignupHandler := handlers.NewWhatsAppEmbeddedSignupHandler(entClient, log, providerManager)
 	whatsappTemplatesHandler := handlers.NewWhatsAppTemplates(providerManager, log)
@@ -341,10 +344,16 @@ func New(ctx context.Context) (*App, error) {
 		outboxPublisher:        outboxPublisher,
 		treasuryClient:         treasuryClient,
 		crossServiceSubscriber: crossServiceSubscriber,
+		whatsappInboxHub:       whatsappInboxHub,
 	}, nil
 }
 
 func (a *App) Run(ctx context.Context) error {
+	if a.whatsappInboxHub != nil {
+		go a.whatsappInboxHub.Start(ctx)
+		a.log.Info("whatsapp inbox hub started")
+	}
+
 	// Start outbox publisher worker
 	if a.outboxPublisher != nil {
 		go func() {
