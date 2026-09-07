@@ -6,7 +6,7 @@
     "source": "whatsapp/auth/otp.txt"
   },
   {
-    "name": "auth_password_reset",
+    "name": "auth_password_reset_v2",
     "category": "AUTHENTICATION",
     "language": "en_US",
     "source": "whatsapp/auth/password_reset.txt"
@@ -60,7 +60,7 @@
     "example": ["Peter", "Home 20Mbps", "12 Sep", "2", "400200", "0712345678"]
   },
   {
-    "name": "ispbilling_hotspot_welcome",
+    "name": "ispbilling_hotspot_welcome_v2",
     "category": "UTILITY",
     "language": "en_US",
     "source": "whatsapp/ispbilling/hotspot_welcome.txt",
@@ -68,19 +68,19 @@
     "example": ["Grace", "grace254", "Daily 5GB", "1"]
   },
   {
-    "name": "ispbilling_pppoe_welcome",
+    "name": "ispbilling_pppoe_welcome_v2",
     "category": "UTILITY",
     "language": "en_US",
     "source": "whatsapp/ispbilling/pppoe_welcome.txt",
-    "body": "Welcome {{1}}! Your PPPoE connection is now active and ready to use. Username: {{2}}, Package: {{3}} at {{4}} speed. Check your account portal for your password. For help, contact support: {{5}}.",
+    "body": "Welcome {{1}}! Your PPPoE connection is now active and ready to use. Username: {{2}}, Package: {{3}} at {{4}} speed. Check your account portal for your password. For help, contact support: {{5}}. Thank you for choosing us!",
     "example": ["John", "john.k", "Business 50", "50/20 Mbps", "0700111222"]
   },
   {
-    "name": "ispbilling_subscription_credentials",
+    "name": "ispbilling_subscription_credentials_v2",
     "category": "UTILITY",
     "language": "en_US",
     "source": "whatsapp/ispbilling/subscription_credentials.txt",
-    "body": "Hi {{1}}, your {{2}} ({{3}}) package is now active and ready to use. Username: {{4}}. Check your account portal for your password. This subscription is valid until {{5}}.",
+    "body": "Hi {{1}}, your {{2}} ({{3}}) package is now active and ready to use. Username: {{4}}. Check your account portal for your password. This subscription is valid until {{5}}. Thank you for choosing us!",
     "example": ["Mary", "Family 30Mbps", "PPPoE", "mary.w", "30 Sep 2026"]
   },
   {
