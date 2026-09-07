@@ -26,6 +26,8 @@ import (
 	"github.com/bengobox/notifications-api/internal/ent/tenantwhatsappsubscription"
 	"github.com/bengobox/notifications-api/internal/ent/user"
 	"github.com/bengobox/notifications-api/internal/ent/userroleassignment"
+	"github.com/bengobox/notifications-api/internal/ent/whatsappconversation"
+	"github.com/bengobox/notifications-api/internal/ent/whatsappmessage"
 	"github.com/bengobox/notifications-api/internal/ent/whatsappplan"
 	"github.com/google/uuid"
 )
@@ -634,6 +636,60 @@ func init() {
 	userroleassignmentDescID := userroleassignmentFields[0].Descriptor()
 	// userroleassignment.DefaultID holds the default value on creation for the id field.
 	userroleassignment.DefaultID = userroleassignmentDescID.Default.(func() uuid.UUID)
+	whatsappconversationFields := schema.WhatsAppConversation{}.Fields()
+	_ = whatsappconversationFields
+	// whatsappconversationDescPhoneNumberID is the schema descriptor for phone_number_id field.
+	whatsappconversationDescPhoneNumberID := whatsappconversationFields[2].Descriptor()
+	// whatsappconversation.PhoneNumberIDValidator is a validator for the "phone_number_id" field. It is called by the builders before save.
+	whatsappconversation.PhoneNumberIDValidator = whatsappconversationDescPhoneNumberID.Validators[0].(func(string) error)
+	// whatsappconversationDescCustomerWaID is the schema descriptor for customer_wa_id field.
+	whatsappconversationDescCustomerWaID := whatsappconversationFields[3].Descriptor()
+	// whatsappconversation.CustomerWaIDValidator is a validator for the "customer_wa_id" field. It is called by the builders before save.
+	whatsappconversation.CustomerWaIDValidator = whatsappconversationDescCustomerWaID.Validators[0].(func(string) error)
+	// whatsappconversationDescLastMessageAt is the schema descriptor for last_message_at field.
+	whatsappconversationDescLastMessageAt := whatsappconversationFields[5].Descriptor()
+	// whatsappconversation.DefaultLastMessageAt holds the default value on creation for the last_message_at field.
+	whatsappconversation.DefaultLastMessageAt = whatsappconversationDescLastMessageAt.Default.(func() time.Time)
+	// whatsappconversationDescUnreadCount is the schema descriptor for unread_count field.
+	whatsappconversationDescUnreadCount := whatsappconversationFields[8].Descriptor()
+	// whatsappconversation.DefaultUnreadCount holds the default value on creation for the unread_count field.
+	whatsappconversation.DefaultUnreadCount = whatsappconversationDescUnreadCount.Default.(int)
+	// whatsappconversationDescCreatedAt is the schema descriptor for created_at field.
+	whatsappconversationDescCreatedAt := whatsappconversationFields[9].Descriptor()
+	// whatsappconversation.DefaultCreatedAt holds the default value on creation for the created_at field.
+	whatsappconversation.DefaultCreatedAt = whatsappconversationDescCreatedAt.Default.(func() time.Time)
+	// whatsappconversationDescUpdatedAt is the schema descriptor for updated_at field.
+	whatsappconversationDescUpdatedAt := whatsappconversationFields[10].Descriptor()
+	// whatsappconversation.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	whatsappconversation.DefaultUpdatedAt = whatsappconversationDescUpdatedAt.Default.(func() time.Time)
+	// whatsappconversation.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	whatsappconversation.UpdateDefaultUpdatedAt = whatsappconversationDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// whatsappconversationDescID is the schema descriptor for id field.
+	whatsappconversationDescID := whatsappconversationFields[0].Descriptor()
+	// whatsappconversation.DefaultID holds the default value on creation for the id field.
+	whatsappconversation.DefaultID = whatsappconversationDescID.Default.(func() uuid.UUID)
+	whatsappmessageFields := schema.WhatsAppMessage{}.Fields()
+	_ = whatsappmessageFields
+	// whatsappmessageDescMessageType is the schema descriptor for message_type field.
+	whatsappmessageDescMessageType := whatsappmessageFields[4].Descriptor()
+	// whatsappmessage.DefaultMessageType holds the default value on creation for the message_type field.
+	whatsappmessage.DefaultMessageType = whatsappmessageDescMessageType.Default.(string)
+	// whatsappmessageDescBody is the schema descriptor for body field.
+	whatsappmessageDescBody := whatsappmessageFields[5].Descriptor()
+	// whatsappmessage.BodyValidator is a validator for the "body" field. It is called by the builders before save.
+	whatsappmessage.BodyValidator = whatsappmessageDescBody.Validators[0].(func(string) error)
+	// whatsappmessageDescStatus is the schema descriptor for status field.
+	whatsappmessageDescStatus := whatsappmessageFields[7].Descriptor()
+	// whatsappmessage.DefaultStatus holds the default value on creation for the status field.
+	whatsappmessage.DefaultStatus = whatsappmessageDescStatus.Default.(string)
+	// whatsappmessageDescCreatedAt is the schema descriptor for created_at field.
+	whatsappmessageDescCreatedAt := whatsappmessageFields[9].Descriptor()
+	// whatsappmessage.DefaultCreatedAt holds the default value on creation for the created_at field.
+	whatsappmessage.DefaultCreatedAt = whatsappmessageDescCreatedAt.Default.(func() time.Time)
+	// whatsappmessageDescID is the schema descriptor for id field.
+	whatsappmessageDescID := whatsappmessageFields[0].Descriptor()
+	// whatsappmessage.DefaultID holds the default value on creation for the id field.
+	whatsappmessage.DefaultID = whatsappmessageDescID.Default.(func() uuid.UUID)
 	whatsappplanFields := schema.WhatsAppPlan{}.Fields()
 	_ = whatsappplanFields
 	// whatsappplanDescName is the schema descriptor for name field.

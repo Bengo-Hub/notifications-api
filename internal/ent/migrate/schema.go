@@ -750,6 +750,82 @@ var (
 			},
 		},
 	}
+	// WhatsAppConversationsColumns holds the columns for the "whats_app_conversations" table.
+	WhatsAppConversationsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "tenant_id", Type: field.TypeUUID},
+		{Name: "phone_number_id", Type: field.TypeString},
+		{Name: "customer_wa_id", Type: field.TypeString},
+		{Name: "customer_name", Type: field.TypeString, Nullable: true},
+		{Name: "last_message_at", Type: field.TypeTime},
+		{Name: "last_message_preview", Type: field.TypeString, Nullable: true},
+		{Name: "last_inbound_at", Type: field.TypeTime, Nullable: true},
+		{Name: "unread_count", Type: field.TypeInt, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// WhatsAppConversationsTable holds the schema information for the "whats_app_conversations" table.
+	WhatsAppConversationsTable = &schema.Table{
+		Name:       "whats_app_conversations",
+		Columns:    WhatsAppConversationsColumns,
+		PrimaryKey: []*schema.Column{WhatsAppConversationsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "whatsappconversation_tenant_id_phone_number_id_customer_wa_id",
+				Unique:  true,
+				Columns: []*schema.Column{WhatsAppConversationsColumns[1], WhatsAppConversationsColumns[2], WhatsAppConversationsColumns[3]},
+			},
+			{
+				Name:    "whatsappconversation_tenant_id_last_message_at",
+				Unique:  false,
+				Columns: []*schema.Column{WhatsAppConversationsColumns[1], WhatsAppConversationsColumns[5]},
+			},
+		},
+	}
+	// WhatsAppMessagesColumns holds the columns for the "whats_app_messages" table.
+	WhatsAppMessagesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "tenant_id", Type: field.TypeUUID},
+		{Name: "direction", Type: field.TypeEnum, Enums: []string{"inbound", "outbound"}},
+		{Name: "message_type", Type: field.TypeString, Default: "text"},
+		{Name: "body", Type: field.TypeString, Size: 2147483647},
+		{Name: "wa_message_id", Type: field.TypeString, Nullable: true},
+		{Name: "status", Type: field.TypeString, Default: "received"},
+		{Name: "sent_by_user_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "conversation_id", Type: field.TypeUUID},
+	}
+	// WhatsAppMessagesTable holds the schema information for the "whats_app_messages" table.
+	WhatsAppMessagesTable = &schema.Table{
+		Name:       "whats_app_messages",
+		Columns:    WhatsAppMessagesColumns,
+		PrimaryKey: []*schema.Column{WhatsAppMessagesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "whats_app_messages_whats_app_conversations_conversation",
+				Columns:    []*schema.Column{WhatsAppMessagesColumns[9]},
+				RefColumns: []*schema.Column{WhatsAppConversationsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "whatsappmessage_conversation_id_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{WhatsAppMessagesColumns[9], WhatsAppMessagesColumns[8]},
+			},
+			{
+				Name:    "whatsappmessage_tenant_id",
+				Unique:  false,
+				Columns: []*schema.Column{WhatsAppMessagesColumns[1]},
+			},
+			{
+				Name:    "whatsappmessage_wa_message_id",
+				Unique:  true,
+				Columns: []*schema.Column{WhatsAppMessagesColumns[5]},
+			},
+		},
+	}
 	// WhatsAppPlansColumns holds the columns for the "whats_app_plans" table.
 	WhatsAppPlansColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -840,6 +916,8 @@ var (
 		TenantWhatsAppSubscriptionsTable,
 		UsersTable,
 		UserRoleAssignmentsTable,
+		WhatsAppConversationsTable,
+		WhatsAppMessagesTable,
 		WhatsAppPlansTable,
 		RolePermissionsTable,
 		UserRolesTable,
@@ -854,6 +932,7 @@ func init() {
 	UserRoleAssignmentsTable.ForeignKeys[0].RefTable = NotificationRolesTable
 	UserRoleAssignmentsTable.ForeignKeys[1].RefTable = UsersTable
 	UserRoleAssignmentsTable.ForeignKeys[2].RefTable = NotificationRolesTable
+	WhatsAppMessagesTable.ForeignKeys[0].RefTable = WhatsAppConversationsTable
 	RolePermissionsTable.ForeignKeys[0].RefTable = RolesTable
 	RolePermissionsTable.ForeignKeys[1].RefTable = PermissionsTable
 	UserRolesTable.ForeignKeys[0].RefTable = UsersTable

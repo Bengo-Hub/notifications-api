@@ -54,6 +54,10 @@ type Tx struct {
 	User *UserClient
 	// UserRoleAssignment is the client for interacting with the UserRoleAssignment builders.
 	UserRoleAssignment *UserRoleAssignmentClient
+	// WhatsAppConversation is the client for interacting with the WhatsAppConversation builders.
+	WhatsAppConversation *WhatsAppConversationClient
+	// WhatsAppMessage is the client for interacting with the WhatsAppMessage builders.
+	WhatsAppMessage *WhatsAppMessageClient
 	// WhatsAppPlan is the client for interacting with the WhatsAppPlan builders.
 	WhatsAppPlan *WhatsAppPlanClient
 
@@ -208,6 +212,8 @@ func (tx *Tx) init() {
 	tx.TenantWhatsAppSubscription = NewTenantWhatsAppSubscriptionClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 	tx.UserRoleAssignment = NewUserRoleAssignmentClient(tx.config)
+	tx.WhatsAppConversation = NewWhatsAppConversationClient(tx.config)
+	tx.WhatsAppMessage = NewWhatsAppMessageClient(tx.config)
 	tx.WhatsAppPlan = NewWhatsAppPlanClient(tx.config)
 }
 

@@ -33,6 +33,8 @@ import (
 	"github.com/bengobox/notifications-api/internal/ent/tenantwhatsappsubscription"
 	"github.com/bengobox/notifications-api/internal/ent/user"
 	"github.com/bengobox/notifications-api/internal/ent/userroleassignment"
+	"github.com/bengobox/notifications-api/internal/ent/whatsappconversation"
+	"github.com/bengobox/notifications-api/internal/ent/whatsappmessage"
 	"github.com/bengobox/notifications-api/internal/ent/whatsappplan"
 )
 
@@ -115,6 +117,8 @@ func checkColumn(t, c string) error {
 			tenantwhatsappsubscription.Table: tenantwhatsappsubscription.ValidColumn,
 			user.Table:                       user.ValidColumn,
 			userroleassignment.Table:         userroleassignment.ValidColumn,
+			whatsappconversation.Table:       whatsappconversation.ValidColumn,
+			whatsappmessage.Table:            whatsappmessage.ValidColumn,
 			whatsappplan.Table:               whatsappplan.ValidColumn,
 		})
 	})

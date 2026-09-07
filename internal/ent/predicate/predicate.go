@@ -69,5 +69,11 @@ type User func(*sql.Selector)
 // UserRoleAssignment is the predicate function for userroleassignment builders.
 type UserRoleAssignment func(*sql.Selector)
 
+// WhatsAppConversation is the predicate function for whatsappconversation builders.
+type WhatsAppConversation func(*sql.Selector)
+
+// WhatsAppMessage is the predicate function for whatsappmessage builders.
+type WhatsAppMessage func(*sql.Selector)
+
 // WhatsAppPlan is the predicate function for whatsappplan builders.
 type WhatsAppPlan func(*sql.Selector)

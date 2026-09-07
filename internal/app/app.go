@@ -42,6 +42,7 @@ import (
 	"github.com/bengobox/notifications-api/internal/platform/database"
 	"github.com/bengobox/notifications-api/internal/platform/events"
 	"github.com/bengobox/notifications-api/internal/platform/templates"
+	"github.com/bengobox/notifications-api/internal/modules/whatsappinbox"
 	"github.com/bengobox/notifications-api/internal/providers"
 	sandboxmod "github.com/bengobox/notifications-api/internal/sandbox"
 	"github.com/bengobox/notifications-api/internal/shared/logger"
@@ -305,10 +306,12 @@ func New(ctx context.Context) (*App, error) {
 		return nil, fmt.Errorf("build swagger handler: %w", err)
 	}
 
-	webhookHandler := handlers.NewWebhookHandler(entClient, log, cfg.HTTP.PublicBaseURL)
+	whatsappInboxService := whatsappinbox.NewService(entClient, providerManager, log)
+	whatsappInboxHandler := handlers.NewWhatsAppInboxHandler(whatsappInboxService, log)
+	webhookHandler := handlers.NewWebhookHandler(entClient, log, cfg.HTTP.PublicBaseURL, whatsappInboxService)
 	whatsappEmbeddedSignupHandler := handlers.NewWhatsAppEmbeddedSignupHandler(entClient, log, providerManager)
 	whatsappTemplatesHandler := handlers.NewWhatsAppTemplates(providerManager, log)
-	httpRouter := router.New(log, healthHandler, notificationHandler, templateHandler, platformProviders, tenantProviders, analyticsHandler, billingHandler, platformBilling, settingsHandler, rbacHandler, authMeHandler, deviceTokenHandler, cfg.Security.APIKey, authMiddleware, authenticator, cfg.HTTP.AllowedOrigins, tenantSyncer, rateLimiter, serviceConfigHandler, whatsappSubsHandler, backupHandler, encryptionKeyHandler, backupDestHandler, notificationPrefsHandler, developerKeyAuth, swaggerHandler, webhookHandler, whatsappEmbeddedSignupHandler, whatsappTemplatesHandler)
+	httpRouter := router.New(log, healthHandler, notificationHandler, templateHandler, platformProviders, tenantProviders, analyticsHandler, billingHandler, platformBilling, settingsHandler, rbacHandler, authMeHandler, deviceTokenHandler, cfg.Security.APIKey, authMiddleware, authenticator, cfg.HTTP.AllowedOrigins, tenantSyncer, rateLimiter, serviceConfigHandler, whatsappSubsHandler, backupHandler, encryptionKeyHandler, backupDestHandler, notificationPrefsHandler, developerKeyAuth, swaggerHandler, webhookHandler, whatsappEmbeddedSignupHandler, whatsappTemplatesHandler, whatsappInboxHandler)
 
 	httpServer := &http.Server{
 		Addr:              fmt.Sprintf("%s:%d", cfg.HTTP.Host, cfg.HTTP.Port),

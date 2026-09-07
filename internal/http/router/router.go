@@ -20,7 +20,7 @@ import (
 	"github.com/bengobox/notifications-api/internal/modules/tenant"
 )
 
-func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handlers.NotificationHandler, templates *handlers.TemplateHandler, platformProviders *handlers.PlatformProviders, tenantProviders *handlers.TenantProviders, analytics *handlers.AnalyticsHandler, billing *handlers.BillingHandler, platformBilling *handlers.PlatformBilling, settings *handlers.SettingsHandler, rbacHandler *handlers.RBACHandler, authMeHandler *handlers.AuthMeHandler, deviceTokens *handlers.DeviceTokenHandler, apiKey string, authMiddleware *authclient.AuthMiddleware, authenticator *identityhandler.Authenticator, allowedOrigins []string, tenantSyncer *tenant.Syncer, rateLimiter *ratelimit.Quota, serviceConfig *handlers.ServiceConfigHandler, whatsappSubs *handlers.WhatsAppSubscriptionHandler, backups *handlers.BackupHandler, encryptionKey *handlers.EncryptionKeyHandler, backupDest *handlers.BackupDestinationHandler, notificationPrefs *handlers.PreferencesHandler, developerKeyAuth *devauth.DeveloperKeyAuth, swaggerHandler *handlers.SwaggerHandler, webhooks *handlers.WebhookHandler, whatsappEmbeddedSignup *handlers.WhatsAppEmbeddedSignupHandler, whatsappTemplates *handlers.WhatsAppTemplates) http.Handler {
+func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handlers.NotificationHandler, templates *handlers.TemplateHandler, platformProviders *handlers.PlatformProviders, tenantProviders *handlers.TenantProviders, analytics *handlers.AnalyticsHandler, billing *handlers.BillingHandler, platformBilling *handlers.PlatformBilling, settings *handlers.SettingsHandler, rbacHandler *handlers.RBACHandler, authMeHandler *handlers.AuthMeHandler, deviceTokens *handlers.DeviceTokenHandler, apiKey string, authMiddleware *authclient.AuthMiddleware, authenticator *identityhandler.Authenticator, allowedOrigins []string, tenantSyncer *tenant.Syncer, rateLimiter *ratelimit.Quota, serviceConfig *handlers.ServiceConfigHandler, whatsappSubs *handlers.WhatsAppSubscriptionHandler, backups *handlers.BackupHandler, encryptionKey *handlers.EncryptionKeyHandler, backupDest *handlers.BackupDestinationHandler, notificationPrefs *handlers.PreferencesHandler, developerKeyAuth *devauth.DeveloperKeyAuth, swaggerHandler *handlers.SwaggerHandler, webhooks *handlers.WebhookHandler, whatsappEmbeddedSignup *handlers.WhatsAppEmbeddedSignupHandler, whatsappTemplates *handlers.WhatsAppTemplates, whatsappInbox *handlers.WhatsAppInboxHandler) http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RealIP)
@@ -215,6 +215,25 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 					}
 					sb.Get("/messages", notifications.ListSandboxMessages)
 				})
+
+				// WhatsApp inbox — tenant-wide (any staff with the read/reply permission sees the
+				// whole tenant's conversations, no per-assignee filtering in v1).
+				if whatsappInbox != nil {
+					tenantRouter.Route("/whatsapp/conversations", func(wa chi.Router) {
+						if authenticator != nil {
+							wa.Use(authenticator.RequirePermissions(identity.PermWhatsAppInboxRead))
+						}
+						wa.Get("/", whatsappInbox.ListConversations)
+						wa.Get("/{conversationId}/messages", whatsappInbox.ListMessages)
+						wa.Post("/{conversationId}/read", whatsappInbox.MarkRead)
+						wa.Group(func(reply chi.Router) {
+							if authenticator != nil {
+								reply.Use(authenticator.RequirePermissions(identity.PermWhatsAppInboxReply))
+							}
+							reply.Post("/{conversationId}/messages", whatsappInbox.Reply)
+						})
+					})
+				}
 
 				// Tenant provider selection
 				tenantProviders.RegisterTenantProviderRoutes(tenantRouter)

@@ -261,6 +261,30 @@ func (f UserRoleAssignmentFunc) Mutate(ctx context.Context, m ent.Mutation) (ent
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.UserRoleAssignmentMutation", m)
 }
 
+// The WhatsAppConversationFunc type is an adapter to allow the use of ordinary
+// function as WhatsAppConversation mutator.
+type WhatsAppConversationFunc func(context.Context, *ent.WhatsAppConversationMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f WhatsAppConversationFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.WhatsAppConversationMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WhatsAppConversationMutation", m)
+}
+
+// The WhatsAppMessageFunc type is an adapter to allow the use of ordinary
+// function as WhatsAppMessage mutator.
+type WhatsAppMessageFunc func(context.Context, *ent.WhatsAppMessageMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f WhatsAppMessageFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.WhatsAppMessageMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WhatsAppMessageMutation", m)
+}
+
 // The WhatsAppPlanFunc type is an adapter to allow the use of ordinary
 // function as WhatsAppPlan mutator.
 type WhatsAppPlanFunc func(context.Context, *ent.WhatsAppPlanMutation) (ent.Value, error)

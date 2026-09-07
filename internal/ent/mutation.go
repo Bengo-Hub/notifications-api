@@ -33,6 +33,8 @@ import (
 	"github.com/bengobox/notifications-api/internal/ent/tenantwhatsappsubscription"
 	"github.com/bengobox/notifications-api/internal/ent/user"
 	"github.com/bengobox/notifications-api/internal/ent/userroleassignment"
+	"github.com/bengobox/notifications-api/internal/ent/whatsappconversation"
+	"github.com/bengobox/notifications-api/internal/ent/whatsappmessage"
 	"github.com/bengobox/notifications-api/internal/ent/whatsappplan"
 	"github.com/google/uuid"
 )
@@ -67,6 +69,8 @@ const (
 	TypeTenantWhatsAppSubscription = "TenantWhatsAppSubscription"
 	TypeUser                       = "User"
 	TypeUserRoleAssignment         = "UserRoleAssignment"
+	TypeWhatsAppConversation       = "WhatsAppConversation"
+	TypeWhatsAppMessage            = "WhatsAppMessage"
 	TypeWhatsAppPlan               = "WhatsAppPlan"
 )
 
@@ -17876,6 +17880,1872 @@ func (m *UserRoleAssignmentMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown UserRoleAssignment edge %s", name)
+}
+
+// WhatsAppConversationMutation represents an operation that mutates the WhatsAppConversation nodes in the graph.
+type WhatsAppConversationMutation struct {
+	config
+	op                   Op
+	typ                  string
+	id                   *uuid.UUID
+	tenant_id            *uuid.UUID
+	phone_number_id      *string
+	customer_wa_id       *string
+	customer_name        *string
+	last_message_at      *time.Time
+	last_message_preview *string
+	last_inbound_at      *time.Time
+	unread_count         *int
+	addunread_count      *int
+	created_at           *time.Time
+	updated_at           *time.Time
+	clearedFields        map[string]struct{}
+	messages             map[uuid.UUID]struct{}
+	removedmessages      map[uuid.UUID]struct{}
+	clearedmessages      bool
+	done                 bool
+	oldValue             func(context.Context) (*WhatsAppConversation, error)
+	predicates           []predicate.WhatsAppConversation
+}
+
+var _ ent.Mutation = (*WhatsAppConversationMutation)(nil)
+
+// whatsappconversationOption allows management of the mutation configuration using functional options.
+type whatsappconversationOption func(*WhatsAppConversationMutation)
+
+// newWhatsAppConversationMutation creates new mutation for the WhatsAppConversation entity.
+func newWhatsAppConversationMutation(c config, op Op, opts ...whatsappconversationOption) *WhatsAppConversationMutation {
+	m := &WhatsAppConversationMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeWhatsAppConversation,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withWhatsAppConversationID sets the ID field of the mutation.
+func withWhatsAppConversationID(id uuid.UUID) whatsappconversationOption {
+	return func(m *WhatsAppConversationMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *WhatsAppConversation
+		)
+		m.oldValue = func(ctx context.Context) (*WhatsAppConversation, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().WhatsAppConversation.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withWhatsAppConversation sets the old WhatsAppConversation of the mutation.
+func withWhatsAppConversation(node *WhatsAppConversation) whatsappconversationOption {
+	return func(m *WhatsAppConversationMutation) {
+		m.oldValue = func(context.Context) (*WhatsAppConversation, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m WhatsAppConversationMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m WhatsAppConversationMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of WhatsAppConversation entities.
+func (m *WhatsAppConversationMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *WhatsAppConversationMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *WhatsAppConversationMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().WhatsAppConversation.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetTenantID sets the "tenant_id" field.
+func (m *WhatsAppConversationMutation) SetTenantID(u uuid.UUID) {
+	m.tenant_id = &u
+}
+
+// TenantID returns the value of the "tenant_id" field in the mutation.
+func (m *WhatsAppConversationMutation) TenantID() (r uuid.UUID, exists bool) {
+	v := m.tenant_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTenantID returns the old "tenant_id" field's value of the WhatsAppConversation entity.
+// If the WhatsAppConversation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WhatsAppConversationMutation) OldTenantID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTenantID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTenantID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTenantID: %w", err)
+	}
+	return oldValue.TenantID, nil
+}
+
+// ResetTenantID resets all changes to the "tenant_id" field.
+func (m *WhatsAppConversationMutation) ResetTenantID() {
+	m.tenant_id = nil
+}
+
+// SetPhoneNumberID sets the "phone_number_id" field.
+func (m *WhatsAppConversationMutation) SetPhoneNumberID(s string) {
+	m.phone_number_id = &s
+}
+
+// PhoneNumberID returns the value of the "phone_number_id" field in the mutation.
+func (m *WhatsAppConversationMutation) PhoneNumberID() (r string, exists bool) {
+	v := m.phone_number_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPhoneNumberID returns the old "phone_number_id" field's value of the WhatsAppConversation entity.
+// If the WhatsAppConversation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WhatsAppConversationMutation) OldPhoneNumberID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPhoneNumberID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPhoneNumberID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPhoneNumberID: %w", err)
+	}
+	return oldValue.PhoneNumberID, nil
+}
+
+// ResetPhoneNumberID resets all changes to the "phone_number_id" field.
+func (m *WhatsAppConversationMutation) ResetPhoneNumberID() {
+	m.phone_number_id = nil
+}
+
+// SetCustomerWaID sets the "customer_wa_id" field.
+func (m *WhatsAppConversationMutation) SetCustomerWaID(s string) {
+	m.customer_wa_id = &s
+}
+
+// CustomerWaID returns the value of the "customer_wa_id" field in the mutation.
+func (m *WhatsAppConversationMutation) CustomerWaID() (r string, exists bool) {
+	v := m.customer_wa_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCustomerWaID returns the old "customer_wa_id" field's value of the WhatsAppConversation entity.
+// If the WhatsAppConversation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WhatsAppConversationMutation) OldCustomerWaID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCustomerWaID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCustomerWaID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCustomerWaID: %w", err)
+	}
+	return oldValue.CustomerWaID, nil
+}
+
+// ResetCustomerWaID resets all changes to the "customer_wa_id" field.
+func (m *WhatsAppConversationMutation) ResetCustomerWaID() {
+	m.customer_wa_id = nil
+}
+
+// SetCustomerName sets the "customer_name" field.
+func (m *WhatsAppConversationMutation) SetCustomerName(s string) {
+	m.customer_name = &s
+}
+
+// CustomerName returns the value of the "customer_name" field in the mutation.
+func (m *WhatsAppConversationMutation) CustomerName() (r string, exists bool) {
+	v := m.customer_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCustomerName returns the old "customer_name" field's value of the WhatsAppConversation entity.
+// If the WhatsAppConversation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WhatsAppConversationMutation) OldCustomerName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCustomerName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCustomerName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCustomerName: %w", err)
+	}
+	return oldValue.CustomerName, nil
+}
+
+// ClearCustomerName clears the value of the "customer_name" field.
+func (m *WhatsAppConversationMutation) ClearCustomerName() {
+	m.customer_name = nil
+	m.clearedFields[whatsappconversation.FieldCustomerName] = struct{}{}
+}
+
+// CustomerNameCleared returns if the "customer_name" field was cleared in this mutation.
+func (m *WhatsAppConversationMutation) CustomerNameCleared() bool {
+	_, ok := m.clearedFields[whatsappconversation.FieldCustomerName]
+	return ok
+}
+
+// ResetCustomerName resets all changes to the "customer_name" field.
+func (m *WhatsAppConversationMutation) ResetCustomerName() {
+	m.customer_name = nil
+	delete(m.clearedFields, whatsappconversation.FieldCustomerName)
+}
+
+// SetLastMessageAt sets the "last_message_at" field.
+func (m *WhatsAppConversationMutation) SetLastMessageAt(t time.Time) {
+	m.last_message_at = &t
+}
+
+// LastMessageAt returns the value of the "last_message_at" field in the mutation.
+func (m *WhatsAppConversationMutation) LastMessageAt() (r time.Time, exists bool) {
+	v := m.last_message_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastMessageAt returns the old "last_message_at" field's value of the WhatsAppConversation entity.
+// If the WhatsAppConversation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WhatsAppConversationMutation) OldLastMessageAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastMessageAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastMessageAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastMessageAt: %w", err)
+	}
+	return oldValue.LastMessageAt, nil
+}
+
+// ResetLastMessageAt resets all changes to the "last_message_at" field.
+func (m *WhatsAppConversationMutation) ResetLastMessageAt() {
+	m.last_message_at = nil
+}
+
+// SetLastMessagePreview sets the "last_message_preview" field.
+func (m *WhatsAppConversationMutation) SetLastMessagePreview(s string) {
+	m.last_message_preview = &s
+}
+
+// LastMessagePreview returns the value of the "last_message_preview" field in the mutation.
+func (m *WhatsAppConversationMutation) LastMessagePreview() (r string, exists bool) {
+	v := m.last_message_preview
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastMessagePreview returns the old "last_message_preview" field's value of the WhatsAppConversation entity.
+// If the WhatsAppConversation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WhatsAppConversationMutation) OldLastMessagePreview(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastMessagePreview is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastMessagePreview requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastMessagePreview: %w", err)
+	}
+	return oldValue.LastMessagePreview, nil
+}
+
+// ClearLastMessagePreview clears the value of the "last_message_preview" field.
+func (m *WhatsAppConversationMutation) ClearLastMessagePreview() {
+	m.last_message_preview = nil
+	m.clearedFields[whatsappconversation.FieldLastMessagePreview] = struct{}{}
+}
+
+// LastMessagePreviewCleared returns if the "last_message_preview" field was cleared in this mutation.
+func (m *WhatsAppConversationMutation) LastMessagePreviewCleared() bool {
+	_, ok := m.clearedFields[whatsappconversation.FieldLastMessagePreview]
+	return ok
+}
+
+// ResetLastMessagePreview resets all changes to the "last_message_preview" field.
+func (m *WhatsAppConversationMutation) ResetLastMessagePreview() {
+	m.last_message_preview = nil
+	delete(m.clearedFields, whatsappconversation.FieldLastMessagePreview)
+}
+
+// SetLastInboundAt sets the "last_inbound_at" field.
+func (m *WhatsAppConversationMutation) SetLastInboundAt(t time.Time) {
+	m.last_inbound_at = &t
+}
+
+// LastInboundAt returns the value of the "last_inbound_at" field in the mutation.
+func (m *WhatsAppConversationMutation) LastInboundAt() (r time.Time, exists bool) {
+	v := m.last_inbound_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastInboundAt returns the old "last_inbound_at" field's value of the WhatsAppConversation entity.
+// If the WhatsAppConversation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WhatsAppConversationMutation) OldLastInboundAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastInboundAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastInboundAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastInboundAt: %w", err)
+	}
+	return oldValue.LastInboundAt, nil
+}
+
+// ClearLastInboundAt clears the value of the "last_inbound_at" field.
+func (m *WhatsAppConversationMutation) ClearLastInboundAt() {
+	m.last_inbound_at = nil
+	m.clearedFields[whatsappconversation.FieldLastInboundAt] = struct{}{}
+}
+
+// LastInboundAtCleared returns if the "last_inbound_at" field was cleared in this mutation.
+func (m *WhatsAppConversationMutation) LastInboundAtCleared() bool {
+	_, ok := m.clearedFields[whatsappconversation.FieldLastInboundAt]
+	return ok
+}
+
+// ResetLastInboundAt resets all changes to the "last_inbound_at" field.
+func (m *WhatsAppConversationMutation) ResetLastInboundAt() {
+	m.last_inbound_at = nil
+	delete(m.clearedFields, whatsappconversation.FieldLastInboundAt)
+}
+
+// SetUnreadCount sets the "unread_count" field.
+func (m *WhatsAppConversationMutation) SetUnreadCount(i int) {
+	m.unread_count = &i
+	m.addunread_count = nil
+}
+
+// UnreadCount returns the value of the "unread_count" field in the mutation.
+func (m *WhatsAppConversationMutation) UnreadCount() (r int, exists bool) {
+	v := m.unread_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUnreadCount returns the old "unread_count" field's value of the WhatsAppConversation entity.
+// If the WhatsAppConversation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WhatsAppConversationMutation) OldUnreadCount(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUnreadCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUnreadCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUnreadCount: %w", err)
+	}
+	return oldValue.UnreadCount, nil
+}
+
+// AddUnreadCount adds i to the "unread_count" field.
+func (m *WhatsAppConversationMutation) AddUnreadCount(i int) {
+	if m.addunread_count != nil {
+		*m.addunread_count += i
+	} else {
+		m.addunread_count = &i
+	}
+}
+
+// AddedUnreadCount returns the value that was added to the "unread_count" field in this mutation.
+func (m *WhatsAppConversationMutation) AddedUnreadCount() (r int, exists bool) {
+	v := m.addunread_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetUnreadCount resets all changes to the "unread_count" field.
+func (m *WhatsAppConversationMutation) ResetUnreadCount() {
+	m.unread_count = nil
+	m.addunread_count = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *WhatsAppConversationMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *WhatsAppConversationMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the WhatsAppConversation entity.
+// If the WhatsAppConversation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WhatsAppConversationMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *WhatsAppConversationMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *WhatsAppConversationMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *WhatsAppConversationMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the WhatsAppConversation entity.
+// If the WhatsAppConversation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WhatsAppConversationMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *WhatsAppConversationMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// AddMessageIDs adds the "messages" edge to the WhatsAppMessage entity by ids.
+func (m *WhatsAppConversationMutation) AddMessageIDs(ids ...uuid.UUID) {
+	if m.messages == nil {
+		m.messages = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.messages[ids[i]] = struct{}{}
+	}
+}
+
+// ClearMessages clears the "messages" edge to the WhatsAppMessage entity.
+func (m *WhatsAppConversationMutation) ClearMessages() {
+	m.clearedmessages = true
+}
+
+// MessagesCleared reports if the "messages" edge to the WhatsAppMessage entity was cleared.
+func (m *WhatsAppConversationMutation) MessagesCleared() bool {
+	return m.clearedmessages
+}
+
+// RemoveMessageIDs removes the "messages" edge to the WhatsAppMessage entity by IDs.
+func (m *WhatsAppConversationMutation) RemoveMessageIDs(ids ...uuid.UUID) {
+	if m.removedmessages == nil {
+		m.removedmessages = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.messages, ids[i])
+		m.removedmessages[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedMessages returns the removed IDs of the "messages" edge to the WhatsAppMessage entity.
+func (m *WhatsAppConversationMutation) RemovedMessagesIDs() (ids []uuid.UUID) {
+	for id := range m.removedmessages {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// MessagesIDs returns the "messages" edge IDs in the mutation.
+func (m *WhatsAppConversationMutation) MessagesIDs() (ids []uuid.UUID) {
+	for id := range m.messages {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetMessages resets all changes to the "messages" edge.
+func (m *WhatsAppConversationMutation) ResetMessages() {
+	m.messages = nil
+	m.clearedmessages = false
+	m.removedmessages = nil
+}
+
+// Where appends a list predicates to the WhatsAppConversationMutation builder.
+func (m *WhatsAppConversationMutation) Where(ps ...predicate.WhatsAppConversation) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the WhatsAppConversationMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *WhatsAppConversationMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.WhatsAppConversation, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *WhatsAppConversationMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *WhatsAppConversationMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (WhatsAppConversation).
+func (m *WhatsAppConversationMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *WhatsAppConversationMutation) Fields() []string {
+	fields := make([]string, 0, 10)
+	if m.tenant_id != nil {
+		fields = append(fields, whatsappconversation.FieldTenantID)
+	}
+	if m.phone_number_id != nil {
+		fields = append(fields, whatsappconversation.FieldPhoneNumberID)
+	}
+	if m.customer_wa_id != nil {
+		fields = append(fields, whatsappconversation.FieldCustomerWaID)
+	}
+	if m.customer_name != nil {
+		fields = append(fields, whatsappconversation.FieldCustomerName)
+	}
+	if m.last_message_at != nil {
+		fields = append(fields, whatsappconversation.FieldLastMessageAt)
+	}
+	if m.last_message_preview != nil {
+		fields = append(fields, whatsappconversation.FieldLastMessagePreview)
+	}
+	if m.last_inbound_at != nil {
+		fields = append(fields, whatsappconversation.FieldLastInboundAt)
+	}
+	if m.unread_count != nil {
+		fields = append(fields, whatsappconversation.FieldUnreadCount)
+	}
+	if m.created_at != nil {
+		fields = append(fields, whatsappconversation.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, whatsappconversation.FieldUpdatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *WhatsAppConversationMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case whatsappconversation.FieldTenantID:
+		return m.TenantID()
+	case whatsappconversation.FieldPhoneNumberID:
+		return m.PhoneNumberID()
+	case whatsappconversation.FieldCustomerWaID:
+		return m.CustomerWaID()
+	case whatsappconversation.FieldCustomerName:
+		return m.CustomerName()
+	case whatsappconversation.FieldLastMessageAt:
+		return m.LastMessageAt()
+	case whatsappconversation.FieldLastMessagePreview:
+		return m.LastMessagePreview()
+	case whatsappconversation.FieldLastInboundAt:
+		return m.LastInboundAt()
+	case whatsappconversation.FieldUnreadCount:
+		return m.UnreadCount()
+	case whatsappconversation.FieldCreatedAt:
+		return m.CreatedAt()
+	case whatsappconversation.FieldUpdatedAt:
+		return m.UpdatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *WhatsAppConversationMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case whatsappconversation.FieldTenantID:
+		return m.OldTenantID(ctx)
+	case whatsappconversation.FieldPhoneNumberID:
+		return m.OldPhoneNumberID(ctx)
+	case whatsappconversation.FieldCustomerWaID:
+		return m.OldCustomerWaID(ctx)
+	case whatsappconversation.FieldCustomerName:
+		return m.OldCustomerName(ctx)
+	case whatsappconversation.FieldLastMessageAt:
+		return m.OldLastMessageAt(ctx)
+	case whatsappconversation.FieldLastMessagePreview:
+		return m.OldLastMessagePreview(ctx)
+	case whatsappconversation.FieldLastInboundAt:
+		return m.OldLastInboundAt(ctx)
+	case whatsappconversation.FieldUnreadCount:
+		return m.OldUnreadCount(ctx)
+	case whatsappconversation.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case whatsappconversation.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown WhatsAppConversation field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *WhatsAppConversationMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case whatsappconversation.FieldTenantID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTenantID(v)
+		return nil
+	case whatsappconversation.FieldPhoneNumberID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPhoneNumberID(v)
+		return nil
+	case whatsappconversation.FieldCustomerWaID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCustomerWaID(v)
+		return nil
+	case whatsappconversation.FieldCustomerName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCustomerName(v)
+		return nil
+	case whatsappconversation.FieldLastMessageAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastMessageAt(v)
+		return nil
+	case whatsappconversation.FieldLastMessagePreview:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastMessagePreview(v)
+		return nil
+	case whatsappconversation.FieldLastInboundAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastInboundAt(v)
+		return nil
+	case whatsappconversation.FieldUnreadCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUnreadCount(v)
+		return nil
+	case whatsappconversation.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case whatsappconversation.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown WhatsAppConversation field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *WhatsAppConversationMutation) AddedFields() []string {
+	var fields []string
+	if m.addunread_count != nil {
+		fields = append(fields, whatsappconversation.FieldUnreadCount)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *WhatsAppConversationMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case whatsappconversation.FieldUnreadCount:
+		return m.AddedUnreadCount()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *WhatsAppConversationMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case whatsappconversation.FieldUnreadCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddUnreadCount(v)
+		return nil
+	}
+	return fmt.Errorf("unknown WhatsAppConversation numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *WhatsAppConversationMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(whatsappconversation.FieldCustomerName) {
+		fields = append(fields, whatsappconversation.FieldCustomerName)
+	}
+	if m.FieldCleared(whatsappconversation.FieldLastMessagePreview) {
+		fields = append(fields, whatsappconversation.FieldLastMessagePreview)
+	}
+	if m.FieldCleared(whatsappconversation.FieldLastInboundAt) {
+		fields = append(fields, whatsappconversation.FieldLastInboundAt)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *WhatsAppConversationMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *WhatsAppConversationMutation) ClearField(name string) error {
+	switch name {
+	case whatsappconversation.FieldCustomerName:
+		m.ClearCustomerName()
+		return nil
+	case whatsappconversation.FieldLastMessagePreview:
+		m.ClearLastMessagePreview()
+		return nil
+	case whatsappconversation.FieldLastInboundAt:
+		m.ClearLastInboundAt()
+		return nil
+	}
+	return fmt.Errorf("unknown WhatsAppConversation nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *WhatsAppConversationMutation) ResetField(name string) error {
+	switch name {
+	case whatsappconversation.FieldTenantID:
+		m.ResetTenantID()
+		return nil
+	case whatsappconversation.FieldPhoneNumberID:
+		m.ResetPhoneNumberID()
+		return nil
+	case whatsappconversation.FieldCustomerWaID:
+		m.ResetCustomerWaID()
+		return nil
+	case whatsappconversation.FieldCustomerName:
+		m.ResetCustomerName()
+		return nil
+	case whatsappconversation.FieldLastMessageAt:
+		m.ResetLastMessageAt()
+		return nil
+	case whatsappconversation.FieldLastMessagePreview:
+		m.ResetLastMessagePreview()
+		return nil
+	case whatsappconversation.FieldLastInboundAt:
+		m.ResetLastInboundAt()
+		return nil
+	case whatsappconversation.FieldUnreadCount:
+		m.ResetUnreadCount()
+		return nil
+	case whatsappconversation.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case whatsappconversation.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown WhatsAppConversation field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *WhatsAppConversationMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.messages != nil {
+		edges = append(edges, whatsappconversation.EdgeMessages)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *WhatsAppConversationMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case whatsappconversation.EdgeMessages:
+		ids := make([]ent.Value, 0, len(m.messages))
+		for id := range m.messages {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *WhatsAppConversationMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.removedmessages != nil {
+		edges = append(edges, whatsappconversation.EdgeMessages)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *WhatsAppConversationMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case whatsappconversation.EdgeMessages:
+		ids := make([]ent.Value, 0, len(m.removedmessages))
+		for id := range m.removedmessages {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *WhatsAppConversationMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedmessages {
+		edges = append(edges, whatsappconversation.EdgeMessages)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *WhatsAppConversationMutation) EdgeCleared(name string) bool {
+	switch name {
+	case whatsappconversation.EdgeMessages:
+		return m.clearedmessages
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *WhatsAppConversationMutation) ClearEdge(name string) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown WhatsAppConversation unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *WhatsAppConversationMutation) ResetEdge(name string) error {
+	switch name {
+	case whatsappconversation.EdgeMessages:
+		m.ResetMessages()
+		return nil
+	}
+	return fmt.Errorf("unknown WhatsAppConversation edge %s", name)
+}
+
+// WhatsAppMessageMutation represents an operation that mutates the WhatsAppMessage nodes in the graph.
+type WhatsAppMessageMutation struct {
+	config
+	op                  Op
+	typ                 string
+	id                  *uuid.UUID
+	tenant_id           *uuid.UUID
+	direction           *whatsappmessage.Direction
+	message_type        *string
+	body                *string
+	wa_message_id       *string
+	status              *string
+	sent_by_user_id     *uuid.UUID
+	created_at          *time.Time
+	clearedFields       map[string]struct{}
+	conversation        *uuid.UUID
+	clearedconversation bool
+	done                bool
+	oldValue            func(context.Context) (*WhatsAppMessage, error)
+	predicates          []predicate.WhatsAppMessage
+}
+
+var _ ent.Mutation = (*WhatsAppMessageMutation)(nil)
+
+// whatsappmessageOption allows management of the mutation configuration using functional options.
+type whatsappmessageOption func(*WhatsAppMessageMutation)
+
+// newWhatsAppMessageMutation creates new mutation for the WhatsAppMessage entity.
+func newWhatsAppMessageMutation(c config, op Op, opts ...whatsappmessageOption) *WhatsAppMessageMutation {
+	m := &WhatsAppMessageMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeWhatsAppMessage,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withWhatsAppMessageID sets the ID field of the mutation.
+func withWhatsAppMessageID(id uuid.UUID) whatsappmessageOption {
+	return func(m *WhatsAppMessageMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *WhatsAppMessage
+		)
+		m.oldValue = func(ctx context.Context) (*WhatsAppMessage, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().WhatsAppMessage.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withWhatsAppMessage sets the old WhatsAppMessage of the mutation.
+func withWhatsAppMessage(node *WhatsAppMessage) whatsappmessageOption {
+	return func(m *WhatsAppMessageMutation) {
+		m.oldValue = func(context.Context) (*WhatsAppMessage, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m WhatsAppMessageMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m WhatsAppMessageMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of WhatsAppMessage entities.
+func (m *WhatsAppMessageMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *WhatsAppMessageMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *WhatsAppMessageMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().WhatsAppMessage.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetConversationID sets the "conversation_id" field.
+func (m *WhatsAppMessageMutation) SetConversationID(u uuid.UUID) {
+	m.conversation = &u
+}
+
+// ConversationID returns the value of the "conversation_id" field in the mutation.
+func (m *WhatsAppMessageMutation) ConversationID() (r uuid.UUID, exists bool) {
+	v := m.conversation
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldConversationID returns the old "conversation_id" field's value of the WhatsAppMessage entity.
+// If the WhatsAppMessage object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WhatsAppMessageMutation) OldConversationID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldConversationID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldConversationID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldConversationID: %w", err)
+	}
+	return oldValue.ConversationID, nil
+}
+
+// ResetConversationID resets all changes to the "conversation_id" field.
+func (m *WhatsAppMessageMutation) ResetConversationID() {
+	m.conversation = nil
+}
+
+// SetTenantID sets the "tenant_id" field.
+func (m *WhatsAppMessageMutation) SetTenantID(u uuid.UUID) {
+	m.tenant_id = &u
+}
+
+// TenantID returns the value of the "tenant_id" field in the mutation.
+func (m *WhatsAppMessageMutation) TenantID() (r uuid.UUID, exists bool) {
+	v := m.tenant_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTenantID returns the old "tenant_id" field's value of the WhatsAppMessage entity.
+// If the WhatsAppMessage object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WhatsAppMessageMutation) OldTenantID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTenantID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTenantID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTenantID: %w", err)
+	}
+	return oldValue.TenantID, nil
+}
+
+// ResetTenantID resets all changes to the "tenant_id" field.
+func (m *WhatsAppMessageMutation) ResetTenantID() {
+	m.tenant_id = nil
+}
+
+// SetDirection sets the "direction" field.
+func (m *WhatsAppMessageMutation) SetDirection(w whatsappmessage.Direction) {
+	m.direction = &w
+}
+
+// Direction returns the value of the "direction" field in the mutation.
+func (m *WhatsAppMessageMutation) Direction() (r whatsappmessage.Direction, exists bool) {
+	v := m.direction
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDirection returns the old "direction" field's value of the WhatsAppMessage entity.
+// If the WhatsAppMessage object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WhatsAppMessageMutation) OldDirection(ctx context.Context) (v whatsappmessage.Direction, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDirection is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDirection requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDirection: %w", err)
+	}
+	return oldValue.Direction, nil
+}
+
+// ResetDirection resets all changes to the "direction" field.
+func (m *WhatsAppMessageMutation) ResetDirection() {
+	m.direction = nil
+}
+
+// SetMessageType sets the "message_type" field.
+func (m *WhatsAppMessageMutation) SetMessageType(s string) {
+	m.message_type = &s
+}
+
+// MessageType returns the value of the "message_type" field in the mutation.
+func (m *WhatsAppMessageMutation) MessageType() (r string, exists bool) {
+	v := m.message_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMessageType returns the old "message_type" field's value of the WhatsAppMessage entity.
+// If the WhatsAppMessage object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WhatsAppMessageMutation) OldMessageType(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMessageType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMessageType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMessageType: %w", err)
+	}
+	return oldValue.MessageType, nil
+}
+
+// ResetMessageType resets all changes to the "message_type" field.
+func (m *WhatsAppMessageMutation) ResetMessageType() {
+	m.message_type = nil
+}
+
+// SetBody sets the "body" field.
+func (m *WhatsAppMessageMutation) SetBody(s string) {
+	m.body = &s
+}
+
+// Body returns the value of the "body" field in the mutation.
+func (m *WhatsAppMessageMutation) Body() (r string, exists bool) {
+	v := m.body
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBody returns the old "body" field's value of the WhatsAppMessage entity.
+// If the WhatsAppMessage object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WhatsAppMessageMutation) OldBody(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBody is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBody requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBody: %w", err)
+	}
+	return oldValue.Body, nil
+}
+
+// ResetBody resets all changes to the "body" field.
+func (m *WhatsAppMessageMutation) ResetBody() {
+	m.body = nil
+}
+
+// SetWaMessageID sets the "wa_message_id" field.
+func (m *WhatsAppMessageMutation) SetWaMessageID(s string) {
+	m.wa_message_id = &s
+}
+
+// WaMessageID returns the value of the "wa_message_id" field in the mutation.
+func (m *WhatsAppMessageMutation) WaMessageID() (r string, exists bool) {
+	v := m.wa_message_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldWaMessageID returns the old "wa_message_id" field's value of the WhatsAppMessage entity.
+// If the WhatsAppMessage object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WhatsAppMessageMutation) OldWaMessageID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldWaMessageID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldWaMessageID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldWaMessageID: %w", err)
+	}
+	return oldValue.WaMessageID, nil
+}
+
+// ClearWaMessageID clears the value of the "wa_message_id" field.
+func (m *WhatsAppMessageMutation) ClearWaMessageID() {
+	m.wa_message_id = nil
+	m.clearedFields[whatsappmessage.FieldWaMessageID] = struct{}{}
+}
+
+// WaMessageIDCleared returns if the "wa_message_id" field was cleared in this mutation.
+func (m *WhatsAppMessageMutation) WaMessageIDCleared() bool {
+	_, ok := m.clearedFields[whatsappmessage.FieldWaMessageID]
+	return ok
+}
+
+// ResetWaMessageID resets all changes to the "wa_message_id" field.
+func (m *WhatsAppMessageMutation) ResetWaMessageID() {
+	m.wa_message_id = nil
+	delete(m.clearedFields, whatsappmessage.FieldWaMessageID)
+}
+
+// SetStatus sets the "status" field.
+func (m *WhatsAppMessageMutation) SetStatus(s string) {
+	m.status = &s
+}
+
+// Status returns the value of the "status" field in the mutation.
+func (m *WhatsAppMessageMutation) Status() (r string, exists bool) {
+	v := m.status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStatus returns the old "status" field's value of the WhatsAppMessage entity.
+// If the WhatsAppMessage object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WhatsAppMessageMutation) OldStatus(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStatus: %w", err)
+	}
+	return oldValue.Status, nil
+}
+
+// ResetStatus resets all changes to the "status" field.
+func (m *WhatsAppMessageMutation) ResetStatus() {
+	m.status = nil
+}
+
+// SetSentByUserID sets the "sent_by_user_id" field.
+func (m *WhatsAppMessageMutation) SetSentByUserID(u uuid.UUID) {
+	m.sent_by_user_id = &u
+}
+
+// SentByUserID returns the value of the "sent_by_user_id" field in the mutation.
+func (m *WhatsAppMessageMutation) SentByUserID() (r uuid.UUID, exists bool) {
+	v := m.sent_by_user_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSentByUserID returns the old "sent_by_user_id" field's value of the WhatsAppMessage entity.
+// If the WhatsAppMessage object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WhatsAppMessageMutation) OldSentByUserID(ctx context.Context) (v *uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSentByUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSentByUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSentByUserID: %w", err)
+	}
+	return oldValue.SentByUserID, nil
+}
+
+// ClearSentByUserID clears the value of the "sent_by_user_id" field.
+func (m *WhatsAppMessageMutation) ClearSentByUserID() {
+	m.sent_by_user_id = nil
+	m.clearedFields[whatsappmessage.FieldSentByUserID] = struct{}{}
+}
+
+// SentByUserIDCleared returns if the "sent_by_user_id" field was cleared in this mutation.
+func (m *WhatsAppMessageMutation) SentByUserIDCleared() bool {
+	_, ok := m.clearedFields[whatsappmessage.FieldSentByUserID]
+	return ok
+}
+
+// ResetSentByUserID resets all changes to the "sent_by_user_id" field.
+func (m *WhatsAppMessageMutation) ResetSentByUserID() {
+	m.sent_by_user_id = nil
+	delete(m.clearedFields, whatsappmessage.FieldSentByUserID)
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *WhatsAppMessageMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *WhatsAppMessageMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the WhatsAppMessage entity.
+// If the WhatsAppMessage object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WhatsAppMessageMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *WhatsAppMessageMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// ClearConversation clears the "conversation" edge to the WhatsAppConversation entity.
+func (m *WhatsAppMessageMutation) ClearConversation() {
+	m.clearedconversation = true
+	m.clearedFields[whatsappmessage.FieldConversationID] = struct{}{}
+}
+
+// ConversationCleared reports if the "conversation" edge to the WhatsAppConversation entity was cleared.
+func (m *WhatsAppMessageMutation) ConversationCleared() bool {
+	return m.clearedconversation
+}
+
+// ConversationIDs returns the "conversation" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// ConversationID instead. It exists only for internal usage by the builders.
+func (m *WhatsAppMessageMutation) ConversationIDs() (ids []uuid.UUID) {
+	if id := m.conversation; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetConversation resets all changes to the "conversation" edge.
+func (m *WhatsAppMessageMutation) ResetConversation() {
+	m.conversation = nil
+	m.clearedconversation = false
+}
+
+// Where appends a list predicates to the WhatsAppMessageMutation builder.
+func (m *WhatsAppMessageMutation) Where(ps ...predicate.WhatsAppMessage) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the WhatsAppMessageMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *WhatsAppMessageMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.WhatsAppMessage, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *WhatsAppMessageMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *WhatsAppMessageMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (WhatsAppMessage).
+func (m *WhatsAppMessageMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *WhatsAppMessageMutation) Fields() []string {
+	fields := make([]string, 0, 9)
+	if m.conversation != nil {
+		fields = append(fields, whatsappmessage.FieldConversationID)
+	}
+	if m.tenant_id != nil {
+		fields = append(fields, whatsappmessage.FieldTenantID)
+	}
+	if m.direction != nil {
+		fields = append(fields, whatsappmessage.FieldDirection)
+	}
+	if m.message_type != nil {
+		fields = append(fields, whatsappmessage.FieldMessageType)
+	}
+	if m.body != nil {
+		fields = append(fields, whatsappmessage.FieldBody)
+	}
+	if m.wa_message_id != nil {
+		fields = append(fields, whatsappmessage.FieldWaMessageID)
+	}
+	if m.status != nil {
+		fields = append(fields, whatsappmessage.FieldStatus)
+	}
+	if m.sent_by_user_id != nil {
+		fields = append(fields, whatsappmessage.FieldSentByUserID)
+	}
+	if m.created_at != nil {
+		fields = append(fields, whatsappmessage.FieldCreatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *WhatsAppMessageMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case whatsappmessage.FieldConversationID:
+		return m.ConversationID()
+	case whatsappmessage.FieldTenantID:
+		return m.TenantID()
+	case whatsappmessage.FieldDirection:
+		return m.Direction()
+	case whatsappmessage.FieldMessageType:
+		return m.MessageType()
+	case whatsappmessage.FieldBody:
+		return m.Body()
+	case whatsappmessage.FieldWaMessageID:
+		return m.WaMessageID()
+	case whatsappmessage.FieldStatus:
+		return m.Status()
+	case whatsappmessage.FieldSentByUserID:
+		return m.SentByUserID()
+	case whatsappmessage.FieldCreatedAt:
+		return m.CreatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *WhatsAppMessageMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case whatsappmessage.FieldConversationID:
+		return m.OldConversationID(ctx)
+	case whatsappmessage.FieldTenantID:
+		return m.OldTenantID(ctx)
+	case whatsappmessage.FieldDirection:
+		return m.OldDirection(ctx)
+	case whatsappmessage.FieldMessageType:
+		return m.OldMessageType(ctx)
+	case whatsappmessage.FieldBody:
+		return m.OldBody(ctx)
+	case whatsappmessage.FieldWaMessageID:
+		return m.OldWaMessageID(ctx)
+	case whatsappmessage.FieldStatus:
+		return m.OldStatus(ctx)
+	case whatsappmessage.FieldSentByUserID:
+		return m.OldSentByUserID(ctx)
+	case whatsappmessage.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown WhatsAppMessage field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *WhatsAppMessageMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case whatsappmessage.FieldConversationID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetConversationID(v)
+		return nil
+	case whatsappmessage.FieldTenantID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTenantID(v)
+		return nil
+	case whatsappmessage.FieldDirection:
+		v, ok := value.(whatsappmessage.Direction)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDirection(v)
+		return nil
+	case whatsappmessage.FieldMessageType:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMessageType(v)
+		return nil
+	case whatsappmessage.FieldBody:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBody(v)
+		return nil
+	case whatsappmessage.FieldWaMessageID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetWaMessageID(v)
+		return nil
+	case whatsappmessage.FieldStatus:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStatus(v)
+		return nil
+	case whatsappmessage.FieldSentByUserID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSentByUserID(v)
+		return nil
+	case whatsappmessage.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown WhatsAppMessage field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *WhatsAppMessageMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *WhatsAppMessageMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *WhatsAppMessageMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown WhatsAppMessage numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *WhatsAppMessageMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(whatsappmessage.FieldWaMessageID) {
+		fields = append(fields, whatsappmessage.FieldWaMessageID)
+	}
+	if m.FieldCleared(whatsappmessage.FieldSentByUserID) {
+		fields = append(fields, whatsappmessage.FieldSentByUserID)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *WhatsAppMessageMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *WhatsAppMessageMutation) ClearField(name string) error {
+	switch name {
+	case whatsappmessage.FieldWaMessageID:
+		m.ClearWaMessageID()
+		return nil
+	case whatsappmessage.FieldSentByUserID:
+		m.ClearSentByUserID()
+		return nil
+	}
+	return fmt.Errorf("unknown WhatsAppMessage nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *WhatsAppMessageMutation) ResetField(name string) error {
+	switch name {
+	case whatsappmessage.FieldConversationID:
+		m.ResetConversationID()
+		return nil
+	case whatsappmessage.FieldTenantID:
+		m.ResetTenantID()
+		return nil
+	case whatsappmessage.FieldDirection:
+		m.ResetDirection()
+		return nil
+	case whatsappmessage.FieldMessageType:
+		m.ResetMessageType()
+		return nil
+	case whatsappmessage.FieldBody:
+		m.ResetBody()
+		return nil
+	case whatsappmessage.FieldWaMessageID:
+		m.ResetWaMessageID()
+		return nil
+	case whatsappmessage.FieldStatus:
+		m.ResetStatus()
+		return nil
+	case whatsappmessage.FieldSentByUserID:
+		m.ResetSentByUserID()
+		return nil
+	case whatsappmessage.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown WhatsAppMessage field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *WhatsAppMessageMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.conversation != nil {
+		edges = append(edges, whatsappmessage.EdgeConversation)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *WhatsAppMessageMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case whatsappmessage.EdgeConversation:
+		if id := m.conversation; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *WhatsAppMessageMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *WhatsAppMessageMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *WhatsAppMessageMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedconversation {
+		edges = append(edges, whatsappmessage.EdgeConversation)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *WhatsAppMessageMutation) EdgeCleared(name string) bool {
+	switch name {
+	case whatsappmessage.EdgeConversation:
+		return m.clearedconversation
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *WhatsAppMessageMutation) ClearEdge(name string) error {
+	switch name {
+	case whatsappmessage.EdgeConversation:
+		m.ClearConversation()
+		return nil
+	}
+	return fmt.Errorf("unknown WhatsAppMessage unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *WhatsAppMessageMutation) ResetEdge(name string) error {
+	switch name {
+	case whatsappmessage.EdgeConversation:
+		m.ResetConversation()
+		return nil
+	}
+	return fmt.Errorf("unknown WhatsAppMessage edge %s", name)
 }
 
 // WhatsAppPlanMutation represents an operation that mutates the WhatsAppPlan nodes in the graph.

@@ -414,6 +414,10 @@ func seedNotificationPermissions(ctx context.Context, client *ent.Client) {
 		// Platform (superuser only)
 		{"notifications.platform.providers", "Platform Providers", "platform", "manage", "providers", "Manage platform-level providers"},
 		{"notifications.platform.billing", "Platform Billing", "platform", "manage", "billing", "Manage platform billing settings"},
+
+		// WhatsApp Inbox
+		{"notifications.whatsapp_inbox.view", "View WhatsApp Inbox", "whatsapp_inbox", "view", "whatsapp_inbox", "View WhatsApp conversations and messages"},
+		{"notifications.whatsapp_inbox.reply", "Reply to WhatsApp Inbox", "whatsapp_inbox", "reply", "whatsapp_inbox", "Send WhatsApp replies to customers"},
 	}
 
 	for _, p := range perms {
@@ -529,6 +533,7 @@ func seedNotificationRolePermissions(ctx context.Context, client *ent.Client) {
 			"notifications.config.view",
 			"notifications.users.view_own",
 			"notifications.analytics.view",
+			"notifications.whatsapp_inbox.view",
 		},
 		"operator": {
 			"notifications.notifications.add",
@@ -550,6 +555,8 @@ func seedNotificationRolePermissions(ctx context.Context, client *ent.Client) {
 			"notifications.users.view_own",
 			"notifications.analytics.view",
 			"notifications.analytics.manage",
+			"notifications.whatsapp_inbox.view",
+			"notifications.whatsapp_inbox.reply",
 		},
 		"notifications_admin": {
 			"notifications.notifications.add",
@@ -582,6 +589,8 @@ func seedNotificationRolePermissions(ctx context.Context, client *ent.Client) {
 			"notifications.users.manage",
 			"notifications.analytics.view",
 			"notifications.analytics.manage",
+			"notifications.whatsapp_inbox.view",
+			"notifications.whatsapp_inbox.reply",
 		},
 	}
 

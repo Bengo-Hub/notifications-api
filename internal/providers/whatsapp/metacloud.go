@@ -113,7 +113,8 @@ func (p *MetaCloudProvider) sendText(ctx context.Context, to, body string, previ
 			"body":        body,
 		},
 	}
-	return p.post(ctx, payload)
+	_, err := p.post(ctx, payload)
+	return err
 }
 
 // sendTemplate sends a pre-approved WhatsApp message template (the only way to reach a recipient
@@ -143,7 +144,8 @@ func (p *MetaCloudProvider) sendTemplate(ctx context.Context, to, templateName, 
 		"type":              "template",
 		"template":          template,
 	}
-	return p.post(ctx, payload)
+	_, err := p.post(ctx, payload)
+	return err
 }
 
 // normalizeWhatsAppNumber strips everything Meta's Cloud API doesn't accept in the "to" field —
@@ -192,30 +194,62 @@ func (p *MetaCloudProvider) AccountInfo(ctx context.Context) (map[string]interfa
 	return info, nil
 }
 
-func (p *MetaCloudProvider) post(ctx context.Context, payload map[string]interface{}) error {
+// post returns Meta's raw response body on success so callers that need it (SendTextMessage, to
+// capture the real wamid) can parse it; callers that don't just ignore it — zero behavior change
+// for sendText/sendTemplate below.
+func (p *MetaCloudProvider) post(ctx context.Context, payload map[string]interface{}) ([]byte, error) {
 	url := fmt.Sprintf("https://graph.facebook.com/%s/%s/messages", p.apiVersion, p.phoneNumberID)
 
 	data, err := json.Marshal(payload)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(data))
 	if err != nil {
-		return err
+		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+p.accessToken)
 
 	resp, err := p.httpClient.Do(req)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	respBody, _ := io.ReadAll(resp.Body)
 	if resp.StatusCode >= 400 {
-		return fmt.Errorf("meta_cloud error: status %d: %s", resp.StatusCode, string(respBody))
+		return nil, fmt.Errorf("meta_cloud error: status %d: %s", resp.StatusCode, string(respBody))
 	}
-	return nil
+	return respBody, nil
+}
+
+// SendTextMessage sends free-form text (valid only within Meta's 24h customer-service window) and
+// returns Meta's own message id (wamid...) from the response body's messages[0].id, so callers —
+// the WhatsApp inbox reply path — can correlate a later delivery-status webhook back to this send.
+func (p *MetaCloudProvider) SendTextMessage(ctx context.Context, to, body string) (string, error) {
+	if p.accessToken == "" || p.phoneNumberID == "" {
+		return "", fmt.Errorf("meta_cloud not configured")
+	}
+	payload := map[string]interface{}{
+		"messaging_product": "whatsapp",
+		"recipient_type":    "individual",
+		"to":                normalizeWhatsAppNumber(to),
+		"type":              "text",
+		"text":              map[string]interface{}{"body": body},
+	}
+	respBody, err := p.post(ctx, payload)
+	if err != nil {
+		return "", err
+	}
+	var parsed struct {
+		Messages []struct {
+			ID string `json:"id"`
+		} `json:"messages"`
+	}
+	if jerr := json.Unmarshal(respBody, &parsed); jerr == nil && len(parsed.Messages) > 0 {
+		return parsed.Messages[0].ID, nil
+	}
+	return "", nil
 }

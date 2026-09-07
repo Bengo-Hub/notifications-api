@@ -40,6 +40,8 @@ const (
 	PermUsersManage         Permission = "notifications.users.manage"
 	PermPlatformProviders   Permission = "notifications.platform.providers"
 	PermPlatformBilling     Permission = "notifications.platform.billing"
+	PermWhatsAppInboxRead   Permission = "notifications.whatsapp_inbox.view"
+	PermWhatsAppInboxReply  Permission = "notifications.whatsapp_inbox.reply"
 )
 
 // AllPermissions returns all defined permissions.
@@ -54,6 +56,7 @@ func AllPermissions() []Permission {
 		PermCreditsRead, PermCreditsManage,
 		PermUsersRead, PermUsersManage,
 		PermPlatformProviders, PermPlatformBilling,
+		PermWhatsAppInboxRead, PermWhatsAppInboxReply,
 	}
 }
 
@@ -69,6 +72,7 @@ func DefaultPermissions(role Role) []Permission {
 			PermBillingRead,
 			PermAnalyticsRead,
 			PermCreditsRead,
+			PermWhatsAppInboxRead,
 		}
 	case RoleManager:
 		return []Permission{
@@ -79,6 +83,7 @@ func DefaultPermissions(role Role) []Permission {
 			PermBillingRead,
 			PermAnalyticsRead, PermAnalyticsExport,
 			PermCreditsRead, PermCreditsManage,
+			PermWhatsAppInboxRead, PermWhatsAppInboxReply,
 		}
 	case RoleAdmin:
 		return []Permission{
@@ -90,6 +95,7 @@ func DefaultPermissions(role Role) []Permission {
 			PermAnalyticsRead, PermAnalyticsExport,
 			PermCreditsRead, PermCreditsManage,
 			PermUsersRead, PermUsersManage,
+			PermWhatsAppInboxRead, PermWhatsAppInboxReply,
 		}
 	case RoleSuperAdmin:
 		return AllPermissions()

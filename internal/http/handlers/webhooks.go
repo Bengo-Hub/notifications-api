@@ -7,10 +7,12 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 
 	"github.com/bengobox/notifications-api/internal/ent"
 	"github.com/bengobox/notifications-api/internal/ent/providersetting"
+	"github.com/bengobox/notifications-api/internal/modules/whatsappinbox"
 )
 
 // WebhookHandler receives provider-initiated callbacks (SMS delivery reports, WhatsApp message/
@@ -21,12 +23,14 @@ type WebhookHandler struct {
 	client        *ent.Client
 	log           *zap.Logger
 	publicBaseURL string
+	inbox         *whatsappinbox.Service
 }
 
 // NewWebhookHandler creates the webhook handler. publicBaseURL is this service's own externally
-// reachable base URL, used to compose the callback URLs shown to admins (see Config).
-func NewWebhookHandler(client *ent.Client, log *zap.Logger, publicBaseURL string) *WebhookHandler {
-	return &WebhookHandler{client: client, log: log.Named("webhooks"), publicBaseURL: publicBaseURL}
+// reachable base URL, used to compose the callback URLs shown to admins (see Config). inbox is
+// optional (nil-safe) — when unset, inbound WhatsApp messages are still logged but not persisted.
+func NewWebhookHandler(client *ent.Client, log *zap.Logger, publicBaseURL string, inbox *whatsappinbox.Service) *WebhookHandler {
+	return &WebhookHandler{client: client, log: log.Named("webhooks"), publicBaseURL: publicBaseURL, inbox: inbox}
 }
 
 // Config returns the provider-facing callback URLs and the WhatsApp verify token, so a tenant or
@@ -101,10 +105,19 @@ type waWebhookPayload struct {
 				Metadata struct {
 					PhoneNumberID string `json:"phone_number_id"`
 				} `json:"metadata"`
+				Contacts []struct {
+					WaID    string `json:"wa_id"`
+					Profile struct {
+						Name string `json:"name"`
+					} `json:"profile"`
+				} `json:"contacts"`
 				Messages []struct {
 					From string `json:"from"`
 					ID   string `json:"id"`
 					Type string `json:"type"`
+					Text struct {
+						Body string `json:"body"`
+					} `json:"text"`
 				} `json:"messages"`
 				Statuses []struct {
 					ID          string `json:"id"`
@@ -143,6 +156,11 @@ func (h *WebhookHandler) WhatsAppIncoming(w http.ResponseWriter, r *http.Request
 			phoneNumberID := change.Value.Metadata.PhoneNumberID
 			tenantID := h.resolveTenantByPhoneNumberID(ctx, phoneNumberID)
 
+			contactNames := make(map[string]string, len(change.Value.Contacts))
+			for _, c := range change.Value.Contacts {
+				contactNames[c.WaID] = c.Profile.Name
+			}
+
 			for _, msg := range change.Value.Messages {
 				h.log.Info("whatsapp incoming message",
 					zap.String("tenant_id", tenantID),
@@ -151,6 +169,13 @@ func (h *WebhookHandler) WhatsAppIncoming(w http.ResponseWriter, r *http.Request
 					zap.String("message_id", msg.ID),
 					zap.String("type", msg.Type),
 				)
+				if h.inbox != nil && tenantID != "" {
+					if tid, err := uuid.Parse(tenantID); err == nil {
+						if err := h.inbox.RecordInbound(ctx, tid, phoneNumberID, msg.ID, msg.From, msg.Type, msg.Text.Body, contactNames[msg.From]); err != nil {
+							h.log.Warn("failed to persist inbound whatsapp message", zap.Error(err), zap.String("message_id", msg.ID))
+						}
+					}
+				}
 			}
 			for _, status := range change.Value.Statuses {
 				h.log.Info("whatsapp message status",
@@ -160,6 +185,11 @@ func (h *WebhookHandler) WhatsAppIncoming(w http.ResponseWriter, r *http.Request
 					zap.String("recipient", status.RecipientID),
 					zap.String("status", status.Status),
 				)
+				if h.inbox != nil {
+					if err := h.inbox.RecordStatusUpdate(ctx, status.ID, status.Status); err != nil {
+						h.log.Warn("failed to record whatsapp status update", zap.Error(err), zap.String("message_id", status.ID))
+					}
+				}
 			}
 		}
 	}
