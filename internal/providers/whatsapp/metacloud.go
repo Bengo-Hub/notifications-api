@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -68,7 +69,8 @@ func (p *MetaCloudProvider) SendWhatsApp(ctx context.Context, from string, to []
 		return fmt.Errorf("meta_cloud not configured")
 	}
 	templateName, _ := metadata["template_name"].(string)
-	for _, recipient := range to {
+	for _, raw := range to {
+		recipient := normalizeWhatsAppNumber(raw)
 		var err error
 		if templateName != "" {
 			language, _ := metadata["template_language"].(string)
@@ -142,6 +144,22 @@ func (p *MetaCloudProvider) sendTemplate(ctx context.Context, to, templateName, 
 		"template":          template,
 	}
 	return p.post(ctx, payload)
+}
+
+// normalizeWhatsAppNumber strips everything Meta's Cloud API doesn't accept in the "to" field —
+// a leading "+" and any non-digit formatting characters (spaces, dashes, parens). Meta requires
+// bare "countrycode+number" digits; a "+254..." recipient (the natural, common way a phone number
+// gets typed or stored) is silently accepted by the send API (2xx) but never actually delivered,
+// with no error surfaced anywhere in this call chain — confirmed live: "+254743793901" accepted
+// but never arrived, "254743793901" (same number, no leading +) delivered immediately.
+func normalizeWhatsAppNumber(raw string) string {
+	var b strings.Builder
+	for _, r := range raw {
+		if r >= '0' && r <= '9' {
+			b.WriteRune(r)
+		}
+	}
+	return b.String()
 }
 
 // AccountInfo confirms the configured credentials are valid by querying Meta's Graph API for the
