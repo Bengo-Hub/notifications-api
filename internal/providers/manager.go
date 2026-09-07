@@ -53,13 +53,18 @@ func (m *Manager) GetWhatsAppProvider(ctx context.Context, tenantID string, pref
 	for _, name := range dedup(order) {
 		switch name {
 		case "meta_cloud":
-			s, _ := pcfg.LoadTenantProviderSettings(ctx, m.dbCfg, tenantID, m.env, "whatsapp", "meta_cloud", m.decryptionKey)
+			// Tenant-only lookup, deliberately — unlike email/SMS, WhatsApp has no shared
+			// platform fallback (see LoadTenantOnlyProviderSettings): every tenant, including
+			// the platform's own tenant, must have their own number configured under their own
+			// tenant ID. tenantID is already the platform's real UUID for platform-tenant sends
+			// (see PlatformID), so this doesn't change platform-tenant behavior at all.
+			s, _ := pcfg.LoadTenantOnlyProviderSettings(ctx, m.dbCfg, tenantID, m.env, "whatsapp", "meta_cloud", m.decryptionKey)
 			accessToken := s["access_token"]
 			phoneNumberID := s["phone_number_id"]
 			apiVersion := s["api_version"]
 
 			if accessToken == "" || phoneNumberID == "" {
-				continue // not configured for this tenant/platform — try fallback
+				continue // no WhatsApp number configured for this specific tenant — no fallback
 			}
 
 			return whatsapp.NewMetaCloudProvider(whatsapp.MetaCloudConfig{
@@ -69,8 +74,10 @@ func (m *Manager) GetWhatsAppProvider(ctx context.Context, tenantID string, pref
 			}), nil
 		}
 	}
-	// No mock/default for WhatsApp; return error or nil
-	return nil, fmt.Errorf("no active whatsapp provider found")
+	// No mock/default for WhatsApp; return error or nil. No platform fallback exists for this
+	// channel (see LoadTenantOnlyProviderSettings) — this tenant simply hasn't configured their
+	// own WhatsApp number yet.
+	return nil, fmt.Errorf("no WhatsApp number configured for this tenant")
 }
 
 func (m *Manager) GetEmailProvider(ctx context.Context, tenantID string, preferred string) (EmailProvider, error) {
