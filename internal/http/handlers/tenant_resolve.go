@@ -13,23 +13,25 @@ import (
 // to the admin's own JWT tenant.
 //
 //   - Platform owner: X-Tenant-ID header first, then the legacy ?tenantId= query param, then the
-//     JWT-derived tenant as a last resort (preserves this handler's pre-existing "no explicit
-//     override → my own tenant" behavior — every call site already has its own considered
-//     behavior for a still-empty result, e.g. falling back to the platform tenant ID; this helper
-//     only adds the header check ahead of what already existed, it doesn't remove any prior path).
-//   - Regular tenant: X-Tenant-ID header first (defensive; should already match the JWT), then
-//     the tenant ID embedded in the JWT claims.
+//     JWT-derived tenant as a last resort.
+//   - Regular tenant: always the tenant ID embedded in their own JWT claims. X-Tenant-ID/tenantId
+//     are never honored for a non-platform-owner caller — a client-supplied header or query
+//     param is not a security boundary on its own, and honoring it unconditionally (as this
+//     helper used to) let any authenticated tenant user read or act on another tenant's data
+//     simply by setting a header, across every handler that calls this helper (billing,
+//     analytics, WhatsApp inbox/subscriptions, backups, preferences, RBAC, settings...). Fixed
+//     2026-09-08 after an audit found tenant-scoped WhatsApp Inbox conversations were reachable
+//     cross-tenant this way.
 //
-// Mirrors subscriptions-api's identical helper (internal/http/handlers/tenant.go), adapted to
-// fall back to the JWT tenant rather than "" for a platform owner with no explicit override, to
-// match how this service's handlers already behaved before the header check was added.
+// Mirrors subscriptions-api's identical helper (internal/http/handlers/tenant.go) — that helper
+// has the same header-trust gap and should get the same fix.
 func resolveActingTenantID(r *http.Request) string {
 	ctx := r.Context()
 
-	if h := r.Header.Get("X-Tenant-ID"); h != "" {
-		return h
-	}
 	if httpware.IsPlatformOwner(ctx) {
+		if h := r.Header.Get("X-Tenant-ID"); h != "" {
+			return h
+		}
 		if q := r.URL.Query().Get("tenantId"); q != "" {
 			return q
 		}
