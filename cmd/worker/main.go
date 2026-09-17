@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"html/template"
 	"log"
 	"os"
@@ -243,6 +244,24 @@ func main() {
 
 		// Deliver via provider
 		deliverErr := deliver(ctx, cfg, pm, emailGuardian, billingSvc, whatsappSubsSvc, tr, dbPool, &msg, rendered, logg)
+		if errors.Is(deliverErr, errSkippedNoSend) {
+			// Deliberately not sent (no valid/verified recipient, no SMS credit, no WhatsApp
+			// subscription/quota, etc.) — deliver() already logged the specific reason. Ack so
+			// the single-attempt worker doesn't dead-letter or retry a send that will never
+			// become possible on its own, but record/log it as skipped, not delivered: this
+			// used to fall through to the "sent"/"delivered" branch below unconditionally,
+			// so delivery_log (and anyone reading these logs) reported every one of these as
+			// successfully sent.
+			recordDeliveryLog(ctx, client, gateTenant, msg.TemplateID, msg.Channel, "skipped", msg.To)
+			logg.Info("message skipped (not delivered)",
+				zap.String("channel", msg.Channel),
+				zap.String("template", msg.TemplateID),
+				zap.Strings("to", msg.To),
+				zap.Uint64("attempt", attempt),
+			)
+			_ = m.Ack()
+			return
+		}
 		if deliverErr != nil {
 			logg.Warn("delivery failed",
 				zap.String("channel", msg.Channel),
@@ -527,6 +546,16 @@ func unverifiedUserRecipients(ctx context.Context, db *pgxpool.Pool, to []string
 	return drop
 }
 
+// errSkippedNoSend is returned by deliver when it deliberately did not attempt a send
+// (no valid/verified recipient, insufficient SMS credit, no WhatsApp subscription/quota,
+// etc.) and has already ack'd the message as "nothing to retry" by design. It is
+// distinct from a nil error (genuine send success) and from any other non-nil error
+// (a real, possibly-retryable failure) so the caller can log and record "skipped"
+// instead of the misleading "delivered"/"sent" it used to report for every one of
+// these early-return branches, and so the delivery_log table (queried by anyone later
+// asking "was this notification actually sent") stops recording a skipped message as sent.
+var errSkippedNoSend = errors.New("notifications: send intentionally skipped")
+
 func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg *emailGuard, billingSvc *billing.Service, whatsappSubsSvc *billing.WhatsAppSubscriptionService, tr *tenantResolver, dbPool *pgxpool.Pool, msg *messaging.Message, rendered string, logg *zap.Logger) error {
 	channel := strings.ToLower(msg.Channel)
 	preferred := ""
@@ -619,7 +648,7 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 		if len(validTo) == 0 {
 			logg.Warn("no valid email recipients — skipping send",
 				zap.Strings("to", msg.To), zap.String("template", msg.TemplateID))
-			return nil // ack: nothing deliverable, do not retry
+			return errSkippedNoSend
 		}
 		eg.WaitForSlot(ctx, 20*time.Second)
 
@@ -704,7 +733,7 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 				if bal, balErr := balProv.GetBalance(ctx); balErr == nil && bal <= 0 {
 					logg.Warn("sms send skipped: real provider account balance is zero (platform-scope, not tenant-billed)",
 						zap.String("template", msg.TemplateID))
-					return nil
+					return errSkippedNoSend
 				}
 			}
 			if err := smsProv.SendSMS(ctx, cfg.Providers.DefaultSMSSender, msg.To, rendered); err != nil {
@@ -731,7 +760,7 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 				zap.String("template", msg.TemplateID),
 				zap.Error(balErr),
 			)
-			return nil
+			return errSkippedNoSend
 		}
 		if balance <= 0 {
 			logg.Warn("sms send skipped: insufficient credits",
@@ -739,7 +768,7 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 				zap.String("template", msg.TemplateID),
 				zap.Float64("balance", balance),
 			)
-			return nil // ack: nothing to retry until the tenant tops up
+			return errSkippedNoSend
 		}
 
 		if err := smsProv.SendSMS(ctx, cfg.Providers.DefaultSMSSender, msg.To, rendered); err != nil {
@@ -768,7 +797,7 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 			if whatsappSubsSvc == nil {
 				logg.Warn("whatsapp send skipped: subscription service unavailable (fail-closed)",
 					zap.String("tenant_id", tenantID.String()), zap.String("template", msg.TemplateID))
-				return nil
+				return errSkippedNoSend
 			}
 			// The WhatsAppPlan subscription (checked above) is the ONE, centralized billing
 			// mechanism for WhatsApp — a monthly fee for a bundled message quota, matching how
@@ -785,7 +814,7 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 					zap.String("template", msg.TemplateID),
 					zap.Error(quotaErr),
 				)
-				return nil // ack: nothing to retry until the tenant subscribes / quota resets
+				return errSkippedNoSend
 			}
 		}
 
@@ -809,7 +838,7 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 		pushProv, err := pm.GetPushProvider(ctx)
 		if err != nil {
 			logg.Warn("push provider unavailable", zap.Error(err))
-			return nil // non-fatal: FCM may not be configured in all envs
+			return errSkippedNoSend // non-fatal: FCM may not be configured in all envs
 		}
 		title, _ := msg.Metadata["push_title"].(string)
 		pushData := make(map[string]string)
@@ -826,6 +855,6 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 
 	default:
 		logg.Warn("unknown channel", zap.String("channel", msg.Channel))
-		return nil
+		return errSkippedNoSend
 	}
 }
