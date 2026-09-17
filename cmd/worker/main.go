@@ -179,6 +179,21 @@ func main() {
 		logg.Warn("failed to sync platform owner, using fallback", zap.Error(err))
 	}
 	platformIDStr := platformID.String()
+	whatsappExemptTenantIDs[platformIDStr] = true
+
+	// codevertex-demo is the platform's own public demo/showcase tenant -- at the user's
+	// explicit request, it is exempted from the WhatsApp paid-subscription gate the same
+	// way the platform tenant itself is (see the "whatsapp" case in deliver()), so demo
+	// order-workflow notifications reach real channels without requiring a purchased plan.
+	// This is a deliberate, narrow carve-out for this one named tenant, not a general
+	// "any tenant can skip billing" mechanism -- every other tenant still needs a real
+	// active subscription. Best-effort: a sync failure here just means the demo tenant
+	// falls back to the normal (gated) behavior rather than blocking worker startup.
+	if demoID, derr := tenantSyncer.SyncTenant(ctx, "codevertex-demo"); derr == nil {
+		whatsappExemptTenantIDs[demoID.String()] = true
+	} else {
+		logg.Warn("failed to sync codevertex-demo tenant for WhatsApp exemption", zap.Error(derr))
+	}
 
 	// Resolve the provider-credential decryption key DB-first (platform-owner-configurable
 	// ServiceConfig encryption_key, tenant_id IS NULL) with env fallback.
@@ -556,6 +571,11 @@ func unverifiedUserRecipients(ctx context.Context, db *pgxpool.Pool, to []string
 // asking "was this notification actually sent") stops recording a skipped message as sent.
 var errSkippedNoSend = errors.New("notifications: send intentionally skipped")
 
+// whatsappExemptTenantIDs holds tenant IDs (as strings) exempt from the per-tenant WhatsApp
+// subscription gate in deliver()'s "whatsapp" case -- the real platform tenant plus
+// codevertex-demo (the platform's own public demo tenant), populated once at startup.
+var whatsappExemptTenantIDs = map[string]bool{}
+
 func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg *emailGuard, billingSvc *billing.Service, whatsappSubsSvc *billing.WhatsAppSubscriptionService, tr *tenantResolver, dbPool *pgxpool.Pool, msg *messaging.Message, rendered string, logg *zap.Logger) error {
 	channel := strings.ToLower(msg.Channel)
 	preferred := ""
@@ -787,7 +807,9 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 		// platform sends against its own real Meta WhatsApp Business Account directly; there's no
 		// "subscription" to buy from itself, and no separate per-message credit charge either
 		// (mirrors the SMS platform-scope precedent: real-provider-billed, not tenant-wallet-billed).
-		isPlatformTenant := tenantID.String() == pm.PlatformID
+		// codevertex-demo carries the same exemption (see whatsappExemptTenantIDs) as a deliberate,
+		// narrow carve-out for the platform's own demo tenant -- every other tenant is unaffected.
+		isPlatformTenant := whatsappExemptTenantIDs[tenantID.String()]
 		if !isPlatformTenant {
 			// Pre-send subscription/quota gate (applies to BOTH HTTP-enqueued and event-sourced
 			// sends). Skip+ack when the tenant has no active WhatsApp subscription or has
