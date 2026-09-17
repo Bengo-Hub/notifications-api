@@ -123,6 +123,14 @@ type waWebhookPayload struct {
 					ID          string `json:"id"`
 					Status      string `json:"status"` // sent | delivered | read | failed
 					RecipientID string `json:"recipient_id"`
+					Errors      []struct {
+						Code      int    `json:"code"`
+						Title     string `json:"title"`
+						Message   string `json:"message"`
+						ErrorData struct {
+							Details string `json:"details"`
+						} `json:"error_data"`
+					} `json:"errors"`
 				} `json:"statuses"`
 			} `json:"value"`
 		} `json:"changes"`
@@ -185,6 +193,20 @@ func (h *WebhookHandler) WhatsAppIncoming(w http.ResponseWriter, r *http.Request
 					zap.String("recipient", status.RecipientID),
 					zap.String("status", status.Status),
 				)
+				// A "failed" status carries the actual reason in Meta's own errors array (e.g.
+				// "Recipient phone number not in allowed list" for a test/dev app, or a 24-hour
+				// session-window violation) -- previously discarded entirely, so a failed send
+				// showed only the fact of failure, never why.
+				for _, e := range status.Errors {
+					h.log.Warn("whatsapp message failed",
+						zap.String("message_id", status.ID),
+						zap.String("recipient", status.RecipientID),
+						zap.Int("error_code", e.Code),
+						zap.String("error_title", e.Title),
+						zap.String("error_message", e.Message),
+						zap.String("error_details", e.ErrorData.Details),
+					)
+				}
 				if h.inbox != nil {
 					if err := h.inbox.RecordStatusUpdate(ctx, status.ID, status.Status); err != nil {
 						h.log.Warn("failed to record whatsapp status update", zap.Error(err), zap.String("message_id", status.ID))
