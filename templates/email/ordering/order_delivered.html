@@ -1,8 +1,10 @@
 {{ define "content" }}
   <p>Hello {{ .name }},</p>
   <p>Your order has been delivered!</p>
-  <p><strong>Order ID:</strong> {{ .order_id }}</p>
+  <p><strong>Order #:</strong> {{ .order_number }}</p>
+  {{ if .delivered_at }}
   <p><strong>Delivered At:</strong> {{ .delivered_at }}</p>
+  {{ end }}
   {{ if .delivery_address }}
   <p><strong>Delivered To:</strong> {{ .delivery_address }}</p>
   {{ end }}

@@ -1,7 +1,7 @@
 {{ define "content" }}
   <p>Hello {{ .name }},</p>
   <p>Thank you for your order!</p>
-  <p><strong>Order ID:</strong> {{ .order_id }}</p>
+  <p><strong>Order #:</strong> {{ .order_number }}</p>
   <p><strong>Total:</strong> {{ .total_amount }}</p>
   {{ if .estimated_prep_time }}
   <p><strong>Estimated Prep Time:</strong> {{ .estimated_prep_time }} minutes</p>

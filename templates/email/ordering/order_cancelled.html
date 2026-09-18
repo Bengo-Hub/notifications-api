@@ -1,9 +1,9 @@
 {{ define "content" }}
   <p>Hello {{ .name }},</p>
   <p>Your order has been cancelled.</p>
-  <p><strong>Order ID:</strong> {{ .order_id }}</p>
-  {{ if .cancellation_reason }}
-  <p><strong>Reason:</strong> {{ .cancellation_reason }}</p>
+  <p><strong>Order #:</strong> {{ .order_number }}</p>
+  {{ if .cancel_reason }}
+  <p><strong>Reason:</strong> {{ .cancel_reason }}</p>
   {{ end }}
   {{ if .refund_amount }}
   <p><strong>Refund Amount:</strong> {{ .refund_amount }}</p>

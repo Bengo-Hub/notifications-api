@@ -1,7 +1,7 @@
 {{ define "content" }}
   <p>Hello {{ .name }},</p>
   <p>Your order is ready!</p>
-  <p><strong>Order ID:</strong> {{ .order_id }}</p>
+  <p><strong>Order #:</strong> {{ .order_number }}</p>
   {{ if .pickup_location }}
   <p><strong>Pickup Location:</strong> {{ .pickup_location }}</p>
   {{ end }}

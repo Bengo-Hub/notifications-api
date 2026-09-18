@@ -21,10 +21,10 @@ import (
 // Ordering-backend publishes CloudEvents with "type"/"tenantId"/"data" fields
 // (not shared-events "event_type"/"aggregate_type"/"tenant_id"/"payload").
 type orderEvent struct {
-	ID            string                 `json:"id"`
-	Type          string                 `json:"type"`
-	TenantID      string                 `json:"tenantId"`
-	Data          map[string]interface{} `json:"data"`
+	ID       string                 `json:"id"`
+	Type     string                 `json:"type"`
+	TenantID string                 `json:"tenantId"`
+	Data     map[string]interface{} `json:"data"`
 	// shared-events fallback fields (for forward compatibility)
 	EventType     string                 `json:"event_type"`
 	AggregateType string                 `json:"aggregate_type"`
@@ -72,6 +72,64 @@ type orderNotificationMapping struct {
 	// "completed"); since the state machine also allows delivered→completed, an order
 	// can emit both events — the shared "review" scope ensures only one review email.
 	IdempotencyScope string
+	// WhatsAppTemplate, when non-empty, is the Meta-approved template name (see
+	// internal/whatsapp/templatesync/templates.json) used for this notification's WhatsApp
+	// send instead of the freeform text render. Meta only allows freeform business-initiated
+	// text within an active 24h customer-service window; nearly every order notification is
+	// sent outside that window, so without this every WhatsApp send here silently required the
+	// customer to have messaged first. Left empty, the send falls back to freeform text (still
+	// correct within an open window).
+	WhatsAppTemplate string
+	// WhatsAppParams builds the ordered {{1}}, {{2}}, ... positional values for WhatsAppTemplate
+	// from the same msgData map DataBuilder already produced, in the exact order Meta's approved
+	// template body expects them (see templates.json's "body"/"example" for each template name).
+	WhatsAppParams func(msgData map[string]interface{}) []string
+}
+
+// waParam coerces a DataBuilder-produced value into a display string for a WhatsApp template
+// positional parameter, falling back to def when empty/nil — Meta rejects an empty-string
+// parameter, so every position must resolve to something visible.
+func waParam(v interface{}, def string) string {
+	s := fmt.Sprintf("%v", v)
+	if v == nil || s == "" || s == "<nil>" {
+		return def
+	}
+	return s
+}
+
+// formatMoney renders a raw amount + ISO currency code as "KES 2,450" (thousands-separated,
+// no decimals when whole, 2 decimals otherwise) — matching the format Meta's approved order
+// templates were drafted and approved against (see templates.json's "example" values). Amounts
+// arrive as float64 off the wire (encoding/json decodes all JSON numbers that way).
+func formatMoney(amount interface{}, currency interface{}) string {
+	amt, _ := amount.(float64)
+	cur, _ := currency.(string)
+	if cur == "" {
+		cur = "KES"
+	}
+	whole := int64(amt)
+	frac := amt - float64(whole)
+	// Thousands-group the integer part.
+	digits := fmt.Sprintf("%d", whole)
+	neg := strings.HasPrefix(digits, "-")
+	if neg {
+		digits = digits[1:]
+	}
+	var grouped strings.Builder
+	for i, d := range digits {
+		if i > 0 && (len(digits)-i)%3 == 0 {
+			grouped.WriteByte(',')
+		}
+		grouped.WriteRune(d)
+	}
+	numStr := grouped.String()
+	if neg {
+		numStr = "-" + numStr
+	}
+	if frac < -0.005 || frac > 0.005 {
+		numStr = fmt.Sprintf("%s.%02d", numStr, int64(frac*100+0.5))
+	}
+	return cur + " " + numStr
 }
 
 // orderAppBaseURL returns the ordering app URL for building "View Order" links.
@@ -100,10 +158,14 @@ func orderLink(data map[string]interface{}, orderAppURL string) string {
 // terminal event fires.
 func reviewEmailDataBuilder(data map[string]interface{}, orderAppURL string) map[string]interface{} {
 	return map[string]interface{}{
-		"name":        data["customer_name"],
-		"order_id":    data["order_id"],
-		"order_link":  orderLink(data, orderAppURL),
-		"review_link": orderLink(data, orderAppURL) + "?rate=1",
+		"name": data["customer_name"],
+		// order.completed (pickup/dine-in) carries no delivered_at; the delivered_at line in
+		// order_delivered.html is guarded with {{ if }} specifically so this is fine when empty.
+		"delivered_at": data["delivered_at"],
+		"order_number": data["order_number"],
+		"order_id":     data["order_id"],
+		"order_link":   orderLink(data, orderAppURL),
+		"review_link":  orderLink(data, orderAppURL) + "?rate=1",
 	}
 }
 
@@ -115,7 +177,8 @@ var orderMappings = map[string]orderNotificationMapping{
 			return map[string]interface{}{
 				"name":                data["customer_name"],
 				"order_id":            data["order_id"],
-				"total_amount":        data["total_amount"],
+				"order_number":        data["order_number"],
+				"total_amount":        formatMoney(data["total_amount"], data["currency"]),
 				"estimated_prep_time": data["estimated_prep_time"],
 				"delivery_address":    data["delivery_address"],
 				"order_link":          orderLink(data, orderAppURL),
@@ -129,15 +192,39 @@ var orderMappings = map[string]orderNotificationMapping{
 				"pod_code": data["pod_code"],
 			}
 		},
+		WhatsAppTemplate: "ordering_order_placed",
+		WhatsAppParams: func(d map[string]interface{}) []string {
+			est := ""
+			if v, ok := d["estimated_prep_time"]; ok && v != nil {
+				if s := fmt.Sprintf("%v", v); s != "" && s != "0" {
+					est = s + " min"
+				}
+			}
+			return []string{
+				waParam(d["order_number"], "your order"),
+				waParam(d["total_amount"], "-"),
+				waParam(est, "As soon as possible"),
+				waParam(d["order_link"], ""),
+			}
+		},
 	},
 	"ordering.order.ready": {
 		TemplateID:   "ordering/order_ready",
 		EmailSubject: "Your order is ready",
 		DataBuilder: func(data map[string]interface{}, orderAppURL string) map[string]interface{} {
 			return map[string]interface{}{
-				"name":       data["customer_name"],
-				"order_id":   data["order_id"],
-				"order_link": orderLink(data, orderAppURL),
+				"name":         data["customer_name"],
+				"order_id":     data["order_id"],
+				"order_number": data["order_number"],
+				"order_link":   orderLink(data, orderAppURL),
+			}
+		},
+		WhatsAppTemplate: "ordering_order_ready",
+		WhatsAppParams: func(d map[string]interface{}) []string {
+			return []string{
+				waParam(d["name"], "there"),
+				waParam(d["order_number"], "your order"),
+				waParam(d["order_link"], ""),
 			}
 		},
 	},
@@ -146,12 +233,23 @@ var orderMappings = map[string]orderNotificationMapping{
 		EmailSubject: "Your order is out for delivery",
 		DataBuilder: func(data map[string]interface{}, orderAppURL string) map[string]interface{} {
 			return map[string]interface{}{
-				"name":        data["customer_name"],
-				"order_id":    data["order_id"],
-				"rider_name":  data["rider_name"],
-				"rider_phone": data["rider_phone"],
-				"order_link":  orderLink(data, orderAppURL),
-				"track_link":  orderLink(data, orderAppURL),
+				"name":         data["customer_name"],
+				"order_id":     data["order_id"],
+				"order_number": data["order_number"],
+				"rider_name":   data["rider_name"],
+				"rider_phone":  data["rider_phone"],
+				"order_link":   orderLink(data, orderAppURL),
+				"track_link":   orderLink(data, orderAppURL),
+			}
+		},
+		WhatsAppTemplate: "ordering_order_out_for_delivery",
+		WhatsAppParams: func(d map[string]interface{}) []string {
+			return []string{
+				waParam(d["name"], "there"),
+				waParam(d["order_number"], "your order"),
+				waParam(d["rider_name"], "your rider"),
+				waParam(d["rider_phone"], "-"),
+				waParam(d["track_link"], ""),
 			}
 		},
 	},
@@ -161,6 +259,13 @@ var orderMappings = map[string]orderNotificationMapping{
 		EmailSubject:     "Your order has been delivered",
 		DataBuilder:      reviewEmailDataBuilder,
 		IdempotencyScope: "review",
+		WhatsAppTemplate: "ordering_order_delivered",
+		WhatsAppParams: func(d map[string]interface{}) []string {
+			return []string{
+				waParam(d["order_number"], "your order"),
+				waParam(d["review_link"], ""),
+			}
+		},
 	},
 	// DELIVERY orders terminate at "delivered" (they never reach "completed"), so the
 	// review/rating email must also fire here — using the same template, subject, and
@@ -172,16 +277,37 @@ var orderMappings = map[string]orderNotificationMapping{
 		EmailSubject:     "Your order has been delivered",
 		DataBuilder:      reviewEmailDataBuilder,
 		IdempotencyScope: "review",
+		WhatsAppTemplate: "ordering_order_delivered",
+		WhatsAppParams: func(d map[string]interface{}) []string {
+			return []string{
+				waParam(d["order_number"], "your order"),
+				waParam(d["review_link"], ""),
+			}
+		},
 	},
 	"ordering.order.cancelled": {
 		TemplateID:   "ordering/order_cancelled",
 		EmailSubject: "Your order has been cancelled",
 		DataBuilder: func(data map[string]interface{}, orderAppURL string) map[string]interface{} {
 			return map[string]interface{}{
-				"name":          data["customer_name"],
-				"order_id":      data["order_id"],
-				"cancel_reason": data["cancel_reason"],
+				"name":         data["customer_name"],
+				"order_id":     data["order_id"],
+				"order_number": data["order_number"],
+				// The event's own field is "reason" (see OrderCancelledData in
+				// ordering-backend/internal/platform/events/publisher.go) — this previously read
+				// "cancel_reason", a key that was never actually present in the event payload, so
+				// the cancellation reason silently never appeared in any cancellation notification.
+				"cancel_reason": data["reason"],
 				"order_link":    orderLink(data, orderAppURL),
+			}
+		},
+		WhatsAppTemplate: "ordering_order_cancelled",
+		WhatsAppParams: func(d map[string]interface{}) []string {
+			return []string{
+				waParam(d["name"], "there"),
+				waParam(d["order_number"], "your order"),
+				waParam(d["cancel_reason"], "Not specified"),
+				waParam(d["order_link"], ""),
 			}
 		},
 	},
@@ -192,10 +318,19 @@ var orderMappings = map[string]orderNotificationMapping{
 			return map[string]interface{}{
 				"name":         data["customer_name"],
 				"order_number": data["order_number"],
-				"amount":       data["total_amount"],
+				"amount":       formatMoney(data["total_amount"], data["currency"]),
 				"currency":     data["currency"],
 				"reason":       data["reason"],
 				"order_link":   orderLink(data, orderAppURL),
+			}
+		},
+		WhatsAppTemplate: "ordering_order_refunded",
+		WhatsAppParams: func(d map[string]interface{}) []string {
+			return []string{
+				waParam(d["name"], "there"),
+				waParam(d["amount"], "-"),
+				waParam(d["order_number"], "your order"),
+				waParam(d["reason"], "Not specified"),
 			}
 		},
 	},
@@ -207,9 +342,19 @@ var orderMappings = map[string]orderNotificationMapping{
 				"name":          data["customer_name"],
 				"order_number":  data["order_number"],
 				"scheduled_for": data["scheduled_for"],
-				"total_amount":  data["total_amount"],
+				"total_amount":  formatMoney(data["total_amount"], data["currency"]),
 				"currency":      data["currency"],
 				"order_link":    orderLink(data, orderAppURL),
+			}
+		},
+		WhatsAppTemplate: "ordering_order_scheduled",
+		WhatsAppParams: func(d map[string]interface{}) []string {
+			return []string{
+				waParam(d["name"], "there"),
+				waParam(d["order_number"], "your order"),
+				waParam(d["scheduled_for"], "the scheduled time"),
+				waParam(d["total_amount"], "-"),
+				waParam(d["order_link"], ""),
 			}
 		},
 	},
@@ -223,6 +368,16 @@ var orderMappings = map[string]orderNotificationMapping{
 				"outlet_name":  data["outlet_name"],
 				"pickup_time":  data["pickup_time"],
 				"order_link":   orderLink(data, orderAppURL),
+			}
+		},
+		WhatsAppTemplate: "ordering_order_for_pickup",
+		WhatsAppParams: func(d map[string]interface{}) []string {
+			return []string{
+				waParam(d["name"], "there"),
+				waParam(d["order_number"], "your order"),
+				waParam(d["outlet_name"], "our store"),
+				waParam(d["pickup_time"], "shortly"),
+				waParam(d["order_link"], ""),
 			}
 		},
 	},
@@ -311,16 +466,30 @@ func startOrderConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 			recipients["sms"] = phone
 			recipients["whatsapp"] = phone
 		}
+		msgData := mapping.DataBuilder(evtData, appURL)
+		metadata := map[string]interface{}{
+			"subject":    mapping.EmailSubject,
+			"service_id": "ordering",
+		}
+		// Attaching template_name/template_params here only changes the WhatsApp send path
+		// (deliver()'s "whatsapp" case, internal/providers/whatsapp/metacloud.go's SendWhatsApp) —
+		// email/SMS/push ignore these metadata keys and keep rendering the local template as
+		// before. Meta requires a pre-approved template for any business-initiated message sent
+		// outside an active 24h customer-service reply window, which is true for nearly every
+		// order notification; without this, WhatsApp sends here only worked when the customer had
+		// messaged the business first.
+		if mapping.WhatsAppTemplate != "" && mapping.WhatsAppParams != nil {
+			metadata["template_name"] = mapping.WhatsAppTemplate
+			metadata["template_language"] = "en_US"
+			metadata["template_params"] = mapping.WhatsAppParams(msgData)
+		}
 		base := messaging.Message{
-			TenantID:    evtTenantID,
-			TemplateID:  mapping.TemplateID,
-			SenderScope: messaging.SenderScopeTenant,
-			Target:      messaging.TargetCustomer,
-			Data:        mapping.DataBuilder(evtData, appURL),
-			Metadata: map[string]interface{}{
-				"subject":    mapping.EmailSubject,
-				"service_id": "ordering",
-			},
+			TenantID:       evtTenantID,
+			TemplateID:     mapping.TemplateID,
+			SenderScope:    messaging.SenderScopeTenant,
+			Target:         messaging.TargetCustomer,
+			Data:           msgData,
+			Metadata:       metadata,
 			IdempotencyKey: idempotencyKey,
 		}
 		targets := fanOutTargets(ctx, gate, templateChannels, evtTenantID, mapping.TemplateID, recipients)
