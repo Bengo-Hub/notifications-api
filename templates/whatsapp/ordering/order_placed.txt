@@ -1,1 +1,10 @@
-{{ or .brand_name "codevertex" }}: Order {{ .order_number }} confirmed! Total: {{ .total_amount }}. {{ if .estimated_prep_time }}Estimated delivery: {{ .estimated_prep_time }} min{{ end }}. Track: {{ .order_link }}
+Hi {{ or .name "there" }},
+
+Your order *{{ .order_number }}* has been confirmed!
+
+Total: {{ .total_amount }}
+{{ if .estimated_prep_time }}Estimated delivery: {{ .estimated_prep_time }} min{{ end }}
+
+Track your order here: {{ .order_link }}
+
+Thanks for ordering with us!

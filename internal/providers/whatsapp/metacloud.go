@@ -62,13 +62,13 @@ func (p *MetaCloudProvider) Name() string {
 //   - metadata["template_name"] set (string): sends a template message. metadata["template_language"]
 //     (default "en_US") and metadata["template_params"] ([]string, substituted in order into the
 //     template's body placeholders {{1}}, {{2}}, ...) configure it. metadata["template_button_param"]
-//     (string), when the template has a URL button with a dynamic suffix, supplies that suffix. When
-//     template_button_param is set, metadata["template_fallback_name"]/["template_fallback_params"]
-//     should also be set (a plain, no-button template covering the same notification) — if Meta
-//     rejects the button-variant send (most likely: that template hasn't been created/approved on
-//     the WABA yet — button templates are added ahead of their one-time Meta sync/approval so the
-//     code and the template registration can ship independently), this retries once with the
-//     fallback instead of failing the notification outright.
+//     (string), when the template has a URL button with a dynamic suffix, supplies that suffix.
+//     metadata["template_fallback_name"]/["template_fallback_params"], when set, name an
+//     already-APPROVED template + its own param list to retry with on ANY failure of the primary
+//     send — not only a button send. This is the standard way a newly-drafted template (polished
+//     wording, possibly with a button) ships ahead of its one-time Meta sync/approval: the code and
+//     the template registration deploy independently, and every send safely degrades to the old,
+//     already-working template until Meta approves the new one.
 //   - metadata["template_name"] absent, metadata["cta_button_text"]/["cta_button_url"] both set:
 //     sends a freeform "interactive" cta_url message — body text plus one real tappable button
 //     (no template registration/approval needed, only the same open-reply-window requirement
@@ -92,7 +92,13 @@ func (p *MetaCloudProvider) SendWhatsApp(ctx context.Context, from string, to []
 			params := stringSliceParam(metadata["template_params"])
 			buttonParam, _ := metadata["template_button_param"].(string)
 			err = p.sendTemplate(ctx, recipient, templateName, language, params, buttonParam)
-			if err != nil && buttonParam != "" {
+			// Retry with the fallback template on ANY primary-send failure, not just a button
+			// send — the primary is often a newly-drafted template (polished wording, possibly
+			// with a button) that hasn't cleared Meta review yet either, regardless of whether
+			// it has a button. The fallback is expected to be an already-APPROVED template, so
+			// this degrades a brand-new/pending template straight to today's working behavior
+			// instead of failing the notification outright.
+			if err != nil {
 				if fallbackName, ok := metadata["template_fallback_name"].(string); ok && fallbackName != "" {
 					fallbackParams := stringSliceParam(metadata["template_fallback_params"])
 					err = p.sendTemplate(ctx, recipient, fallbackName, language, fallbackParams, "")
