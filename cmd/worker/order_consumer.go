@@ -97,11 +97,18 @@ type orderNotificationMapping struct {
 	// URL that becomes the button's dynamic suffix when WhatsAppButtonTemplate is used.
 	WhatsAppLinkKey string
 	// WhatsAppOriginalTemplate/WhatsAppOriginalParams are the ALREADY Meta-approved template +
-	// its (older, name-less) param order this mapping shipped with before the polished "_v2"/
-	// "_btn" rewrite. Every send here tries the new, polished primary first and falls back to
+	// its (older, name-less) param order this mapping shipped with before the polished "_v3"/
+	// "_v3_btn" rewrite. Every send here tries the new, polished primary first and falls back to
 	// this proven-working template on any failure (see MetaCloudProvider.SendWhatsApp) — so a
 	// customer keeps receiving correctly formatted messages the whole time Meta is reviewing the
 	// new templates, never a hard failure.
+	//
+	// NOTE (2026-09-18): the original 8 templates were deleted from Meta along with the first
+	// "_v2"/"_btn" draft (see project plan log #24) — Meta enforces a real cooldown before a
+	// deleted template's exact name+language can be recreated ("Message template language is
+	// being deleted... try again in 4 weeks"), so this fallback is itself temporarily
+	// non-functional until that clears. No code change needed when it does: Run() will simply
+	// succeed recreating these names again on its own schedule.
 	WhatsAppOriginalTemplate string
 	WhatsAppOriginalParams   func(msgData map[string]interface{}) []string
 }
@@ -238,8 +245,8 @@ var orderMappings = map[string]orderNotificationMapping{
 				"pod_code": data["pod_code"],
 			}
 		},
-		WhatsAppTemplate:       "ordering_order_placed_v2",
-		WhatsAppButtonTemplate: "ordering_order_placed_btn",
+		WhatsAppTemplate:       "ordering_order_placed_v3",
+		WhatsAppButtonTemplate: "ordering_order_placed_v3_btn",
 		WhatsAppLinkKey:        "order_link",
 		WhatsAppParams: func(d map[string]interface{}) []string {
 			est := ""
@@ -283,8 +290,8 @@ var orderMappings = map[string]orderNotificationMapping{
 				"order_link":   orderLink(data, orderAppURL),
 			}
 		},
-		WhatsAppTemplate:       "ordering_order_ready_v2",
-		WhatsAppButtonTemplate: "ordering_order_ready_btn",
+		WhatsAppTemplate:       "ordering_order_ready_v3",
+		WhatsAppButtonTemplate: "ordering_order_ready_v3_btn",
 		WhatsAppLinkKey:        "order_link",
 		WhatsAppParams: func(d map[string]interface{}) []string {
 			return []string{
@@ -316,8 +323,8 @@ var orderMappings = map[string]orderNotificationMapping{
 				"track_link":   orderLink(data, orderAppURL),
 			}
 		},
-		WhatsAppTemplate:       "ordering_order_out_for_delivery_v2",
-		WhatsAppButtonTemplate: "ordering_order_out_for_delivery_btn",
+		WhatsAppTemplate:       "ordering_order_out_for_delivery_v3",
+		WhatsAppButtonTemplate: "ordering_order_out_for_delivery_v3_btn",
 		WhatsAppLinkKey:        "track_link",
 		WhatsAppParams: func(d map[string]interface{}) []string {
 			return []string{
@@ -345,8 +352,8 @@ var orderMappings = map[string]orderNotificationMapping{
 		EmailSubject:           "Your order has been delivered",
 		DataBuilder:            reviewEmailDataBuilder,
 		IdempotencyScope:       "review",
-		WhatsAppTemplate:       "ordering_order_delivered_v2",
-		WhatsAppButtonTemplate: "ordering_order_delivered_btn",
+		WhatsAppTemplate:       "ordering_order_delivered_v3",
+		WhatsAppButtonTemplate: "ordering_order_delivered_v3_btn",
 		WhatsAppLinkKey:        "review_link",
 		WhatsAppParams: func(d map[string]interface{}) []string {
 			return []string{
@@ -373,8 +380,8 @@ var orderMappings = map[string]orderNotificationMapping{
 		EmailSubject:           "Your order has been delivered",
 		DataBuilder:            reviewEmailDataBuilder,
 		IdempotencyScope:       "review",
-		WhatsAppTemplate:       "ordering_order_delivered_v2",
-		WhatsAppButtonTemplate: "ordering_order_delivered_btn",
+		WhatsAppTemplate:       "ordering_order_delivered_v3",
+		WhatsAppButtonTemplate: "ordering_order_delivered_v3_btn",
 		WhatsAppLinkKey:        "review_link",
 		WhatsAppParams: func(d map[string]interface{}) []string {
 			return []string{
@@ -407,8 +414,8 @@ var orderMappings = map[string]orderNotificationMapping{
 				"order_link":    orderLink(data, orderAppURL),
 			}
 		},
-		WhatsAppTemplate:       "ordering_order_cancelled_v2",
-		WhatsAppButtonTemplate: "ordering_order_cancelled_btn",
+		WhatsAppTemplate:       "ordering_order_cancelled_v3",
+		WhatsAppButtonTemplate: "ordering_order_cancelled_v3_btn",
 		WhatsAppLinkKey:        "order_link",
 		WhatsAppParams: func(d map[string]interface{}) []string {
 			return []string{
@@ -441,7 +448,7 @@ var orderMappings = map[string]orderNotificationMapping{
 				"order_link":   orderLink(data, orderAppURL),
 			}
 		},
-		WhatsAppTemplate: "ordering_order_refunded_v2",
+		WhatsAppTemplate: "ordering_order_refunded_v3",
 		WhatsAppParams: func(d map[string]interface{}) []string {
 			return []string{
 				waParam(d["name"], "there"),
@@ -473,8 +480,8 @@ var orderMappings = map[string]orderNotificationMapping{
 				"order_link":    orderLink(data, orderAppURL),
 			}
 		},
-		WhatsAppTemplate:       "ordering_order_scheduled_v2",
-		WhatsAppButtonTemplate: "ordering_order_scheduled_btn",
+		WhatsAppTemplate:       "ordering_order_scheduled_v3",
+		WhatsAppButtonTemplate: "ordering_order_scheduled_v3_btn",
 		WhatsAppLinkKey:        "order_link",
 		WhatsAppParams: func(d map[string]interface{}) []string {
 			return []string{
@@ -508,8 +515,8 @@ var orderMappings = map[string]orderNotificationMapping{
 				"order_link":   orderLink(data, orderAppURL),
 			}
 		},
-		WhatsAppTemplate:       "ordering_order_for_pickup_v2",
-		WhatsAppButtonTemplate: "ordering_order_for_pickup_btn",
+		WhatsAppTemplate:       "ordering_order_for_pickup_v3",
+		WhatsAppButtonTemplate: "ordering_order_for_pickup_v3_btn",
 		WhatsAppLinkKey:        "order_link",
 		WhatsAppParams: func(d map[string]interface{}) []string {
 			return []string{

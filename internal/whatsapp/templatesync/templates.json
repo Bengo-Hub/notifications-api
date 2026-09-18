@@ -76,7 +76,7 @@
     "example": ["Amina", "#ULC-2299", "Westlands Branch", "5:30 PM today", "cdvtx.co/o/2299"]
   },
   {
-    "name": "ordering_order_placed_v2",
+    "name": "ordering_order_placed_v3",
     "category": "UTILITY",
     "language": "en_US",
     "source": "whatsapp/ordering/order_placed.txt (polished, plain-link variant)",
@@ -84,7 +84,7 @@
     "example": ["Amina", "#ULC-2291", "KES 2,450", "35 min", "cdvtx.co/t/2291"]
   },
   {
-    "name": "ordering_order_placed_btn",
+    "name": "ordering_order_placed_v3_btn",
     "category": "UTILITY",
     "language": "en_US",
     "source": "whatsapp/ordering/order_placed.txt (button variant, shared-domain tenants only)",
@@ -95,7 +95,7 @@
     ]
   },
   {
-    "name": "ordering_order_delivered_v2",
+    "name": "ordering_order_delivered_v3",
     "category": "UTILITY",
     "language": "en_US",
     "source": "whatsapp/ordering/order_delivered.txt (polished, plain-link variant)",
@@ -103,7 +103,7 @@
     "example": ["Amina", "#ULC-2291", "cdvtx.co/f/2291"]
   },
   {
-    "name": "ordering_order_delivered_btn",
+    "name": "ordering_order_delivered_v3_btn",
     "category": "UTILITY",
     "language": "en_US",
     "source": "whatsapp/ordering/order_delivered.txt (button variant, shared-domain tenants only)",
@@ -114,7 +114,7 @@
     ]
   },
   {
-    "name": "ordering_order_ready_v2",
+    "name": "ordering_order_ready_v3",
     "category": "UTILITY",
     "language": "en_US",
     "source": "whatsapp/ordering/order_ready.txt (polished, plain-link variant)",
@@ -122,7 +122,7 @@
     "example": ["Amina", "#ULC-2299", "cdvtx.co/o/2299"]
   },
   {
-    "name": "ordering_order_ready_btn",
+    "name": "ordering_order_ready_v3_btn",
     "category": "UTILITY",
     "language": "en_US",
     "source": "whatsapp/ordering/order_ready.txt (button variant, shared-domain tenants only)",
@@ -133,7 +133,7 @@
     ]
   },
   {
-    "name": "ordering_order_out_for_delivery_v2",
+    "name": "ordering_order_out_for_delivery_v3",
     "category": "UTILITY",
     "language": "en_US",
     "source": "whatsapp/ordering/order_out_for_delivery.txt (polished, plain-link variant)",
@@ -141,7 +141,7 @@
     "example": ["Amina", "#ULC-2299", "James K.", "0711223344", "cdvtx.co/t/2299"]
   },
   {
-    "name": "ordering_order_out_for_delivery_btn",
+    "name": "ordering_order_out_for_delivery_v3_btn",
     "category": "UTILITY",
     "language": "en_US",
     "source": "whatsapp/ordering/order_out_for_delivery.txt (button variant, shared-domain tenants only)",
@@ -152,7 +152,7 @@
     ]
   },
   {
-    "name": "ordering_order_cancelled_v2",
+    "name": "ordering_order_cancelled_v3",
     "category": "UTILITY",
     "language": "en_US",
     "source": "whatsapp/ordering/order_cancelled.txt (polished, plain-link variant)",
@@ -160,7 +160,7 @@
     "example": ["Amina", "#ULC-2299", "Item out of stock", "cdvtx.co/o/2299"]
   },
   {
-    "name": "ordering_order_cancelled_btn",
+    "name": "ordering_order_cancelled_v3_btn",
     "category": "UTILITY",
     "language": "en_US",
     "source": "whatsapp/ordering/order_cancelled.txt (button variant, shared-domain tenants only)",
@@ -171,7 +171,7 @@
     ]
   },
   {
-    "name": "ordering_order_refunded_v2",
+    "name": "ordering_order_refunded_v3",
     "category": "UTILITY",
     "language": "en_US",
     "source": "whatsapp/ordering/order_refunded.txt (polished; no button, no link in this notification)",
@@ -179,7 +179,7 @@
     "example": ["Amina", "KES 2,450", "#ULC-2299", "Order cancelled by customer"]
   },
   {
-    "name": "ordering_order_scheduled_v2",
+    "name": "ordering_order_scheduled_v3",
     "category": "UTILITY",
     "language": "en_US",
     "source": "whatsapp/ordering/order_scheduled.txt (polished, plain-link variant)",
@@ -187,7 +187,7 @@
     "example": ["Amina", "#ULC-2299", "9 Sep, 6:00 PM", "KES 3,200", "cdvtx.co/o/2299"]
   },
   {
-    "name": "ordering_order_scheduled_btn",
+    "name": "ordering_order_scheduled_v3_btn",
     "category": "UTILITY",
     "language": "en_US",
     "source": "whatsapp/ordering/order_scheduled.txt (button variant, shared-domain tenants only)",
@@ -198,7 +198,7 @@
     ]
   },
   {
-    "name": "ordering_order_for_pickup_v2",
+    "name": "ordering_order_for_pickup_v3",
     "category": "UTILITY",
     "language": "en_US",
     "source": "whatsapp/ordering/order_for_pickup.txt (polished, plain-link variant)",
@@ -206,7 +206,7 @@
     "example": ["Amina", "#ULC-2299", "Westlands Branch", "5:30 PM today", "cdvtx.co/o/2299"]
   },
   {
-    "name": "ordering_order_for_pickup_btn",
+    "name": "ordering_order_for_pickup_v3_btn",
     "category": "UTILITY",
     "language": "en_US",
     "source": "whatsapp/ordering/order_for_pickup.txt (button variant, shared-domain tenants only)",
