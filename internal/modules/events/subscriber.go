@@ -161,6 +161,14 @@ func (s *Subscriber) Start(ctx context.Context) error {
 }
 
 func (s *Subscriber) publish(tenantID, channel, templateID, target string, to []string, data map[string]any) {
+	s.publishWithMetadata(tenantID, channel, templateID, target, to, data, nil)
+}
+
+// publishWithMetadata is publish plus an explicit Metadata map — used where a send needs
+// channel-specific delivery options (e.g. a WhatsApp interactive cta_url button; see
+// internal/providers/whatsapp/metacloud.go's SendWhatsApp) that publish's plain signature has no
+// room for. Every other caller keeps using publish unchanged.
+func (s *Subscriber) publishWithMetadata(tenantID, channel, templateID, target string, to []string, data map[string]any, metadata map[string]any) {
 	msg := messaging.Message{
 		TenantID:   tenantID,
 		Channel:    channel,
@@ -168,6 +176,7 @@ func (s *Subscriber) publish(tenantID, channel, templateID, target string, to []
 		Target:     target,
 		To:         to,
 		Data:       data,
+		Metadata:   metadata,
 		QueuedAt:   time.Now(),
 		RequestID:  uuid.New().String(),
 	}
@@ -423,7 +432,14 @@ func (s *Subscriber) handleSaleNotification(msg *nats.Msg) {
 	}
 	switch channel {
 	case "whatsapp":
-		s.publish(p.TenantID, "whatsapp", "pos/receipt_share", messaging.TargetCustomer, []string{phone}, data)
+		// Always a freeform send (the customer explicitly requested share-via-WhatsApp from an
+		// active POS session, so there's no template-registration path here) — attach the
+		// download link as a real tappable button instead of pasting the raw URL into the body
+		// (see MetaCloudProvider.sendInteractiveCTA).
+		s.publishWithMetadata(p.TenantID, "whatsapp", "pos/receipt_share", messaging.TargetCustomer, []string{phone}, data, map[string]any{
+			"cta_button_text": "View Receipt",
+			"cta_button_url":  p.DownloadLink,
+		})
 	case "email":
 		s.publish(p.TenantID, "email", "pos/receipt_share", messaging.TargetCustomer, []string{email}, data)
 	default:

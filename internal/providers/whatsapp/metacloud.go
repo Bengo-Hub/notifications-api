@@ -69,8 +69,13 @@ func (p *MetaCloudProvider) Name() string {
 //     the WABA yet — button templates are added ahead of their one-time Meta sync/approval so the
 //     code and the template registration can ship independently), this retries once with the
 //     fallback instead of failing the notification outright.
-//   - metadata["template_name"] absent: falls back to the original free-form text body (only valid
-//     inside an open reply window). metadata["preview_url"] (bool) still applies to that path.
+//   - metadata["template_name"] absent, metadata["cta_button_text"]/["cta_button_url"] both set:
+//     sends a freeform "interactive" cta_url message — body text plus one real tappable button
+//     (no template registration/approval needed, only the same open-reply-window requirement
+//     freeform text already has). Use this for a notification that always sends freeform and
+//     shows a link — attach it as a button rather than embedding the raw URL in the text.
+//   - metadata["template_name"] absent, no cta_button_*: falls back to the original free-form text
+//     body. metadata["preview_url"] (bool) still applies to that path.
 func (p *MetaCloudProvider) SendWhatsApp(ctx context.Context, from string, to []string, body string, metadata map[string]interface{}) error {
 	if p.accessToken == "" || p.phoneNumberID == "" {
 		return fmt.Errorf("meta_cloud not configured")
@@ -92,6 +97,12 @@ func (p *MetaCloudProvider) SendWhatsApp(ctx context.Context, from string, to []
 					fallbackParams := stringSliceParam(metadata["template_fallback_params"])
 					err = p.sendTemplate(ctx, recipient, fallbackName, language, fallbackParams, "")
 				}
+			}
+		} else if ctaText, _ := metadata["cta_button_text"].(string); ctaText != "" {
+			if ctaURL, _ := metadata["cta_button_url"].(string); ctaURL != "" {
+				err = p.sendInteractiveCTA(ctx, recipient, body, ctaText, ctaURL)
+			} else {
+				err = p.sendText(ctx, recipient, body, false)
 			}
 		} else {
 			previewURL := false
@@ -122,6 +133,34 @@ func stringSliceParam(v interface{}) []string {
 		}
 	}
 	return out
+}
+
+// sendInteractiveCTA sends a freeform (session-window) message with a real tappable "cta_url"
+// button — Meta's interactive message type, distinct from a template's BUTTONS component and
+// requiring no template registration/approval at all, only an active 24h customer-service window
+// (the same requirement sendText already has). This is how a link gets attached as an action
+// button on a send that, unlike the templated order-notification path, is never routed through a
+// Meta-approved template — see pos/receipt_share's WhatsApp send for the one live example today.
+func (p *MetaCloudProvider) sendInteractiveCTA(ctx context.Context, to, bodyText, buttonText, url string) error {
+	payload := map[string]interface{}{
+		"messaging_product": "whatsapp",
+		"recipient_type":    "individual",
+		"to":                to,
+		"type":              "interactive",
+		"interactive": map[string]interface{}{
+			"type": "cta_url",
+			"body": map[string]interface{}{"text": bodyText},
+			"action": map[string]interface{}{
+				"name": "cta_url",
+				"parameters": map[string]interface{}{
+					"display_text": buttonText,
+					"url":          url,
+				},
+			},
+		},
+	}
+	_, err := p.post(ctx, payload)
+	return err
 }
 
 func (p *MetaCloudProvider) sendText(ctx context.Context, to, body string, previewURL bool) error {
