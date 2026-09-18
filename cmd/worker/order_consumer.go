@@ -545,6 +545,14 @@ func startOrderConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 					metadata["template_language"] = "en_US"
 					metadata["template_params"] = params[:len(params)-1] // drop the link — it's the button now
 					metadata["template_button_param"] = suffix
+					// The "_btn" template needs its own one-time Meta sync/approval (see
+					// templatesync) before it actually exists on the WABA — this code can ship
+					// ahead of that. Until approved, Meta rejects a send using it; the fallback
+					// here (plain template, full params including the link) is what
+					// MetaCloudProvider.SendWhatsApp retries with on that failure, so shipping
+					// early degrades to today's working behavior instead of breaking sends.
+					metadata["template_fallback_name"] = mapping.WhatsAppTemplate
+					metadata["template_fallback_params"] = params
 				}
 			}
 			if metadata["template_name"] == nil {

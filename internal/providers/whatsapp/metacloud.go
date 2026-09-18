@@ -62,7 +62,13 @@ func (p *MetaCloudProvider) Name() string {
 //   - metadata["template_name"] set (string): sends a template message. metadata["template_language"]
 //     (default "en_US") and metadata["template_params"] ([]string, substituted in order into the
 //     template's body placeholders {{1}}, {{2}}, ...) configure it. metadata["template_button_param"]
-//     (string), when the template has a URL button with a dynamic suffix, supplies that suffix.
+//     (string), when the template has a URL button with a dynamic suffix, supplies that suffix. When
+//     template_button_param is set, metadata["template_fallback_name"]/["template_fallback_params"]
+//     should also be set (a plain, no-button template covering the same notification) — if Meta
+//     rejects the button-variant send (most likely: that template hasn't been created/approved on
+//     the WABA yet — button templates are added ahead of their one-time Meta sync/approval so the
+//     code and the template registration can ship independently), this retries once with the
+//     fallback instead of failing the notification outright.
 //   - metadata["template_name"] absent: falls back to the original free-form text body (only valid
 //     inside an open reply window). metadata["preview_url"] (bool) still applies to that path.
 func (p *MetaCloudProvider) SendWhatsApp(ctx context.Context, from string, to []string, body string, metadata map[string]interface{}) error {
@@ -78,18 +84,15 @@ func (p *MetaCloudProvider) SendWhatsApp(ctx context.Context, from string, to []
 			if language == "" {
 				language = "en_US"
 			}
-			var params []string
-			if raw, ok := metadata["template_params"].([]string); ok {
-				params = raw
-			} else if raw, ok := metadata["template_params"].([]interface{}); ok {
-				for _, v := range raw {
-					if s, ok := v.(string); ok {
-						params = append(params, s)
-					}
-				}
-			}
+			params := stringSliceParam(metadata["template_params"])
 			buttonParam, _ := metadata["template_button_param"].(string)
 			err = p.sendTemplate(ctx, recipient, templateName, language, params, buttonParam)
+			if err != nil && buttonParam != "" {
+				if fallbackName, ok := metadata["template_fallback_name"].(string); ok && fallbackName != "" {
+					fallbackParams := stringSliceParam(metadata["template_fallback_params"])
+					err = p.sendTemplate(ctx, recipient, fallbackName, language, fallbackParams, "")
+				}
+			}
 		} else {
 			previewURL := false
 			if v, ok := metadata["preview_url"].(bool); ok {
@@ -102,6 +105,23 @@ func (p *MetaCloudProvider) SendWhatsApp(ctx context.Context, from string, to []
 		}
 	}
 	return nil
+}
+
+// stringSliceParam coerces a metadata value into a []string — it may already be []string (set
+// directly by Go callers) or []interface{} (after a JSON round-trip through the NATS event bus).
+func stringSliceParam(v interface{}) []string {
+	if raw, ok := v.([]string); ok {
+		return raw
+	}
+	var out []string
+	if raw, ok := v.([]interface{}); ok {
+		for _, item := range raw {
+			if s, ok := item.(string); ok {
+				out = append(out, s)
+			}
+		}
+	}
+	return out
 }
 
 func (p *MetaCloudProvider) sendText(ctx context.Context, to, body string, previewURL bool) error {
