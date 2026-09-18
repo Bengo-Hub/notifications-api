@@ -61,7 +61,8 @@ func (p *MetaCloudProvider) Name() string {
 // instead, or Meta rejects it outright. metadata therefore supports two modes:
 //   - metadata["template_name"] set (string): sends a template message. metadata["template_language"]
 //     (default "en_US") and metadata["template_params"] ([]string, substituted in order into the
-//     template's body placeholders {{1}}, {{2}}, ...) configure it.
+//     template's body placeholders {{1}}, {{2}}, ...) configure it. metadata["template_button_param"]
+//     (string), when the template has a URL button with a dynamic suffix, supplies that suffix.
 //   - metadata["template_name"] absent: falls back to the original free-form text body (only valid
 //     inside an open reply window). metadata["preview_url"] (bool) still applies to that path.
 func (p *MetaCloudProvider) SendWhatsApp(ctx context.Context, from string, to []string, body string, metadata map[string]interface{}) error {
@@ -87,7 +88,8 @@ func (p *MetaCloudProvider) SendWhatsApp(ctx context.Context, from string, to []
 					}
 				}
 			}
-			err = p.sendTemplate(ctx, recipient, templateName, language, params)
+			buttonParam, _ := metadata["template_button_param"].(string)
+			err = p.sendTemplate(ctx, recipient, templateName, language, params, buttonParam)
 		} else {
 			previewURL := false
 			if v, ok := metadata["preview_url"].(bool); ok {
@@ -121,8 +123,10 @@ func (p *MetaCloudProvider) sendText(ctx context.Context, to, body string, previ
 // outside an active 24h reply window). params are substituted positionally into the template
 // body's {{1}}, {{2}}, ... placeholders — Meta does its own server-side rendering from the
 // template it already has on file, so no local template body is sent here, only the name +
-// language + ordered parameter values.
-func (p *MetaCloudProvider) sendTemplate(ctx context.Context, to, templateName, language string, params []string) error {
+// language + ordered parameter values. buttonParam, when non-empty, fills the dynamic suffix of
+// the template's (single, index-0) URL button — Meta requires a SEPARATE "button" component for
+// this, scoped independently from the body's own {{1}}, {{2}}, ... numbering.
+func (p *MetaCloudProvider) sendTemplate(ctx context.Context, to, templateName, language string, params []string, buttonParam string) error {
 	components := []map[string]interface{}{}
 	if len(params) > 0 {
 		bodyParams := make([]map[string]interface{}, 0, len(params))
@@ -130,6 +134,16 @@ func (p *MetaCloudProvider) sendTemplate(ctx context.Context, to, templateName, 
 			bodyParams = append(bodyParams, map[string]interface{}{"type": "text", "text": v})
 		}
 		components = append(components, map[string]interface{}{"type": "body", "parameters": bodyParams})
+	}
+	if buttonParam != "" {
+		components = append(components, map[string]interface{}{
+			"type":     "button",
+			"sub_type": "url",
+			"index":    "0",
+			"parameters": []map[string]interface{}{
+				{"type": "text", "text": buttonParam},
+			},
+		})
 	}
 	template := map[string]interface{}{
 		"name":     templateName,

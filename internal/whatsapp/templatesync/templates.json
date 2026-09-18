@@ -76,6 +76,83 @@
     "example": ["Amina", "#ULC-2299", "Westlands Branch", "5:30 PM today", "cdvtx.co/o/2299"]
   },
   {
+    "name": "ordering_order_placed_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/ordering/order_placed.txt (button variant, shared-domain tenants only)",
+    "body": "Your order {{1}} has been confirmed! Total: {{2}}. Estimated delivery: {{3}}. Thanks for ordering with us!",
+    "example": ["#ULC-2291", "KES 2,450", "35 min"],
+    "buttons": [
+      {"type": "URL", "text": "Track Order", "url": "https://ordering.codevertexafrica.com/{{1}}", "example": ["codevertex-demo/orders/guest/f2e6121d-bead-41ad-95ed-b74655a3d45c"]}
+    ]
+  },
+  {
+    "name": "ordering_order_delivered_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/ordering/order_delivered.txt (button variant, shared-domain tenants only)",
+    "body": "Your order {{1}} has been delivered! We hope you enjoy it. Thank you for choosing us!",
+    "example": ["#ULC-2291"],
+    "buttons": [
+      {"type": "URL", "text": "Leave Feedback", "url": "https://ordering.codevertexafrica.com/{{1}}", "example": ["codevertex-demo/orders/guest/f2e6121d-bead-41ad-95ed-b74655a3d45c?rate=1"]}
+    ]
+  },
+  {
+    "name": "ordering_order_ready_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/ordering/order_ready.txt (button variant, shared-domain tenants only)",
+    "body": "Hi {{1}}, your order {{2}} is ready! Thank you for your order!",
+    "example": ["Amina", "#ULC-2299"],
+    "buttons": [
+      {"type": "URL", "text": "View Order", "url": "https://ordering.codevertexafrica.com/{{1}}", "example": ["codevertex-demo/orders/guest/f2e6121d-bead-41ad-95ed-b74655a3d45c"]}
+    ]
+  },
+  {
+    "name": "ordering_order_out_for_delivery_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/ordering/order_out_for_delivery.txt (button variant, shared-domain tenants only)",
+    "body": "Hi {{1}}, your order {{2}} is out for delivery with {{3}} ({{4}}). Thank you for your order!",
+    "example": ["Amina", "#ULC-2299", "James K.", "0711223344"],
+    "buttons": [
+      {"type": "URL", "text": "Track Delivery", "url": "https://ordering.codevertexafrica.com/{{1}}", "example": ["codevertex-demo/orders/guest/f2e6121d-bead-41ad-95ed-b74655a3d45c"]}
+    ]
+  },
+  {
+    "name": "ordering_order_cancelled_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/ordering/order_cancelled.txt (button variant, shared-domain tenants only)",
+    "body": "Hi {{1}}, your order {{2}} has been cancelled. Reason: {{3}}. We're sorry for the inconvenience.",
+    "example": ["Amina", "#ULC-2299", "Item out of stock"],
+    "buttons": [
+      {"type": "URL", "text": "View Order", "url": "https://ordering.codevertexafrica.com/{{1}}", "example": ["codevertex-demo/orders/guest/f2e6121d-bead-41ad-95ed-b74655a3d45c"]}
+    ]
+  },
+  {
+    "name": "ordering_order_scheduled_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/ordering/order_scheduled.txt (button variant, shared-domain tenants only)",
+    "body": "Hi {{1}}, your order {{2}} has been scheduled for {{3}}. Total: {{4}}. Thank you for your order!",
+    "example": ["Amina", "#ULC-2299", "9 Sep, 6:00 PM", "KES 3,200"],
+    "buttons": [
+      {"type": "URL", "text": "View Order", "url": "https://ordering.codevertexafrica.com/{{1}}", "example": ["codevertex-demo/orders/guest/f2e6121d-bead-41ad-95ed-b74655a3d45c"]}
+    ]
+  },
+  {
+    "name": "ordering_order_for_pickup_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/ordering/order_for_pickup.txt (button variant, shared-domain tenants only)",
+    "body": "Hi {{1}}, your order {{2}} is ready for pickup at {{3}}, {{4}}. See you soon!",
+    "example": ["Amina", "#ULC-2299", "Westlands Branch", "5:30 PM today"],
+    "buttons": [
+      {"type": "URL", "text": "View Order", "url": "https://ordering.codevertexafrica.com/{{1}}", "example": ["codevertex-demo/orders/guest/f2e6121d-bead-41ad-95ed-b74655a3d45c"]}
+    ]
+  },
+  {
     "name": "pos_receipt_share",
     "category": "UTILITY",
     "language": "en_US",

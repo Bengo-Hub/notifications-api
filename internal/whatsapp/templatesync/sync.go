@@ -30,6 +30,21 @@ type TemplateDef struct {
 	Source   string   `json:"source"` // documentation only, not sent to Meta
 	Body     string   `json:"body"`   // BODY component text with {{1}}, {{2}}, ... — omitted for AUTHENTICATION
 	Example  []string `json:"example"`
+	// Buttons, when present, adds a BUTTONS component (currently only URL buttons are used
+	// anywhere in this manifest). A URL button's `url` may carry at most one dynamic
+	// placeholder — always "{{1}}" — appended as a suffix to a fixed, hardcoded prefix; Meta
+	// resolves the base domain once at template-approval time and can never swap it out per
+	// send, so a URL button only makes sense for a domain that's the same for every send using
+	// this template (see order_consumer.go's shared-vs-custom-domain template selection).
+	Buttons []ButtonDef `json:"buttons,omitempty"`
+}
+
+// ButtonDef is one BUTTONS-component button. Only Type "URL" is used today.
+type ButtonDef struct {
+	Type    string   `json:"type"`
+	Text    string   `json:"text"`
+	URL     string   `json:"url,omitempty"`
+	Example []string `json:"example,omitempty"`
 }
 
 // LoadManifest parses the embedded templates.json.
@@ -180,7 +195,7 @@ func (s *Syncer) create(ctx context.Context, def TemplateDef) error {
 			{"type": "BUTTONS", "buttons": []map[string]any{{"type": "OTP", "otp_type": "COPY_CODE"}}},
 		}
 	} else {
-		payload["components"] = []map[string]any{
+		components := []map[string]any{
 			{
 				"type": "BODY",
 				"text": def.Body,
@@ -189,6 +204,21 @@ func (s *Syncer) create(ctx context.Context, def TemplateDef) error {
 				},
 			},
 		}
+		if len(def.Buttons) > 0 {
+			buttons := make([]map[string]any, 0, len(def.Buttons))
+			for _, b := range def.Buttons {
+				btn := map[string]any{"type": b.Type, "text": b.Text}
+				if b.URL != "" {
+					btn["url"] = b.URL
+				}
+				if len(b.Example) > 0 {
+					btn["example"] = b.Example
+				}
+				buttons = append(buttons, btn)
+			}
+			components = append(components, map[string]any{"type": "BUTTONS", "buttons": buttons})
+		}
+		payload["components"] = components
 	}
 
 	data, err := json.Marshal(payload)
