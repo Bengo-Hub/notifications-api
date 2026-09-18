@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sort"
 	"strings"
 	"time"
 )
@@ -74,15 +75,18 @@ func FilterByPrefix(defs []TemplateDef, prefixes []string) []TemplateDef {
 	return out
 }
 
-// Outcome is one of "created", "skipped" (already existed on Meta — idempotent no-op), or "failed".
+// Outcome is one of "created", "skipped" (already existed on Meta — idempotent no-op), "deleted",
+// or "failed".
 type Outcome string
 
 const (
 	OutcomeCreated Outcome = "created"
 	OutcomeSkipped Outcome = "skipped"
+	OutcomeDeleted Outcome = "deleted"
 	OutcomeFailed  Outcome = "failed"
-	// outcomeWouldCreate is dry-run only, reported to the caller as OutcomeCreated with DryRun=true
-	// on the Result so JSON consumers don't need a fourth enum value to handle.
+	// outcomeWouldCreate/outcomeWouldDelete are dry-run only, reported to the caller as
+	// OutcomeCreated/OutcomeDeleted with DryRun=true on the Result so JSON consumers don't need
+	// extra enum values to handle.
 )
 
 // Result reports what happened for one template definition.
@@ -134,6 +138,68 @@ func (s *Syncer) Run(ctx context.Context, defs []TemplateDef, dryRun bool) ([]Re
 		results = append(results, Result{Name: def.Name, Category: def.Category, Outcome: OutcomeCreated})
 	}
 	return results, nil
+}
+
+// DeleteByPrefix permanently removes every template on the WABA (regardless of review status —
+// approved, pending, or rejected) whose name starts with one of prefixes, fetched live from Meta
+// rather than from the local manifest — so it also cleans up a template a prior manifest revision
+// created and has since been renamed or removed locally. A template scheduled for deletion that's
+// still actively being sent (this platform's own fallback path included) will fail sends the
+// instant it's gone — callers must know that whatever they pass here has no live traffic
+// depending on it, or accept the resulting gap. dryRun reports what WOULD be deleted with no
+// calls to Meta's delete endpoint at all.
+func (s *Syncer) DeleteByPrefix(ctx context.Context, prefixes []string, dryRun bool) ([]Result, error) {
+	existing, err := s.fetchExisting(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("fetch existing templates from Meta: %w", err)
+	}
+	names := make([]string, 0, len(existing))
+	for name := range existing {
+		for _, p := range prefixes {
+			if strings.HasPrefix(name, strings.TrimSpace(p)) {
+				names = append(names, name)
+				break
+			}
+		}
+	}
+	sort.Strings(names)
+
+	results := make([]Result, 0, len(names))
+	for _, name := range names {
+		if dryRun {
+			results = append(results, Result{Name: name, Outcome: OutcomeDeleted, DryRun: true})
+			continue
+		}
+		if err := s.delete(ctx, name); err != nil {
+			results = append(results, Result{Name: name, Outcome: OutcomeFailed, Detail: err.Error()})
+			continue
+		}
+		results = append(results, Result{Name: name, Outcome: OutcomeDeleted})
+	}
+	return results, nil
+}
+
+// delete removes every template revision sharing name (Meta's delete-by-name endpoint drops all
+// language variants of that name at once — this manifest only ever registers one language per
+// name, so that's a non-issue here, just the documented behavior).
+func (s *Syncer) delete(ctx context.Context, name string) error {
+	url := fmt.Sprintf("https://graph.facebook.com/%s/%s/message_templates?name=%s", apiVersion, s.WABAID, name)
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, url, nil)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Authorization", "Bearer "+s.Token)
+
+	resp, err := s.client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode >= 300 {
+		return fmt.Errorf("status %d: %s", resp.StatusCode, string(body))
+	}
+	return nil
 }
 
 // fetchExisting paginates through every template already on the WABA, keyed by name.
