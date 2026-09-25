@@ -221,24 +221,57 @@
     "category": "UTILITY",
     "language": "en_US",
     "source": "whatsapp/ordering/order_placed.txt (order received, before the outlet accepts it)",
-    "body": "Hi {{1}},\n\nWe have received your order *{{2}}*.\n\nTotal: {{3}}\n\nWe will let you know as soon as it is accepted. Track your order here: {{4}}\n\nThanks for ordering with us!",
+    "body": "Hi {{1}},\n\nWe have received your order *{{2}}*.\n\nTotal: {{3}}\n\nWe will let you know as soon as it is accepted.\n\nTrack your order here: {{4}}\n\nThanks for ordering with us!",
     "example": ["Amina", "#ULC-2291", "KES 2,450", "cdvtx.co/t/2291"]
+  },
+  {
+    "name": "ordering_order_received_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/ordering/order_placed.txt (order received, button variant, shared-domain tenants only)",
+    "body": "Hi {{1}},\n\nWe have received your order *{{2}}*.\n\nTotal: {{3}}\n\nWe will let you know as soon as it is accepted.\n\nThanks for ordering with us!",
+    "example": ["Amina", "#ULC-2291", "KES 2,450"],
+    "buttons": [
+      {"type": "URL", "text": "Track Order", "url": "https://ordering.codevertexafrica.com/{{1}}", "example": ["codevertex-demo/orders/guest/f2e6121d-bead-41ad-95ed-b74655a3d45c"]}
+    ]
   },
   {
     "name": "ordering_order_accepted_v1",
     "category": "UTILITY",
     "language": "en_US",
     "source": "whatsapp/ordering/order_accepted.txt",
-    "body": "Hi {{1}},\n\nGood news: your order *{{2}}* has been accepted and is being prepared.\n\nTrack it here: {{3}}",
+    "body": "Hi {{1}},\n\nGood news! Your order *{{2}}* has been accepted and is being prepared.\n\nTrack your order here: {{3}}\n\nThanks for ordering with us!",
     "example": ["Amina", "#ULC-2291", "cdvtx.co/t/2291"]
+  },
+  {
+    "name": "ordering_order_accepted_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/ordering/order_accepted.txt (button variant, shared-domain tenants only)",
+    "body": "Hi {{1}},\n\nGood news! Your order *{{2}}* has been accepted and is being prepared.\n\nThanks for ordering with us!",
+    "example": ["Amina", "#ULC-2291"],
+    "buttons": [
+      {"type": "URL", "text": "Track Order", "url": "https://ordering.codevertexafrica.com/{{1}}", "example": ["codevertex-demo/orders/guest/f2e6121d-bead-41ad-95ed-b74655a3d45c"]}
+    ]
   },
   {
     "name": "ordering_new_order_business_v1",
     "category": "UTILITY",
     "language": "en_US",
-    "source": "cmd/worker/order_consumer.go (new online order alert to the business number)",
-    "body": "New online order *{{1}}* from {{2}}.\n\nTotal: {{3}}\nFulfilment: {{4}}\n\nOpen the online orders queue to accept it: {{5}}",
+    "source": "cmd/worker/order_business_alert.go (new online order alert to the business number)",
+    "body": "You have a new online order *{{1}}* from {{2}}.\n\nTotal: {{3}}\nFulfilment: {{4}}\n\nAccept it in the online orders queue: {{5}}\n\nPlease accept or reject it promptly.",
     "example": ["#ULC-2291", "Amina", "KES 2,450", "Delivery", "pos.codevertexafrica.com/urban-loft/online-orders"]
+  },
+  {
+    "name": "ordering_new_order_business_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "cmd/worker/order_business_alert.go (button variant, shared POS domain)",
+    "body": "You have a new online order *{{1}}* from {{2}}.\n\nTotal: {{3}}\nFulfilment: {{4}}\n\nPlease accept or reject it promptly.",
+    "example": ["#ULC-2291", "Amina", "KES 2,450", "Delivery"],
+    "buttons": [
+      {"type": "URL", "text": "Open Orders", "url": "https://pos.codevertexafrica.com/{{1}}", "example": ["urban-loft/online-orders"]}
+    ]
   },
   {
     "name": "pos_receipt_share",

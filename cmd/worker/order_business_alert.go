@@ -17,6 +17,10 @@ import (
 // businessAlertEvents are the order events that mean the business has something to act on: an
 // order waiting to be accepted (manual acceptance, the default) or, under automatic acceptance, an
 // order that just went to the kitchen. An unpaid online-payment order never triggers an alert.
+// sharedPOSBase is the shared POS app domain the ordering_new_order_business_v1_btn template's
+// "Open Orders" button was approved against (templates.json).
+const sharedPOSBase = "https://pos.codevertexafrica.com"
+
 var businessAlertEvents = map[string]bool{
 	"ordering.order.awaiting_acceptance": true,
 	"ordering.order.confirmed":           true,
@@ -35,9 +39,15 @@ func sendBusinessNewOrderAlert(ctx context.Context, nc *nats.Conn, cfg *config.C
 	customer := waParam(evtData["customer_name"], "a customer")
 	total := formatMoney(evtData["grand_total"], evtData["currency"])
 	fulfilment := strings.Title(strings.ReplaceAll(fmt.Sprintf("%v", evtData["fulfillment_type"]), "_", " ")) //nolint:staticcheck // ASCII labels only
-	manageLink := serviceURL("NOTIFICATIONS_POS_APP_URL", ti.Website) + "/online-orders"
+	// The POS online orders queue: the tenant's own POS domain when it has one, else the shared
+	// POS app. (It used to fall back to the tenant's marketing website, which has no queue.)
+	posBase := strings.TrimRight(serviceURL("NOTIFICATIONS_POS_APP_URL", sharedPOSBase), "/")
+	if custom := strings.TrimRight(ti.ServiceURLs["pos"], "/"); custom != "" {
+		posBase = custom
+	}
+	manageLink := posBase + "/online-orders"
 	if ti.Slug != "" {
-		manageLink = strings.TrimRight(serviceURL("NOTIFICATIONS_POS_APP_URL", ti.Website), "/") + "/" + ti.Slug + "/online-orders"
+		manageLink = posBase + "/" + ti.Slug + "/online-orders"
 	}
 	data := map[string]interface{}{
 		"outlet_name":      evtData["outlet_name"],
@@ -73,17 +83,21 @@ func sendBusinessNewOrderAlert(ctx context.Context, nc *nats.Conn, cfg *config.C
 		})
 	}
 	if ti.ContactPhone != "" {
+		params := []string{waParam(orderNumber, "-"), customer, total, waParam(fulfilment, "Online order")}
 		meta := map[string]interface{}{
 			"service_id":        "ordering",
 			"template_name":     "ordering_new_order_business_v1",
 			"template_language": "en_US",
-			"template_params": []string{
-				waParam(orderNumber, "-"),
-				customer,
-				total,
-				waParam(fulfilment, "Online order"),
-				manageLink,
-			},
+			"template_params":   append(append([]string{}, params...), manageLink),
+		}
+		// On the shared POS domain the link is an "Open Orders" button (the approved button URL
+		// can only vary the part after the domain); the plain-link template is the fallback.
+		if strings.HasPrefix(manageLink, sharedPOSBase+"/") {
+			meta["template_name"] = "ordering_new_order_business_v1_btn"
+			meta["template_params"] = params
+			meta["template_button_param"] = strings.TrimPrefix(manageLink, sharedPOSBase+"/")
+			meta["template_fallback_name"] = "ordering_new_order_business_v1"
+			meta["template_fallback_params"] = append(append([]string{}, params...), manageLink)
 		}
 		if code := dialCodeForCountry(ti.Country); code != "" {
 			meta["default_dial_code"] = code

@@ -251,7 +251,9 @@ var orderMappings = map[string]orderNotificationMapping{
 		// "Order received" (the outlet has not accepted it yet under manual acceptance). The older
 		// placed templates say "has been confirmed", which is not true at this point; they remain
 		// only as the fallback while ordering_order_received_v1 is in Meta review.
-		WhatsAppTemplate: "ordering_order_received_v1",
+		WhatsAppTemplate:       "ordering_order_received_v1",
+		WhatsAppButtonTemplate: "ordering_order_received_v1_btn",
+		WhatsAppLinkKey:        "order_link",
 		WhatsAppParams: func(d map[string]interface{}) []string {
 			return []string{
 				waParam(d["name"], "there"),
@@ -290,7 +292,9 @@ var orderMappings = map[string]orderNotificationMapping{
 				"collection_code": data["collection_code"],
 			}
 		},
-		WhatsAppTemplate: "ordering_order_accepted_v1",
+		WhatsAppTemplate:       "ordering_order_accepted_v1",
+		WhatsAppButtonTemplate: "ordering_order_accepted_v1_btn",
+		WhatsAppLinkKey:        "order_link",
 		WhatsAppParams: func(d map[string]interface{}) []string {
 			return []string{
 				waParam(d["name"], "there"),
