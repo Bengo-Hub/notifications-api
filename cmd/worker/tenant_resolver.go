@@ -35,6 +35,29 @@ type tenantInfo struct {
 	LogoURL        string
 	PrimaryColor   string
 	SecondaryColor string
+	// Country is the tenant's ISO country (e.g. "KE", "UG"), used to turn a customer's local phone
+	// number into the international form WhatsApp needs.
+	Country string
+}
+
+// dialCodeForCountry returns the calling code for the tenant's country ("" when unknown, which the
+// WhatsApp provider treats as Kenya).
+func dialCodeForCountry(country string) string {
+	switch strings.ToUpper(strings.TrimSpace(country)) {
+	case "KE", "KENYA":
+		return "254"
+	case "UG", "UGANDA":
+		return "256"
+	case "TZ", "TANZANIA":
+		return "255"
+	case "RW", "RWANDA":
+		return "250"
+	case "ET", "ETHIOPIA":
+		return "251"
+	case "NG", "NIGERIA":
+		return "234"
+	}
+	return ""
 }
 
 // ServiceURL returns the per-tenant URL for the given service name.
@@ -146,6 +169,7 @@ func (r *tenantResolver) enrichFromCache(ctx context.Context, info *tenantInfo) 
 	branding := cache.GetTenantBranding(details)
 	info.ContactEmail = details.ContactEmail
 	info.ContactPhone = details.ContactPhone
+	info.Country = details.Country
 	info.Website = normalizeWebsite(details.Website)
 	// AppURL and ServiceURLs come from auth-api tenant metadata — per-tenant deployed app domains.
 	if details.Metadata != nil {

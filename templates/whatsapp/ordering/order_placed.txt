@@ -1,10 +1,10 @@
 Hi {{ or .name "there" }},
 
-Your order *{{ .order_number }}* has been confirmed!
+We have received your order *{{ .order_number }}*.
 
 Total: {{ .total_amount }}
-{{ if .estimated_prep_time }}Estimated delivery: {{ .estimated_prep_time }} min{{ end }}
-
-Track your order here: {{ .order_link }}
+{{ if .pod_code }}Delivery code: *{{ .pod_code }}* (give it to the rider when your order arrives)
+{{ end }}
+We will let you know as soon as it is accepted. Track your order here: {{ .order_link }}
 
 Thanks for ordering with us!

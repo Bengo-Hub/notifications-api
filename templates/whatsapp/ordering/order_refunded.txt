@@ -1,0 +1,3 @@
+Hi {{ or .name "there" }},
+
+Your refund of *{{ .amount }}* for order *{{ .order_number }}* has been processed.{{ if .reason }} Reason: {{ .reason }}.{{ end }}

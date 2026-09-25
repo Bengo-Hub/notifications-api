@@ -1,0 +1,5 @@
+Hi {{ or .name "there" }},
+
+Good news: your order *{{ .order_number }}* has been accepted and is being prepared.
+
+Track it here: {{ .order_link }}

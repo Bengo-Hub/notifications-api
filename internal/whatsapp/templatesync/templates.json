@@ -217,6 +217,30 @@
     ]
   },
   {
+    "name": "ordering_order_received_v1",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/ordering/order_placed.txt (order received, before the outlet accepts it)",
+    "body": "Hi {{1}},\n\nWe have received your order *{{2}}*.\n\nTotal: {{3}}\n\nWe will let you know as soon as it is accepted. Track your order here: {{4}}\n\nThanks for ordering with us!",
+    "example": ["Amina", "#ULC-2291", "KES 2,450", "cdvtx.co/t/2291"]
+  },
+  {
+    "name": "ordering_order_accepted_v1",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/ordering/order_accepted.txt",
+    "body": "Hi {{1}},\n\nGood news: your order *{{2}}* has been accepted and is being prepared.\n\nTrack it here: {{3}}",
+    "example": ["Amina", "#ULC-2291", "cdvtx.co/t/2291"]
+  },
+  {
+    "name": "ordering_new_order_business_v1",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "cmd/worker/order_consumer.go (new online order alert to the business number)",
+    "body": "New online order *{{1}}* from {{2}}.\n\nTotal: {{3}}\nFulfilment: {{4}}\n\nOpen the online orders queue to accept it: {{5}}",
+    "example": ["#ULC-2291", "Amina", "KES 2,450", "Delivery", "pos.codevertexafrica.com/urban-loft/online-orders"]
+  },
+  {
     "name": "pos_receipt_share",
     "category": "UTILITY",
     "language": "en_US",

@@ -8,7 +8,6 @@ import (
 	"time"
 
 	eventslib "github.com/Bengo-Hub/shared-events"
-	"github.com/google/uuid"
 	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
 
@@ -247,10 +246,20 @@ var orderMappings = map[string]orderNotificationMapping{
 				"pod_code": data["pod_code"],
 			}
 		},
-		WhatsAppTemplate:       "ordering_order_placed_v3",
-		WhatsAppButtonTemplate: "ordering_order_placed_v3_btn",
-		WhatsAppLinkKey:        "order_link",
+		// "Order received" (the outlet has not accepted it yet under manual acceptance). The older
+		// placed templates say "has been confirmed", which is not true at this point; they remain
+		// only as the fallback while ordering_order_received_v1 is in Meta review.
+		WhatsAppTemplate: "ordering_order_received_v1",
 		WhatsAppParams: func(d map[string]interface{}) []string {
+			return []string{
+				waParam(d["name"], "there"),
+				waParam(d["order_number"], "your order"),
+				waParam(d["total_amount"], "-"),
+				waParam(d["order_link"], "-"),
+			}
+		},
+		WhatsAppOriginalTemplate: "ordering_order_placed_v3",
+		WhatsAppOriginalParams: func(d map[string]interface{}) []string {
 			est := ""
 			if v, ok := d["estimated_prep_time"]; ok && v != nil {
 				if s := fmt.Sprintf("%v", v); s != "" && s != "0" {
@@ -265,19 +274,25 @@ var orderMappings = map[string]orderNotificationMapping{
 				waParam(d["order_link"], ""),
 			}
 		},
-		WhatsAppOriginalTemplate: "ordering_order_placed",
-		WhatsAppOriginalParams: func(d map[string]interface{}) []string {
-			est := ""
-			if v, ok := d["estimated_prep_time"]; ok && v != nil {
-				if s := fmt.Sprintf("%v", v); s != "" && s != "0" {
-					est = s + " min"
-				}
+	},
+	// The outlet accepted the order (manual acceptance) or it was accepted automatically.
+	"ordering.order.confirmed": {
+		TemplateID:   "ordering/order_accepted",
+		EmailSubject: "Your order has been accepted",
+		DataBuilder: func(data map[string]interface{}, orderAppURL string) map[string]interface{} {
+			return map[string]interface{}{
+				"name":         data["customer_name"],
+				"order_id":     data["order_id"],
+				"order_number": data["order_number"],
+				"order_link":   orderLink(data, orderAppURL),
 			}
+		},
+		WhatsAppTemplate: "ordering_order_accepted_v1",
+		WhatsAppParams: func(d map[string]interface{}) []string {
 			return []string{
+				waParam(d["name"], "there"),
 				waParam(d["order_number"], "your order"),
-				waParam(d["total_amount"], "-"),
-				waParam(est, "As soon as possible"),
-				waParam(d["order_link"], ""),
+				waParam(d["order_link"], "-"),
 			}
 		},
 	},
@@ -564,6 +579,14 @@ func startOrderConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 		evtTenantID := evt.resolvedTenantID()
 		evtData := evt.resolvedData()
 
+		// The business hears about an order when there is something to do: accept it (manual
+		// acceptance) or, under automatic acceptance, prepare it. Never for an unpaid order.
+		if businessAlertEvents[evtType] {
+			if ti, err := tr.resolve(ctx, evtTenantID); err == nil {
+				sendBusinessNewOrderAlert(ctx, nc, cfg, ti, evtTenantID, evtData, logg)
+			}
+		}
+
 		mapping, ok := orderMappings[evtType]
 		if !ok {
 			logg.Debug("order event: unhandled type, skipping", zap.String("type", evtType))
@@ -632,6 +655,11 @@ func startOrderConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 			"subject":    mapping.EmailSubject,
 			"service_id": "ordering",
 		}
+		if ti != nil {
+			if code := dialCodeForCountry(ti.Country); code != "" {
+				metadata["default_dial_code"] = code
+			}
+		}
 		// Attaching template_name/template_params here only changes the WhatsApp send path
 		// (deliver()'s "whatsapp" case, internal/providers/whatsapp/metacloud.go's SendWhatsApp) —
 		// email/SMS/push ignore these metadata keys and keep rendering the local template as
@@ -682,41 +710,9 @@ func startOrderConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 		}
 		targets := fanOutTargets(ctx, gate, templateChannels, evtTenantID, mapping.TemplateID, recipients)
 
-		// On a brand-new online order, send the tenant/outlet a dedicated, actionable
-		// "new order arrived" alert — a SEPARATE email to the tenant contact address, using
-		// its own staff-facing template. This is NOT a Bcc of the customer's confirmation
-		// (which staff have no use for) and is never sent to the customer.
-		if evtType == "ordering.order.created" && ti != nil && ti.ContactEmail != "" {
-			tenantMsg := messaging.Message{
-				TenantID:    evtTenantID,
-				Channel:     "email",
-				TemplateID:  "ordering/new_order_tenant",
-				SenderScope: messaging.SenderScopeTenant,
-				Target:      messaging.TargetStaff,
-				To:          []string{ti.ContactEmail},
-				Data: map[string]interface{}{
-					"outlet_name":      evtData["outlet_name"],
-					"order_number":     evtData["order_number"],
-					"order_id":         evtData["order_id"],
-					"customer_name":    evtData["customer_name"],
-					"total_amount":     evtData["total_amount"],
-					"delivery_address": evtData["delivery_address"],
-					"manage_link":      serviceURL("NOTIFICATIONS_POS_APP_URL", tenantWebsite) + "/online-orders",
-				},
-				Metadata: map[string]interface{}{
-					"subject":    "New order received — action required",
-					"service_id": "ordering",
-				},
-				RequestID:      uuid.New().String(),
-				IdempotencyKey: fmt.Sprintf("new-order-tenant-%s", orderID),
-				QueuedAt:       time.Now(),
-			}
-			if _, terr := messaging.Publish(ctx, nc, cfg.Events, tenantMsg); terr != nil {
-				logg.Warn("failed to dispatch tenant new-order alert", zap.String("order_id", orderID), zap.Error(terr))
-			} else {
-				logg.Info("tenant new-order alert dispatched", zap.String("order_id", orderID), zap.String("to", ti.ContactEmail))
-			}
-		}
+		// The business "new order" alert is sent from sendBusinessNewOrderAlert when the order is
+		// actionable (awaiting acceptance / confirmed), not at creation: an online-payment order is
+		// created before the customer pays and may never be paid.
 
 		sentChannels := publishFanOut(ctx, nc, cfg, base, targets, logg)
 		if len(sentChannels) == 0 {

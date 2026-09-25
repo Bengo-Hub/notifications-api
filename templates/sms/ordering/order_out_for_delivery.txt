@@ -1,0 +1,1 @@
+{{ or .brand_name "Your order" }}: order {{ .order_number }} is on its way{{ if .rider_name }} with {{ .rider_name }}{{ end }}.{{ if .pod_code }} Give the rider code {{ .pod_code }}.{{ end }}

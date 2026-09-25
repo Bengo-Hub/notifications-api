@@ -1,0 +1,1 @@
+{{ or .brand_name "Your order" }}: order {{ .order_number }} is ready for pickup{{ if .outlet_name }} at {{ .outlet_name }}{{ end }}. Show the order number at the counter.

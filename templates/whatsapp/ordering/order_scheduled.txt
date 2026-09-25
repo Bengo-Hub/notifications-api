@@ -1,0 +1,6 @@
+Hi {{ or .name "there" }},
+
+Your order *{{ .order_number }}* is scheduled for {{ .scheduled_for }}.
+Total: {{ .total_amount }}
+
+View details here: {{ .order_link }}

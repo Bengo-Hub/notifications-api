@@ -1,0 +1,5 @@
+Hi {{ or .name "there" }},
+
+Your order *{{ .order_number }}* is ready and waiting for a rider.
+
+View your order here: {{ .order_link }}

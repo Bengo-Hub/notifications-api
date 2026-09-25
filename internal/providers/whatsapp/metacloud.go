@@ -81,8 +81,9 @@ func (p *MetaCloudProvider) SendWhatsApp(ctx context.Context, from string, to []
 		return fmt.Errorf("meta_cloud not configured")
 	}
 	templateName, _ := metadata["template_name"].(string)
+	dialCode, _ := metadata["default_dial_code"].(string)
 	for _, raw := range to {
-		recipient := normalizeWhatsAppNumber(raw)
+		recipient := internationalWhatsAppNumber(raw, dialCode)
 		var err error
 		if templateName != "" {
 			language, _ := metadata["template_language"].(string)
@@ -241,6 +242,33 @@ func normalizeWhatsAppNumber(raw string) string {
 		}
 	}
 	return b.String()
+}
+
+// defaultDialCode is used when a local number arrives without a country code and the sender did
+// not pass the tenant's own (most tenants are in Kenya).
+const defaultDialCode = "254"
+
+// internationalWhatsAppNumber turns what customers actually type into the country-code form Meta
+// delivers to. A local number ("0712 345 678", or "712345678" with the leading 0 dropped) gets the
+// tenant's dial code; a number that already carries a country code ("+254...", "254...", "256...")
+// is only stripped of formatting. Without this a local number was sent as "0712345678" and never
+// arrived.
+func internationalWhatsAppNumber(raw, dialCode string) string {
+	digits := normalizeWhatsAppNumber(raw)
+	if dialCode == "" {
+		dialCode = defaultDialCode
+	}
+	dialCode = normalizeWhatsAppNumber(dialCode)
+	switch {
+	case strings.HasPrefix(digits, "00"):
+		return digits[2:] // international prefix form, e.g. 00254...
+	case len(digits) == 10 && strings.HasPrefix(digits, "0"):
+		return dialCode + digits[1:]
+	case len(digits) == 9 && (digits[0] == '7' || digits[0] == '1'):
+		return dialCode + digits
+	default:
+		return digits
+	}
 }
 
 // AccountInfo confirms the configured credentials are valid by querying Meta's Graph API for the
