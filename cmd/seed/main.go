@@ -238,6 +238,10 @@ func seedPermissions(ctx context.Context, client *ent.Client) {
 		{"notifications.users.manage", "users", "Manage user roles"},
 		{"notifications.platform.providers", "platform", "Manage platform-level providers"},
 		{"notifications.platform.billing", "platform", "Manage platform billing settings"},
+		// Referenced by the role defaults but never seeded: every role's permission refresh failed
+		// on the missing foreign key (role_permissions_permission_id), so no role got inbox access.
+		{"notifications.whatsapp_inbox.view", "whatsapp_inbox", "Read WhatsApp inbox conversations"},
+		{"notifications.whatsapp_inbox.reply", "whatsapp_inbox", "Reply to WhatsApp inbox conversations"},
 	}
 
 	for _, p := range perms {
@@ -327,8 +331,15 @@ func seedRolePermissions(ctx context.Context, client *ent.Client) {
 	for _, role := range roles {
 		perms := identity.DefaultPermissions(role)
 		permIDs := make([]uuid.UUID, 0, len(perms))
+		seen := map[uuid.UUID]bool{}
 		for _, p := range perms {
-			permIDs = append(permIDs, permissionUUID(string(p)))
+			// Some permission constants share a code (templates test = templates manage).
+			id := permissionUUID(string(p))
+			if seen[id] {
+				continue
+			}
+			seen[id] = true
+			permIDs = append(permIDs, id)
 		}
 
 		err := client.Role.UpdateOneID(string(role)).
