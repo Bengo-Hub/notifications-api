@@ -7,6 +7,7 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -92,13 +93,42 @@ func (p *FCMProvider) SendPush(ctx context.Context, tokens []string, title, body
 	}
 
 	var lastErr error
+	var dead []string
+	delivered := 0
 	for _, token := range tokens {
-		if err := p.sendMessage(ctx, accessToken, token, title, body, data); err != nil {
+		err := p.sendMessage(ctx, accessToken, token, title, body, data)
+		switch {
+		case err == nil:
+			delivered++
+		case errors.Is(err, errUnregistered):
+			dead = append(dead, token)
+		default:
 			lastErr = err
 		}
 	}
+	if len(dead) > 0 {
+		// Some devices are gone; report them so the caller can deactivate the tokens. Only an
+		// error when nothing was delivered and there was no other failure to report.
+		return &UnregisteredTokensError{Tokens: dead, Delivered: delivered, Other: lastErr}
+	}
 	return lastErr
 }
+
+var errUnregistered = errors.New("fcm: token unregistered")
+
+// UnregisteredTokensError lists device tokens FCM no longer knows (app uninstalled, browser data
+// cleared). The caller should deactivate them so later sends skip them.
+type UnregisteredTokensError struct {
+	Tokens    []string
+	Delivered int
+	Other     error
+}
+
+func (e *UnregisteredTokensError) Error() string {
+	return fmt.Sprintf("fcm: %d unregistered device token(s), %d delivered", len(e.Tokens), e.Delivered)
+}
+
+func (e *UnregisteredTokensError) Unwrap() error { return e.Other }
 
 // getAccessToken exchanges a service-account JWT for a Google OAuth2 access token.
 func (p *FCMProvider) getAccessToken(ctx context.Context) (string, error) {
@@ -212,6 +242,12 @@ func (p *FCMProvider) sendMessage(ctx context.Context, accessToken, token, title
 
 	if resp.StatusCode >= 300 {
 		b, _ := io.ReadAll(resp.Body)
+		// 404 UNREGISTERED: the token no longer exists; 400 INVALID_ARGUMENT naming the token:
+		// it was never valid. Either way the device will never receive anything.
+		if resp.StatusCode == http.StatusNotFound || strings.Contains(string(b), "UNREGISTERED") ||
+			(resp.StatusCode == http.StatusBadRequest && strings.Contains(string(b), "registration token")) {
+			return errUnregistered
+		}
 		return fmt.Errorf("fcm: send failed (status %d): %s", resp.StatusCode, string(b))
 	}
 	return nil

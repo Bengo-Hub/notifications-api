@@ -34,6 +34,7 @@ import (
 	"github.com/bengobox/notifications-api/internal/platform/events"
 	"github.com/bengobox/notifications-api/internal/platform/templates"
 	"github.com/bengobox/notifications-api/internal/providers"
+	"github.com/bengobox/notifications-api/internal/providers/push"
 	"github.com/bengobox/notifications-api/internal/providers/email"
 	"github.com/bengobox/notifications-api/internal/shared/logger"
 
@@ -870,6 +871,26 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 			}
 		}
 		if err := pushProv.SendPush(ctx, msg.To, title, rendered, pushData); err != nil {
+			// Devices FCM no longer knows are switched off so later pushes skip them; the send
+			// only fails if nothing was delivered.
+			var dead *push.UnregisteredTokensError
+			if errors.As(err, &dead) {
+				if dbPool != nil {
+					if _, uerr := dbPool.Exec(ctx,
+						`UPDATE device_tokens SET is_active = false, updated_at = now() WHERE token = ANY($1)`, dead.Tokens); uerr != nil {
+						logg.Warn("push: deactivate unregistered tokens failed", zap.Error(uerr))
+					}
+				}
+				logg.Info("push: deactivated unregistered device tokens", zap.Int("count", len(dead.Tokens)))
+				if dead.Delivered > 0 || dead.Other == nil {
+					if dead.Delivered == 0 {
+						return errSkippedNoSend
+					}
+					logg.Info("push notification sent", zap.String("provider", pushProv.Name()), zap.Int("delivered", dead.Delivered))
+					return nil
+				}
+				return dead.Other
+			}
 			return err
 		}
 		logg.Info("push notification sent", zap.String("provider", pushProv.Name()), zap.Strings("to", msg.To))
