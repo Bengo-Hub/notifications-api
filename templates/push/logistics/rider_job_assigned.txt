@@ -1,0 +1,1 @@
+Order {{ .order_number }}{{ if .pickup_name }}: pick up at {{ .pickup_name }}{{ end }}.{{ if .cash_on_delivery }} Collect {{ .cash_on_delivery }} on delivery.{{ end }} Tap to open.

@@ -1,0 +1,10 @@
+{{ define "content" }}
+  <h2 style="margin:0 0 16px;font-size:20px;color:#111827;">New delivery job</h2>
+  <p style="margin:16px 0;color:#374151;">Hi {{ .name }}, order <strong>{{ .order_number }}</strong> is yours to deliver.</p>
+  {{ if .pickup_name }}<p style="margin:16px 0;color:#374151;"><strong>Pick up at:</strong> {{ .pickup_name }}</p>{{ end }}
+  {{ if .cash_on_delivery }}<p style="margin:16px 0;color:#374151;"><strong>Collect on delivery:</strong> {{ .cash_on_delivery }} (cash or M-Pesa to the business).</p>{{ end }}
+  <p style="margin:16px 0;color:#374151;">Ask the customer for their delivery code at the door to complete the delivery.</p>
+  <div style="text-align:center;margin:24px 0;">
+    <a href="{{ .job_link }}" style="display:inline-block;padding:12px 24px;background:{{ or .brand_primary_color "#0F766E" }};color:#ffffff;text-decoration:none;border-radius:6px;font-weight:bold;">Open the job</a>
+  </div>
+{{ end }}

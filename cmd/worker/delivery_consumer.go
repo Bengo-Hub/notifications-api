@@ -12,6 +12,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/bengobox/notifications-api/internal/config"
+	"github.com/bengobox/notifications-api/internal/ent"
 	"github.com/bengobox/notifications-api/internal/messaging"
 )
 
@@ -40,7 +41,8 @@ var deliveryMappings = map[string]deliveryNotificationMapping{
 			return map[string]interface{}{
 				"name":          "Customer",
 				"order_id":      data["external_reference"],
-				"driver_name":   data["fleet_member_id"],
+				// The rider's name, never their fleet-member UUID (which this used to show).
+				"driver_name":   firstNonEmpty(data["rider_name"], "your rider"),
 				"tracking_link": fmt.Sprintf("%s/track/%s", serviceURL("NOTIFICATIONS_ORDERING_APP_URL", tenantWebsite), trackingCode),
 			}
 		},
@@ -84,7 +86,7 @@ var deliveryMappings = map[string]deliveryNotificationMapping{
 // startDeliveryConsumer subscribes to logistics.task.> events and dispatches
 // delivery notification emails. This is separate from the fleet consumer which
 // handles logistics.fleet.> events for rider lifecycle notifications.
-func startDeliveryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamContext, cfg *config.Config, tr *tenantResolver, logg *zap.Logger) {
+func startDeliveryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamContext, cfg *config.Config, tr *tenantResolver, client *ent.Client, logg *zap.Logger) {
 	if nc == nil || js == nil {
 		logg.Warn("skipping delivery consumer: NATS not available")
 		return
@@ -112,20 +114,28 @@ func startDeliveryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStream
 			_ = m.Nak()
 			return
 		}
-		if ti.ContactEmail == "" {
-			logg.Warn("delivery event: tenant has no contact_email, skipping", zap.String("tenant_id", evt.TenantID))
-			_ = m.Ack()
-			return
-		}
-
 		tenantWebsite := ti.Website
 
 		taskID, _ := evt.Payload["task_id"].(string)
 
-		// Use customer email from event if available, fallback to tenant contact
-		recipientEmail := ti.ContactEmail
-		if ce, ok := evt.Payload["customer_email"].(string); ok && ce != "" {
-			recipientEmail = ce
+		// The rider is told about a job assigned to them (push to their devices, and email).
+		if evt.EventType == "task.assigned" {
+			notifyRiderAssigned(ctx, nc, cfg, client, ti, evt, logg)
+		}
+
+		// Customer messages. Ordering owns the customer conversation for its orders (received,
+		// accepted, on its way with rider and code, delivered), so logistics sends none for them.
+		// These messages also used to fall back to the tenant's contact email when the event had
+		// no customer email (logistics events never carry one), mailing the business "your
+		// delivery has been assigned" for every task.
+		if source, _ := evt.Payload["source_service"].(string); source == "ordering" {
+			_ = m.Ack()
+			return
+		}
+		recipientEmail, _ := evt.Payload["customer_email"].(string)
+		if recipientEmail == "" {
+			_ = m.Ack()
+			return
 		}
 
 		msg := messaging.Message{
