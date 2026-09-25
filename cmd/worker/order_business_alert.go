@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"strings"
 	"time"
 
@@ -20,6 +21,20 @@ import (
 // sharedPOSBase is the shared POS app domain the ordering_new_order_business_v1_btn template's
 // "Open Orders" button was approved against (templates.json).
 const sharedPOSBase = "https://pos.codevertexafrica.com"
+
+// posButtonSuffix is the "Open Orders" button's dynamic part: the queue link's path on the shared
+// POS app ("<slug>/online-orders").
+func posButtonSuffix(link, slug string) string {
+	if u, err := url.Parse(link); err == nil {
+		if p := strings.TrimPrefix(u.EscapedPath(), "/"); p != "" {
+			return p
+		}
+	}
+	if slug != "" {
+		return slug + "/online-orders"
+	}
+	return "online-orders"
+}
 
 var businessAlertEvents = map[string]bool{
 	"ordering.order.awaiting_acceptance": true,
@@ -83,21 +98,15 @@ func sendBusinessNewOrderAlert(ctx context.Context, nc *nats.Conn, cfg *config.C
 		})
 	}
 	if ti.ContactPhone != "" {
-		params := []string{waParam(orderNumber, "-"), customer, total, waParam(fulfilment, "Online order")}
+		// Link policy: the queue link is an "Open Orders" button, never raw text. The button's
+		// domain is fixed to the shared POS app, which serves every tenant under its slug, so a
+		// tenant on its own POS domain gets the same path there.
 		meta := map[string]interface{}{
-			"service_id":        "ordering",
-			"template_name":     "ordering_new_order_business_v1",
-			"template_language": "en_US",
-			"template_params":   append(append([]string{}, params...), manageLink),
-		}
-		// On the shared POS domain the link is an "Open Orders" button (the approved button URL
-		// can only vary the part after the domain); the plain-link template is the fallback.
-		if strings.HasPrefix(manageLink, sharedPOSBase+"/") {
-			meta["template_name"] = "ordering_new_order_business_v1_btn"
-			meta["template_params"] = params
-			meta["template_button_param"] = strings.TrimPrefix(manageLink, sharedPOSBase+"/")
-			meta["template_fallback_name"] = "ordering_new_order_business_v1"
-			meta["template_fallback_params"] = append(append([]string{}, params...), manageLink)
+			"service_id":            "ordering",
+			"template_name":         "ordering_new_order_business_v1_btn",
+			"template_language":     "en_US",
+			"template_params":       []string{waParam(orderNumber, "-"), customer, total, waParam(fulfilment, "Online order")},
+			"template_button_param": posButtonSuffix(manageLink, ti.Slug),
 		}
 		if code := dialCodeForCountry(ti.Country); code != "" {
 			meta["default_dial_code"] = code

@@ -4,4 +4,4 @@ Your order *{{ .order_number }}* is on its way.
 {{ if .rider_name }}Rider: {{ .rider_name }}{{ if .rider_phone }} ({{ .rider_phone }}){{ end }}
 {{ end }}{{ if .pod_code }}Delivery code: *{{ .pod_code }}*. Give it to the rider when you receive your order.
 {{ end }}
-Track it here: {{ .track_link }}
+Thank you for your order!

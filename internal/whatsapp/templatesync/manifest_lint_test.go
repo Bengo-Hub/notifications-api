@@ -10,6 +10,8 @@ import (
 var (
 	placeholder  = regexp.MustCompile(`\{\{(\d+)\}\}`)
 	templateName = regexp.MustCompile(`^[a-z0-9_]{1,512}$`)
+	// rawLink matches a domain-with-path example value such as "cdvtx.co/t/2291".
+	rawLink = regexp.MustCompile(`^[a-z0-9-]+(\.[a-z0-9-]+)+/`)
 )
 
 // TestManifestFollowsMetaRules checks every template against the formatting rules Meta applies
@@ -51,6 +53,12 @@ func TestManifestFollowsMetaRules(t *testing.T) {
 		}
 		if len(d.Example) != len(nums) {
 			t.Errorf("%s: %d body variables but %d examples", d.Name, len(nums), len(d.Example))
+		}
+		// Link policy (docs/whatsapp-template-policy.md): links are URL buttons, never body text.
+		for i, ex := range d.Example {
+			if strings.Contains(ex, "://") || rawLink.MatchString(ex) {
+				t.Errorf("%s: body variable {{%d}} is a link (%q); put it in a URL button instead", d.Name, i+1, ex)
+			}
 		}
 		body := strings.TrimSpace(d.Body)
 		if strings.HasPrefix(body, "{{") {

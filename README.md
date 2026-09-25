@@ -87,6 +87,7 @@ Detailed docs live under `docs/` and are indexed in [`docs/documentation-guide.m
 - [`docs/development-workflow.md`](docs/development-workflow.md) – local setup, CI/CD pipeline
 - [`docs/testing-strategy.md`](docs/testing-strategy.md) – testing pyramid, tooling, coverage
 - [`docs/channel-routing.md`](docs/channel-routing.md) – provider selection, failover logic
+- [`docs/whatsapp-template-policy.md`](docs/whatsapp-template-policy.md) – WhatsApp templates: links always as buttons, Meta formatting rules, publishing
 - [`docs/api-contracts.md`](docs/api-contracts.md) – REST/webhook/event schema conventions
 - [`docs/local-testing.md`](docs/local-testing.md) – quick local run with Docker
 

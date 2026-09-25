@@ -4,7 +4,8 @@ We have received your order *{{ .order_number }}*.
 
 Total: {{ .total_amount }}
 {{ if .pod_code }}Delivery code: *{{ .pod_code }}* (give it to the rider when your order arrives)
+{{ end }}{{ if .collection_code }}Collection code: *{{ .collection_code }}* (show it at the counter)
 {{ end }}
-We will let you know as soon as it is accepted. Track your order here: {{ .order_link }}
+We will let you know as soon as it is accepted.
 
 Thanks for ordering with us!

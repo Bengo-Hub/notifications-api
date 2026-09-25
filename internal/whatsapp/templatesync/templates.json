@@ -12,82 +12,10 @@
     "source": "whatsapp/auth/password_reset.txt"
   },
   {
-    "name": "ordering_order_placed",
-    "category": "UTILITY",
-    "language": "en_US",
-    "source": "whatsapp/ordering/order_placed.txt",
-    "body": "Your order {{1}} has been confirmed! Total: {{2}}. Estimated delivery: {{3}}. Track your order here: {{4}}. Thanks for ordering with us!",
-    "example": ["#ULC-2291", "KES 2,450", "35 min", "cdvtx.co/t/2291"]
-  },
-  {
-    "name": "ordering_order_delivered",
-    "category": "UTILITY",
-    "language": "en_US",
-    "source": "whatsapp/ordering/order_delivered.txt",
-    "body": "Your order {{1}} has been delivered! We hope you enjoy it. Share your feedback here: {{2}}. Thank you for choosing us!",
-    "example": ["#ULC-2291", "cdvtx.co/f/2291"]
-  },
-  {
-    "name": "ordering_order_ready",
-    "category": "UTILITY",
-    "language": "en_US",
-    "source": "whatsapp/ordering/order_ready.txt",
-    "body": "Hi {{1}}, your order {{2}} is ready! View details here: {{3}}. Thank you for your order!",
-    "example": ["Amina", "#ULC-2299", "cdvtx.co/o/2299"]
-  },
-  {
-    "name": "ordering_order_out_for_delivery",
-    "category": "UTILITY",
-    "language": "en_US",
-    "source": "whatsapp/ordering/order_out_for_delivery.txt",
-    "body": "Hi {{1}}, your order {{2}} is out for delivery with {{3}} ({{4}}). Track it here: {{5}}. Thank you for your order!",
-    "example": ["Amina", "#ULC-2299", "James K.", "0711223344", "cdvtx.co/t/2299"]
-  },
-  {
-    "name": "ordering_order_cancelled",
-    "category": "UTILITY",
-    "language": "en_US",
-    "source": "whatsapp/ordering/order_cancelled.txt",
-    "body": "Hi {{1}}, your order {{2}} has been cancelled. Reason: {{3}}. View details here: {{4}}. We're sorry for the inconvenience.",
-    "example": ["Amina", "#ULC-2299", "Item out of stock", "cdvtx.co/o/2299"]
-  },
-  {
-    "name": "ordering_order_refunded",
-    "category": "UTILITY",
-    "language": "en_US",
-    "source": "whatsapp/ordering/order_refunded.txt",
-    "body": "Hi {{1}}, your refund of {{2}} for order {{3}} has been processed. Reason: {{4}}. Thank you for your patience!",
-    "example": ["Amina", "KES 2,450", "#ULC-2299", "Order cancelled by customer"]
-  },
-  {
-    "name": "ordering_order_scheduled",
-    "category": "UTILITY",
-    "language": "en_US",
-    "source": "whatsapp/ordering/order_scheduled.txt",
-    "body": "Hi {{1}}, your order {{2}} has been scheduled for {{3}}. Total: {{4}}. View details here: {{5}}. Thank you for your order!",
-    "example": ["Amina", "#ULC-2299", "9 Sep, 6:00 PM", "KES 3,200", "cdvtx.co/o/2299"]
-  },
-  {
-    "name": "ordering_order_for_pickup",
-    "category": "UTILITY",
-    "language": "en_US",
-    "source": "whatsapp/ordering/order_for_pickup.txt",
-    "body": "Hi {{1}}, your order {{2}} is ready for pickup at {{3}}, {{4}}. View details here: {{5}}. See you soon!",
-    "example": ["Amina", "#ULC-2299", "Westlands Branch", "5:30 PM today", "cdvtx.co/o/2299"]
-  },
-  {
-    "name": "ordering_order_placed_v3",
-    "category": "UTILITY",
-    "language": "en_US",
-    "source": "whatsapp/ordering/order_placed.txt (polished, plain-link variant)",
-    "body": "Hi {{1}},\n\nYour order *{{2}}* has been confirmed!\n\nTotal: {{3}}\nEstimated delivery: {{4}}\n\nTrack your order here: {{5}}\n\nThanks for ordering with us!",
-    "example": ["Amina", "#ULC-2291", "KES 2,450", "35 min", "cdvtx.co/t/2291"]
-  },
-  {
     "name": "ordering_order_placed_v3_btn",
     "category": "UTILITY",
     "language": "en_US",
-    "source": "whatsapp/ordering/order_placed.txt (button variant, shared-domain tenants only)",
+    "source": "whatsapp/ordering/order_placed.txt (link as a URL button)",
     "body": "Hi {{1}},\n\nYour order *{{2}}* has been confirmed!\n\nTotal: {{3}}\nEstimated delivery: {{4}}\n\nThanks for ordering with us!",
     "example": ["Amina", "#ULC-2291", "KES 2,450", "35 min"],
     "buttons": [
@@ -95,18 +23,10 @@
     ]
   },
   {
-    "name": "ordering_order_delivered_v3",
-    "category": "UTILITY",
-    "language": "en_US",
-    "source": "whatsapp/ordering/order_delivered.txt (polished, plain-link variant)",
-    "body": "Hi {{1}},\n\nYour order *{{2}}* has been delivered! We hope you enjoy it.\n\nShare your feedback here: {{3}}\n\nThank you for choosing us!",
-    "example": ["Amina", "#ULC-2291", "cdvtx.co/f/2291"]
-  },
-  {
     "name": "ordering_order_delivered_v3_btn",
     "category": "UTILITY",
     "language": "en_US",
-    "source": "whatsapp/ordering/order_delivered.txt (button variant, shared-domain tenants only)",
+    "source": "whatsapp/ordering/order_delivered.txt (link as a URL button)",
     "body": "Hi {{1}},\n\nYour order *{{2}}* has been delivered! We hope you enjoy it.\n\nThank you for choosing us!",
     "example": ["Amina", "#ULC-2291"],
     "buttons": [
@@ -114,18 +34,10 @@
     ]
   },
   {
-    "name": "ordering_order_ready_v3",
-    "category": "UTILITY",
-    "language": "en_US",
-    "source": "whatsapp/ordering/order_ready.txt (polished, plain-link variant)",
-    "body": "Hi {{1}},\n\nGreat news — your order *{{2}}* is ready!\n\nView your order here: {{3}}\n\nThank you for your order!",
-    "example": ["Amina", "#ULC-2299", "cdvtx.co/o/2299"]
-  },
-  {
     "name": "ordering_order_ready_v3_btn",
     "category": "UTILITY",
     "language": "en_US",
-    "source": "whatsapp/ordering/order_ready.txt (button variant, shared-domain tenants only)",
+    "source": "whatsapp/ordering/order_ready.txt (link as a URL button)",
     "body": "Hi {{1}},\n\nGreat news — your order *{{2}}* is ready!\n\nThank you for your order!",
     "example": ["Amina", "#ULC-2299"],
     "buttons": [
@@ -133,18 +45,10 @@
     ]
   },
   {
-    "name": "ordering_order_out_for_delivery_v3",
-    "category": "UTILITY",
-    "language": "en_US",
-    "source": "whatsapp/ordering/order_out_for_delivery.txt (polished, plain-link variant)",
-    "body": "Hi {{1}},\n\nYour order *{{2}}* is out for delivery.\n\nRider: {{3}}\nContact: {{4}}\n\nTrack it here: {{5}}\n\nThank you for your order!",
-    "example": ["Amina", "#ULC-2299", "James K.", "0711223344", "cdvtx.co/t/2299"]
-  },
-  {
     "name": "ordering_order_out_for_delivery_v3_btn",
     "category": "UTILITY",
     "language": "en_US",
-    "source": "whatsapp/ordering/order_out_for_delivery.txt (button variant, shared-domain tenants only)",
+    "source": "whatsapp/ordering/order_out_for_delivery.txt (link as a URL button)",
     "body": "Hi {{1}},\n\nYour order *{{2}}* is out for delivery.\n\nRider: {{3}}\nContact: {{4}}\n\nThank you for your order!",
     "example": ["Amina", "#ULC-2299", "James K.", "0711223344"],
     "buttons": [
@@ -152,18 +56,10 @@
     ]
   },
   {
-    "name": "ordering_order_cancelled_v3",
-    "category": "UTILITY",
-    "language": "en_US",
-    "source": "whatsapp/ordering/order_cancelled.txt (polished, plain-link variant)",
-    "body": "Hi {{1}},\n\nYour order *{{2}}* has been cancelled.\n\nReason: {{3}}\n\nView details here: {{4}}\n\nWe're sorry for the inconvenience.",
-    "example": ["Amina", "#ULC-2299", "Item out of stock", "cdvtx.co/o/2299"]
-  },
-  {
     "name": "ordering_order_cancelled_v3_btn",
     "category": "UTILITY",
     "language": "en_US",
-    "source": "whatsapp/ordering/order_cancelled.txt (button variant, shared-domain tenants only)",
+    "source": "whatsapp/ordering/order_cancelled.txt (link as a URL button)",
     "body": "Hi {{1}},\n\nYour order *{{2}}* has been cancelled.\n\nReason: {{3}}\n\nWe're sorry for the inconvenience.",
     "example": ["Amina", "#ULC-2299", "Item out of stock"],
     "buttons": [
@@ -179,18 +75,10 @@
     "example": ["Amina", "KES 2,450", "#ULC-2299", "Order cancelled by customer"]
   },
   {
-    "name": "ordering_order_scheduled_v3",
-    "category": "UTILITY",
-    "language": "en_US",
-    "source": "whatsapp/ordering/order_scheduled.txt (polished, plain-link variant)",
-    "body": "Hi {{1}},\n\nYour order *{{2}}* has been scheduled for {{3}}.\n\nTotal: {{4}}\n\nView details here: {{5}}\n\nThank you for your order!",
-    "example": ["Amina", "#ULC-2299", "9 Sep, 6:00 PM", "KES 3,200", "cdvtx.co/o/2299"]
-  },
-  {
     "name": "ordering_order_scheduled_v3_btn",
     "category": "UTILITY",
     "language": "en_US",
-    "source": "whatsapp/ordering/order_scheduled.txt (button variant, shared-domain tenants only)",
+    "source": "whatsapp/ordering/order_scheduled.txt (link as a URL button)",
     "body": "Hi {{1}},\n\nYour order *{{2}}* has been scheduled for {{3}}.\n\nTotal: {{4}}\n\nThank you for your order!",
     "example": ["Amina", "#ULC-2299", "9 Sep, 6:00 PM", "KES 3,200"],
     "buttons": [
@@ -198,18 +86,10 @@
     ]
   },
   {
-    "name": "ordering_order_for_pickup_v3",
-    "category": "UTILITY",
-    "language": "en_US",
-    "source": "whatsapp/ordering/order_for_pickup.txt (polished, plain-link variant)",
-    "body": "Hi {{1}},\n\nYour order *{{2}}* is ready for pickup at {{3}}, {{4}}.\n\nView details here: {{5}}\n\nSee you soon!",
-    "example": ["Amina", "#ULC-2299", "Westlands Branch", "5:30 PM today", "cdvtx.co/o/2299"]
-  },
-  {
     "name": "ordering_order_for_pickup_v3_btn",
     "category": "UTILITY",
     "language": "en_US",
-    "source": "whatsapp/ordering/order_for_pickup.txt (button variant, shared-domain tenants only)",
+    "source": "whatsapp/ordering/order_for_pickup.txt (link as a URL button)",
     "body": "Hi {{1}},\n\nYour order *{{2}}* is ready for pickup at {{3}}, {{4}}.\n\nSee you soon!",
     "example": ["Amina", "#ULC-2299", "Westlands Branch", "5:30 PM today"],
     "buttons": [
@@ -217,18 +97,10 @@
     ]
   },
   {
-    "name": "ordering_order_received_v1",
-    "category": "UTILITY",
-    "language": "en_US",
-    "source": "whatsapp/ordering/order_placed.txt (order received, before the outlet accepts it)",
-    "body": "Hi {{1}},\n\nWe have received your order *{{2}}*.\n\nTotal: {{3}}\n\nWe will let you know as soon as it is accepted.\n\nTrack your order here: {{4}}\n\nThanks for ordering with us!",
-    "example": ["Amina", "#ULC-2291", "KES 2,450", "cdvtx.co/t/2291"]
-  },
-  {
     "name": "ordering_order_received_v1_btn",
     "category": "UTILITY",
     "language": "en_US",
-    "source": "whatsapp/ordering/order_placed.txt (order received, button variant, shared-domain tenants only)",
+    "source": "whatsapp/ordering/order_placed.txt (order received, link as a URL button)",
     "body": "Hi {{1}},\n\nWe have received your order *{{2}}*.\n\nTotal: {{3}}\n\nWe will let you know as soon as it is accepted.\n\nThanks for ordering with us!",
     "example": ["Amina", "#ULC-2291", "KES 2,450"],
     "buttons": [
@@ -236,31 +108,15 @@
     ]
   },
   {
-    "name": "ordering_order_accepted_v1",
-    "category": "UTILITY",
-    "language": "en_US",
-    "source": "whatsapp/ordering/order_accepted.txt",
-    "body": "Hi {{1}},\n\nGood news! Your order *{{2}}* has been accepted and is being prepared.\n\nTrack your order here: {{3}}\n\nThanks for ordering with us!",
-    "example": ["Amina", "#ULC-2291", "cdvtx.co/t/2291"]
-  },
-  {
     "name": "ordering_order_accepted_v1_btn",
     "category": "UTILITY",
     "language": "en_US",
-    "source": "whatsapp/ordering/order_accepted.txt (button variant, shared-domain tenants only)",
+    "source": "whatsapp/ordering/order_accepted.txt (link as a URL button)",
     "body": "Hi {{1}},\n\nGood news! Your order *{{2}}* has been accepted and is being prepared.\n\nThanks for ordering with us!",
     "example": ["Amina", "#ULC-2291"],
     "buttons": [
       {"type": "URL", "text": "Track Order", "url": "https://ordering.codevertexafrica.com/{{1}}", "example": ["codevertex-demo/orders/guest/f2e6121d-bead-41ad-95ed-b74655a3d45c"]}
     ]
-  },
-  {
-    "name": "ordering_new_order_business_v1",
-    "category": "UTILITY",
-    "language": "en_US",
-    "source": "cmd/worker/order_business_alert.go (new online order alert to the business number)",
-    "body": "You have a new online order *{{1}}* from {{2}}.\n\nTotal: {{3}}\nFulfilment: {{4}}\n\nAccept it in the online orders queue: {{5}}\n\nPlease accept or reject it promptly.",
-    "example": ["#ULC-2291", "Amina", "KES 2,450", "Delivery", "pos.codevertexafrica.com/urban-loft/online-orders"]
   },
   {
     "name": "ordering_new_order_business_v1_btn",
@@ -274,28 +130,37 @@
     ]
   },
   {
-    "name": "pos_receipt_share",
+    "name": "pos_receipt_share_btn",
     "category": "UTILITY",
     "language": "en_US",
-    "source": "whatsapp/pos/receipt_share.txt",
-    "body": "Thank you for your purchase, {{1}}! Order: {{2}}. Total: {{3}}. View or download your receipt here: {{4}}. We appreciate your business!",
-    "example": ["David", "POS-88213", "KES 1,180", "cdvtx.co/r/88213"]
+    "source": "whatsapp/pos/receipt_share.txt (receipt short link as a button)",
+    "body": "Thank you for your purchase, {{1}}!\n\nOrder: *{{2}}*\nTotal: {{3}}\n\nWe appreciate your business!",
+    "example": ["David", "POS-88213", "KES 1,180"],
+    "buttons": [
+      {"type": "URL", "text": "View Receipt", "url": "https://r.codevertexafrica.com/{{1}}", "example": ["7Kq9mZ2xT4bNw1"]}
+    ]
   },
   {
-    "name": "logistics_delivery_arriving",
+    "name": "logistics_delivery_arriving_btn",
     "category": "UTILITY",
     "language": "en_US",
-    "source": "whatsapp/logistics/delivery_arriving.txt",
-    "body": "Your delivery is arriving! Order {{1}}. ETA: {{2}}. Track your delivery here: {{3}}. See you soon!",
-    "example": ["TL-40217", "12 min", "cdvtx.co/t/40217"]
+    "source": "whatsapp/logistics/delivery_arriving.txt (tracking link as a button)",
+    "body": "Your delivery is arriving!\n\nOrder: *{{1}}*\nETA: {{2}}\n\nSee you soon!",
+    "example": ["TL-40217", "12 min"],
+    "buttons": [
+      {"type": "URL", "text": "Track Delivery", "url": "https://ordering.codevertexafrica.com/{{1}}", "example": ["codevertex-demo/track/TL-40217"]}
+    ]
   },
   {
-    "name": "logistics_delivery_completed_v2",
+    "name": "logistics_delivery_completed_btn",
     "category": "UTILITY",
     "language": "en_US",
-    "source": "whatsapp/logistics/delivery_completed.txt",
-    "body": "Your order {{1}} has been delivered. Share your feedback on this delivery here: {{2}}. Thank you for choosing us!",
-    "example": ["TL-40217", "cdvtx.co/f/40217"]
+    "source": "whatsapp/logistics/delivery_completed.txt (feedback link as a button)",
+    "body": "Your order *{{1}}* has been delivered.\n\nThank you for choosing us!",
+    "example": ["TL-40217"],
+    "buttons": [
+      {"type": "URL", "text": "Leave Feedback", "url": "https://ordering.codevertexafrica.com/{{1}}", "example": ["codevertex-demo/orders/guest/f2e6121d-bead-41ad-95ed-b74655a3d45c?rate=1"]}
+    ]
   },
   {
     "name": "ispbilling_expiry_reminder",
@@ -370,12 +235,15 @@
     "example": ["KES 8,400", "ULC-3310"]
   },
   {
-    "name": "finance_payment_failed",
+    "name": "finance_payment_failed_btn",
     "category": "UTILITY",
     "language": "en_US",
-    "source": "proposed: whatsapp/finance/payment_failed.txt",
-    "body": "Hi {{1}}, your payment for order {{2}} was unsuccessful. Please try again here: {{3}}. Need help? Contact our support team.",
-    "example": ["Samuel", "#ULC-3310", "cdvtx.co/o/3310/pay"]
+    "source": "proposed: whatsapp/finance/payment_failed.txt (retry link as a button)",
+    "body": "Hi {{1}},\n\nYour payment for order *{{2}}* was unsuccessful.\n\nNeed help? Contact our support team.",
+    "example": ["Samuel", "#ULC-3310"],
+    "buttons": [
+      {"type": "URL", "text": "Try Again", "url": "https://ordering.codevertexafrica.com/{{1}}", "example": ["codevertex-demo/orders/f2e6121d-bead-41ad-95ed-b74655a3d45c/pay"]}
+    ]
   },
   {
     "name": "finance_payment_receipt",

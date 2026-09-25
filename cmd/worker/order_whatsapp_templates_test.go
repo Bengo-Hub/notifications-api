@@ -2,6 +2,7 @@ package main
 
 import (
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/bengobox/notifications-api/internal/whatsapp/templatesync"
@@ -43,18 +44,71 @@ func TestOrderWhatsAppParamsMatchManifest(t *testing.T) {
 		}
 	}
 	for event, m := range orderMappings {
-		if m.WhatsAppTemplate == "" || m.WhatsAppParams == nil {
+		if m.WhatsAppParams == nil {
 			continue
 		}
 		params := m.WhatsAppParams(sample)
-		check(event, m.WhatsAppTemplate, len(params))
+		if m.WhatsAppTemplate != "" {
+			check(event, m.WhatsAppTemplate, len(params))
+		}
 		if m.WhatsAppButtonTemplate != "" {
 			check(event, m.WhatsAppButtonTemplate, len(params)-1) // the link becomes the button
 		}
-		if m.WhatsAppOriginalTemplate != "" && m.WhatsAppOriginalParams != nil {
-			check(event, m.WhatsAppOriginalTemplate, len(m.WhatsAppOriginalParams(sample)))
+	}
+	// The business alert: four body parameters, the queue link is the Open Orders button.
+	check("business alert", "ordering_new_order_business_v1_btn", 4)
+}
+
+// LINK POLICY: a message with a link is always sent with its button template (every tenant,
+// including one on its own domain), and a template sent without a button never shows a URL.
+func TestOrderWhatsAppLinkPolicy(t *testing.T) {
+	defs, err := templatesync.LoadManifest()
+	if err != nil {
+		t.Fatal(err)
+	}
+	byName := map[string]templatesync.TemplateDef{}
+	for _, d := range defs {
+		byName[d.Name] = d
+	}
+	looksLikeURL := func(s string) bool {
+		return strings.Contains(s, "://") || strings.Contains(s, ".com/") || strings.Contains(s, ".co/")
+	}
+
+	for _, link := range []string{
+		"https://ordering.codevertexafrica.com/urban-loft/orders/guest/abc",
+		"https://theurbanloftcafe.com/urban-loft/orders/guest/abc?rate=1", // tenant on its own domain
+	} {
+		for event, m := range orderMappings {
+			if m.WhatsAppParams == nil {
+				continue
+			}
+			data := map[string]interface{}{"order_link": link, "track_link": link, "review_link": link, "name": "Amina", "order_number": "000006"}
+			meta := whatsAppTemplateMetadata(m, data)
+			name, _ := meta["template_name"].(string)
+			def, ok := byName[name]
+			if name != "" && !ok {
+				t.Errorf("%s: sends %q, which is not in templates.json", event, name)
+				continue
+			}
+			if m.WhatsAppLinkKey != "" {
+				if len(def.Buttons) == 0 {
+					t.Errorf("%s (%s): message has a link but is sent with %q, which has no URL button", event, link, name)
+				}
+				if meta["template_button_param"] == "" {
+					t.Errorf("%s: button suffix missing", event)
+				}
+				continue
+			}
+			for _, ex := range def.Example {
+				if looksLikeURL(ex) {
+					t.Errorf("%s: %q is sent without a button but its body carries a link", event, name)
+				}
+			}
 		}
 	}
-	// The business alert sends five parameters.
-	check("business alert", "ordering_new_order_business_v1", 5)
+
+	suffix := buttonURLSuffix("https://theurbanloftcafe.com/urban-loft/orders/guest/abc?rate=1")
+	if suffix != "urban-loft/orders/guest/abc?rate=1" {
+		t.Fatalf("custom-domain link must map onto the shared domain path, got %q", suffix)
+	}
 }

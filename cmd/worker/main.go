@@ -850,6 +850,9 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 		for k, v := range msg.Metadata {
 			waMetadata[k] = v
 		}
+		// Link policy: a free-form send (no approved template) never pastes a raw URL; its link
+		// goes out as a tappable button.
+		applyWhatsAppLinkButton(waMetadata, msg.Data)
 
 		if err := waProv.SendWhatsApp(ctx, cfg.Providers.DefaultSMSSender, msg.To, rendered, waMetadata); err != nil {
 			return err

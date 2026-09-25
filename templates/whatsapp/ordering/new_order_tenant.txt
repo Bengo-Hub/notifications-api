@@ -1,5 +1,5 @@
-New online order *{{ .order_number }}* from {{ .customer_name }}.
+You have a new online order *{{ .order_number }}* from {{ .customer_name }}.
 
 Total: {{ .total_amount }}
 
-Open the online orders queue to accept it: {{ .manage_link }}
+Please accept or reject it promptly in the online orders queue.

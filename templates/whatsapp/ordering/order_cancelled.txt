@@ -3,4 +3,4 @@ Hi {{ or .name "there" }},
 Your order *{{ .order_number }}* has been cancelled.{{ if .cancel_reason }} Reason: {{ .cancel_reason }}.{{ end }}
 If you had already paid online, your refund is on its way.
 
-View details here: {{ .order_link }}
+We're sorry for the inconvenience.

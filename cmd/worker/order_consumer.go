@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"strings"
 	"time"
 
@@ -83,59 +84,83 @@ type orderNotificationMapping struct {
 	// from the same msgData map DataBuilder already produced, in the exact order Meta's approved
 	// template body expects them (see templates.json's "body"/"example" for each template name).
 	// For a mapping with WhatsAppButtonTemplate set, this MUST end with the link value named by
-	// WhatsAppLinkKey as its last element — the button path reuses this slice minus that last
-	// element as the button variant's (shorter) body params.
+	// WhatsAppLinkKey as its last element; the button send drops it (the link is the button).
 	WhatsAppParams func(msgData map[string]interface{}) []string
-	// WhatsAppButtonTemplate, when non-empty, is a second Meta-approved template — identical to
-	// WhatsAppTemplate but with the link moved out of the body text into a tappable URL button —
-	// used instead of WhatsAppTemplate for tenants on the shared ordering domain (see
-	// isSharedOrderingDomain). Left empty for mappings with no link (e.g. order_refunded) or
-	// where a button doesn't make sense.
+	// WhatsAppButtonTemplate is the Meta-approved template with the link as a tappable URL button.
+	//
+	// LINK POLICY (docs/whatsapp-template-policy.md): a WhatsApp message never carries a raw URL
+	// in its text. Any message with a link is sent with its "_btn" template; WhatsAppTemplate (the
+	// plain sibling) is only for messages with no link at all (e.g. order_refunded). There is no
+	// raw-link fallback: if the button template cannot be sent, WhatsApp is skipped for that
+	// message (email/SMS still go).
 	WhatsAppButtonTemplate string
 	// WhatsAppLinkKey names the msgData key (e.g. "order_link", "review_link") holding the full
-	// URL that becomes the button's dynamic suffix when WhatsAppButtonTemplate is used.
+	// URL whose path becomes the button's dynamic suffix.
 	WhatsAppLinkKey string
-	// WhatsAppOriginalTemplate/WhatsAppOriginalParams are the ALREADY Meta-approved template +
-	// its (older, name-less) param order this mapping shipped with before the polished "_v3"/
-	// "_v3_btn" rewrite. Every send here tries the new, polished primary first and falls back to
-	// this proven-working template on any failure (see MetaCloudProvider.SendWhatsApp) — so a
-	// customer keeps receiving correctly formatted messages the whole time Meta is reviewing the
-	// new templates, never a hard failure.
-	//
-	// NOTE (2026-09-18): the original 8 templates were deleted from Meta along with the first
-	// "_v2"/"_btn" draft (see project plan log #24) — Meta enforces a real cooldown before a
-	// deleted template's exact name+language can be recreated ("Message template language is
-	// being deleted... try again in 4 weeks"), so this fallback is itself temporarily
-	// non-functional until that clears. No code change needed when it does: Run() will simply
-	// succeed recreating these names again on its own schedule.
-	WhatsAppOriginalTemplate string
-	WhatsAppOriginalParams   func(msgData map[string]interface{}) []string
 }
 
-// sharedOrderingButtonPrefix is the ONE fixed domain Meta bakes into every "_btn" template's URL
-// button at approval time (see templates.json) — Meta allows a button URL to vary only a suffix
-// after a fixed prefix, never the domain itself, so button templates are only valid for tenants
-// actually served from this domain. Must match NOTIFICATIONS_ORDERING_APP_URL's real value
-// exactly (verified live: https://ordering.codevertexafrica.com).
+// sharedOrderingButtonPrefix is the fixed domain Meta bakes into every ordering "_btn" template's
+// URL button at approval (templates.json); only the part after it varies per send.
 const sharedOrderingButtonPrefix = "https://ordering.codevertexafrica.com/"
 
-// isSharedOrderingDomain reports whether ti resolves its ordering links to the shared domain the
-// "_btn" templates were approved against, rather than a tenant-specific custom domain (e.g.
-// kuraweigh.kura.go.ke) — ServiceURLs["ordering"] is only set when a tenant has such an override.
-func isSharedOrderingDomain(ti *tenantInfo) bool {
-	return ti == nil || ti.ServiceURLs["ordering"] == ""
+// whatsAppTemplateMetadata picks how a mapping's WhatsApp message is sent, per the link policy:
+//   - a message with a link: its "_btn" template, the link path as the button suffix, never a raw
+//     link in the text;
+//   - a link that cannot become a button: an interactive message with a "View Order" button
+//     (Meta allows it inside the customer's 24h reply window; outside it the send fails rather
+//     than falling back to raw text);
+//   - a message without a link: its plain template.
+func whatsAppTemplateMetadata(mapping orderNotificationMapping, msgData map[string]interface{}) map[string]interface{} {
+	out := map[string]interface{}{}
+	if mapping.WhatsAppParams == nil {
+		return out
+	}
+	params := mapping.WhatsAppParams(msgData)
+	if mapping.WhatsAppButtonTemplate != "" && mapping.WhatsAppLinkKey != "" && len(params) > 0 {
+		link := strings.TrimSpace(fmt.Sprintf("%v", msgData[mapping.WhatsAppLinkKey]))
+		if suffix := buttonURLSuffix(link); suffix != "" {
+			out["template_name"] = mapping.WhatsAppButtonTemplate
+			out["template_language"] = "en_US"
+			out["template_params"] = params[:len(params)-1] // the link is the button
+			out["template_button_param"] = suffix
+			return out
+		}
+		if strings.HasPrefix(link, "https://") {
+			out["cta_button_text"] = "View Order"
+			out["cta_button_url"] = link
+		}
+		return out
+	}
+	if mapping.WhatsAppTemplate != "" {
+		out["template_name"] = mapping.WhatsAppTemplate
+		out["template_language"] = "en_US"
+		out["template_params"] = params
+	}
+	return out
 }
 
-// buttonURLSuffix strips sharedOrderingButtonPrefix from a full order/review link, returning the
-// dynamic suffix a "_btn" template's URL button parameter expects. Returns "" (meaning: don't use
-// the button template) if fullURL doesn't actually start with that fixed prefix — a defensive
-// check, since isSharedOrderingDomain already gates this, but a mismatched value here would
-// otherwise silently send a broken button link.
+// buttonURLSuffix returns the dynamic part of a "_btn" template's URL button for an order link.
+// Order links are always "<base>/<tenant-slug>/orders/guest/<id>[?...]", and the shared ordering
+// app serves every tenant's pages under its slug, so a tenant on its own domain gets the same
+// path on the shared domain: every tenant gets a button, none gets a raw link. "" only when the
+// value is not a usable link.
 func buttonURLSuffix(fullURL string) string {
-	if !strings.HasPrefix(fullURL, sharedOrderingButtonPrefix) {
+	fullURL = strings.TrimSpace(fullURL)
+	if strings.HasPrefix(fullURL, sharedOrderingButtonPrefix) {
+		return strings.TrimPrefix(fullURL, sharedOrderingButtonPrefix)
+	}
+	u, err := url.Parse(fullURL)
+	if err != nil || u.Host == "" {
 		return ""
 	}
-	return strings.TrimPrefix(fullURL, sharedOrderingButtonPrefix)
+	suffix := strings.TrimPrefix(u.EscapedPath(), "/")
+	if suffix == "" {
+		return ""
+	}
+	if u.RawQuery != "" {
+		suffix += "?" + u.RawQuery
+	}
+	return suffix
 }
 
 // waParam coerces a DataBuilder-produced value into a display string for a WhatsApp template
@@ -251,7 +276,6 @@ var orderMappings = map[string]orderNotificationMapping{
 		// "Order received" (the outlet has not accepted it yet under manual acceptance). The older
 		// placed templates say "has been confirmed", which is not true at this point; they remain
 		// only as the fallback while ordering_order_received_v1 is in Meta review.
-		WhatsAppTemplate:       "ordering_order_received_v1",
 		WhatsAppButtonTemplate: "ordering_order_received_v1_btn",
 		WhatsAppLinkKey:        "order_link",
 		WhatsAppParams: func(d map[string]interface{}) []string {
@@ -260,22 +284,6 @@ var orderMappings = map[string]orderNotificationMapping{
 				waParam(d["order_number"], "your order"),
 				waParam(d["total_amount"], "-"),
 				waParam(d["order_link"], "-"),
-			}
-		},
-		WhatsAppOriginalTemplate: "ordering_order_placed_v3",
-		WhatsAppOriginalParams: func(d map[string]interface{}) []string {
-			est := ""
-			if v, ok := d["estimated_prep_time"]; ok && v != nil {
-				if s := fmt.Sprintf("%v", v); s != "" && s != "0" {
-					est = s + " min"
-				}
-			}
-			return []string{
-				waParam(d["name"], "there"),
-				waParam(d["order_number"], "your order"),
-				waParam(d["total_amount"], "-"),
-				waParam(est, "As soon as possible"),
-				waParam(d["order_link"], ""),
 			}
 		},
 	},
@@ -292,7 +300,6 @@ var orderMappings = map[string]orderNotificationMapping{
 				"collection_code": data["collection_code"],
 			}
 		},
-		WhatsAppTemplate:       "ordering_order_accepted_v1",
 		WhatsAppButtonTemplate: "ordering_order_accepted_v1_btn",
 		WhatsAppLinkKey:        "order_link",
 		WhatsAppParams: func(d map[string]interface{}) []string {
@@ -314,18 +321,9 @@ var orderMappings = map[string]orderNotificationMapping{
 				"order_link":   orderLink(data, orderAppURL),
 			}
 		},
-		WhatsAppTemplate:       "ordering_order_ready_v3",
 		WhatsAppButtonTemplate: "ordering_order_ready_v3_btn",
 		WhatsAppLinkKey:        "order_link",
 		WhatsAppParams: func(d map[string]interface{}) []string {
-			return []string{
-				waParam(d["name"], "there"),
-				waParam(d["order_number"], "your order"),
-				waParam(d["order_link"], ""),
-			}
-		},
-		WhatsAppOriginalTemplate: "ordering_order_ready",
-		WhatsAppOriginalParams: func(d map[string]interface{}) []string {
 			return []string{
 				waParam(d["name"], "there"),
 				waParam(d["order_number"], "your order"),
@@ -349,20 +347,9 @@ var orderMappings = map[string]orderNotificationMapping{
 				"pod_code": data["pod_code"],
 			}
 		},
-		WhatsAppTemplate:       "ordering_order_out_for_delivery_v3",
 		WhatsAppButtonTemplate: "ordering_order_out_for_delivery_v3_btn",
 		WhatsAppLinkKey:        "track_link",
 		WhatsAppParams: func(d map[string]interface{}) []string {
-			return []string{
-				waParam(d["name"], "there"),
-				waParam(d["order_number"], "your order"),
-				waParam(d["rider_name"], "your rider"),
-				waParam(d["rider_phone"], "-"),
-				waParam(d["track_link"], ""),
-			}
-		},
-		WhatsAppOriginalTemplate: "ordering_order_out_for_delivery",
-		WhatsAppOriginalParams: func(d map[string]interface{}) []string {
 			return []string{
 				waParam(d["name"], "there"),
 				waParam(d["order_number"], "your order"),
@@ -378,19 +365,11 @@ var orderMappings = map[string]orderNotificationMapping{
 		EmailSubject:           "Your order has been delivered",
 		DataBuilder:            reviewEmailDataBuilder,
 		IdempotencyScope:       "review",
-		WhatsAppTemplate:       "ordering_order_delivered_v3",
 		WhatsAppButtonTemplate: "ordering_order_delivered_v3_btn",
 		WhatsAppLinkKey:        "review_link",
 		WhatsAppParams: func(d map[string]interface{}) []string {
 			return []string{
 				waParam(d["name"], "there"),
-				waParam(d["order_number"], "your order"),
-				waParam(d["review_link"], ""),
-			}
-		},
-		WhatsAppOriginalTemplate: "ordering_order_delivered",
-		WhatsAppOriginalParams: func(d map[string]interface{}) []string {
-			return []string{
 				waParam(d["order_number"], "your order"),
 				waParam(d["review_link"], ""),
 			}
@@ -406,19 +385,11 @@ var orderMappings = map[string]orderNotificationMapping{
 		EmailSubject:           "Your order has been delivered",
 		DataBuilder:            reviewEmailDataBuilder,
 		IdempotencyScope:       "review",
-		WhatsAppTemplate:       "ordering_order_delivered_v3",
 		WhatsAppButtonTemplate: "ordering_order_delivered_v3_btn",
 		WhatsAppLinkKey:        "review_link",
 		WhatsAppParams: func(d map[string]interface{}) []string {
 			return []string{
 				waParam(d["name"], "there"),
-				waParam(d["order_number"], "your order"),
-				waParam(d["review_link"], ""),
-			}
-		},
-		WhatsAppOriginalTemplate: "ordering_order_delivered",
-		WhatsAppOriginalParams: func(d map[string]interface{}) []string {
-			return []string{
 				waParam(d["order_number"], "your order"),
 				waParam(d["review_link"], ""),
 			}
@@ -440,19 +411,9 @@ var orderMappings = map[string]orderNotificationMapping{
 				"order_link":    orderLink(data, orderAppURL),
 			}
 		},
-		WhatsAppTemplate:       "ordering_order_cancelled_v3",
 		WhatsAppButtonTemplate: "ordering_order_cancelled_v3_btn",
 		WhatsAppLinkKey:        "order_link",
 		WhatsAppParams: func(d map[string]interface{}) []string {
-			return []string{
-				waParam(d["name"], "there"),
-				waParam(d["order_number"], "your order"),
-				waParam(d["cancel_reason"], "Not specified"),
-				waParam(d["order_link"], ""),
-			}
-		},
-		WhatsAppOriginalTemplate: "ordering_order_cancelled",
-		WhatsAppOriginalParams: func(d map[string]interface{}) []string {
 			return []string{
 				waParam(d["name"], "there"),
 				waParam(d["order_number"], "your order"),
@@ -483,15 +444,6 @@ var orderMappings = map[string]orderNotificationMapping{
 				waParam(d["reason"], "Not specified"),
 			}
 		},
-		WhatsAppOriginalTemplate: "ordering_order_refunded",
-		WhatsAppOriginalParams: func(d map[string]interface{}) []string {
-			return []string{
-				waParam(d["name"], "there"),
-				waParam(d["amount"], "-"),
-				waParam(d["order_number"], "your order"),
-				waParam(d["reason"], "Not specified"),
-			}
-		},
 	},
 	"ordering.order.scheduled": {
 		TemplateID:   "ordering/order_scheduled",
@@ -506,20 +458,9 @@ var orderMappings = map[string]orderNotificationMapping{
 				"order_link":    orderLink(data, orderAppURL),
 			}
 		},
-		WhatsAppTemplate:       "ordering_order_scheduled_v3",
 		WhatsAppButtonTemplate: "ordering_order_scheduled_v3_btn",
 		WhatsAppLinkKey:        "order_link",
 		WhatsAppParams: func(d map[string]interface{}) []string {
-			return []string{
-				waParam(d["name"], "there"),
-				waParam(d["order_number"], "your order"),
-				waParam(d["scheduled_for"], "the scheduled time"),
-				waParam(d["total_amount"], "-"),
-				waParam(d["order_link"], ""),
-			}
-		},
-		WhatsAppOriginalTemplate: "ordering_order_scheduled",
-		WhatsAppOriginalParams: func(d map[string]interface{}) []string {
 			return []string{
 				waParam(d["name"], "there"),
 				waParam(d["order_number"], "your order"),
@@ -534,28 +475,17 @@ var orderMappings = map[string]orderNotificationMapping{
 		EmailSubject: "Your order is ready for pickup",
 		DataBuilder: func(data map[string]interface{}, orderAppURL string) map[string]interface{} {
 			return map[string]interface{}{
-				"name":         data["customer_name"],
-				"order_number": data["order_number"],
+				"name":            data["customer_name"],
+				"order_number":    data["order_number"],
 				"outlet_name":     data["outlet_name"],
 				"pickup_time":     data["pickup_time"],
 				"order_link":      orderLink(data, orderAppURL),
 				"collection_code": data["collection_code"],
 			}
 		},
-		WhatsAppTemplate:       "ordering_order_for_pickup_v3",
 		WhatsAppButtonTemplate: "ordering_order_for_pickup_v3_btn",
 		WhatsAppLinkKey:        "order_link",
 		WhatsAppParams: func(d map[string]interface{}) []string {
-			return []string{
-				waParam(d["name"], "there"),
-				waParam(d["order_number"], "your order"),
-				waParam(d["outlet_name"], "our store"),
-				waParam(d["pickup_time"], "shortly"),
-				waParam(d["order_link"], ""),
-			}
-		},
-		WhatsAppOriginalTemplate: "ordering_order_for_pickup",
-		WhatsAppOriginalParams: func(d map[string]interface{}) []string {
 			return []string{
 				waParam(d["name"], "there"),
 				waParam(d["order_number"], "your order"),
@@ -675,37 +605,8 @@ func startOrderConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 		// outside an active 24h customer-service reply window, which is true for nearly every
 		// order notification; without this, WhatsApp sends here only worked when the customer had
 		// messaged the business first.
-		if mapping.WhatsAppTemplate != "" && mapping.WhatsAppParams != nil {
-			params := mapping.WhatsAppParams(msgData)
-			// Prefer the button variant when one exists for this mapping AND this tenant resolves
-			// ordering links to the shared domain the button was approved against (see
-			// isSharedOrderingDomain/buttonURLSuffix) — a tenant on a custom domain keeps the
-			// plain-text-link template instead, since Meta can't vary the button's domain per send.
-			if mapping.WhatsAppButtonTemplate != "" && mapping.WhatsAppLinkKey != "" && isSharedOrderingDomain(ti) && len(params) > 0 {
-				linkVal := fmt.Sprintf("%v", msgData[mapping.WhatsAppLinkKey])
-				if suffix := buttonURLSuffix(linkVal); suffix != "" {
-					metadata["template_name"] = mapping.WhatsAppButtonTemplate
-					metadata["template_language"] = "en_US"
-					metadata["template_params"] = params[:len(params)-1] // drop the link — it's the button now
-					metadata["template_button_param"] = suffix
-				}
-			}
-			if metadata["template_name"] == nil {
-				metadata["template_name"] = mapping.WhatsAppTemplate
-				metadata["template_language"] = "en_US"
-				metadata["template_params"] = params
-			}
-			// Both the button and the polished-plain "_v2" template are new, freshly drafted
-			// (see templatesync/templates.json) and need their own one-time Meta sync/approval
-			// before they actually exist on the WABA — this code ships ahead of that. Point the
-			// fallback at WhatsAppOriginalTemplate, the template this mapping shipped with
-			// before this rewrite and which is ALREADY approved and live — so a pending/rejected
-			// new template degrades straight to today's known-working send (old wording, no
-			// button) instead of failing outright. See SendWhatsApp's retry-on-any-failure logic.
-			if mapping.WhatsAppOriginalTemplate != "" && mapping.WhatsAppOriginalParams != nil {
-				metadata["template_fallback_name"] = mapping.WhatsAppOriginalTemplate
-				metadata["template_fallback_params"] = mapping.WhatsAppOriginalParams(msgData)
-			}
+		for k, v := range whatsAppTemplateMetadata(mapping, msgData) {
+			metadata[k] = v
 		}
 		base := messaging.Message{
 			TenantID:       evtTenantID,

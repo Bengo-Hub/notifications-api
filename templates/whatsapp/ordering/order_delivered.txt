@@ -2,6 +2,4 @@ Hi {{ or .name "there" }},
 
 Your order *{{ .order_number }}* has been delivered! We hope you enjoy it.
 
-{{ if .review_link }}Share your feedback here: {{ .review_link }}
-
-{{ end }}Thank you for choosing us!
+Thank you for choosing us!

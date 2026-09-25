@@ -1,5 +1,7 @@
 Hi {{ or .name "there" }},
 
-Your order *{{ .order_number }}* is ready for pickup{{ if .outlet_name }} at {{ .outlet_name }}{{ end }}. Show your order number at the counter.
+Your order *{{ .order_number }}* is ready for pickup{{ if .outlet_name }} at {{ .outlet_name }}{{ end }}.{{ if .collection_code }}
 
-View your order here: {{ .order_link }}
+Collection code: *{{ .collection_code }}*. Show it at the counter.{{ end }}
+
+See you soon!

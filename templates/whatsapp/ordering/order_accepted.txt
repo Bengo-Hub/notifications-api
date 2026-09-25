@@ -1,5 +1,7 @@
 Hi {{ or .name "there" }},
 
-Good news: your order *{{ .order_number }}* has been accepted and is being prepared.
+Good news! Your order *{{ .order_number }}* has been accepted and is being prepared.{{ if .collection_code }}
 
-Track it here: {{ .order_link }}
+Collection code: *{{ .collection_code }}*. Show it at the counter.{{ end }}
+
+Thanks for ordering with us!
