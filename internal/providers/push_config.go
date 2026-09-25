@@ -105,11 +105,43 @@ func (m *Manager) ResolvePush(ctx context.Context, tenantID string) PushSettings
 	})
 }
 
-// GetPushProvider returns the FCM provider for the tenant's resolved push configuration.
+// GetPushProvider returns the tenant's push sender: Firebase for FCM-registered devices when a
+// project is configured (tenant, platform or env), and the platform's Web Push identity for
+// browser subscriptions. Each device is sent through the channel it registered with.
 func (m *Manager) GetPushProvider(ctx context.Context, tenantID string) (PushProvider, error) {
-	ps := m.ResolvePush(ctx, tenantID)
-	if !ps.Ready() {
-		return nil, fmt.Errorf("push: no Firebase service account configured for this tenant or the platform")
+	r := &push.Router{}
+	if ps := m.ResolvePush(ctx, tenantID); ps.Ready() {
+		r.FCM = push.NewFCM(push.FCMConfig{ProjectID: ps.ProjectID, ServiceAccount: ps.ServiceAccount})
 	}
-	return push.NewFCM(push.FCMConfig{ProjectID: ps.ProjectID, ServiceAccount: ps.ServiceAccount}), nil
+	if wp, err := m.WebPushKeys(ctx); err == nil {
+		r.Web = push.NewWebPush(wp)
+	}
+	if r.FCM == nil && r.Web == nil {
+		return nil, fmt.Errorf("push: no Firebase project and no Web Push keys available")
+	}
+	return r, nil
+}
+
+// BrowserPushConfig is what a browser needs to register this device for push: Firebase when the
+// tenant resolves to a complete Firebase project (service account and web values), otherwise the
+// platform's standard Web Push public key.
+type BrowserPushConfig struct {
+	Enabled bool `json:"enabled"`
+	// Kind is "fcm" or "webpush".
+	Kind           string         `json:"kind,omitempty"`
+	Source         string         `json:"source,omitempty"`
+	Config         *WebPushConfig `json:"config,omitempty"`
+	VAPIDPublicKey string         `json:"vapid_public_key,omitempty"`
+}
+
+// ResolveBrowserPush picks how a browser of this tenant should register.
+func (m *Manager) ResolveBrowserPush(ctx context.Context, tenantID string) BrowserPushConfig {
+	if ps := m.ResolvePush(ctx, tenantID); ps.Ready() && ps.Web.Complete() {
+		web := ps.Web
+		return BrowserPushConfig{Enabled: true, Kind: "fcm", Source: ps.Source, Config: &web}
+	}
+	if wp, err := m.WebPushKeys(ctx); err == nil {
+		return BrowserPushConfig{Enabled: true, Kind: "webpush", Source: "platform", VAPIDPublicKey: wp.PublicKey}
+	}
+	return BrowserPushConfig{Enabled: false}
 }

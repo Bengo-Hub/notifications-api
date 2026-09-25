@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/bengobox/notifications-api/internal/config"
 	pcfg "github.com/bengobox/notifications-api/internal/providers/config"
 	"github.com/bengobox/notifications-api/internal/providers/email"
+	"github.com/bengobox/notifications-api/internal/providers/push"
 	"github.com/bengobox/notifications-api/internal/providers/sms"
 	"github.com/bengobox/notifications-api/internal/providers/whatsapp"
 )
@@ -23,6 +26,11 @@ type Manager struct {
 	decryptionKey []byte
 	env           string
 	PlatformID    string
+
+	// Platform Web Push identity cache (see webpush_keys.go).
+	vapidMu    sync.Mutex
+	vapidCache *push.WebPushConfig
+	vapidAt    time.Time
 }
 
 // NewManager creates a provider manager. decryptionKey is optional (32 bytes) for decrypting provider secrets at rest.

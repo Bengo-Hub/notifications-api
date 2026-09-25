@@ -96,6 +96,9 @@ func (p *FCMProvider) SendPush(ctx context.Context, tokens []string, title, body
 	var dead []string
 	delivered := 0
 	for _, token := range tokens {
+		if IsWebPushSubscription(token) {
+			continue // a browser Web Push subscription, sent by the webpush provider
+		}
 		err := p.sendMessage(ctx, accessToken, token, title, body, data)
 		switch {
 		case err == nil:

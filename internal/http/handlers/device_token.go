@@ -202,10 +202,12 @@ func (h *DeviceTokenHandler) SetPushResolver(pm *providers.Manager) {
 }
 
 // WebConfig handles GET /api/v1/push/web-config?tenant={slug or id} (public).
-// Returns the Firebase browser config (public client values, never the service account) an app
-// needs to register a device for push, resolved centrally: the tenant's own Firebase project if
-// it configured one, else the platform's shared project. Apps call this at runtime instead of
-// each carrying Firebase build settings. enabled=false means push is not set up yet.
+// Tells an app how to register a device for push, resolved centrally (never any secret):
+//   - kind "fcm": the tenant's (or platform's) Firebase project; register with the Firebase SDK
+//     using config and send the FCM token (provider "fcm");
+//   - kind "webpush": the platform's standard Web Push identity; subscribe with the browser's
+//     PushManager using vapid_public_key and send the subscription JSON (provider "webpush").
+// Apps call this at runtime instead of carrying push build settings. enabled=false: push is off.
 func (h *DeviceTokenHandler) WebConfig(w http.ResponseWriter, r *http.Request) {
 	if h.push == nil {
 		respondJSON(w, http.StatusOK, map[string]any{"enabled": false})
@@ -223,12 +225,6 @@ func (h *DeviceTokenHandler) WebConfig(w http.ResponseWriter, r *http.Request) {
 			tenantID = t.ID.String()
 		}
 	}
-	ps := h.push.ResolvePush(r.Context(), tenantID)
-	enabled := ps.Ready() && ps.Web.Complete()
 	w.Header().Set("Cache-Control", "public, max-age=300")
-	if !enabled {
-		respondJSON(w, http.StatusOK, map[string]any{"enabled": false})
-		return
-	}
-	respondJSON(w, http.StatusOK, map[string]any{"enabled": true, "source": ps.Source, "config": ps.Web})
+	respondJSON(w, http.StatusOK, h.push.ResolveBrowserPush(r.Context(), tenantID))
 }
