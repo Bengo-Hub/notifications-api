@@ -125,33 +125,26 @@ func (m *Manager) GetEmailProvider(ctx context.Context, tenantID string, preferr
 	for _, name := range dedup(order) {
 		switch name {
 		case "smtp":
-			// Load settings with hierarchy: Platform Managed > Tenant > Platform Fallback
-			s, loadErr := pcfg.LoadTenantProviderSettings(ctx, m.dbCfg, tenantID, m.env, "email", "smtp", m.decryptionKey)
-			if loadErr != nil {
-				fmt.Printf("[DEBUG] LoadTenantProviderSettings error for tenant %s: %v\n", tenantID, loadErr)
-			}
+			// The tenant's own SMTP account as a whole, else the platform's (DB, then env); never
+			// the platform's credentials against a tenant's host (see provider_scope.go). A
+			// localhost tenant host outside development counts as unconfigured.
+			tenantOwn, platform, merged := m.scopedSettings(ctx, tenantID, "email", "smtp")
+			acct := resolveSMTP(tenantOwn, platform, merged, smtpAccount{
+				Host:     m.cfg.SMTPHost,
+				Port:     strconv.Itoa(m.cfg.SMTPPort),
+				Username: m.cfg.SMTPUsername,
+				Password: m.cfg.SMTPPassword,
+				From:     m.cfg.SMTPFrom,
+				StartTLS: boolToStr(m.cfg.SMTPStartTLS),
+			}, m.env == "development")
 
-			// In non-development environments, treat localhost/loopback SMTP hosts
-			// from tenant config as unconfigured so we fall through to platform config.
-			tenantHost := s["host"]
-			if m.env != "development" && isLocalhost(tenantHost) {
-				tenantHost = ""
-				// Also clear other tenant SMTP fields so platform config is used entirely
-				delete(s, "host")
-				delete(s, "port")
-				delete(s, "username")
-				delete(s, "password")
-				delete(s, "from")
-				delete(s, "start_tls")
-			}
-
-			host := firstNonEmpty(tenantHost, m.cfg.SMTPHost)
-			port := parseInt(firstNonEmpty(s["port"], strconv.Itoa(m.cfg.SMTPPort)))
-			user := firstNonEmpty(s["username"], m.cfg.SMTPUsername)
-			pass := firstNonEmpty(s["password"], m.cfg.SMTPPassword)
-			from := firstNonEmpty(s["from"], m.cfg.SMTPFrom)
-			startTLS := parseBool(firstNonEmpty(s["start_tls"], boolToStr(m.cfg.SMTPStartTLS)))
-			ssl := parseBool(s["ssl"]) || port == 465
+			host := acct.Host
+			port := parseInt(acct.Port)
+			user := acct.Username
+			pass := acct.Password
+			from := acct.From
+			startTLS := parseBool(acct.StartTLS)
+			ssl := parseBool(acct.SSL) || port == 465
 
 			// If the resolved host is still localhost in production, skip SMTP
 			// and try the next provider (brevo, etc.)
@@ -170,8 +163,10 @@ func (m *Manager) GetEmailProvider(ctx context.Context, tenantID string, preferr
 				SSL:      ssl,
 			}), nil
 		case "brevo":
-			s, _ := pcfg.LoadTenantProviderSettings(ctx, m.dbCfg, tenantID, m.env, "email", "brevo", m.decryptionKey)
-			apiKey := firstNonEmpty(s["api_key"], m.cfg.BrevoAPIKey)
+			tenantOwn, platform, merged := m.scopedSettings(ctx, tenantID, "email", "brevo")
+			s, _ := resolveKeyedAccount(tenantOwn, platform, merged, "api_key", nil,
+				[]string{"sender_email", "sender_name", "from"}, map[string]string{"api_key": m.cfg.BrevoAPIKey})
+			apiKey := s["api_key"]
 			senderEmail := firstNonEmpty(s["sender_email"], s["from"], m.cfg.DefaultEmailSender)
 			senderName := firstNonEmpty(s["sender_name"], "Notifications")
 			if apiKey == "" {
@@ -206,9 +201,13 @@ func (m *Manager) GetSMSProvider(ctx context.Context, tenantID string, preferred
 	for _, name := range dedup(order) {
 		switch name {
 		case "africastalking":
-			s, _ := pcfg.LoadTenantProviderSettings(ctx, m.dbCfg, tenantID, m.env, "sms", "africastalking", m.decryptionKey)
-			user := firstNonEmpty(s["username"], m.cfg.AfricasTalkingUsername)
-			key := firstNonEmpty(s["api_key"], m.cfg.AfricasTalkingKey)
+			// The username belongs to the API key's account, so they resolve together; the sender
+			// ID may be the tenant's own on the platform account (registered there).
+			tenantOwn, platform, merged := m.scopedSettings(ctx, tenantID, "sms", "africastalking")
+			s, _ := resolveKeyedAccount(tenantOwn, platform, merged, "api_key", []string{"username"}, []string{"from"},
+				map[string]string{"api_key": m.cfg.AfricasTalkingKey, "username": m.cfg.AfricasTalkingUsername})
+			user := s["username"]
+			key := s["api_key"]
 			from := firstNonEmpty(s["from"], m.cfg.DefaultSMSSender)
 			return &africasTalkingAdapter{username: user, apiKey: key, from: from}, nil
 		}
