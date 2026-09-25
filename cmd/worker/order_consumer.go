@@ -224,8 +224,10 @@ func reviewEmailDataBuilder(data map[string]interface{}, orderAppURL string) map
 
 var orderMappings = map[string]orderNotificationMapping{
 	"ordering.order.created": {
-		TemplateID:   "ordering/order_placed",
-		EmailSubject: "Your order has been confirmed",
+		TemplateID: "ordering/order_placed",
+		// Sent when the order is placed, which can be before an online payment lands or before the
+		// outlet checks a manual M-Pesa code, so it must not claim the order is confirmed.
+		EmailSubject: "We have received your order",
 		DataBuilder: func(data map[string]interface{}, orderAppURL string) map[string]interface{} {
 			return map[string]interface{}{
 				"name":                data["customer_name"],
@@ -321,6 +323,8 @@ var orderMappings = map[string]orderNotificationMapping{
 				"rider_phone":  data["rider_phone"],
 				"order_link":   orderLink(data, orderAppURL),
 				"track_link":   orderLink(data, orderAppURL),
+				// The delivery code again, for customers who only look at the latest message.
+				"pod_code": data["pod_code"],
 			}
 		},
 		WhatsAppTemplate:       "ordering_order_out_for_delivery_v3",

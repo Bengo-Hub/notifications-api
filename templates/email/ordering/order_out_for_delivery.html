@@ -11,6 +11,13 @@
   {{ if .rider_phone }}
   <p><strong>Driver Contact:</strong> {{ .rider_phone }}</p>
   {{ end }}
+  {{ if .pod_code }}
+  <div style="margin:20px 0;padding:16px;border:1px solid #e0e0e0;border-radius:8px;background:#f8f8f8;text-align:center;">
+    <p style="margin:0 0 8px;">Your delivery code:</p>
+    <p style="margin:0;font-size:28px;font-weight:bold;letter-spacing:4px;">{{ .pod_code }}</p>
+    <p class="muted" style="margin:8px 0 0;">Give this code to the rider when you receive your order.</p>
+  </div>
+  {{ end }}
   <p>
     <a class="button" href="{{ .track_link }}">Track Delivery</a>
   </p>
