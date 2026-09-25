@@ -1,1 +1,1 @@
-{{ or .brand_name "Your order" }}: order {{ .order_number }} is ready for pickup{{ if .outlet_name }} at {{ .outlet_name }}{{ end }}. Show the order number at the counter.
+{{ or .brand_name "Your order" }}: order {{ .order_number }} is ready for pickup{{ if .outlet_name }} at {{ .outlet_name }}{{ end }}.{{ if .collection_code }} Show code {{ .collection_code }} at the counter.{{ else }} Show the order number at the counter.{{ end }}

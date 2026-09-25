@@ -244,6 +244,8 @@ var orderMappings = map[string]orderNotificationMapping{
 				// Proof-of-delivery code (6-digit); empty for non-delivery orders.
 				// The template only renders the PoD block when this is non-empty.
 				"pod_code": data["pod_code"],
+				// Pickup orders: the code to show at the counter (never labelled as a rider code).
+				"collection_code": data["collection_code"],
 			}
 		},
 		// "Order received" (the outlet has not accepted it yet under manual acceptance). The older
@@ -281,10 +283,11 @@ var orderMappings = map[string]orderNotificationMapping{
 		EmailSubject: "Your order has been accepted",
 		DataBuilder: func(data map[string]interface{}, orderAppURL string) map[string]interface{} {
 			return map[string]interface{}{
-				"name":         data["customer_name"],
-				"order_id":     data["order_id"],
-				"order_number": data["order_number"],
-				"order_link":   orderLink(data, orderAppURL),
+				"name":            data["customer_name"],
+				"order_id":        data["order_id"],
+				"order_number":    data["order_number"],
+				"order_link":      orderLink(data, orderAppURL),
+				"collection_code": data["collection_code"],
 			}
 		},
 		WhatsAppTemplate: "ordering_order_accepted_v1",
@@ -529,9 +532,10 @@ var orderMappings = map[string]orderNotificationMapping{
 			return map[string]interface{}{
 				"name":         data["customer_name"],
 				"order_number": data["order_number"],
-				"outlet_name":  data["outlet_name"],
-				"pickup_time":  data["pickup_time"],
-				"order_link":   orderLink(data, orderAppURL),
+				"outlet_name":     data["outlet_name"],
+				"pickup_time":     data["pickup_time"],
+				"order_link":      orderLink(data, orderAppURL),
+				"collection_code": data["collection_code"],
 			}
 		},
 		WhatsAppTemplate:       "ordering_order_for_pickup_v3",
