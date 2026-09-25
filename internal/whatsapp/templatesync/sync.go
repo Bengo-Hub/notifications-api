@@ -96,6 +96,9 @@ type Result struct {
 	Outcome  Outcome `json:"outcome"`
 	Detail   string  `json:"detail,omitempty"` // Meta's error message, when Outcome is "failed"
 	DryRun   bool    `json:"dry_run,omitempty"`
+	// MetaStatus is Meta's review status for a template that already exists (APPROVED, PENDING,
+	// REJECTED, ...), so admins can see whether a submitted template can be sent yet.
+	MetaStatus string `json:"meta_status,omitempty"`
 }
 
 // Syncer talks to one WhatsApp Business Account's Graph API template endpoints.
@@ -123,8 +126,8 @@ func (s *Syncer) Run(ctx context.Context, defs []TemplateDef, dryRun bool) ([]Re
 
 	results := make([]Result, 0, len(defs))
 	for _, def := range defs {
-		if _, ok := existing[def.Name]; ok {
-			results = append(results, Result{Name: def.Name, Category: def.Category, Outcome: OutcomeSkipped, Detail: "already exists on Meta"})
+		if status, ok := existing[def.Name]; ok {
+			results = append(results, Result{Name: def.Name, Category: def.Category, Outcome: OutcomeSkipped, Detail: "already exists on Meta", MetaStatus: status})
 			continue
 		}
 		if dryRun {
