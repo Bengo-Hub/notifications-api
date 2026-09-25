@@ -86,13 +86,42 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 			})
 		}
 
-		// Templates — public platform-wide resource (no authentication required)
+		// Templates — reading is public (platform-wide resource). Writing and test sends were public
+		// too: anyone could overwrite the email every tenant sends, or send real messages (and
+		// spend credits) through any tenant's providers. Both now require a signed-in user:
+		// editing a template is platform super admin only; a test send needs the send permission
+		// and is pinned to the caller's own tenant unless they are a platform admin (TestSend).
 		api.Route("/templates", func(tmpl chi.Router) {
 			tmpl.Get("/", templates.List)
 			tmpl.Get("/*", templates.Get)
-			tmpl.Post("/*", templates.TestSend) // handles /*/test
-			tmpl.Put("/*", templates.Update)
+			tmpl.Group(func(write chi.Router) {
+				if authMiddleware != nil {
+					write.Use(authMiddleware.RequireAuth)
+				}
+				if authenticator != nil {
+					write.Use(authenticator.RequireAuth)
+				}
+				write.Use(tenantContext())
+				write.With(func(next http.Handler) http.Handler {
+					if authenticator == nil {
+						return next
+					}
+					return authenticator.RequirePermissions(identity.PermNotificationsSend)(next)
+				}).Post("/*", templates.TestSend) // handles /*/test
+				write.With(func(next http.Handler) http.Handler {
+					if authenticator == nil {
+						return next
+					}
+					return authenticator.RequireRoles(identity.RoleSuperAdmin)(next)
+				}).Put("/*", templates.Update)
+			})
 		})
+
+		// Web push browser config (public Firebase client values), resolved centrally so every app
+		// registers devices against the right Firebase project without its own build settings.
+		if deviceTokens != nil {
+			api.Get("/push/web-config", deviceTokens.WebConfig)
+		}
 
 		// WhatsApp plans — public, no auth needed (pricing discovery)
 		if whatsappSubs != nil {
@@ -193,19 +222,7 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 
 			// Base group for tenant-scoped operations
 			protected.Group(func(tenantRouter chi.Router) {
-				tenantRouter.Use(httpware.TenantV2(httpware.TenantConfig{
-					ClaimsExtractor: func(ctx context.Context) (tenantID, tenantSlug string, isPlatformOwner bool, ok bool) {
-						claims, found := authclient.ClaimsFromContext(ctx)
-						if !found {
-							return "", "", false, false
-						}
-						// Slug-based platform owner check
-						isPO := claims.GetTenantSlug() == "codevertex"
-						return claims.TenantID, claims.GetTenantSlug(), isPO, true
-					},
-					URLParamFunc: chi.URLParam,
-					Required:     false, // Make optional to allow platform owners to bypass
-				}))
+				tenantRouter.Use(tenantContext())
 
 				// JIT tenant sync: ensure tenant exists in local DB when slug is in context
 				if tenantSyncer != nil {
@@ -385,4 +402,22 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 	})
 
 	return r
+}
+
+// tenantContext puts the caller's tenant (and platform-owner flag) from their token into the
+// request context, as every tenant-scoped route expects.
+func tenantContext() func(http.Handler) http.Handler {
+	return httpware.TenantV2(httpware.TenantConfig{
+		ClaimsExtractor: func(ctx context.Context) (tenantID, tenantSlug string, isPlatformOwner bool, ok bool) {
+			claims, found := authclient.ClaimsFromContext(ctx)
+			if !found {
+				return "", "", false, false
+			}
+			// Slug-based platform owner check
+			isPO := claims.GetTenantSlug() == "codevertex"
+			return claims.TenantID, claims.GetTenantSlug(), isPO, true
+		},
+		URLParamFunc: chi.URLParam,
+		Required:     false, // Make optional to allow platform owners to bypass
+	})
 }

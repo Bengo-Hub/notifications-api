@@ -59,6 +59,21 @@ func NewFCM(cfg FCMConfig) *FCMProvider {
 
 func (p *FCMProvider) Name() string { return "fcm" }
 
+// AccountInfo checks the service account can sign in to Google (no message sent), for the
+// provider settings "Test" button.
+func (p *FCMProvider) AccountInfo(ctx context.Context) (map[string]interface{}, error) {
+	if p.saKey == nil {
+		return nil, fmt.Errorf("fcm: service account JSON is missing or invalid")
+	}
+	if p.cfg.ProjectID == "" {
+		return nil, fmt.Errorf("fcm: project_id not configured")
+	}
+	if _, err := p.getAccessToken(ctx); err != nil {
+		return nil, fmt.Errorf("fcm: service account rejected: %w", err)
+	}
+	return map[string]interface{}{"project_id": p.cfg.ProjectID, "client_email": p.saKey.ClientEmail, "credentials": "ok"}, nil
+}
+
 // SendPush sends a push notification to all provided device tokens.
 func (p *FCMProvider) SendPush(ctx context.Context, tokens []string, title, body string, data map[string]string) error {
 	if p.cfg.ProjectID == "" {

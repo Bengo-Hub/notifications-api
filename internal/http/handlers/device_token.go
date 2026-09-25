@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -12,12 +13,16 @@ import (
 
 	"github.com/bengobox/notifications-api/internal/ent"
 	"github.com/bengobox/notifications-api/internal/ent/devicetoken"
+	enttenant "github.com/bengobox/notifications-api/internal/ent/tenant"
+	"github.com/bengobox/notifications-api/internal/providers"
 )
 
-// DeviceTokenHandler manages FCM/APNS device token registration.
+// DeviceTokenHandler manages FCM/APNS device token registration and serves the central web push
+// configuration.
 type DeviceTokenHandler struct {
 	log    *zap.Logger
 	client *ent.Client
+	push   *providers.Manager
 }
 
 // NewDeviceTokenHandler creates a new DeviceTokenHandler.
@@ -189,4 +194,41 @@ func (h *DeviceTokenHandler) extractIDs(w http.ResponseWriter, r *http.Request) 
 	}
 
 	return tenantID, userID, true
+}
+
+// SetPushResolver wires the central push configuration (providers.Manager.ResolvePush).
+func (h *DeviceTokenHandler) SetPushResolver(pm *providers.Manager) {
+	h.push = pm
+}
+
+// WebConfig handles GET /api/v1/push/web-config?tenant={slug or id} (public).
+// Returns the Firebase browser config (public client values, never the service account) an app
+// needs to register a device for push, resolved centrally: the tenant's own Firebase project if
+// it configured one, else the platform's shared project. Apps call this at runtime instead of
+// each carrying Firebase build settings. enabled=false means push is not set up yet.
+func (h *DeviceTokenHandler) WebConfig(w http.ResponseWriter, r *http.Request) {
+	if h.push == nil {
+		respondJSON(w, http.StatusOK, map[string]any{"enabled": false})
+		return
+	}
+	tenantID := ""
+	if ref := strings.TrimSpace(r.URL.Query().Get("tenant")); ref != "" {
+		q := h.client.Tenant.Query()
+		if id, err := uuid.Parse(ref); err == nil {
+			q = q.Where(enttenant.ID(id))
+		} else {
+			q = q.Where(enttenant.Slug(ref))
+		}
+		if t, err := q.Only(r.Context()); err == nil {
+			tenantID = t.ID.String()
+		}
+	}
+	ps := h.push.ResolvePush(r.Context(), tenantID)
+	enabled := ps.Ready() && ps.Web.Complete()
+	w.Header().Set("Cache-Control", "public, max-age=300")
+	if !enabled {
+		respondJSON(w, http.StatusOK, map[string]any{"enabled": false})
+		return
+	}
+	respondJSON(w, http.StatusOK, map[string]any{"enabled": true, "source": ps.Source, "config": ps.Web})
 }

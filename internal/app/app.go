@@ -157,6 +157,7 @@ func New(ctx context.Context) (*App, error) {
 	analyticsHandler := handlers.NewAnalyticsHandler(entClient, log)
 
 	deviceTokenHandler := handlers.NewDeviceTokenHandler(log, entClient)
+	deviceTokenHandler.SetPushResolver(providerManager)
 
 	billingHandler := handlers.NewBillingHandler(log, billingService)
 	platformBilling := handlers.NewPlatformBilling(entClient, log, billingService, whatsappSubsService)

@@ -16,6 +16,9 @@ var SecretKeys = map[string]bool{
 	"access_token": true, // Meta WhatsApp Cloud API permanent system-user token
 	"app_secret":   true, // Meta app secret (webhook signature verification)
 	"private_key":  true, // FCM service-account key
+	// FCM service account JSON as saved by the push provider settings (it embeds the private
+	// key); was missing, so a tenant-saved service account was stored in plain text.
+	"service_account": true,
 }
 
 // IsSecret returns true if the setting key should be encrypted.

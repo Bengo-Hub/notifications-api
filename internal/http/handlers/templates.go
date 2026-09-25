@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	httpware "github.com/Bengo-Hub/httpware"
 	"github.com/Bengo-Hub/pagination"
 	"github.com/bengobox/notifications-api/internal/modules/templates"
 	platformtemplates "github.com/bengobox/notifications-api/internal/platform/templates"
@@ -148,8 +149,13 @@ type templateTestSendRequest struct {
 // @Security ApiKeyAuth
 // @Router /templates/{id}/test [post]
 func (h *TemplateHandler) TestSend(w http.ResponseWriter, r *http.Request) {
-	// tenantId is required as a query parameter (since templates are platform-wide, not tenant-scoped)
+	// tenantId picks whose providers send the test. Templates are platform-wide, so a platform
+	// owner may choose any tenant; everyone else always tests on their own tenant, whatever the
+	// query says (otherwise any signed-in user could send, and spend credits, as another tenant).
 	tenantID := r.URL.Query().Get("tenantId")
+	if !httpware.IsPlatformOwner(r.Context()) {
+		tenantID = httpware.GetTenantID(r.Context())
+	}
 	if tenantID == "" {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)

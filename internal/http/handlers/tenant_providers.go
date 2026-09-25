@@ -277,7 +277,9 @@ func (h *TenantProviders) GetProviderSettings(w http.ResponseWriter, r *http.Req
 
 	result := make(map[string]string)
 	for _, s := range settings {
-		if s.IsSecret || s.IsEncrypted {
+		// Key-based check too: rows saved before a key was classed secret (e.g. an FCM
+		// service_account saved in plain text) must still never be echoed back.
+		if s.IsSecret || s.IsEncrypted || encryption.IsSecret(s.Key) {
 			if s.Value != "" {
 				result[s.Key] = "••••••••"
 			} else {

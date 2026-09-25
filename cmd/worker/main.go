@@ -857,7 +857,7 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 		return nil
 
 	case "push":
-		pushProv, err := pm.GetPushProvider(ctx)
+		pushProv, err := pm.GetPushProvider(ctx, msg.TenantID)
 		if err != nil {
 			logg.Warn("push provider unavailable", zap.Error(err))
 			return errSkippedNoSend // non-fatal: FCM may not be configured in all envs

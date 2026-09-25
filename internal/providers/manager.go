@@ -11,7 +11,6 @@ import (
 	"github.com/bengobox/notifications-api/internal/config"
 	pcfg "github.com/bengobox/notifications-api/internal/providers/config"
 	"github.com/bengobox/notifications-api/internal/providers/email"
-	"github.com/bengobox/notifications-api/internal/providers/push"
 	"github.com/bengobox/notifications-api/internal/providers/sms"
 	"github.com/bengobox/notifications-api/internal/providers/whatsapp"
 )
@@ -217,15 +216,6 @@ func (m *Manager) GetSMSProvider(ctx context.Context, tenantID string, preferred
 	return &africasTalkingAdapter{username: m.cfg.AfricasTalkingUsername, apiKey: m.cfg.AfricasTalkingKey, from: m.cfg.DefaultSMSSender}, nil
 }
 
-// GetPushProvider returns the configured FCM push provider.
-func (m *Manager) GetPushProvider(ctx context.Context) (PushProvider, error) {
-	sa := m.cfg.FCMServiceAccount
-	if sa == "" {
-		return nil, fmt.Errorf("push: FCM_SERVICE_ACCOUNT not configured")
-	}
-	return push.NewFCM(push.FCMConfig{ServiceAccount: sa}), nil
-}
-
 // TestConnection loads platform config for the given channel/provider, builds the provider, and sends a test message to the given recipient.
 // TestConnection confirms tenantID's resolved provider config (tenant override, falling back to
 // the platform-wide config per LoadTenantProviderSettings's hierarchy — the same resolution a real
@@ -282,6 +272,24 @@ func (m *Manager) TestConnection(ctx context.Context, tenantID, channel, provide
 			return infoProv.AccountInfo(ctx)
 		}
 		return nil, fmt.Errorf("to is required to test this WhatsApp provider (no account-info check available)")
+	case "push":
+		// Same tenant-then-platform resolution a real push uses. `to` is a device token for a
+		// real test push; without it only the service account is checked.
+		prov, err := m.GetPushProvider(ctx, tenantID)
+		if err != nil {
+			return nil, err
+		}
+		if to != "" {
+			return nil, prov.SendPush(ctx, []string{to}, "Test notification", "Push is working.", nil)
+		}
+		if infoProv, ok := prov.(AccountInfoProvider); ok {
+			info, ierr := infoProv.AccountInfo(ctx)
+			if info != nil {
+				info["source"] = m.ResolvePush(ctx, tenantID).Source
+			}
+			return info, ierr
+		}
+		return nil, nil
 	default:
 		return nil, nil
 	}

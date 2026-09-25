@@ -110,11 +110,20 @@ type ProviderConfig struct {
 	SMTPFrom               string `envconfig:"PROVIDERS_SMTP_FROM" default:"no-reply@bengobox.com"`
 	SMTPStartTLS           bool   `envconfig:"PROVIDERS_SMTP_STARTTLS" default:"false"`
 	FCMServiceAccount      string `envconfig:"PROVIDERS_FCM_SERVICE_ACCOUNT"`
-	APNSCert               string `envconfig:"PROVIDERS_APNS_CERT"`
-	APNSKey                string `envconfig:"PROVIDERS_APNS_KEY"`
-	DefaultEmailSender     string `envconfig:"PROVIDERS_DEFAULT_EMAIL_SENDER" default:"Urban Cafe <hello@bengobox.com>"`
-	DefaultSMSSender       string `envconfig:"PROVIDERS_DEFAULT_SMS_SENDER" default:"codevertex"`
-	DefaultPushTopic       string `envconfig:"PROVIDERS_DEFAULT_PUSH_TOPIC" default:"general"`
+	// Platform Firebase project fallback (used when no platform/tenant push provider settings
+	// are saved). The web values are public browser config served by GET /push/web-config.
+	FCMProjectID            string `envconfig:"PROVIDERS_FCM_PROJECT_ID"`
+	FCMWebAPIKey            string `envconfig:"PROVIDERS_FCM_WEB_API_KEY"`
+	FCMWebAuthDomain        string `envconfig:"PROVIDERS_FCM_WEB_AUTH_DOMAIN"`
+	FCMWebStorageBucket     string `envconfig:"PROVIDERS_FCM_WEB_STORAGE_BUCKET"`
+	FCMWebMessagingSenderID string `envconfig:"PROVIDERS_FCM_WEB_MESSAGING_SENDER_ID"`
+	FCMWebAppID             string `envconfig:"PROVIDERS_FCM_WEB_APP_ID"`
+	FCMWebVAPIDKey          string `envconfig:"PROVIDERS_FCM_WEB_VAPID_KEY"`
+	APNSCert                string `envconfig:"PROVIDERS_APNS_CERT"`
+	APNSKey                 string `envconfig:"PROVIDERS_APNS_KEY"`
+	DefaultEmailSender      string `envconfig:"PROVIDERS_DEFAULT_EMAIL_SENDER" default:"Urban Cafe <hello@bengobox.com>"`
+	DefaultSMSSender        string `envconfig:"PROVIDERS_DEFAULT_SMS_SENDER" default:"codevertex"`
+	DefaultPushTopic        string `envconfig:"PROVIDERS_DEFAULT_PUSH_TOPIC" default:"general"`
 	// Email send protection — avoid provider rate-limit blocks (e.g. Zoho "mail rate
 	// exceeded") by pacing sends, and protect sender reputation / reduce failure logs by
 	// validating recipients (syntax + MX) and suppressing hard-bounced addresses.
