@@ -15,6 +15,7 @@ import (
 	"github.com/bengobox/notifications-api/internal/config"
 	"github.com/bengobox/notifications-api/internal/messaging"
 	"github.com/bengobox/notifications-api/internal/modules/preferences"
+	"github.com/bengobox/notifications-api/internal/moneyfmt"
 )
 
 // orderEvent is the CloudEvents envelope from ordering-service.
@@ -181,32 +182,7 @@ func waParam(v interface{}, def string) string {
 func formatMoney(amount interface{}, currency interface{}) string {
 	amt, _ := amount.(float64)
 	cur, _ := currency.(string)
-	if cur == "" {
-		cur = "KES"
-	}
-	whole := int64(amt)
-	frac := amt - float64(whole)
-	// Thousands-group the integer part.
-	digits := fmt.Sprintf("%d", whole)
-	neg := strings.HasPrefix(digits, "-")
-	if neg {
-		digits = digits[1:]
-	}
-	var grouped strings.Builder
-	for i, d := range digits {
-		if i > 0 && (len(digits)-i)%3 == 0 {
-			grouped.WriteByte(',')
-		}
-		grouped.WriteRune(d)
-	}
-	numStr := grouped.String()
-	if neg {
-		numStr = "-" + numStr
-	}
-	if frac < -0.005 || frac > 0.005 {
-		numStr = fmt.Sprintf("%s.%02d", numStr, int64(frac*100+0.5))
-	}
-	return cur + " " + numStr
+	return moneyfmt.Format(amt, cur)
 }
 
 // orderAppBaseURL returns the ordering app URL for building "View Order" links.

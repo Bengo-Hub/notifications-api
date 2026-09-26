@@ -17,6 +17,7 @@ import (
 	"github.com/bengobox/notifications-api/internal/config"
 	"github.com/bengobox/notifications-api/internal/ent"
 	"github.com/bengobox/notifications-api/internal/messaging"
+	"github.com/bengobox/notifications-api/internal/moneyfmt"
 )
 
 const (
@@ -187,6 +188,28 @@ func (s *Subscriber) publishWithMetadata(tenantID, channel, templateID, target s
 			zap.Error(err),
 		)
 	}
+}
+
+// receiptShortLinkPrefix is the fixed domain baked into pos_receipt_share_btn's URL button.
+const receiptShortLinkPrefix = "https://r.codevertexafrica.com/"
+
+// receiptShareWhatsApp picks how a shared receipt goes out on WhatsApp: the approved button
+// template when the link is a receipt short link, else an interactive button.
+func receiptShareWhatsApp(name, orderNumber string, total float64, currency, link string) map[string]any {
+	link = strings.TrimSpace(link)
+	if code := strings.TrimPrefix(link, receiptShortLinkPrefix); code != link && code != "" && !strings.Contains(code, "/") {
+		return map[string]any{
+			"template_name":     "pos_receipt_share_btn",
+			"template_language": "en_US",
+			"template_params": []string{
+				nonEmpty(name, "there"),
+				nonEmpty(orderNumber, "your order"),
+				moneyfmt.Format(total, currency),
+			},
+			"template_button_param": code,
+		}
+	}
+	return map[string]any{"cta_button_text": "View Receipt", "cta_button_url": link}
 }
 
 // nonEmpty returns v trimmed, or fallback when blank. Meta rejects a template send with an empty
@@ -442,14 +465,12 @@ func (s *Subscriber) handleSaleNotification(msg *nats.Msg) {
 	}
 	switch channel {
 	case "whatsapp":
-		// Always a freeform send (the customer explicitly requested share-via-WhatsApp from an
-		// active POS session, so there's no template-registration path here) — attach the
-		// download link as a real tappable button instead of pasting the raw URL into the body
-		// (see MetaCloudProvider.sendInteractiveCTA).
-		s.publishWithMetadata(p.TenantID, "whatsapp", "pos/receipt_share", messaging.TargetCustomer, []string{phone}, data, map[string]any{
-			"cta_button_text": "View Receipt",
-			"cta_button_url":  p.DownloadLink,
-		})
+		// A customer at the till has usually never messaged the business on WhatsApp, so a
+		// free-form send would only be delivered inside a 24h reply window. Receipt links live on
+		// the short-link domain, so they go out with the approved pos_receipt_share_btn template
+		// (the short code is the button suffix). A link on any other host keeps the interactive
+		// button, which only works inside the window. Never a raw link in the text.
+		s.publishWithMetadata(p.TenantID, "whatsapp", "pos/receipt_share", messaging.TargetCustomer, []string{phone}, data, receiptShareWhatsApp(p.CustomerName, p.OrderNumber, p.TotalAmount, currency, p.DownloadLink))
 	case "email":
 		s.publish(p.TenantID, "email", "pos/receipt_share", messaging.TargetCustomer, []string{email}, data)
 	default:
