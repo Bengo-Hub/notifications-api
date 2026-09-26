@@ -359,10 +359,12 @@ var orderMappings = map[string]orderNotificationMapping{
 			}
 		},
 	},
-	// Pickup/dine-in orders terminate at "completed" and get the review/rating email.
+	// Pickup/dine-in orders terminate at "completed" and get the review/rating email. Worded as
+	// complete, not delivered: the customer collected it or ate in. WhatsApp moves to
+	// ordering_order_completed_v1_btn once Meta approves it.
 	"ordering.order.completed": {
-		TemplateID:             "ordering/order_delivered",
-		EmailSubject:           "Your order has been delivered",
+		TemplateID:             "ordering/order_completed",
+		EmailSubject:           "Your order is complete",
 		DataBuilder:            reviewEmailDataBuilder,
 		IdempotencyScope:       "review",
 		WhatsAppButtonTemplate: "ordering_order_delivered_v3_btn",

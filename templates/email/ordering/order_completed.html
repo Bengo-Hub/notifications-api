@@ -1,0 +1,12 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <p>Your order is complete. We hope you enjoy it!</p>
+  <p><strong>Order #:</strong> {{ .order_number }}</p>
+  <p>
+    <a class="button" href="{{ .order_link }}">View Order</a>
+  </p>
+  <p>
+    <a class="button" href="{{ .review_link }}">Leave Review</a>
+  </p>
+  <p class="muted">Thank you for choosing {{ or .brand_name "codevertex" }}!</p>
+{{ end }}

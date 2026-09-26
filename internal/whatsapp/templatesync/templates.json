@@ -34,6 +34,17 @@
     ]
   },
   {
+    "name": "ordering_order_completed_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/ordering/order_completed.txt (link as a URL button)",
+    "body": "Hi {{1}},\n\nYour order *{{2}}* is complete. We hope you enjoy it!\n\nThank you for choosing us!",
+    "example": ["Amina", "#ULC-2291"],
+    "buttons": [
+      {"type": "URL", "text": "Leave Feedback", "url": "https://ordering.codevertexafrica.com/{{1}}", "example": ["codevertex-demo/orders/guest/f2e6121d-bead-41ad-95ed-b74655a3d45c?rate=1"]}
+    ]
+  },
+  {
     "name": "ordering_order_ready_v3_btn",
     "category": "UTILITY",
     "language": "en_US",

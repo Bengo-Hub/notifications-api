@@ -1,0 +1,5 @@
+Hi {{ or .name "there" }},
+
+Your order *{{ .order_number }}* is complete. We hope you enjoy it!
+
+Thank you for choosing us!

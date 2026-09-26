@@ -89,6 +89,7 @@ var Registry = []Type{
 	{Key: "ordering/order_for_pickup", Label: "Order ready for pickup", Group: "Orders", Class: ClassEssential},
 	{Key: "ordering/order_out_for_delivery", Label: "Order out for delivery", Group: "Orders", Class: ClassEssential},
 	{Key: "ordering/order_delivered", Label: "Order delivered", Group: "Orders", Class: ClassEssential},
+	{Key: "ordering/order_completed", Label: "Order complete (collected or dine-in)", Group: "Orders", Class: ClassEssential},
 	{Key: "ordering/order_cancelled", Label: "Order cancelled", Group: "Orders", Class: ClassEssential},
 	{Key: "ordering/order_refunded", Label: "Order refunded", Group: "Orders", Class: ClassEssential},
 	{Key: "ordering/order_scheduled", Label: "Order scheduled", Group: "Orders", Class: ClassEssential},
