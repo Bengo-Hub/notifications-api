@@ -99,6 +99,15 @@ type Result struct {
 	// MetaStatus is Meta's review status for a template that already exists (APPROVED, PENDING,
 	// REJECTED, ...), so admins can see whether a submitted template can be sent yet.
 	MetaStatus string `json:"meta_status,omitempty"`
+	// MetaReason is Meta's rejected_reason for a REJECTED template (e.g. INVALID_FORMAT,
+	// TAG_CONTENT_MISMATCH), so admins know what to change before submitting a new version.
+	MetaReason string `json:"meta_reason,omitempty"`
+}
+
+// metaTemplate is one template as Meta reports it.
+type metaTemplate struct {
+	Status         string
+	RejectedReason string
 }
 
 // Syncer talks to one WhatsApp Business Account's Graph API template endpoints.
@@ -126,8 +135,12 @@ func (s *Syncer) Run(ctx context.Context, defs []TemplateDef, dryRun bool) ([]Re
 
 	results := make([]Result, 0, len(defs))
 	for _, def := range defs {
-		if status, ok := existing[def.Name]; ok {
-			results = append(results, Result{Name: def.Name, Category: def.Category, Outcome: OutcomeSkipped, Detail: "already exists on Meta", MetaStatus: status})
+		if mt, ok := existing[def.Name]; ok {
+			reason := ""
+			if mt.RejectedReason != "" && mt.RejectedReason != "NONE" {
+				reason = mt.RejectedReason
+			}
+			results = append(results, Result{Name: def.Name, Category: def.Category, Outcome: OutcomeSkipped, Detail: "already exists on Meta", MetaStatus: mt.Status, MetaReason: reason})
 			continue
 		}
 		if dryRun {
@@ -206,9 +219,9 @@ func (s *Syncer) delete(ctx context.Context, name string) error {
 }
 
 // fetchExisting paginates through every template already on the WABA, keyed by name.
-func (s *Syncer) fetchExisting(ctx context.Context) (map[string]string, error) {
-	out := map[string]string{}
-	url := fmt.Sprintf("https://graph.facebook.com/%s/%s/message_templates?fields=name,status&limit=200", apiVersion, s.WABAID)
+func (s *Syncer) fetchExisting(ctx context.Context) (map[string]metaTemplate, error) {
+	out := map[string]metaTemplate{}
+	url := fmt.Sprintf("https://graph.facebook.com/%s/%s/message_templates?fields=name,status,rejected_reason&limit=200", apiVersion, s.WABAID)
 
 	for url != "" {
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
@@ -229,8 +242,9 @@ func (s *Syncer) fetchExisting(ctx context.Context) (map[string]string, error) {
 
 		var lr struct {
 			Data []struct {
-				Name   string `json:"name"`
-				Status string `json:"status"`
+				Name           string `json:"name"`
+				Status         string `json:"status"`
+				RejectedReason string `json:"rejected_reason"`
 			} `json:"data"`
 			Paging struct {
 				Next string `json:"next"`
@@ -240,7 +254,7 @@ func (s *Syncer) fetchExisting(ctx context.Context) (map[string]string, error) {
 			return nil, fmt.Errorf("unexpected response: %s", string(body))
 		}
 		for _, t := range lr.Data {
-			out[t.Name] = t.Status
+			out[t.Name] = metaTemplate{Status: t.Status, RejectedReason: t.RejectedReason}
 		}
 		url = lr.Paging.Next
 	}
