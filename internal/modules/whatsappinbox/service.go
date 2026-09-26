@@ -19,6 +19,9 @@ import (
 	"github.com/bengobox/notifications-api/internal/config"
 	"github.com/bengobox/notifications-api/internal/ent"
 	"github.com/bengobox/notifications-api/internal/ent/devicetoken"
+	entrole "github.com/bengobox/notifications-api/internal/ent/role"
+	entuser "github.com/bengobox/notifications-api/internal/ent/user"
+	"github.com/bengobox/notifications-api/internal/modules/identity"
 	"github.com/bengobox/notifications-api/internal/ent/whatsappconversation"
 	"github.com/bengobox/notifications-api/internal/ent/whatsappmessage"
 	"github.com/bengobox/notifications-api/internal/messaging"
@@ -50,16 +53,43 @@ func NewService(client *ent.Client, providerMgr *providers.Manager, hub *Hub, nc
 	return &Service{client: client, providerMgr: providerMgr, hub: hub, nc: nc, eventsCfg: eventsCfg, log: log.Named("whatsapp-inbox")}
 }
 
-// notifyStaff fans a push notification out to every active device token for the tenant (tenant-
-// wide, matching the inbox's own RBAC scoping — no per-assignee targeting). Best-effort: a
-// tenant with no registered devices, or push not configured, just means no push goes out; the
-// message is already persisted and visible in the inbox regardless.
+// inboxReplyRoles are the local roles that may answer customers (identity.PermWhatsAppInboxReply).
+// Viewer is excluded: every synced user, riders and customers included, defaults to it.
+func inboxReplyRoles() []string {
+	var out []string
+	for _, r := range []identity.Role{identity.RoleViewer, identity.RoleManager, identity.RoleAdmin, identity.RoleSuperAdmin} {
+		for _, p := range identity.DefaultPermissions(r) {
+			if p == identity.PermWhatsAppInboxReply {
+				out = append(out, string(r))
+				break
+			}
+		}
+	}
+	return out
+}
+
+// notifyStaff pushes a new-message alert to the devices of the tenant's inbox staff (users whose
+// role can reply; no per-assignee targeting). Best-effort: a tenant with no registered staff
+// devices, or push not configured, just means no push goes out; the message is already persisted
+// and visible in the inbox regardless.
 func (s *Service) notifyStaff(ctx context.Context, tenantID uuid.UUID, customerName, customerWaID, preview string) {
 	if s.nc == nil {
 		return
 	}
+	// Only staff who answer customers. Every app user registers devices here (riders, customers),
+	// and a customer's name and message must never reach their phones.
+	staff, err := s.client.User.Query().
+		Where(entuser.TenantID(tenantID), entuser.HasRolesWith(entrole.IDIn(inboxReplyRoles()...))).
+		IDs(ctx)
+	if err != nil {
+		s.log.Warn("whatsapp inbox: staff lookup failed", zap.Error(err))
+		return
+	}
+	if len(staff) == 0 {
+		return
+	}
 	tokens, err := s.client.DeviceToken.Query().
-		Where(devicetoken.TenantID(tenantID), devicetoken.IsActive(true)).
+		Where(devicetoken.TenantID(tenantID), devicetoken.UserIDIn(staff...), devicetoken.IsActive(true)).
 		All(ctx)
 	if err != nil {
 		s.log.Warn("whatsapp inbox: device token lookup failed", zap.Error(err))
