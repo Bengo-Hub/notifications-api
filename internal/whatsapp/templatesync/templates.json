@@ -206,6 +206,30 @@
     "example": ["Mary", "Family 30Mbps", "PPPoE", "mary.w", "30 Sep 2026"]
   },
   {
+    "name": "ispbilling_subscription_credentials_v3",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/ispbilling/subscription_credentials.txt (v2 rejected INCORRECT_CATEGORY: account notice wording only)",
+    "body": "Hi {{1}}, your {{2}} ({{3}}) internet account has been activated. Account username: {{4}}. Account valid until: {{5}}. Your password was sent to this number by SMS.",
+    "example": ["Mary", "Family 30Mbps", "PPPoE", "mary.w", "30 Sep 2026"]
+  },
+  {
+    "name": "ispbilling_hotspot_welcome_v3",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/ispbilling/hotspot_welcome.txt (v2 rejected INCORRECT_CATEGORY: account notice wording only)",
+    "body": "Hi {{1}}, your hotspot account has been activated. Login: {{2}}. Package: {{3}}, valid for {{4}} day(s). Your password was sent to this number by SMS.",
+    "example": ["Grace", "grace254", "Daily 5GB", "1"]
+  },
+  {
+    "name": "ispbilling_pppoe_welcome_v3",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/ispbilling/pppoe_welcome.txt (v2 rejected INCORRECT_CATEGORY: account notice wording only)",
+    "body": "Hi {{1}}, your PPPoE connection has been activated. Username: {{2}}. Package: {{3}} at {{4}}. Your password was sent to this number by SMS. For help, call support on {{5}} at any time.",
+    "example": ["John", "john.k", "Business 50", "50/20 Mbps", "0700111222"]
+  },
+  {
     "name": "ispbilling_subscription_renewal",
     "category": "UTILITY",
     "language": "en_US",

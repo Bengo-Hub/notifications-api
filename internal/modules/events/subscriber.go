@@ -189,6 +189,15 @@ func (s *Subscriber) publishWithMetadata(tenantID, channel, templateID, target s
 	}
 }
 
+// nonEmpty returns v trimmed, or fallback when blank. Meta rejects a template send with an empty
+// body parameter, so every WhatsApp template param needs a readable default.
+func nonEmpty(v, fallback string) string {
+	if v = strings.TrimSpace(v); v != "" {
+		return v
+	}
+	return fallback
+}
+
 // platformAlertRecipients splits the configured comma-separated alert list, dropping blanks.
 // An empty result switches the new-tenant alert off.
 func (s *Subscriber) platformAlertRecipients() []string {
@@ -812,8 +821,19 @@ func (s *Subscriber) handleISPSubscriberCreated(msg *nats.Msg) {
 		"expiry_at":     e.Payload.ExpiryAt,
 	}
 	s.publish(tid, "sms", "ispbilling/subscription_credentials", messaging.TargetCustomer, []string{e.Payload.Phone}, data)
-	// Also attempt WhatsApp — the delivery-path gate skips it if the tenant has no active WA subscription.
-	s.publish(tid, "whatsapp", "ispbilling/subscription_credentials", messaging.TargetCustomer, []string{e.Payload.Phone}, data)
+	// Also WhatsApp (the delivery-path gate skips it if the tenant has no active WA subscription).
+	// A new subscriber has never messaged the business, so this must be an approved template:
+	// free-form text is only delivered inside a 24h reply window. The password stays in the SMS.
+	s.publishWithMetadata(tid, "whatsapp", "ispbilling/subscription_credentials", messaging.TargetCustomer, []string{e.Payload.Phone}, data, map[string]any{
+		"template_name": "ispbilling_subscription_credentials_v3",
+		"template_params": []string{
+			nonEmpty(e.Payload.CustomerName, "there"),
+			nonEmpty(e.Payload.PackageName, "internet"),
+			nonEmpty(e.Payload.PackageType, "package"),
+			nonEmpty(e.Payload.Username, "-"),
+			nonEmpty(e.Payload.ExpiryAt, "the end of your package period"),
+		},
+	})
 	s.log.Info("isp_subscriber_created notifications dispatched", zap.String("tenant_id", tid), zap.String("username", e.Payload.Username))
 	_ = msg.Ack()
 }
