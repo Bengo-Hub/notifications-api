@@ -3,13 +3,11 @@ package whatsappinbox
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"strings"
 	"sync"
 	"time"
 
+	eventslib "github.com/Bengo-Hub/shared-events"
 	"github.com/google/uuid"
-	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 	"nhooyr.io/websocket"
 	"nhooyr.io/websocket/wsjson"
@@ -27,118 +25,106 @@ type wsClient struct {
 	send     chan StreamMessage
 }
 
+const (
+	relayTopic   = "whatsapp_inbox"
+	sendBuffer   = 32
+	writeTimeout = 5 * time.Second
+	pingInterval = 25 * time.Second // under typical 60s proxy idle timeouts
+)
+
 // Hub manages active WhatsApp-inbox WebSocket connections, broadcasting tenant-wide (no
-// per-assignee targeting — matches the tenant-wide inbox RBAC scoping). Mirrors pos-api's
-// notifications.Hub pattern (client registry + Redis cross-pod relay + ping/pong keepalive),
-// stripped to tenant-only broadcast since there's no per-user targeting need here.
+// per-assignee targeting, matching the tenant-wide inbox RBAC scoping).
+//
+// Clients connect to whichever replica the load balancer picks, so a broadcast is relayed to
+// every replica through the shared events.Broadcaster (core NATS fan-out); each replica then
+// delivers to its own sockets. Clients are indexed by tenant so a broadcast touches only that
+// tenant's sockets.
 type Hub struct {
-	mu       sync.RWMutex
-	clients  map[*wsClient]struct{}
-	log      *zap.Logger
-	redis    *redis.Client
-	originID string
+	mu      sync.RWMutex
+	clients map[uuid.UUID]map[*wsClient]struct{}
+	log     *zap.Logger
+	relay   *eventslib.Broadcaster
 }
 
 func NewHub(log *zap.Logger) *Hub {
 	return &Hub{
-		clients:  make(map[*wsClient]struct{}),
-		log:      log.Named("whatsapp-inbox.hub"),
-		originID: uuid.NewString(),
+		clients: make(map[uuid.UUID]map[*wsClient]struct{}),
+		log:     log.Named("whatsapp-inbox.hub"),
 	}
 }
 
-// SetRedis wires the cross-pod relay. Call before Start. A nil client degrades to single-pod mode.
-func (h *Hub) SetRedis(rdb *redis.Client) { h.redis = rdb }
-
-// Start subscribes to the cross-pod relay channel and relays to this pod's local clients. Blocks
-// until ctx is cancelled — run in a goroutine.
-func (h *Hub) Start(ctx context.Context) {
-	if h.redis == nil {
-		h.log.Info("whatsapp-inbox.hub: no Redis client — single-pod broadcast only")
+// SetRelay wires the cross-replica relay. A nil relay degrades to single-pod delivery.
+func (h *Hub) SetRelay(b *eventslib.Broadcaster) {
+	h.relay = b
+	if b == nil {
 		return
 	}
-	sub := h.redis.PSubscribe(ctx, "whatsapp_inbox:*")
-	defer func() { _ = sub.Close() }()
-	ch := sub.Channel()
-	for {
-		select {
-		case <-ctx.Done():
+	if err := b.Subscribe(relayTopic, func(m eventslib.BroadcastMessage) {
+		tenantID, err := uuid.Parse(m.TenantID)
+		if err != nil {
 			return
-		case msg, ok := <-ch:
-			if !ok {
-				return
-			}
-			h.relayFromRedis(msg.Channel, msg.Payload)
 		}
+		var msg StreamMessage
+		if err := json.Unmarshal(m.Data, &msg); err != nil {
+			h.log.Warn("whatsapp-inbox.hub: bad relay message", zap.Error(err))
+			return
+		}
+		h.sendLocal(tenantID, msg)
+	}); err != nil {
+		h.log.Warn("whatsapp-inbox.hub: relay subscribe failed, single-pod delivery only", zap.Error(err))
 	}
 }
 
-type relayEnvelope struct {
-	Msg    StreamMessage `json:"msg"`
-	Origin string        `json:"origin"`
-}
-
-func (h *Hub) relayFromRedis(channel, payload string) {
-	tenantID, ok := parseChannel(channel)
-	if !ok {
-		return
-	}
-	var env relayEnvelope
-	if err := json.Unmarshal([]byte(payload), &env); err != nil {
-		h.log.Warn("whatsapp-inbox.hub: failed to decode redis relay message", zap.Error(err))
-		return
-	}
-	if env.Origin == h.originID {
-		return // avoid double-delivering our own publish to local clients
-	}
-	h.sendLocal(tenantID, env.Msg)
-}
-
-func parseChannel(channel string) (uuid.UUID, bool) {
-	parts := strings.SplitN(channel, ":", 2)
-	if len(parts) != 2 || parts[0] != "whatsapp_inbox" {
-		return uuid.Nil, false
-	}
-	tid, err := uuid.Parse(parts[1])
-	if err != nil {
-		return uuid.Nil, false
-	}
-	return tid, true
-}
-
-func (h *Hub) publish(tenantID uuid.UUID, msg StreamMessage) {
-	if h.redis == nil {
-		return
-	}
-	payload, err := json.Marshal(relayEnvelope{Msg: msg, Origin: h.originID})
-	if err != nil {
-		h.log.Warn("whatsapp-inbox.hub: failed to marshal relay payload", zap.Error(err))
-		return
-	}
-	channel := fmt.Sprintf("whatsapp_inbox:%s", tenantID)
-	if err := h.redis.Publish(context.Background(), channel, payload).Err(); err != nil {
-		h.log.Warn("whatsapp-inbox.hub: redis publish failed", zap.Error(err))
-	}
-}
-
-// ServeWS upgrades the HTTP connection and blocks until the client disconnects.
+// ServeWS serves one upgraded connection and blocks until the client disconnects.
 func (h *Hub) ServeWS(ctx context.Context, conn *websocket.Conn, tenantID uuid.UUID) {
-	c := &wsClient{conn: conn, tenantID: tenantID, send: make(chan StreamMessage, 32)}
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	c := &wsClient{conn: conn, tenantID: tenantID, send: make(chan StreamMessage, sendBuffer)}
 
 	h.mu.Lock()
-	h.clients[c] = struct{}{}
+	if h.clients[tenantID] == nil {
+		h.clients[tenantID] = make(map[*wsClient]struct{})
+	}
+	h.clients[tenantID][c] = struct{}{}
 	h.mu.Unlock()
 
 	defer func() {
 		h.mu.Lock()
-		delete(h.clients, c)
+		delete(h.clients[tenantID], c)
+		if len(h.clients[tenantID]) == 0 {
+			delete(h.clients, tenantID)
+		}
 		close(c.send)
 		h.mu.Unlock()
 	}()
 
+	// Writer: every write has a deadline, and the server pings on an interval, so a stalled
+	// or vanished client is dropped instead of holding a goroutine and a socket open.
 	go func() {
-		for msg := range c.send {
-			if err := wsjson.Write(ctx, conn, msg); err != nil {
+		ticker := time.NewTicker(pingInterval)
+		defer ticker.Stop()
+		for {
+			select {
+			case msg, ok := <-c.send:
+				if !ok {
+					return
+				}
+				wctx, wcancel := context.WithTimeout(ctx, writeTimeout)
+				err := wsjson.Write(wctx, conn, msg)
+				wcancel()
+				if err != nil {
+					cancel()
+					return
+				}
+			case <-ticker.C:
+				pctx, pcancel := context.WithTimeout(ctx, writeTimeout)
+				err := conn.Ping(pctx)
+				pcancel()
+				if err != nil {
+					cancel()
+					return
+				}
+			case <-ctx.Done():
 				return
 			}
 		}
@@ -163,23 +149,29 @@ func (h *Hub) ServeWS(ctx context.Context, conn *websocket.Conn, tenantID uuid.U
 	}
 }
 
-// BroadcastToTenant delivers msg to every active session for tenantID — locally, and (via Redis)
-// on every other replica too.
+// BroadcastToTenant delivers msg to every active session for tenantID on every replica.
 func (h *Hub) BroadcastToTenant(tenantID uuid.UUID, msg StreamMessage) {
-	h.sendLocal(tenantID, msg)
-	h.publish(tenantID, msg)
+	if h.relay == nil {
+		h.sendLocal(tenantID, msg)
+		return
+	}
+	data, err := json.Marshal(msg)
+	if err != nil {
+		h.log.Warn("whatsapp-inbox.hub: marshal failed", zap.Error(err))
+		return
+	}
+	// Publish delivers to this replica's handler first, then relays to the others.
+	_ = h.relay.Publish(relayTopic, tenantID.String(), "", data)
 }
 
 func (h *Hub) sendLocal(tenantID uuid.UUID, msg StreamMessage) {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
-	for c := range h.clients {
-		if c.tenantID == tenantID {
-			select {
-			case c.send <- msg:
-			default:
-				h.log.Warn("whatsapp-inbox.hub: send buffer full, dropping broadcast", zap.Stringer("tenant_id", tenantID))
-			}
+	for c := range h.clients[tenantID] {
+		select {
+		case c.send <- msg:
+		default:
+			h.log.Warn("whatsapp-inbox.hub: send buffer full, dropping broadcast", zap.Stringer("tenant_id", tenantID))
 		}
 	}
 }

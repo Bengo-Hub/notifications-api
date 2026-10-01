@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/nats-io/nats.go"
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 
 	serviceclient "github.com/Bengo-Hub/shared-service-client"
@@ -19,12 +20,13 @@ import (
 // ScheduledNotifier periodically checks for expiring subscriptions and
 // dispatches plan expiry warning emails to tenant admins.
 type ScheduledNotifier struct {
-	logger             *zap.Logger
+	logger              *zap.Logger
 	subscriptionsClient *serviceclient.Client
-	nc                 *nats.Conn
-	cfg                *config.Config
-	tr                 *tenantResolver
-	interval           time.Duration
+	nc                  *nats.Conn
+	cfg                 *config.Config
+	tr                  *tenantResolver
+	rdb                 redis.UniversalClient
+	interval            time.Duration
 }
 
 // NewScheduledNotifier creates a new scheduled notifier.
@@ -34,14 +36,16 @@ func NewScheduledNotifier(
 	nc *nats.Conn,
 	cfg *config.Config,
 	tr *tenantResolver,
+	rdb redis.UniversalClient,
 ) *ScheduledNotifier {
 	return &ScheduledNotifier{
-		logger:             logger.Named("scheduled-notifier"),
+		logger:              logger.Named("scheduled-notifier"),
 		subscriptionsClient: subscriptionsClient,
-		nc:                 nc,
-		cfg:                cfg,
-		tr:                 tr,
-		interval:           6 * time.Hour,
+		nc:                  nc,
+		cfg:                 cfg,
+		tr:                  tr,
+		rdb:                 rdb,
+		interval:            6 * time.Hour,
 	}
 }
 
@@ -128,6 +132,9 @@ func (s *ScheduledNotifier) sendExpiryWarnings(ctx context.Context, days int) {
 			continue
 		}
 
+		if !s.claimWarning(ctx, sub, days) {
+			continue
+		}
 		s.dispatchExpiryWarning(ctx, sub)
 	}
 
@@ -135,6 +142,28 @@ func (s *ScheduledNotifier) sendExpiryWarnings(ctx context.Context, days int) {
 		zap.Int("days", days),
 		zap.Int("subscriptions_found", len(subs)),
 	)
+}
+
+// claimWarning makes each warning (tenant, billing period, 7/3/1-day bucket) go out exactly
+// once. Every worker pod runs this check, on start and every 6 hours, and a subscription sits
+// in each bucket for up to three days, so without a shared marker a tenant got the same
+// warning many times. The marker is a Redis SET NX that outlives the bucket. With Redis
+// unavailable the warning is skipped this round (a later tick sends it) rather than risking
+// a duplicate from every pod.
+func (s *ScheduledNotifier) claimWarning(ctx context.Context, sub expiringSubscription, bucket int) bool {
+	if s.rdb == nil {
+		return false
+	}
+	key := fmt.Sprintf("notifications:plan-expiry-warning:%s:%s:%d", sub.TenantID, sub.CurrentPeriodEnd, bucket)
+	cctx, cancel := context.WithTimeout(ctx, 500*time.Millisecond)
+	defer cancel()
+	ok, err := s.rdb.SetNX(cctx, key, "1", 10*24*time.Hour).Result()
+	if err != nil {
+		s.logger.Warn("expiry warning claim failed, will retry next tick",
+			zap.String("tenant_id", sub.TenantID), zap.Error(err))
+		return false
+	}
+	return ok
 }
 
 // shouldNotifyForDays returns true if the subscription should receive a notification

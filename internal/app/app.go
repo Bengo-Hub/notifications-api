@@ -38,11 +38,10 @@ import (
 	"github.com/bengobox/notifications-api/internal/modules/rbac"
 	templatesmod "github.com/bengobox/notifications-api/internal/modules/templates"
 	"github.com/bengobox/notifications-api/internal/modules/tenant"
-	"github.com/bengobox/notifications-api/internal/platform/cache"
+	"github.com/bengobox/notifications-api/internal/modules/whatsappinbox"
 	"github.com/bengobox/notifications-api/internal/platform/database"
 	"github.com/bengobox/notifications-api/internal/platform/events"
 	"github.com/bengobox/notifications-api/internal/platform/templates"
-	"github.com/bengobox/notifications-api/internal/modules/whatsappinbox"
 	"github.com/bengobox/notifications-api/internal/providers"
 	sandboxmod "github.com/bengobox/notifications-api/internal/sandbox"
 	"github.com/bengobox/notifications-api/internal/shared/logger"
@@ -80,11 +79,25 @@ func New(ctx context.Context) (*App, error) {
 		return nil, fmt.Errorf("postgres init: %w", err)
 	}
 
-	redisClient := cache.NewClient(cfg.Redis)
+	// Shared constructor: pool, 500ms timeouts. A failed ping is logged, not fatal; the client
+	// reconnects on its own (same posture as before).
+	redisClient, redisErr := sharedcache.NewRedis(ctx, sharedcache.RedisConfig{
+		Addr: cfg.Redis.Addr, Password: cfg.Redis.Password, DB: cfg.Redis.DB, DialTimeout: cfg.Redis.DialTimeout,
+	})
+	if redisErr != nil {
+		log.Warn("redis not reachable at startup", zap.Error(redisErr))
+	}
 
 	natsConn, err := events.Connect(cfg.Events)
 	if err != nil {
 		log.Warn("event bus connection failed", zap.Error(err))
+	}
+	if natsConn != nil {
+		// Drop revoked/rotated API keys from every validator on this pod at once
+		// (auth-api broadcasts the key hash; see authclient.InvalidateAPIKeyHash).
+		_ = eventslib.NewBroadcaster(log, natsConn, "auth").Subscribe("apikey.changed", func(m eventslib.BroadcastMessage) {
+			authclient.InvalidateAPIKeyHash(string(m.Data))
+		})
 	}
 
 	templateLoader := templates.New(cfg.Templates)
@@ -94,10 +107,8 @@ func New(ctx context.Context) (*App, error) {
 	if err != nil {
 		return nil, fmt.Errorf("ent client init: %w", err)
 	}
-	// Run auto-migrations
-	if err := entdb.RunMigrations(ctx, entClient); err != nil {
-		log.Warn("ent migration failed", zap.Error(err))
-	}
+	// Schema migrations run once per rollout in cmd/migrate (advisory-locked, direct DSN), not
+	// here: running them from every API pod on start raced the schema diff across replicas.
 
 	// Dedicated sql.DB for the backup module (raw tenant-row dump + advisory lock).
 	backupSQLDB, err := sql.Open("pgx", cfg.Postgres.URL)
@@ -298,7 +309,7 @@ func New(ctx context.Context) (*App, error) {
 		Enabled:       cfg.Backup.ScheduleEnabled,
 		Hour:          cfg.Backup.ScheduleHour,
 		RetentionDays: cfg.Backup.RetentionDays,
-	}, log).Start(ctx)
+	}, log).WithRedis(redisClient).Start(ctx)
 
 	developerKeyAuth := devauth.NewDeveloperKeyAuth(cfg.Services.AuthAPI, log)
 	notificationHandler.SetSandboxStore(sandboxmod.New(redisClient))
@@ -309,7 +320,9 @@ func New(ctx context.Context) (*App, error) {
 	}
 
 	whatsappInboxHub := whatsappinbox.NewHub(log)
-	whatsappInboxHub.SetRedis(redisClient)
+	if natsConn != nil {
+		whatsappInboxHub.SetRelay(eventslib.NewBroadcaster(log, natsConn, "notifications"))
+	}
 	whatsappInboxService := whatsappinbox.NewService(entClient, providerManager, whatsappInboxHub, natsConn, cfg.Events, log)
 	whatsappInboxHandler := handlers.NewWhatsAppInboxHandler(whatsappInboxService, whatsappInboxHub, cfg.HTTP.AllowedOrigins, log)
 	webhookHandler := handlers.NewWebhookHandler(entClient, log, cfg.HTTP.PublicBaseURL, whatsappInboxService)
@@ -351,8 +364,7 @@ func New(ctx context.Context) (*App, error) {
 
 func (a *App) Run(ctx context.Context) error {
 	if a.whatsappInboxHub != nil {
-		go a.whatsappInboxHub.Start(ctx)
-		a.log.Info("whatsapp inbox hub started")
+		a.log.Info("whatsapp inbox hub ready (cross-replica relay via shared-events Broadcaster)")
 	}
 
 	// Start outbox publisher worker

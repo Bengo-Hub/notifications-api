@@ -5,11 +5,13 @@ import (
 	"time"
 
 	"go.uber.org/zap"
+
+	sharedcache "github.com/Bengo-Hub/cache"
+	"github.com/redis/go-redis/v9"
 )
 
-// schedulerAdvisoryLockKey is a fixed, service-unique key for the Postgres session advisory
-// lock that guards the run so only ONE replica executes it. ("notifications-backup")
-const schedulerAdvisoryLockKey int64 = 0x4E54_4642 // 'N','T','F','B'
+// schedulerLockPrefix keys the Redis lease that runs each scheduler tick on one replica.
+const schedulerLockPrefix = "notifications:backup:tick"
 
 // SchedulerConfig configures the hourly auto-backup + retention churn.
 type SchedulerConfig struct {
@@ -20,8 +22,9 @@ type SchedulerConfig struct {
 
 // Scheduler wakes at every top of the hour and backs up ONLY tenants that have opted in
 // (auto_enabled=true) AND scheduled that hour. Auto-backup is OPT-IN: tenants that have not
-// activated it are never touched. A Postgres advisory lock ensures only one replica works.
+// activated it are never touched. A Redis once-per-hour lease ensures only one replica works.
 type Scheduler struct {
+	rdb redis.UniversalClient
 	svc *Service
 	cfg SchedulerConfig
 	log *zap.Logger
@@ -65,35 +68,35 @@ func (sc *Scheduler) Start(ctx context.Context) {
 	}()
 }
 
-// runGuarded acquires the advisory lock and, if won, backs up the tenants that activated
-// auto-backup for backupHour (when backupHour>=0) then runs a safety churn. Only one replica
-// wins the lock per tick.
+// runGuarded runs one tick on a single replica. Hourly ticks run once per hour fleet-wide
+// (RunOnce keyed by the hour, so a replica whose timer fires a moment later cannot repeat
+// it); the startup churn (backupHour -1) only needs mutual exclusion. This replaced a
+// session pg_try_advisory_lock, which PgBouncer transaction pooling breaks (lock and unlock
+// can land on different server connections, leaking the lock or admitting a second replica).
 func (sc *Scheduler) runGuarded(ctx context.Context, backupHour int) {
-	conn, err := sc.svc.db.Conn(ctx)
+	tick := func(ctx context.Context) error { return sc.runTick(ctx, backupHour) }
+	var ran bool
+	var err error
+	if backupHour < 0 {
+		ran, err = sharedcache.RunExclusive(ctx, sc.rdb, sc.log, schedulerLockPrefix+":startup", 30*time.Minute, tick)
+	} else {
+		ran, err = sharedcache.RunOnce(ctx, sc.rdb, sc.log, sharedcache.PeriodKey(schedulerLockPrefix, time.Hour), time.Hour, tick)
+	}
 	if err != nil {
-		sc.log.Warn("scheduler: acquire conn failed", zap.Error(err))
-		return
+		sc.log.Warn("scheduler: tick not run", zap.Bool("ran", ran), zap.Error(err))
 	}
-	defer func() { _ = conn.Close() }()
+}
 
-	var got bool
-	if err := conn.QueryRowContext(ctx, `SELECT pg_try_advisory_lock($1)`, schedulerAdvisoryLockKey).Scan(&got); err != nil {
-		sc.log.Warn("scheduler: advisory lock failed", zap.Error(err))
-		return
-	}
-	if !got {
-		return
-	}
-	defer func() {
-		_, _ = conn.ExecContext(context.Background(), `SELECT pg_advisory_unlock($1)`, schedulerAdvisoryLockKey)
-	}()
-
+// runTick backs up the tenants that activated auto-backup for backupHour (when >= 0), then
+// runs the retention churn.
+func (sc *Scheduler) runTick(ctx context.Context, backupHour int) error {
 	if backupHour >= 0 {
 		sc.backupActivatedTenants(ctx, backupHour)
 	}
 	if _, err := sc.svc.Churn(ctx, sc.cfg.RetentionDays); err != nil {
 		sc.log.Warn("scheduler: churn failed", zap.Error(err))
 	}
+	return nil
 }
 
 // backupActivatedTenants backs up ONLY tenants that opted in (auto_enabled=true) for the
@@ -124,4 +127,11 @@ func (sc *Scheduler) backupActivatedTenants(ctx context.Context, hour int) {
 // nextTopOfHour returns the next top of the hour strictly after now.
 func nextTopOfHour(now time.Time) time.Time {
 	return now.Truncate(time.Hour).Add(time.Hour)
+}
+
+// WithRedis sets the Redis client used for the cross-replica tick lease. Without it no tick
+// runs (logged), because running on every replica would duplicate backups.
+func (sc *Scheduler) WithRedis(rdb redis.UniversalClient) *Scheduler {
+	sc.rdb = rdb
+	return sc
 }

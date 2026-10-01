@@ -46,9 +46,8 @@ func main() {
 	}
 	defer client.Close()
 
-	if err := database.RunMigrations(ctx, client); err != nil {
-		log.Fatalf("migrate: %v", err)
-	}
+	// Schema is migrated by notifications-migrate (advisory-locked) before seed runs; seed must
+	// not run its own unlocked migration, which raced the locked one on other pods.
 
 	// ── Phase 1: Platform-level shared providers ────────────────────────
 	// These are global provider configurations available to all tenants.

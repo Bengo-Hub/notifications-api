@@ -427,20 +427,21 @@ func (s *WhatsAppSubscriptionService) CheckQuota(ctx context.Context, tenantID u
 		return fmt.Errorf("query plan: %w", err)
 	}
 
-	// 0 = unlimited
-	if plan.MessagesPerMonth > 0 && sub.MessagesUsed >= plan.MessagesPerMonth {
-		return fmt.Errorf("quota_exhausted: monthly limit of %d messages reached", plan.MessagesPerMonth)
+	// One conditional UPDATE does the check and the increment: messages_used = messages_used + 1
+	// WHERE messages_used < limit. The old read-then-write (SetMessagesUsed(read+1)) lost
+	// updates when worker pods sent for one tenant at once, so tenants went over quota.
+	upd := s.client.TenantWhatsAppSubscription.Update().
+		Where(tenantwhatsappsubscription.IDEQ(sub.ID))
+	if plan.MessagesPerMonth > 0 { // 0 = unlimited
+		upd = upd.Where(tenantwhatsappsubscription.MessagesUsedLT(plan.MessagesPerMonth))
 	}
-
-	// Increment counter
-	_, err = sub.Update().
-		SetMessagesUsed(sub.MessagesUsed + 1).
-		SetUpdatedAt(time.Now()).
-		Save(ctx)
+	n, err := upd.AddMessagesUsed(1).SetUpdatedAt(time.Now()).Save(ctx)
 	if err != nil {
 		return fmt.Errorf("increment message counter: %w", err)
 	}
-
+	if n == 0 {
+		return fmt.Errorf("quota_exhausted: monthly limit of %d messages reached", plan.MessagesPerMonth)
+	}
 	return nil
 }
 

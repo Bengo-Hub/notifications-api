@@ -5,53 +5,38 @@ import (
 	"net"
 	"net/mail"
 	"strings"
-	"sync"
 	"time"
 
+	sharedcache "github.com/Bengo-Hub/cache"
+	ratelimit "github.com/Bengo-Hub/shared-ratelimit"
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 )
 
 // emailGuard protects the shared email provider account on two fronts:
-//   1. Rate-limit blocks — paces sends with a token bucket so a backlog drain or order
-//      burst never trips the provider's hourly limit (e.g. Zoho "mail rate exceeded").
-//   2. Reputation / noisy failure logs — validates recipients (RFC syntax + MX
-//      resolvability + disposable/placeholder blocklist) and suppresses addresses that
-//      hard-bounced (550 5.1.x), so we stop sending to invalid mailboxes. (Per email
-//      deliverability best practice: keep hard-bounce rate <2%; "no MX" = hard bounce.)
+//  1. Rate-limit blocks: paces sends so a backlog drain or order burst never trips the
+//     provider's hourly limit (e.g. "mail rate exceeded").
+//  2. Reputation and noisy failure logs: validates recipients (RFC syntax, MX resolvability,
+//     disposable/placeholder blocklist) and suppresses addresses that hard-bounced (550 5.1.x).
 //
-// All state is in-process and concurrency-safe. Suppression is best-effort within a pod
-// lifetime — a Redis/DB-backed suppression list fed by bounce webhooks is the production
-// upgrade (tracked as a follow-up).
+// Every worker pod sends through the same provider account, so the pacing budget, the
+// suppression list and provider cooldowns are shared in Redis: before, each pod kept its own
+// copy in memory, so N pods sent N times the provider limit and a bounce seen by one pod was
+// retried by the others. Without Redis the limiter falls back to a per-pod share and the lists
+// to bounded per-pod caches. The MX cache stays per pod (it only saves DNS lookups).
 type emailGuard struct {
 	log        *zap.Logger
 	validateMX bool
+	rdb        redis.UniversalClient
 
-	// token-bucket rate limiter
-	mu        sync.Mutex
-	tokens    float64
-	maxTokens float64
-	perSec    float64
-	last      time.Time
+	limiter *ratelimit.Limiter
+	pace    ratelimit.Options
 
-	// MX-resolvability cache (domain -> result, TTL'd) to avoid a DNS lookup per send
-	mxMu    sync.Mutex
-	mxCache map[string]mxEntry
+	mxOK  *sharedcache.Local[string, bool] // positive results, 6h
+	mxBad *sharedcache.Local[string, bool] // negative results, 30m (re-check sooner)
 
-	// in-process suppression of hard-bounced / invalid recipients
-	supMu      sync.Mutex
-	suppressed map[string]time.Time
-
-	// circuit breaker for tenant providers with failing credentials: a provider that
-	// fails auth is skipped (straight to platform fallback) until the cooldown expires,
-	// instead of hammering the SMTP host with a doomed AUTH per message — bursts of
-	// failed logins are exactly what trips Zoho's abuse detection.
-	provMu       sync.Mutex
-	provCooldown map[string]time.Time
-}
-
-type mxEntry struct {
-	ok  bool
-	exp time.Time
+	localSuppressed *sharedcache.Local[string, bool] // used only when Redis is unavailable
+	localCooldown   *sharedcache.Local[string, bool]
 }
 
 // disposable/placeholder domains we never attempt to send to (guaranteed bounces / noise).
@@ -62,56 +47,75 @@ var blockedEmailDomains = map[string]bool{
 	"10minutemail.com": true, "tempmail.com": true, "trashmail.com": true, "sharklasers.com": true,
 }
 
-func newEmailGuard(maxPerHour, burst int, validateMX bool, log *zap.Logger) *emailGuard {
+const (
+	suppressedKeyPrefix = "notifications:email:suppressed:"
+	cooldownKeyPrefix   = "notifications:email:provider-cooldown:"
+)
+
+func newEmailGuard(rdb redis.UniversalClient, maxPerHour, burst int, validateMX bool, log *zap.Logger) *emailGuard {
 	if maxPerHour <= 0 {
 		maxPerHour = 200
 	}
 	if burst <= 0 {
 		burst = 25
 	}
+	if c, ok := rdb.(*redis.Client); ok && c == nil {
+		rdb = nil // a typed nil client must not look like a live one
+	}
+	l := log.Named("email-guard")
 	return &emailGuard{
-		log:        log.Named("email-guard"),
+		log:        l,
 		validateMX: validateMX,
-		tokens:     float64(burst),
-		maxTokens:  float64(burst),
-		perSec:     float64(maxPerHour) / 3600.0,
-		last:       time.Now(),
-		mxCache:      make(map[string]mxEntry),
-		suppressed:   make(map[string]time.Time),
-		provCooldown: make(map[string]time.Time),
+		rdb:        rdb,
+		limiter:    ratelimit.NewLimiter(rdb, l, "notifications"),
+		pace: ratelimit.Options{
+			Name: "email-provider", Limit: maxPerHour, Window: time.Hour, Burst: burst,
+		},
+		mxOK:            sharedcache.NewLocal[string, bool](10000, 6*time.Hour),
+		mxBad:           sharedcache.NewLocal[string, bool](10000, 30*time.Minute),
+		localSuppressed: sharedcache.NewLocal[string, bool](50000, 30*24*time.Hour),
+		localCooldown:   sharedcache.NewLocal[string, bool](5000, time.Hour),
 	}
 }
+
+func (g *emailGuard) redisOK() bool { return g.rdb != nil }
 
 // ProviderCoolingDown reports whether the given provider key (tenant id) recently failed
 // authentication and should be skipped in favor of the platform provider.
 func (g *emailGuard) ProviderCoolingDown(key string) bool {
-	g.provMu.Lock()
-	defer g.provMu.Unlock()
-	exp, ok := g.provCooldown[key]
-	if !ok {
-		return false
+	if g.redisOK() {
+		ctx, cancel := context.WithTimeout(context.Background(), 300*time.Millisecond)
+		defer cancel()
+		n, err := g.rdb.Exists(ctx, cooldownKeyPrefix+key).Result()
+		if err == nil {
+			return n > 0
+		}
 	}
-	if time.Now().After(exp) {
-		delete(g.provCooldown, key)
-		return false
-	}
-	return true
+	_, ok := g.localCooldown.Get(key)
+	return ok
 }
 
-// CoolProvider opens the circuit for a provider key after an auth failure.
+// CoolProvider opens the circuit for a provider key after an auth failure, on every pod.
 func (g *emailGuard) CoolProvider(key string, ttl time.Duration) {
 	if key == "" {
 		return
 	}
-	g.provMu.Lock()
-	g.provCooldown[key] = time.Now().Add(ttl)
-	g.provMu.Unlock()
+	if g.redisOK() {
+		ctx, cancel := context.WithTimeout(context.Background(), 300*time.Millisecond)
+		err := g.rdb.Set(ctx, cooldownKeyPrefix+key, "1", ttl).Err()
+		cancel()
+		if err != nil {
+			g.localCooldown.Set(key, true)
+		}
+	} else {
+		g.localCooldown.Set(key, true)
+	}
 	g.log.Warn("tenant email provider cooling down after auth failure",
 		zap.String("tenant_id", key), zap.Duration("ttl", ttl))
 }
 
 // isAuthFailureError reports whether an SMTP error means the provider's own credentials
-// are bad (535 / authentication failed) — a config problem that will fail identically on
+// are bad (535 / authentication failed): a config problem that will fail identically on
 // every send until the tenant fixes their provider settings.
 func isAuthFailureError(err error) bool {
 	if err == nil {
@@ -123,8 +127,6 @@ func isAuthFailureError(err error) bool {
 }
 
 // ValidRecipients returns the subset of addrs safe to send to, plus the skipped ones.
-// Skipping bad recipients up front avoids guaranteed bounces (which hurt reputation and
-// flood the logs) without ever attempting the send.
 func (g *emailGuard) ValidRecipients(addrs []string) (valid, skipped []string) {
 	for _, a := range addrs {
 		if reason := g.reject(a); reason != "" {
@@ -160,23 +162,20 @@ func (g *emailGuard) reject(addr string) string {
 }
 
 // domainResolvable reports whether the domain can receive mail (has MX, or A/AAAA as an
-// implicit MX fallback). Results are cached for 6h (negative for 30m) to bound DNS load.
+// implicit MX fallback). Cached per pod: 6h positive, 30m negative, bounded entries.
 func (g *emailGuard) domainResolvable(domain string) bool {
-	g.mxMu.Lock()
-	if e, ok := g.mxCache[domain]; ok && time.Now().Before(e.exp) {
-		g.mxMu.Unlock()
-		return e.ok
+	if _, ok := g.mxOK.Get(domain); ok {
+		return true
 	}
-	g.mxMu.Unlock()
-
+	if _, ok := g.mxBad.Get(domain); ok {
+		return false
+	}
 	ok := lookupMailHost(domain)
-	ttl := 6 * time.Hour
-	if !ok {
-		ttl = 30 * time.Minute // re-check sooner in case of transient DNS failure
+	if ok {
+		g.mxOK.Set(domain, true)
+	} else {
+		g.mxBad.Set(domain, true)
 	}
-	g.mxMu.Lock()
-	g.mxCache[domain] = mxEntry{ok: ok, exp: time.Now().Add(ttl)}
-	g.mxMu.Unlock()
 	return ok
 }
 
@@ -193,68 +192,66 @@ func lookupMailHost(domain string) bool {
 
 func (g *emailGuard) isSuppressed(addr string) bool {
 	key := strings.ToLower(addr)
-	g.supMu.Lock()
-	defer g.supMu.Unlock()
-	exp, ok := g.suppressed[key]
-	if !ok {
-		return false
+	if g.redisOK() {
+		ctx, cancel := context.WithTimeout(context.Background(), 300*time.Millisecond)
+		defer cancel()
+		n, err := g.rdb.Exists(ctx, suppressedKeyPrefix+key).Result()
+		if err == nil {
+			return n > 0
+		}
 	}
-	if time.Now().After(exp) {
-		delete(g.suppressed, key)
-		return false
-	}
-	return true
+	_, ok := g.localSuppressed.Get(key)
+	return ok
 }
 
-// Suppress records a hard-bounced / invalid recipient so we stop sending to it for ttl.
+// Suppress records a hard-bounced / invalid recipient so no pod sends to it for ttl.
 func (g *emailGuard) Suppress(addr string, ttl time.Duration) {
 	if addr == "" {
 		return
 	}
-	g.supMu.Lock()
-	g.suppressed[strings.ToLower(addr)] = time.Now().Add(ttl)
-	g.supMu.Unlock()
+	key := strings.ToLower(addr)
+	stored := false
+	if g.redisOK() {
+		ctx, cancel := context.WithTimeout(context.Background(), 300*time.Millisecond)
+		stored = g.rdb.Set(ctx, suppressedKeyPrefix+key, "1", ttl).Err() == nil
+		cancel()
+	}
+	if !stored {
+		g.localSuppressed.Set(key, true)
+	}
 	g.log.Warn("recipient suppressed after hard bounce", zap.String("to", addr), zap.Duration("ttl", ttl))
 }
 
-// WaitForSlot paces sends: it blocks until a token is available or maxWait elapses
+// WaitForSlot paces sends: it blocks until the fleet-wide budget has room or maxWait elapses
 // (maxWait is bounded well under the broker AckWait so a paced message is never
-// redelivered). Returns whether a token was actually granted.
+// redelivered). Returns whether a slot was granted.
 func (g *emailGuard) WaitForSlot(ctx context.Context, maxWait time.Duration) bool {
 	deadline := time.Now().Add(maxWait)
 	for {
-		if g.take() {
+		ok, retryAfter := g.limiter.Allow(ctx, "send", g.pace, 1)
+		if ok {
 			return true
 		}
-		if !time.Now().Before(deadline) {
+		wait := retryAfter
+		if wait <= 0 || wait > time.Until(deadline) {
+			wait = time.Until(deadline)
+		}
+		if wait <= 0 {
 			return false
 		}
+		if wait > 2*time.Second {
+			wait = 2 * time.Second // re-check: another pod's slot may free up sooner
+		}
 		select {
-		case <-time.After(400 * time.Millisecond):
+		case <-time.After(wait):
 		case <-ctx.Done():
 			return false
 		}
 	}
 }
 
-func (g *emailGuard) take() bool {
-	g.mu.Lock()
-	defer g.mu.Unlock()
-	now := time.Now()
-	g.tokens += now.Sub(g.last).Seconds() * g.perSec
-	if g.tokens > g.maxTokens {
-		g.tokens = g.maxTokens
-	}
-	g.last = now
-	if g.tokens >= 1 {
-		g.tokens--
-		return true
-	}
-	return false
-}
-
 // isPermanentRecipientError reports whether an SMTP error means the mailbox is bad
-// (550 5.1.x — no such user / does not exist), which should suppress the recipient.
+// (550 5.1.x: no such user / does not exist), which should suppress the recipient.
 // A 550 5.4.6 (rate/policy) is NOT a recipient problem and must not suppress.
 func isPermanentRecipientError(err error) bool {
 	if err == nil {

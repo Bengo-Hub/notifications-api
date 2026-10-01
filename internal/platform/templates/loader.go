@@ -7,43 +7,39 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-	"sync"
-	"time"
+
+	sharedcache "github.com/Bengo-Hub/cache"
 
 	"github.com/bengobox/notifications-api/internal/config"
 )
 
 var varRegex = regexp.MustCompile(`\{\{\s*(?:or\s+)?\.(\w+)`)
 
-// Loader caches compiled templates in-memory with TTL invalidation.
+// Loader caches template files in memory with a TTL. The cache is bounded (least recently
+// used templates are dropped first) so it cannot grow with arbitrary template IDs.
 type Loader struct {
 	cfg   config.TemplateConfig
-	mu    sync.RWMutex
-	cache map[string]cachedTemplate
-}
-
-type cachedTemplate struct {
-	content string
-	expires time.Time
+	cache *sharedcache.Local[string, string]
 }
 
 func New(cfg config.TemplateConfig) *Loader {
-	return &Loader{cfg: cfg, cache: make(map[string]cachedTemplate)}
+	return &Loader{cfg: cfg, cache: sharedcache.NewLocal[string, string](2000, cfg.CacheTTL)}
 }
 
 // Get loads the template content by identifier.
 // templateID may be either "<channel>/<name>" or just "<name>" (then channel must be encoded in the ID by caller).
 func (l *Loader) Get(_ context.Context, templateID string) (string, error) {
-	l.mu.RLock()
-	entry, ok := l.cache[templateID]
-	l.mu.RUnlock()
-
-	if ok && time.Now().Before(entry.expires) {
-		return entry.content, nil
+	if content, ok := l.cache.Get(templateID); ok {
+		return content, nil
 	}
 
-	// Load from filesystem
-	baseDir := l.cfg.Directory
+	// Load from filesystem. templateID arrives in API requests, so the resolved path must stay
+	// inside the template directory: "../" segments would otherwise read any file in the
+	// container into an outgoing message.
+	baseDir, err := filepath.Abs(l.cfg.Directory)
+	if err != nil {
+		return "", fmt.Errorf("template dir: %w", err)
+	}
 	var path string
 	if strings.Contains(templateID, "/") {
 		path = filepath.Join(baseDir, templateID)
@@ -51,31 +47,23 @@ func (l *Loader) Get(_ context.Context, templateID string) (string, error) {
 		// default to email channel
 		path = filepath.Join(baseDir, "email", templateID)
 	}
+	if !strings.HasPrefix(path, baseDir+string(filepath.Separator)) {
+		return "", fmt.Errorf("template not found: %s", templateID)
+	}
 	// try with known extensions
-	candidates := []string{path, path + ".html", path + ".txt", path + ".mjml", path + ".json"}
-	var content []byte
-	var err error
-	for _, p := range candidates {
-		if _, statErr := os.Stat(p); statErr == nil {
-			content, err = os.ReadFile(p)
-			if err != nil {
-				return "", fmt.Errorf("read template: %w", err)
-			}
-			goto cacheAndReturn
+	for _, p := range []string{path, path + ".html", path + ".txt", path + ".mjml", path + ".json"} {
+		info, statErr := os.Stat(p)
+		if statErr != nil || info.IsDir() {
+			continue
 		}
+		content, err := os.ReadFile(p)
+		if err != nil {
+			return "", fmt.Errorf("read template: %w", err)
+		}
+		l.cache.Set(templateID, string(content))
+		return string(content), nil
 	}
-	// not found
 	return "", fmt.Errorf("template not found: %s", templateID)
-
-cacheAndReturn:
-	l.mu.Lock()
-	l.cache[templateID] = cachedTemplate{
-		content: string(content),
-		expires: time.Now().Add(l.cfg.CacheTTL),
-	}
-	l.mu.Unlock()
-
-	return string(content), nil
 }
 
 // Summary describes a template available for rendering.
@@ -123,10 +111,9 @@ func (l *Loader) Write(_ context.Context, channel, id, content string) error {
 	if err := os.WriteFile(targetPath, []byte(content), 0644); err != nil {
 		return fmt.Errorf("write template: %w", err)
 	}
-	// Invalidate cache for this template
-	l.mu.Lock()
-	delete(l.cache, channel+"/"+id)
-	l.mu.Unlock()
+	// Invalidate this pod's cached copy. NOTE: the file itself is pod-local (see the queued
+	// template-persistence item in the multi-pod plan); other replicas keep the image version.
+	l.cache.Delete(channel + "/" + id)
 	return nil
 }
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/redis/go-redis/v9"
 	"html/template"
 	"log"
 	"os"
@@ -29,13 +30,12 @@ import (
 	"github.com/bengobox/notifications-api/internal/config"
 	"github.com/bengobox/notifications-api/internal/encryption"
 	"github.com/bengobox/notifications-api/internal/messaging"
-	"github.com/bengobox/notifications-api/internal/platform/cache"
 	"github.com/bengobox/notifications-api/internal/platform/database"
 	"github.com/bengobox/notifications-api/internal/platform/events"
 	"github.com/bengobox/notifications-api/internal/platform/templates"
 	"github.com/bengobox/notifications-api/internal/providers"
-	"github.com/bengobox/notifications-api/internal/providers/push"
 	"github.com/bengobox/notifications-api/internal/providers/email"
+	"github.com/bengobox/notifications-api/internal/providers/push"
 	"github.com/bengobox/notifications-api/internal/shared/logger"
 
 	"github.com/bengobox/notifications-api/internal/modules/billing"
@@ -200,11 +200,18 @@ func main() {
 	// ServiceConfig encryption_key, tenant_id IS NULL) with env fallback.
 	keyProvider := encryption.NewKeyProvider(client, cfg.Security.EncryptionKey)
 	pm := providers.NewManager(dbPool, cfg.Postgres, cfg.Providers, keyProvider.Primary(ctx), cfg.App.Env, platformIDStr)
-	emailGuardian := newEmailGuard(cfg.Providers.EmailMaxPerHour, cfg.Providers.EmailBurst, cfg.Providers.EmailValidateMX, logg)
 
 	durable := "notifications-worker"
 	// Redis for cached auth-api tenant data (branding, contact info)
-	redisClient := cache.NewClient(cfg.Redis)
+	// Shared constructor: pool, 500ms timeouts. A failed ping is logged, not fatal; the client
+	// reconnects on its own (same posture as before).
+	redisClient, redisErr := sharedcache.NewRedis(ctx, sharedcache.RedisConfig{
+		Addr: cfg.Redis.Addr, Password: cfg.Redis.Password, DB: cfg.Redis.DB, DialTimeout: cfg.Redis.DialTimeout,
+	})
+	if redisErr != nil {
+		logg.Warn("redis not reachable at startup", zap.Error(redisErr))
+	}
+	emailGuardian := newEmailGuard(redisClient, cfg.Providers.EmailMaxPerHour, cfg.Providers.EmailBurst, cfg.Providers.EmailValidateMX, logg)
 
 	// Shared cache-aside helper for tenant branding (auto-fetches from auth-api on miss)
 	tenantCache := sharedcache.New(redisClient, logg)
@@ -352,7 +359,7 @@ func main() {
 	if cfg.Services.SubscriptionsAPI != "" {
 		subsCfg := serviceclient.DefaultConfig(cfg.Services.SubscriptionsAPI, "subscriptions-api", logg)
 		subsClient := serviceclient.New(subsCfg)
-		scheduledNotifier := NewScheduledNotifier(logg, subsClient, nc, cfg, tr)
+		scheduledNotifier := NewScheduledNotifier(logg, subsClient, nc, cfg, tr, nilIfTyped(redisClient))
 		scheduledNotifier.Start(ctx)
 	}
 
@@ -903,4 +910,12 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 		logg.Warn("unknown channel", zap.String("channel", msg.Channel))
 		return errSkippedNoSend
 	}
+}
+
+// nilIfTyped returns a nil interface for a nil *redis.Client so callers can test rdb == nil.
+func nilIfTyped(c *redis.Client) redis.UniversalClient {
+	if c == nil {
+		return nil
+	}
+	return c
 }

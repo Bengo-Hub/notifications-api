@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/nats-io/nats.go"
@@ -201,6 +202,52 @@ func (h *NotificationHandler) Enqueue(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	requestID := httpware.GetRequestID(r.Context())
+	clientKey := strings.TrimSpace(r.Header.Get("Idempotency-Key"))
+	// The message always carries an idempotency key for the worker; only a client-supplied
+	// key is deduplicated here (two identical sends without one are two real sends).
+	idemp := clientKey
+	if idemp == "" {
+		sum := sha256.Sum256([]byte(tenant + "|" + req.Channel + "|" + req.Template + "|" + requestID))
+		idemp = hex.EncodeToString(sum[:])
+	}
+
+	// Idempotency (24h), claimed first so a retried request never consumes quota twice. The
+	// key is scoped by tenant: an unscoped key let one tenant's request be swallowed as a
+	// "duplicate" of another tenant's. A Redis error lets the send through (dropping a real
+	// message is worse than a rare duplicate), and the claim is released if the request is
+	// rejected or fails below, so the client's retry is not mistaken for a duplicate.
+	var claimedKey string
+	queued := false
+	if h.cache != nil && clientKey != "" {
+		key := "idemp:" + tenant + ":" + clientKey
+		ctx, cancel := context.WithTimeout(r.Context(), 500*time.Millisecond)
+		ok, err := h.cache.SetNX(ctx, key, requestID, 24*time.Hour).Result()
+		if err != nil {
+			h.log.Warn("idempotency setnx failed, sending anyway", zap.Error(err))
+		} else if !ok {
+			original, _ := h.cache.Get(ctx, key).Result()
+			cancel()
+			if original == "" {
+				original = requestID
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusAccepted)
+			json.NewEncoder(w).Encode(enqueueResponse{Status: "duplicate", RequestID: original})
+			return
+		} else {
+			claimedKey = key
+		}
+		cancel()
+	}
+	defer func() {
+		if claimedKey != "" && !queued {
+			ctx, cancel := context.WithTimeout(context.WithoutCancel(r.Context()), 500*time.Millisecond)
+			defer cancel()
+			_ = h.cache.Del(ctx, claimedKey).Err()
+		}
+	}()
+
 	// Per-channel rate limiting based on subscription plan
 	if h.rateLimiter != nil {
 		limitKey := channelRateLimitKey(req.Channel)
@@ -209,9 +256,10 @@ func (h *NotificationHandler) Enqueue(w http.ResponseWriter, r *http.Request) {
 			if claims != nil {
 				limit := claims.GetLimit(limitKey)
 				if limit != 0 {
-					// Multiply limit check by number of recipients
-					for range req.To {
-						result, _ := h.rateLimiter.Check(r.Context(), tenant, limitKey, limit)
+					// All recipients in one atomic check: the batch fits today's quota or
+					// consumes nothing.
+					{
+						result, _ := h.rateLimiter.CheckN(r.Context(), tenant, limitKey, limit, max(len(req.To), 1))
 						if result != nil && !result.Allowed {
 							w.Header().Set("Content-Type", "application/json")
 							w.Header().Set("X-RateLimit-Limit", fmt.Sprintf("%d", result.Limit))
@@ -283,31 +331,6 @@ func (h *NotificationHandler) Enqueue(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	requestID := httpware.GetRequestID(r.Context())
-	idemp := r.Header.Get("Idempotency-Key")
-	if idemp == "" {
-		// derive from payload
-		sum := sha256.Sum256([]byte(tenant + "|" + req.Channel + "|" + req.Template + "|" + requestID))
-		idemp = hex.EncodeToString(sum[:])
-	}
-
-	// idempotency check (24h)
-	if h.cache != nil {
-		ctx, cancel := context.WithTimeout(r.Context(), 500*time.Millisecond)
-		defer cancel()
-		key := "idemp:" + idemp
-		ok, err := h.cache.SetNX(ctx, key, requestID, 24*time.Hour).Result()
-		if err != nil {
-			h.log.Warn("idempotency setnx failed", zap.Error(err))
-		}
-		if !ok {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusAccepted)
-			json.NewEncoder(w).Encode(enqueueResponse{Status: "duplicate", RequestID: requestID})
-			return
-		}
-	}
-
 	msg := messaging.Message{
 		TenantID:       tenant,
 		Channel:        req.Channel,
@@ -329,6 +352,7 @@ func (h *NotificationHandler) Enqueue(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(errorResponse{Error: "queue_unavailable"})
 		return
 	}
+	queued = true
 
 	// Publish per-channel usage event for subscriptions-api limit tracking.
 	h.publishUsageEvent(r.Context(), tenant, req.Channel)
@@ -459,8 +483,8 @@ func (h *NotificationHandler) EnqueueMessage(ctx context.Context, tenantID, chan
 	if h.cache != nil {
 		cctx, cancel := context.WithTimeout(ctx, 500*time.Millisecond)
 		defer cancel()
-		ok, _ := h.cache.SetNX(cctx, "idemp:"+idemp, rid, 24*time.Hour).Result()
-		if !ok {
+		// Only a confirmed existing key is a duplicate; a Redis error must not drop the send.
+		if ok, err := h.cache.SetNX(cctx, "idemp:"+idemp, rid, 24*time.Hour).Result(); err == nil && !ok {
 			return rid, nil // duplicate, treat as success
 		}
 	}
