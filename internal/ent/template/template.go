@@ -24,6 +24,8 @@ const (
 	FieldTags = "tags"
 	// FieldFilePath holds the string denoting the file_path field in the database.
 	FieldFilePath = "file_path"
+	// FieldContentOverride holds the string denoting the content_override field in the database.
+	FieldContentOverride = "content_override"
 	// FieldDescription holds the string denoting the description field in the database.
 	FieldDescription = "description"
 	// FieldVariables holds the string denoting the variables field in the database.
@@ -48,6 +50,7 @@ var Columns = []string{
 	FieldCategory,
 	FieldTags,
 	FieldFilePath,
+	FieldContentOverride,
 	FieldDescription,
 	FieldVariables,
 	FieldMimeType,
@@ -119,6 +122,11 @@ func ByCategory(opts ...sql.OrderTermOption) OrderOption {
 // ByFilePath orders the results by the file_path field.
 func ByFilePath(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldFilePath, opts...).ToFunc()
+}
+
+// ByContentOverride orders the results by the content_override field.
+func ByContentOverride(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldContentOverride, opts...).ToFunc()
 }
 
 // ByDescription orders the results by the description field.

@@ -490,6 +490,7 @@ var (
 		{Name: "category", Type: field.TypeString, Default: "general"},
 		{Name: "tags", Type: field.TypeJSON, Nullable: true},
 		{Name: "file_path", Type: field.TypeString},
+		{Name: "content_override", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "description", Type: field.TypeString, Nullable: true, Default: ""},
 		{Name: "variables", Type: field.TypeJSON, Nullable: true},
 		{Name: "mime_type", Type: field.TypeString, Default: "text/plain"},
@@ -519,7 +520,7 @@ var (
 			{
 				Name:    "template_is_active",
 				Unique:  false,
-				Columns: []*schema.Column{TemplatesColumns[9]},
+				Columns: []*schema.Column{TemplatesColumns[10]},
 			},
 		},
 	}

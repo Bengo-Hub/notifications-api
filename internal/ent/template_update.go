@@ -104,6 +104,26 @@ func (_u *TemplateUpdate) SetNillableFilePath(v *string) *TemplateUpdate {
 	return _u
 }
 
+// SetContentOverride sets the "content_override" field.
+func (_u *TemplateUpdate) SetContentOverride(v string) *TemplateUpdate {
+	_u.mutation.SetContentOverride(v)
+	return _u
+}
+
+// SetNillableContentOverride sets the "content_override" field if the given value is not nil.
+func (_u *TemplateUpdate) SetNillableContentOverride(v *string) *TemplateUpdate {
+	if v != nil {
+		_u.SetContentOverride(*v)
+	}
+	return _u
+}
+
+// ClearContentOverride clears the value of the "content_override" field.
+func (_u *TemplateUpdate) ClearContentOverride() *TemplateUpdate {
+	_u.mutation.ClearContentOverride()
+	return _u
+}
+
 // SetDescription sets the "description" field.
 func (_u *TemplateUpdate) SetDescription(v string) *TemplateUpdate {
 	_u.mutation.SetDescription(v)
@@ -283,6 +303,12 @@ func (_u *TemplateUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.FilePath(); ok {
 		_spec.SetField(template.FieldFilePath, field.TypeString, value)
 	}
+	if value, ok := _u.mutation.ContentOverride(); ok {
+		_spec.SetField(template.FieldContentOverride, field.TypeString, value)
+	}
+	if _u.mutation.ContentOverrideCleared() {
+		_spec.ClearField(template.FieldContentOverride, field.TypeString)
+	}
 	if value, ok := _u.mutation.Description(); ok {
 		_spec.SetField(template.FieldDescription, field.TypeString, value)
 	}
@@ -402,6 +428,26 @@ func (_u *TemplateUpdateOne) SetNillableFilePath(v *string) *TemplateUpdateOne {
 	if v != nil {
 		_u.SetFilePath(*v)
 	}
+	return _u
+}
+
+// SetContentOverride sets the "content_override" field.
+func (_u *TemplateUpdateOne) SetContentOverride(v string) *TemplateUpdateOne {
+	_u.mutation.SetContentOverride(v)
+	return _u
+}
+
+// SetNillableContentOverride sets the "content_override" field if the given value is not nil.
+func (_u *TemplateUpdateOne) SetNillableContentOverride(v *string) *TemplateUpdateOne {
+	if v != nil {
+		_u.SetContentOverride(*v)
+	}
+	return _u
+}
+
+// ClearContentOverride clears the value of the "content_override" field.
+func (_u *TemplateUpdateOne) ClearContentOverride() *TemplateUpdateOne {
+	_u.mutation.ClearContentOverride()
 	return _u
 }
 
@@ -613,6 +659,12 @@ func (_u *TemplateUpdateOne) sqlSave(ctx context.Context) (_node *Template, err 
 	}
 	if value, ok := _u.mutation.FilePath(); ok {
 		_spec.SetField(template.FieldFilePath, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.ContentOverride(); ok {
+		_spec.SetField(template.FieldContentOverride, field.TypeString, value)
+	}
+	if _u.mutation.ContentOverrideCleared() {
+		_spec.ClearField(template.FieldContentOverride, field.TypeString)
 	}
 	if value, ok := _u.mutation.Description(); ok {
 		_spec.SetField(template.FieldDescription, field.TypeString, value)

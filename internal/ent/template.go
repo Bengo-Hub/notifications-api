@@ -29,6 +29,8 @@ type Template struct {
 	Tags []string `json:"tags,omitempty"`
 	// Relative path from templates root, e.g. email/auth/welcome.html
 	FilePath string `json:"file_path,omitempty"`
+	// Platform-edited template content. When set it wins over the file baked into the image; stored in the DB so an edit reaches every pod and survives redeploys
+	ContentOverride *string `json:"content_override,omitempty"`
 	// Optional human-readable description
 	Description string `json:"description,omitempty"`
 	// Extracted {{ .var }} names from template content
@@ -53,7 +55,7 @@ func (*Template) scanValues(columns []string) ([]any, error) {
 			values[i] = new([]byte)
 		case template.FieldIsActive:
 			values[i] = new(sql.NullBool)
-		case template.FieldName, template.FieldChannel, template.FieldCategory, template.FieldFilePath, template.FieldDescription, template.FieldMimeType:
+		case template.FieldName, template.FieldChannel, template.FieldCategory, template.FieldFilePath, template.FieldContentOverride, template.FieldDescription, template.FieldMimeType:
 			values[i] = new(sql.NullString)
 		case template.FieldCreatedAt, template.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -111,6 +113,13 @@ func (_m *Template) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field file_path", values[i])
 			} else if value.Valid {
 				_m.FilePath = value.String
+			}
+		case template.FieldContentOverride:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field content_override", values[i])
+			} else if value.Valid {
+				_m.ContentOverride = new(string)
+				*_m.ContentOverride = value.String
 			}
 		case template.FieldDescription:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -200,6 +209,11 @@ func (_m *Template) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("file_path=")
 	builder.WriteString(_m.FilePath)
+	builder.WriteString(", ")
+	if v := _m.ContentOverride; v != nil {
+		builder.WriteString("content_override=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
 	builder.WriteString("description=")
 	builder.WriteString(_m.Description)

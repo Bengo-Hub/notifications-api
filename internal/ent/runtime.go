@@ -473,23 +473,23 @@ func init() {
 	// template.FilePathValidator is a validator for the "file_path" field. It is called by the builders before save.
 	template.FilePathValidator = templateDescFilePath.Validators[0].(func(string) error)
 	// templateDescDescription is the schema descriptor for description field.
-	templateDescDescription := templateFields[6].Descriptor()
+	templateDescDescription := templateFields[7].Descriptor()
 	// template.DefaultDescription holds the default value on creation for the description field.
 	template.DefaultDescription = templateDescDescription.Default.(string)
 	// templateDescMimeType is the schema descriptor for mime_type field.
-	templateDescMimeType := templateFields[8].Descriptor()
+	templateDescMimeType := templateFields[9].Descriptor()
 	// template.DefaultMimeType holds the default value on creation for the mime_type field.
 	template.DefaultMimeType = templateDescMimeType.Default.(string)
 	// templateDescIsActive is the schema descriptor for is_active field.
-	templateDescIsActive := templateFields[9].Descriptor()
+	templateDescIsActive := templateFields[10].Descriptor()
 	// template.DefaultIsActive holds the default value on creation for the is_active field.
 	template.DefaultIsActive = templateDescIsActive.Default.(bool)
 	// templateDescCreatedAt is the schema descriptor for created_at field.
-	templateDescCreatedAt := templateFields[10].Descriptor()
+	templateDescCreatedAt := templateFields[11].Descriptor()
 	// template.DefaultCreatedAt holds the default value on creation for the created_at field.
 	template.DefaultCreatedAt = templateDescCreatedAt.Default.(func() time.Time)
 	// templateDescUpdatedAt is the schema descriptor for updated_at field.
-	templateDescUpdatedAt := templateFields[11].Descriptor()
+	templateDescUpdatedAt := templateFields[12].Descriptor()
 	// template.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	template.DefaultUpdatedAt = templateDescUpdatedAt.Default.(func() time.Time)
 	// template.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.

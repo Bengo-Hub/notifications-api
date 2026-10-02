@@ -1,6 +1,7 @@
 package main
 
 import (
+	templatesmod "github.com/bengobox/notifications-api/internal/modules/templates"
 	"context"
 	"encoding/json"
 	"errors"
@@ -155,6 +156,12 @@ func main() {
 	client, err := entdb.NewClient(ctx, cfg.Postgres)
 	if err != nil {
 		logg.Fatal("failed to connect to ent", zap.Error(err))
+	}
+	// The worker renders with the same DB-stored template edits as the API, and drops its cached
+	// copy when an edit is saved on any pod.
+	tpl.SetStore(templatesmod.NewOverrideStore(client))
+	if nc != nil {
+		tpl.SetInvalidator(eventslib.NewBroadcaster(logg, nc, "notifications"))
 	}
 	defer client.Close()
 

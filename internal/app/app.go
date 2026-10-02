@@ -153,6 +153,12 @@ func New(ctx context.Context) (*App, error) {
 		templateCache = sharedcache.New(redisClient, log)
 	}
 	templateRepo := templatesmod.NewRepository(entClient, templateCache)
+	// Platform template edits live in the DB (every pod, survives redeploys) and clear every
+	// pod's loader cache when saved.
+	templateLoader.SetStore(templatesmod.NewOverrideStore(entClient))
+	if natsConn != nil {
+		templateLoader.SetInvalidator(eventslib.NewBroadcaster(log, natsConn, "notifications"))
+	}
 	templateHandler := handlers.NewTemplateHandler(templateLoader, templateRepo, notificationHandler)
 	// Provider-credential encryption key: DB-first (platform-owner configurable via
 	// ServiceConfig encryption_key, tenant_id IS NULL), env fallback

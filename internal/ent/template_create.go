@@ -62,6 +62,20 @@ func (_c *TemplateCreate) SetFilePath(v string) *TemplateCreate {
 	return _c
 }
 
+// SetContentOverride sets the "content_override" field.
+func (_c *TemplateCreate) SetContentOverride(v string) *TemplateCreate {
+	_c.mutation.SetContentOverride(v)
+	return _c
+}
+
+// SetNillableContentOverride sets the "content_override" field if the given value is not nil.
+func (_c *TemplateCreate) SetNillableContentOverride(v *string) *TemplateCreate {
+	if v != nil {
+		_c.SetContentOverride(*v)
+	}
+	return _c
+}
+
 // SetDescription sets the "description" field.
 func (_c *TemplateCreate) SetDescription(v string) *TemplateCreate {
 	_c.mutation.SetDescription(v)
@@ -319,6 +333,10 @@ func (_c *TemplateCreate) createSpec() (*Template, *sqlgraph.CreateSpec) {
 		_spec.SetField(template.FieldFilePath, field.TypeString, value)
 		_node.FilePath = value
 	}
+	if value, ok := _c.mutation.ContentOverride(); ok {
+		_spec.SetField(template.FieldContentOverride, field.TypeString, value)
+		_node.ContentOverride = &value
+	}
 	if value, ok := _c.mutation.Description(); ok {
 		_spec.SetField(template.FieldDescription, field.TypeString, value)
 		_node.Description = value
@@ -458,6 +476,24 @@ func (u *TemplateUpsert) SetFilePath(v string) *TemplateUpsert {
 // UpdateFilePath sets the "file_path" field to the value that was provided on create.
 func (u *TemplateUpsert) UpdateFilePath() *TemplateUpsert {
 	u.SetExcluded(template.FieldFilePath)
+	return u
+}
+
+// SetContentOverride sets the "content_override" field.
+func (u *TemplateUpsert) SetContentOverride(v string) *TemplateUpsert {
+	u.Set(template.FieldContentOverride, v)
+	return u
+}
+
+// UpdateContentOverride sets the "content_override" field to the value that was provided on create.
+func (u *TemplateUpsert) UpdateContentOverride() *TemplateUpsert {
+	u.SetExcluded(template.FieldContentOverride)
+	return u
+}
+
+// ClearContentOverride clears the value of the "content_override" field.
+func (u *TemplateUpsert) ClearContentOverride() *TemplateUpsert {
+	u.SetNull(template.FieldContentOverride)
 	return u
 }
 
@@ -658,6 +694,27 @@ func (u *TemplateUpsertOne) SetFilePath(v string) *TemplateUpsertOne {
 func (u *TemplateUpsertOne) UpdateFilePath() *TemplateUpsertOne {
 	return u.Update(func(s *TemplateUpsert) {
 		s.UpdateFilePath()
+	})
+}
+
+// SetContentOverride sets the "content_override" field.
+func (u *TemplateUpsertOne) SetContentOverride(v string) *TemplateUpsertOne {
+	return u.Update(func(s *TemplateUpsert) {
+		s.SetContentOverride(v)
+	})
+}
+
+// UpdateContentOverride sets the "content_override" field to the value that was provided on create.
+func (u *TemplateUpsertOne) UpdateContentOverride() *TemplateUpsertOne {
+	return u.Update(func(s *TemplateUpsert) {
+		s.UpdateContentOverride()
+	})
+}
+
+// ClearContentOverride clears the value of the "content_override" field.
+func (u *TemplateUpsertOne) ClearContentOverride() *TemplateUpsertOne {
+	return u.Update(func(s *TemplateUpsert) {
+		s.ClearContentOverride()
 	})
 }
 
@@ -1037,6 +1094,27 @@ func (u *TemplateUpsertBulk) SetFilePath(v string) *TemplateUpsertBulk {
 func (u *TemplateUpsertBulk) UpdateFilePath() *TemplateUpsertBulk {
 	return u.Update(func(s *TemplateUpsert) {
 		s.UpdateFilePath()
+	})
+}
+
+// SetContentOverride sets the "content_override" field.
+func (u *TemplateUpsertBulk) SetContentOverride(v string) *TemplateUpsertBulk {
+	return u.Update(func(s *TemplateUpsert) {
+		s.SetContentOverride(v)
+	})
+}
+
+// UpdateContentOverride sets the "content_override" field to the value that was provided on create.
+func (u *TemplateUpsertBulk) UpdateContentOverride() *TemplateUpsertBulk {
+	return u.Update(func(s *TemplateUpsert) {
+		s.UpdateContentOverride()
+	})
+}
+
+// ClearContentOverride clears the value of the "content_override" field.
+func (u *TemplateUpsertBulk) ClearContentOverride() *TemplateUpsertBulk {
+	return u.Update(func(s *TemplateUpsert) {
+		s.ClearContentOverride()
 	})
 }
 

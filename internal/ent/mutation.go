@@ -12425,26 +12425,27 @@ func (m *ServiceConfigMutation) ResetEdge(name string) error {
 // TemplateMutation represents an operation that mutates the Template nodes in the graph.
 type TemplateMutation struct {
 	config
-	op              Op
-	typ             string
-	id              *uuid.UUID
-	name            *string
-	channel         *string
-	category        *string
-	tags            *[]string
-	appendtags      []string
-	file_path       *string
-	description     *string
-	variables       *[]string
-	appendvariables []string
-	mime_type       *string
-	is_active       *bool
-	created_at      *time.Time
-	updated_at      *time.Time
-	clearedFields   map[string]struct{}
-	done            bool
-	oldValue        func(context.Context) (*Template, error)
-	predicates      []predicate.Template
+	op               Op
+	typ              string
+	id               *uuid.UUID
+	name             *string
+	channel          *string
+	category         *string
+	tags             *[]string
+	appendtags       []string
+	file_path        *string
+	content_override *string
+	description      *string
+	variables        *[]string
+	appendvariables  []string
+	mime_type        *string
+	is_active        *bool
+	created_at       *time.Time
+	updated_at       *time.Time
+	clearedFields    map[string]struct{}
+	done             bool
+	oldValue         func(context.Context) (*Template, error)
+	predicates       []predicate.Template
 }
 
 var _ ent.Mutation = (*TemplateMutation)(nil)
@@ -12760,6 +12761,55 @@ func (m *TemplateMutation) ResetFilePath() {
 	m.file_path = nil
 }
 
+// SetContentOverride sets the "content_override" field.
+func (m *TemplateMutation) SetContentOverride(s string) {
+	m.content_override = &s
+}
+
+// ContentOverride returns the value of the "content_override" field in the mutation.
+func (m *TemplateMutation) ContentOverride() (r string, exists bool) {
+	v := m.content_override
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldContentOverride returns the old "content_override" field's value of the Template entity.
+// If the Template object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TemplateMutation) OldContentOverride(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldContentOverride is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldContentOverride requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldContentOverride: %w", err)
+	}
+	return oldValue.ContentOverride, nil
+}
+
+// ClearContentOverride clears the value of the "content_override" field.
+func (m *TemplateMutation) ClearContentOverride() {
+	m.content_override = nil
+	m.clearedFields[template.FieldContentOverride] = struct{}{}
+}
+
+// ContentOverrideCleared returns if the "content_override" field was cleared in this mutation.
+func (m *TemplateMutation) ContentOverrideCleared() bool {
+	_, ok := m.clearedFields[template.FieldContentOverride]
+	return ok
+}
+
+// ResetContentOverride resets all changes to the "content_override" field.
+func (m *TemplateMutation) ResetContentOverride() {
+	m.content_override = nil
+	delete(m.clearedFields, template.FieldContentOverride)
+}
+
 // SetDescription sets the "description" field.
 func (m *TemplateMutation) SetDescription(s string) {
 	m.description = &s
@@ -13052,7 +13102,7 @@ func (m *TemplateMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *TemplateMutation) Fields() []string {
-	fields := make([]string, 0, 11)
+	fields := make([]string, 0, 12)
 	if m.name != nil {
 		fields = append(fields, template.FieldName)
 	}
@@ -13067,6 +13117,9 @@ func (m *TemplateMutation) Fields() []string {
 	}
 	if m.file_path != nil {
 		fields = append(fields, template.FieldFilePath)
+	}
+	if m.content_override != nil {
+		fields = append(fields, template.FieldContentOverride)
 	}
 	if m.description != nil {
 		fields = append(fields, template.FieldDescription)
@@ -13104,6 +13157,8 @@ func (m *TemplateMutation) Field(name string) (ent.Value, bool) {
 		return m.Tags()
 	case template.FieldFilePath:
 		return m.FilePath()
+	case template.FieldContentOverride:
+		return m.ContentOverride()
 	case template.FieldDescription:
 		return m.Description()
 	case template.FieldVariables:
@@ -13135,6 +13190,8 @@ func (m *TemplateMutation) OldField(ctx context.Context, name string) (ent.Value
 		return m.OldTags(ctx)
 	case template.FieldFilePath:
 		return m.OldFilePath(ctx)
+	case template.FieldContentOverride:
+		return m.OldContentOverride(ctx)
 	case template.FieldDescription:
 		return m.OldDescription(ctx)
 	case template.FieldVariables:
@@ -13190,6 +13247,13 @@ func (m *TemplateMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetFilePath(v)
+		return nil
+	case template.FieldContentOverride:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetContentOverride(v)
 		return nil
 	case template.FieldDescription:
 		v, ok := value.(string)
@@ -13266,6 +13330,9 @@ func (m *TemplateMutation) ClearedFields() []string {
 	if m.FieldCleared(template.FieldTags) {
 		fields = append(fields, template.FieldTags)
 	}
+	if m.FieldCleared(template.FieldContentOverride) {
+		fields = append(fields, template.FieldContentOverride)
+	}
 	if m.FieldCleared(template.FieldDescription) {
 		fields = append(fields, template.FieldDescription)
 	}
@@ -13288,6 +13355,9 @@ func (m *TemplateMutation) ClearField(name string) error {
 	switch name {
 	case template.FieldTags:
 		m.ClearTags()
+		return nil
+	case template.FieldContentOverride:
+		m.ClearContentOverride()
 		return nil
 	case template.FieldDescription:
 		m.ClearDescription()
@@ -13317,6 +13387,9 @@ func (m *TemplateMutation) ResetField(name string) error {
 		return nil
 	case template.FieldFilePath:
 		m.ResetFilePath()
+		return nil
+	case template.FieldContentOverride:
+		m.ResetContentOverride()
 		return nil
 	case template.FieldDescription:
 		m.ResetDescription()

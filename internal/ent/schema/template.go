@@ -11,7 +11,8 @@ import (
 )
 
 // Template holds the schema definition for a notification template registered in the DB.
-// Actual content lives on the filesystem; this table stores metadata, tags, and variables.
+// Default content lives in the image's template files; this table stores metadata, tags,
+// variables and any platform edit (content_override), which wins over the file.
 type Template struct {
 	ent.Schema
 }
@@ -38,6 +39,10 @@ func (Template) Fields() []ent.Field {
 		field.String("file_path").
 			NotEmpty().
 			Comment("Relative path from templates root, e.g. email/auth/welcome.html"),
+		field.Text("content_override").
+			Optional().
+			Nillable().
+			Comment("Platform-edited template content. When set it wins over the file baked into the image; stored in the DB so an edit reaches every pod and survives redeploys"),
 		field.String("description").
 			Default("").
 			Optional().

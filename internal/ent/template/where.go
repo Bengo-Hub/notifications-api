@@ -75,6 +75,11 @@ func FilePath(v string) predicate.Template {
 	return predicate.Template(sql.FieldEQ(FieldFilePath, v))
 }
 
+// ContentOverride applies equality check predicate on the "content_override" field. It's identical to ContentOverrideEQ.
+func ContentOverride(v string) predicate.Template {
+	return predicate.Template(sql.FieldEQ(FieldContentOverride, v))
+}
+
 // Description applies equality check predicate on the "description" field. It's identical to DescriptionEQ.
 func Description(v string) predicate.Template {
 	return predicate.Template(sql.FieldEQ(FieldDescription, v))
@@ -368,6 +373,81 @@ func FilePathEqualFold(v string) predicate.Template {
 // FilePathContainsFold applies the ContainsFold predicate on the "file_path" field.
 func FilePathContainsFold(v string) predicate.Template {
 	return predicate.Template(sql.FieldContainsFold(FieldFilePath, v))
+}
+
+// ContentOverrideEQ applies the EQ predicate on the "content_override" field.
+func ContentOverrideEQ(v string) predicate.Template {
+	return predicate.Template(sql.FieldEQ(FieldContentOverride, v))
+}
+
+// ContentOverrideNEQ applies the NEQ predicate on the "content_override" field.
+func ContentOverrideNEQ(v string) predicate.Template {
+	return predicate.Template(sql.FieldNEQ(FieldContentOverride, v))
+}
+
+// ContentOverrideIn applies the In predicate on the "content_override" field.
+func ContentOverrideIn(vs ...string) predicate.Template {
+	return predicate.Template(sql.FieldIn(FieldContentOverride, vs...))
+}
+
+// ContentOverrideNotIn applies the NotIn predicate on the "content_override" field.
+func ContentOverrideNotIn(vs ...string) predicate.Template {
+	return predicate.Template(sql.FieldNotIn(FieldContentOverride, vs...))
+}
+
+// ContentOverrideGT applies the GT predicate on the "content_override" field.
+func ContentOverrideGT(v string) predicate.Template {
+	return predicate.Template(sql.FieldGT(FieldContentOverride, v))
+}
+
+// ContentOverrideGTE applies the GTE predicate on the "content_override" field.
+func ContentOverrideGTE(v string) predicate.Template {
+	return predicate.Template(sql.FieldGTE(FieldContentOverride, v))
+}
+
+// ContentOverrideLT applies the LT predicate on the "content_override" field.
+func ContentOverrideLT(v string) predicate.Template {
+	return predicate.Template(sql.FieldLT(FieldContentOverride, v))
+}
+
+// ContentOverrideLTE applies the LTE predicate on the "content_override" field.
+func ContentOverrideLTE(v string) predicate.Template {
+	return predicate.Template(sql.FieldLTE(FieldContentOverride, v))
+}
+
+// ContentOverrideContains applies the Contains predicate on the "content_override" field.
+func ContentOverrideContains(v string) predicate.Template {
+	return predicate.Template(sql.FieldContains(FieldContentOverride, v))
+}
+
+// ContentOverrideHasPrefix applies the HasPrefix predicate on the "content_override" field.
+func ContentOverrideHasPrefix(v string) predicate.Template {
+	return predicate.Template(sql.FieldHasPrefix(FieldContentOverride, v))
+}
+
+// ContentOverrideHasSuffix applies the HasSuffix predicate on the "content_override" field.
+func ContentOverrideHasSuffix(v string) predicate.Template {
+	return predicate.Template(sql.FieldHasSuffix(FieldContentOverride, v))
+}
+
+// ContentOverrideIsNil applies the IsNil predicate on the "content_override" field.
+func ContentOverrideIsNil() predicate.Template {
+	return predicate.Template(sql.FieldIsNull(FieldContentOverride))
+}
+
+// ContentOverrideNotNil applies the NotNil predicate on the "content_override" field.
+func ContentOverrideNotNil() predicate.Template {
+	return predicate.Template(sql.FieldNotNull(FieldContentOverride))
+}
+
+// ContentOverrideEqualFold applies the EqualFold predicate on the "content_override" field.
+func ContentOverrideEqualFold(v string) predicate.Template {
+	return predicate.Template(sql.FieldEqualFold(FieldContentOverride, v))
+}
+
+// ContentOverrideContainsFold applies the ContainsFold predicate on the "content_override" field.
+func ContentOverrideContainsFold(v string) predicate.Template {
+	return predicate.Template(sql.FieldContainsFold(FieldContentOverride, v))
 }
 
 // DescriptionEQ applies the EQ predicate on the "description" field.

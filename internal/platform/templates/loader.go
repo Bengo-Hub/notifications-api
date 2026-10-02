@@ -9,26 +9,67 @@ import (
 	"strings"
 
 	sharedcache "github.com/Bengo-Hub/cache"
+	eventslib "github.com/Bengo-Hub/shared-events"
 
 	"github.com/bengobox/notifications-api/internal/config"
 )
 
 var varRegex = regexp.MustCompile(`\{\{\s*(?:or\s+)?\.(\w+)`)
 
-// Loader caches template files in memory with a TTL. The cache is bounded (least recently
-// used templates are dropped first) so it cannot grow with arbitrary template IDs.
+// Loader resolves template content: a platform edit stored in the database (Store) wins over
+// the file baked into the image. Results are cached per pod in a bounded LRU with a TTL; an edit
+// clears every pod's copy through the Broadcaster (SetInvalidator).
 type Loader struct {
-	cfg   config.TemplateConfig
-	cache *sharedcache.Local[string, string]
+	cfg         config.TemplateConfig
+	cache       *sharedcache.Local[string, string]
+	store       Store
+	invalidator *eventslib.Broadcaster
 }
+
+// Store persists platform template edits so every pod (API and worker) serves them and they
+// survive redeploys. Keys are paths relative to the template root, e.g. "email/welcome.html".
+// Before it existed, an edit was written to the serving pod's own filesystem: other pods kept
+// the image version and the next deploy discarded it.
+type Store interface {
+	// Overrides returns the stored content for whichever of rels has an edit.
+	Overrides(ctx context.Context, rels []string) (map[string]string, error)
+	// SaveOverride stores content as the edit for rel (channel and name describe the template).
+	SaveOverride(ctx context.Context, rel, channel, name, content string) error
+}
+
+const invalidateTopic = "template-changed"
 
 func New(cfg config.TemplateConfig) *Loader {
 	return &Loader{cfg: cfg, cache: sharedcache.NewLocal[string, string](2000, cfg.CacheTTL)}
 }
 
+// SetStore wires database-backed template edits. Without it edits go to the local filesystem
+// (development only).
+func (l *Loader) SetStore(st Store) { l.store = st }
+
+// SetInvalidator makes an edit clear the cached template on every pod (API and worker).
+func (l *Loader) SetInvalidator(b *eventslib.Broadcaster) {
+	l.invalidator = b
+	if b == nil {
+		return
+	}
+	_ = b.Subscribe(invalidateTopic, func(m eventslib.BroadcastMessage) {
+		l.cache.Delete(string(m.Data))
+	})
+}
+
+func (l *Loader) invalidate(templateID string) {
+	if l.invalidator == nil {
+		l.cache.Delete(templateID)
+		return
+	}
+	// Publish delivers to this pod's handler first, then to every other pod.
+	_ = l.invalidator.Publish(invalidateTopic, "", "", []byte(templateID))
+}
+
 // Get loads the template content by identifier.
 // templateID may be either "<channel>/<name>" or just "<name>" (then channel must be encoded in the ID by caller).
-func (l *Loader) Get(_ context.Context, templateID string) (string, error) {
+func (l *Loader) Get(ctx context.Context, templateID string) (string, error) {
 	if content, ok := l.cache.Get(templateID); ok {
 		return content, nil
 	}
@@ -50,8 +91,26 @@ func (l *Loader) Get(_ context.Context, templateID string) (string, error) {
 	if !strings.HasPrefix(path, baseDir+string(filepath.Separator)) {
 		return "", fmt.Errorf("template not found: %s", templateID)
 	}
+	candidates := []string{path, path + ".html", path + ".txt", path + ".mjml", path + ".json"}
+	// A stored platform edit wins over the image file (one query for all candidate paths).
+	if l.store != nil {
+		rels := make([]string, 0, len(candidates))
+		for _, c := range candidates {
+			if rel, rerr := filepath.Rel(baseDir, c); rerr == nil {
+				rels = append(rels, filepath.ToSlash(rel))
+			}
+		}
+		if overrides, oerr := l.store.Overrides(ctx, rels); oerr == nil {
+			for _, rel := range rels {
+				if content, ok := overrides[rel]; ok {
+					l.cache.Set(templateID, content)
+					return content, nil
+				}
+			}
+		}
+	}
 	// try with known extensions
-	for _, p := range []string{path, path + ".html", path + ".txt", path + ".mjml", path + ".json"} {
+	for _, p := range candidates {
 		info, statErr := os.Stat(p)
 		if statErr != nil || info.IsDir() {
 			continue
@@ -76,7 +135,7 @@ type Summary struct {
 // Write saves template content to the filesystem under the configured directory.
 // Only writes under baseDir; returns error if path would escape (e.g. path traversal).
 // Channel must be one of: email, sms, push. Id must not contain path separators.
-func (l *Loader) Write(_ context.Context, channel, id, content string) error {
+func (l *Loader) Write(ctx context.Context, channel, id, content string) error {
 	if channel == "" || id == "" {
 		return fmt.Errorf("channel and id required")
 	}
@@ -105,15 +164,20 @@ func (l *Loader) Write(_ context.Context, channel, id, content string) error {
 	if err != nil || strings.HasPrefix(rel, "..") {
 		return fmt.Errorf("invalid path: write not under template directory")
 	}
-	if err := os.MkdirAll(filepath.Dir(targetPath), 0755); err != nil {
-		return fmt.Errorf("mkdir: %w", err)
+	if l.store != nil {
+		if err := l.store.SaveOverride(ctx, filepath.ToSlash(rel), channel, id, content); err != nil {
+			return fmt.Errorf("save template: %w", err)
+		}
+	} else {
+		// Development without a database: write the file.
+		if err := os.MkdirAll(filepath.Dir(targetPath), 0755); err != nil {
+			return fmt.Errorf("mkdir: %w", err)
+		}
+		if err := os.WriteFile(targetPath, []byte(content), 0644); err != nil {
+			return fmt.Errorf("write template: %w", err)
+		}
 	}
-	if err := os.WriteFile(targetPath, []byte(content), 0644); err != nil {
-		return fmt.Errorf("write template: %w", err)
-	}
-	// Invalidate this pod's cached copy. NOTE: the file itself is pod-local (see the queued
-	// template-persistence item in the multi-pod plan); other replicas keep the image version.
-	l.cache.Delete(channel + "/" + id)
+	l.invalidate(channel + "/" + id)
 	return nil
 }
 
