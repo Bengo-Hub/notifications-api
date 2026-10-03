@@ -9,6 +9,18 @@ import (
 	"github.com/bengobox/notifications-api/internal/ent"
 )
 
+// The AnnouncementFunc type is an adapter to allow the use of ordinary
+// function as Announcement mutator.
+type AnnouncementFunc func(context.Context, *ent.AnnouncementMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f AnnouncementFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.AnnouncementMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.AnnouncementMutation", m)
+}
+
 // The BackupFunc type is an adapter to allow the use of ordinary
 // function as Backup mutator.
 type BackupFunc func(context.Context, *ent.BackupMutation) (ent.Value, error)

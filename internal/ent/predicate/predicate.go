@@ -6,6 +6,9 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
+// Announcement is the predicate function for announcement builders.
+type Announcement func(*sql.Selector)
+
 // Backup is the predicate function for backup builders.
 type Backup func(*sql.Selector)
 

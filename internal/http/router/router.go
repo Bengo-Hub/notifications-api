@@ -39,7 +39,7 @@ func bypassForWebsocket(mw func(http.Handler) http.Handler) func(http.Handler) h
 	}
 }
 
-func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handlers.NotificationHandler, templates *handlers.TemplateHandler, platformProviders *handlers.PlatformProviders, tenantProviders *handlers.TenantProviders, analytics *handlers.AnalyticsHandler, billing *handlers.BillingHandler, platformBilling *handlers.PlatformBilling, settings *handlers.SettingsHandler, rbacHandler *handlers.RBACHandler, authMeHandler *handlers.AuthMeHandler, deviceTokens *handlers.DeviceTokenHandler, apiKey string, authMiddleware *authclient.AuthMiddleware, authenticator *identityhandler.Authenticator, allowedOrigins []string, tenantSyncer *tenant.Syncer, rateLimiter *ratelimit.Quota, serviceConfig *handlers.ServiceConfigHandler, whatsappSubs *handlers.WhatsAppSubscriptionHandler, backups *handlers.BackupHandler, encryptionKey *handlers.EncryptionKeyHandler, backupDest *handlers.BackupDestinationHandler, notificationPrefs *handlers.PreferencesHandler, developerKeyAuth *devauth.DeveloperKeyAuth, swaggerHandler *handlers.SwaggerHandler, webhooks *handlers.WebhookHandler, whatsappEmbeddedSignup *handlers.WhatsAppEmbeddedSignupHandler, whatsappTemplates *handlers.WhatsAppTemplates, whatsappInbox *handlers.WhatsAppInboxHandler) http.Handler {
+func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handlers.NotificationHandler, templates *handlers.TemplateHandler, platformProviders *handlers.PlatformProviders, tenantProviders *handlers.TenantProviders, analytics *handlers.AnalyticsHandler, billing *handlers.BillingHandler, platformBilling *handlers.PlatformBilling, settings *handlers.SettingsHandler, rbacHandler *handlers.RBACHandler, authMeHandler *handlers.AuthMeHandler, deviceTokens *handlers.DeviceTokenHandler, apiKey string, authMiddleware *authclient.AuthMiddleware, authenticator *identityhandler.Authenticator, allowedOrigins []string, tenantSyncer *tenant.Syncer, rateLimiter *ratelimit.Quota, serviceConfig *handlers.ServiceConfigHandler, whatsappSubs *handlers.WhatsAppSubscriptionHandler, backups *handlers.BackupHandler, encryptionKey *handlers.EncryptionKeyHandler, backupDest *handlers.BackupDestinationHandler, notificationPrefs *handlers.PreferencesHandler, developerKeyAuth *devauth.DeveloperKeyAuth, swaggerHandler *handlers.SwaggerHandler, webhooks *handlers.WebhookHandler, whatsappEmbeddedSignup *handlers.WhatsAppEmbeddedSignupHandler, whatsappTemplates *handlers.WhatsAppTemplates, whatsappInbox *handlers.WhatsAppInboxHandler, announcementsH *handlers.AnnouncementHandler) http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RealIP)
@@ -123,6 +123,12 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 			api.Get("/push/web-config", deviceTokens.WebConfig)
 		}
 
+		// Platform "what's new" banners for an app's dashboard: public and cached (no secrets, and
+		// PIN-terminal sessions must read them too). Writes are platform admin only, below.
+		if announcementsH != nil {
+			api.Get("/announcements/active", announcementsH.Active)
+		}
+
 		// WhatsApp plans — public, no auth needed (pricing discovery)
 		if whatsappSubs != nil {
 			api.Get("/billing/whatsapp/plans", whatsappSubs.ListPlans)
@@ -190,6 +196,9 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 				}
 				if encryptionKey != nil {
 					encryptionKey.RegisterPlatformRoutes(platform)
+				}
+				if announcementsH != nil {
+					announcementsH.RegisterPlatformRoutes(platform)
 				}
 				// Platform-default backup destination (OneDrive/GDrive/S3/WebDAV/SFTP/SMB).
 				if backupDest != nil {

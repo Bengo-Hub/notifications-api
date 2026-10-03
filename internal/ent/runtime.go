@@ -5,6 +5,7 @@ package ent
 import (
 	"time"
 
+	"github.com/bengobox/notifications-api/internal/ent/announcement"
 	"github.com/bengobox/notifications-api/internal/ent/backup"
 	"github.com/bengobox/notifications-api/internal/ent/backupsetting"
 	"github.com/bengobox/notifications-api/internal/ent/credittransaction"
@@ -36,6 +37,60 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	announcementFields := schema.Announcement{}.Fields()
+	_ = announcementFields
+	// announcementDescTitle is the schema descriptor for title field.
+	announcementDescTitle := announcementFields[1].Descriptor()
+	// announcement.TitleValidator is a validator for the "title" field. It is called by the builders before save.
+	announcement.TitleValidator = func() func(string) error {
+		validators := announcementDescTitle.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(title string) error {
+			for _, fn := range fns {
+				if err := fn(title); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// announcementDescSummary is the schema descriptor for summary field.
+	announcementDescSummary := announcementFields[2].Descriptor()
+	// announcement.SummaryValidator is a validator for the "summary" field. It is called by the builders before save.
+	announcement.SummaryValidator = announcementDescSummary.Validators[0].(func(string) error)
+	// announcementDescPriority is the schema descriptor for priority field.
+	announcementDescPriority := announcementFields[9].Descriptor()
+	// announcement.DefaultPriority holds the default value on creation for the priority field.
+	announcement.DefaultPriority = announcementDescPriority.Default.(int)
+	// announcementDescDismissible is the schema descriptor for dismissible field.
+	announcementDescDismissible := announcementFields[10].Descriptor()
+	// announcement.DefaultDismissible holds the default value on creation for the dismissible field.
+	announcement.DefaultDismissible = announcementDescDismissible.Default.(bool)
+	// announcementDescIsActive is the schema descriptor for is_active field.
+	announcementDescIsActive := announcementFields[11].Descriptor()
+	// announcement.DefaultIsActive holds the default value on creation for the is_active field.
+	announcement.DefaultIsActive = announcementDescIsActive.Default.(bool)
+	// announcementDescStartsAt is the schema descriptor for starts_at field.
+	announcementDescStartsAt := announcementFields[12].Descriptor()
+	// announcement.DefaultStartsAt holds the default value on creation for the starts_at field.
+	announcement.DefaultStartsAt = announcementDescStartsAt.Default.(func() time.Time)
+	// announcementDescCreatedAt is the schema descriptor for created_at field.
+	announcementDescCreatedAt := announcementFields[16].Descriptor()
+	// announcement.DefaultCreatedAt holds the default value on creation for the created_at field.
+	announcement.DefaultCreatedAt = announcementDescCreatedAt.Default.(func() time.Time)
+	// announcementDescUpdatedAt is the schema descriptor for updated_at field.
+	announcementDescUpdatedAt := announcementFields[17].Descriptor()
+	// announcement.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	announcement.DefaultUpdatedAt = announcementDescUpdatedAt.Default.(func() time.Time)
+	// announcement.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	announcement.UpdateDefaultUpdatedAt = announcementDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// announcementDescID is the schema descriptor for id field.
+	announcementDescID := announcementFields[0].Descriptor()
+	// announcement.DefaultID holds the default value on creation for the id field.
+	announcement.DefaultID = announcementDescID.Default.(func() uuid.UUID)
 	backupFields := schema.Backup{}.Fields()
 	_ = backupFields
 	// backupDescName is the schema descriptor for name field.

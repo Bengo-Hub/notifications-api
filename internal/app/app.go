@@ -31,6 +31,7 @@ import (
 	devauth "github.com/bengobox/notifications-api/internal/http/middleware"
 	router "github.com/bengobox/notifications-api/internal/http/router"
 	backupmod "github.com/bengobox/notifications-api/internal/modules/backup"
+	"github.com/bengobox/notifications-api/internal/modules/announcements"
 	"github.com/bengobox/notifications-api/internal/modules/billing"
 	eventsmod "github.com/bengobox/notifications-api/internal/modules/events"
 	"github.com/bengobox/notifications-api/internal/modules/identity"
@@ -172,6 +173,15 @@ func New(ctx context.Context) (*App, error) {
 	tenantProviders := handlers.NewTenantProviders(entClient, log, platformIDStr, keyProvider, providerManager, whatsappSubsService)
 	encryptionKeyHandler := handlers.NewEncryptionKeyHandler(entClient, log, keyProvider)
 	analyticsHandler := handlers.NewAnalyticsHandler(entClient, log)
+	announcementSvc := announcements.NewService(entClient)
+	announcementHandler := handlers.NewAnnouncementHandler(announcementSvc, log)
+	// Expired announcements are hard deleted (hourly, once fleet-wide). The branch keeps a nil
+	// client from turning into a non-nil interface value.
+	if redisClient != nil {
+		announcementSvc.StartPurger(ctx, redisClient, log)
+	} else {
+		announcementSvc.StartPurger(ctx, nil, log)
+	}
 
 	deviceTokenHandler := handlers.NewDeviceTokenHandler(log, entClient)
 	deviceTokenHandler.SetPushResolver(providerManager)
@@ -334,7 +344,7 @@ func New(ctx context.Context) (*App, error) {
 	webhookHandler := handlers.NewWebhookHandler(entClient, log, cfg.HTTP.PublicBaseURL, whatsappInboxService)
 	whatsappEmbeddedSignupHandler := handlers.NewWhatsAppEmbeddedSignupHandler(entClient, log, providerManager)
 	whatsappTemplatesHandler := handlers.NewWhatsAppTemplates(providerManager, log)
-	httpRouter := router.New(log, healthHandler, notificationHandler, templateHandler, platformProviders, tenantProviders, analyticsHandler, billingHandler, platformBilling, settingsHandler, rbacHandler, authMeHandler, deviceTokenHandler, cfg.Security.APIKey, authMiddleware, authenticator, cfg.HTTP.AllowedOrigins, tenantSyncer, rateLimiter, serviceConfigHandler, whatsappSubsHandler, backupHandler, encryptionKeyHandler, backupDestHandler, notificationPrefsHandler, developerKeyAuth, swaggerHandler, webhookHandler, whatsappEmbeddedSignupHandler, whatsappTemplatesHandler, whatsappInboxHandler)
+	httpRouter := router.New(log, healthHandler, notificationHandler, templateHandler, platformProviders, tenantProviders, analyticsHandler, billingHandler, platformBilling, settingsHandler, rbacHandler, authMeHandler, deviceTokenHandler, cfg.Security.APIKey, authMiddleware, authenticator, cfg.HTTP.AllowedOrigins, tenantSyncer, rateLimiter, serviceConfigHandler, whatsappSubsHandler, backupHandler, encryptionKeyHandler, backupDestHandler, notificationPrefsHandler, developerKeyAuth, swaggerHandler, webhookHandler, whatsappEmbeddedSignupHandler, whatsappTemplatesHandler, whatsappInboxHandler, announcementHandler)
 
 	httpServer := &http.Server{
 		Addr:              fmt.Sprintf("%s:%d", cfg.HTTP.Host, cfg.HTTP.Port),

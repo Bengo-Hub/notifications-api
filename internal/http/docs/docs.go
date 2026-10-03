@@ -132,10 +132,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/internal_http_handlers.ActivityLogEntry"
-                            }
+                            "$ref": "#/definitions/internal_http_handlers.ActivityLogsResponse"
                         }
                     }
                 }
@@ -192,11 +189,151 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/internal_http_handlers.ActivityLogEntry"
-                            }
+                            "$ref": "#/definitions/internal_http_handlers.ActivityLogsResponse"
                         }
+                    }
+                }
+            }
+        },
+        "/api/v1/announcements/active": {
+            "get": {
+                "description": "The banners an app's dashboard shows now (public, cached). Dismissal is per user, client side.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Announcements"
+                ],
+                "summary": "Active announcements for an app",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "App key, e.g. pos, treasury, inventory",
+                        "name": "service",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "announcements: []",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/platform/announcements": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Announcements"
+                ],
+                "summary": "List announcements (platform)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Announcements"
+                ],
+                "summary": "Publish an announcement (platform)",
+                "parameters": [
+                    {
+                        "description": "Announcement",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_bengobox_notifications-api_internal_modules_announcements.Input"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/platform/announcements/{id}": {
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Announcements"
+                ],
+                "summary": "Update an announcement (platform)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Announcement ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Announcement",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_bengobox_notifications-api_internal_modules_announcements.Input"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Announcements"
+                ],
+                "summary": "Delete an announcement (platform)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Announcement ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
                     }
                 }
             }
@@ -283,7 +420,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Create or replace a platform provider (Email: SMTP/SendGrid; SMS: Africa's Talking). Secrets stored encrypted at rest when ENCRYPTION_KEY is set.",
+                "description": "Create or replace a platform provider (Email: SMTP/Brevo; SMS: Africa's Talking). Secrets stored encrypted at rest when ENCRYPTION_KEY is set.",
                 "consumes": [
                     "application/json"
                 ],
@@ -349,7 +486,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Provider name (smtp|sendgrid|twilio|...)",
+                        "description": "Provider name (smtp|brevo|africastalking|meta_cloud|fcm)",
                         "name": "provider_name",
                         "in": "query",
                         "required": true
@@ -562,6 +699,108 @@ const docTemplate = `{
                             "items": {
                                 "$ref": "#/definitions/internal_http_handlers.tenantListItem"
                             }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/platform/whatsapp/templates": {
+            "delete": {
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "description": "Permanently deletes every template on the WABA whose name starts with one of the given prefixes. dry_run previews with no write calls to Meta.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Platform"
+                ],
+                "summary": "Delete WhatsApp templates from Meta by name prefix",
+                "parameters": [
+                    {
+                        "description": "Delete options",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.deleteTemplatesRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.deleteTemplatesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/platform/whatsapp/templates/sync": {
+            "post": {
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "description": "Idempotently creates any drafted WhatsApp template not already registered on the platform's WABA. dry_run previews with no write calls to Meta.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Platform"
+                ],
+                "summary": "Sync WhatsApp templates to Meta",
+                "parameters": [
+                    {
+                        "description": "Sync options",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.syncTemplatesRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.syncTemplatesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
                         }
                     },
                     "500": {
@@ -912,6 +1151,60 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "github_com_bengobox_notifications-api_internal_modules_announcements.Input": {
+            "type": "object",
+            "properties": {
+                "audience": {
+                    "type": "string"
+                },
+                "cta_label": {
+                    "type": "string"
+                },
+                "cta_url": {
+                    "type": "string"
+                },
+                "dismissible": {
+                    "type": "boolean"
+                },
+                "ends_at": {
+                    "type": "string"
+                },
+                "highlights": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "priority": {
+                    "type": "integer"
+                },
+                "services": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "starts_at": {
+                    "type": "string"
+                },
+                "summary": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "tone": {
+                    "type": "string"
+                }
+            }
+        },
         "github_com_bengobox_notifications-api_internal_modules_templates.TemplateSummary": {
             "type": "object",
             "properties": {
@@ -950,6 +1243,50 @@ const docTemplate = `{
                 }
             }
         },
+        "github_com_bengobox_notifications-api_internal_whatsapp_templatesync.Outcome": {
+            "type": "string",
+            "enum": [
+                "created",
+                "skipped",
+                "deleted",
+                "failed"
+            ],
+            "x-enum-varnames": [
+                "OutcomeCreated",
+                "OutcomeSkipped",
+                "OutcomeDeleted",
+                "OutcomeFailed"
+            ]
+        },
+        "github_com_bengobox_notifications-api_internal_whatsapp_templatesync.Result": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "type": "string"
+                },
+                "detail": {
+                    "description": "Meta's error message, when Outcome is \"failed\"",
+                    "type": "string"
+                },
+                "dry_run": {
+                    "type": "boolean"
+                },
+                "meta_reason": {
+                    "description": "MetaReason is Meta's rejected_reason for a REJECTED template (e.g. INVALID_FORMAT,\nTAG_CONTENT_MISMATCH), so admins know what to change before submitting a new version.",
+                    "type": "string"
+                },
+                "meta_status": {
+                    "description": "MetaStatus is Meta's review status for a template that already exists (APPROVED, PENDING,\nREJECTED, ...), so admins can see whether a submitted template can be sent yet.",
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "outcome": {
+                    "$ref": "#/definitions/github_com_bengobox_notifications-api_internal_whatsapp_templatesync.Outcome"
+                }
+            }
+        },
         "internal_http_handlers.ActivityLogEntry": {
             "type": "object",
             "properties": {
@@ -970,6 +1307,20 @@ const docTemplate = `{
                 },
                 "timestamp": {
                     "type": "string"
+                }
+            }
+        },
+        "internal_http_handlers.ActivityLogsResponse": {
+            "type": "object",
+            "properties": {
+                "logs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_http_handlers.ActivityLogEntry"
+                    }
+                },
+                "total": {
+                    "type": "integer"
                 }
             }
         },
@@ -1033,7 +1384,7 @@ const docTemplate = `{
                     }
                 },
                 "provider_name": {
-                    "description": "smtp, sendgrid, twilio, etc.",
+                    "description": "smtp, brevo, africastalking, meta_cloud, fcm",
                     "type": "string"
                 },
                 "provider_type": {
@@ -1064,6 +1415,41 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "provider_type": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_http_handlers.deleteTemplatesRequest": {
+            "type": "object",
+            "properties": {
+                "dry_run": {
+                    "type": "boolean"
+                },
+                "prefixes": {
+                    "description": "required — refuses to run with none, see Delete",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "internal_http_handlers.deleteTemplatesResponse": {
+            "type": "object",
+            "properties": {
+                "results": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_bengobox_notifications-api_internal_whatsapp_templatesync.Result"
+                    }
+                },
+                "summary": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer"
+                    }
+                },
+                "waba_id": {
                     "type": "string"
                 }
             }
@@ -1128,7 +1514,7 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "provider_name": {
-                    "description": "smtp, sendgrid, twilio, etc.",
+                    "description": "smtp, brevo, africastalking, meta_cloud, fcm",
                     "type": "string"
                 },
                 "provider_type": {
@@ -1176,6 +1562,41 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_http_handlers.syncTemplatesRequest": {
+            "type": "object",
+            "properties": {
+                "dry_run": {
+                    "type": "boolean"
+                },
+                "only": {
+                    "description": "name prefixes, e.g. [\"finance_\"] — empty means every template",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "internal_http_handlers.syncTemplatesResponse": {
+            "type": "object",
+            "properties": {
+                "results": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_bengobox_notifications-api_internal_whatsapp_templatesync.Result"
+                    }
+                },
+                "summary": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer"
+                    }
+                },
+                "waba_id": {
                     "type": "string"
                 }
             }

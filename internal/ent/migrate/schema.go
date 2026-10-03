@@ -9,6 +9,40 @@ import (
 )
 
 var (
+	// AnnouncementsColumns holds the columns for the "announcements" table.
+	AnnouncementsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "title", Type: field.TypeString, Size: 120},
+		{Name: "summary", Type: field.TypeString, Size: 2147483647},
+		{Name: "highlights", Type: field.TypeJSON, Nullable: true},
+		{Name: "cta_label", Type: field.TypeString, Nullable: true},
+		{Name: "cta_url", Type: field.TypeString, Nullable: true},
+		{Name: "services", Type: field.TypeJSON, Nullable: true},
+		{Name: "audience", Type: field.TypeEnum, Enums: []string{"all", "admins"}, Default: "all"},
+		{Name: "tone", Type: field.TypeEnum, Enums: []string{"feature", "info", "warning"}, Default: "feature"},
+		{Name: "priority", Type: field.TypeInt, Default: 0},
+		{Name: "dismissible", Type: field.TypeBool, Default: true},
+		{Name: "is_active", Type: field.TypeBool, Default: true},
+		{Name: "starts_at", Type: field.TypeTime},
+		{Name: "ends_at", Type: field.TypeTime, Nullable: true},
+		{Name: "metadata", Type: field.TypeJSON, Nullable: true},
+		{Name: "created_by", Type: field.TypeString, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// AnnouncementsTable holds the schema information for the "announcements" table.
+	AnnouncementsTable = &schema.Table{
+		Name:       "announcements",
+		Columns:    AnnouncementsColumns,
+		PrimaryKey: []*schema.Column{AnnouncementsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "announcement_is_active_starts_at",
+				Unique:  false,
+				Columns: []*schema.Column{AnnouncementsColumns[11], AnnouncementsColumns[12]},
+			},
+		},
+	}
 	// BackupsColumns holds the columns for the "backups" table.
 	BackupsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -896,6 +930,7 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		AnnouncementsTable,
 		BackupsTable,
 		BackupSettingsTable,
 		CreditTransactionsTable,

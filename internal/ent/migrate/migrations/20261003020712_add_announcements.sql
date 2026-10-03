@@ -1,0 +1,4 @@
+-- Create "announcements" table
+CREATE TABLE "announcements" ("id" uuid NOT NULL, "title" character varying NOT NULL, "summary" text NOT NULL, "highlights" jsonb NULL, "cta_label" character varying NULL, "cta_url" character varying NULL, "services" jsonb NULL, "audience" character varying NOT NULL DEFAULT 'all', "tone" character varying NOT NULL DEFAULT 'feature', "priority" bigint NOT NULL DEFAULT 0, "dismissible" boolean NOT NULL DEFAULT true, "is_active" boolean NOT NULL DEFAULT true, "starts_at" timestamptz NOT NULL, "ends_at" timestamptz NULL, "metadata" jsonb NULL, "created_by" character varying NULL, "created_at" timestamptz NOT NULL, "updated_at" timestamptz NOT NULL, PRIMARY KEY ("id"));
+-- Create index "announcement_is_active_starts_at" to table: "announcements"
+CREATE INDEX "announcement_is_active_starts_at" ON "announcements" ("is_active", "starts_at");

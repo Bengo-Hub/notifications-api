@@ -1,5 +1,41 @@
 basePath: /api/v1
 definitions:
+  github_com_bengobox_notifications-api_internal_modules_announcements.Input:
+    properties:
+      audience:
+        type: string
+      cta_label:
+        type: string
+      cta_url:
+        type: string
+      dismissible:
+        type: boolean
+      ends_at:
+        type: string
+      highlights:
+        items:
+          type: string
+        type: array
+      is_active:
+        type: boolean
+      metadata:
+        additionalProperties: {}
+        type: object
+      priority:
+        type: integer
+      services:
+        items:
+          type: string
+        type: array
+      starts_at:
+        type: string
+      summary:
+        type: string
+      title:
+        type: string
+      tone:
+        type: string
+    type: object
   github_com_bengobox_notifications-api_internal_modules_templates.TemplateSummary:
     properties:
       category:
@@ -25,6 +61,42 @@ definitions:
           type: string
         type: array
     type: object
+  github_com_bengobox_notifications-api_internal_whatsapp_templatesync.Outcome:
+    enum:
+    - created
+    - skipped
+    - deleted
+    - failed
+    type: string
+    x-enum-varnames:
+    - OutcomeCreated
+    - OutcomeSkipped
+    - OutcomeDeleted
+    - OutcomeFailed
+  github_com_bengobox_notifications-api_internal_whatsapp_templatesync.Result:
+    properties:
+      category:
+        type: string
+      detail:
+        description: Meta's error message, when Outcome is "failed"
+        type: string
+      dry_run:
+        type: boolean
+      meta_reason:
+        description: |-
+          MetaReason is Meta's rejected_reason for a REJECTED template (e.g. INVALID_FORMAT,
+          TAG_CONTENT_MISMATCH), so admins know what to change before submitting a new version.
+        type: string
+      meta_status:
+        description: |-
+          MetaStatus is Meta's review status for a template that already exists (APPROVED, PENDING,
+          REJECTED, ...), so admins can see whether a submitted template can be sent yet.
+        type: string
+      name:
+        type: string
+      outcome:
+        $ref: '#/definitions/github_com_bengobox_notifications-api_internal_whatsapp_templatesync.Outcome'
+    type: object
   internal_http_handlers.ActivityLogEntry:
     properties:
       channel:
@@ -39,6 +111,15 @@ definitions:
         type: string
       timestamp:
         type: string
+    type: object
+  internal_http_handlers.ActivityLogsResponse:
+    properties:
+      logs:
+        items:
+          $ref: '#/definitions/internal_http_handlers.ActivityLogEntry'
+        type: array
+      total:
+        type: integer
     type: object
   internal_http_handlers.CreateMessageRequest:
     type: object
@@ -80,7 +161,7 @@ definitions:
           type: string
         type: array
       provider_name:
-        description: smtp, sendgrid, twilio, etc.
+        description: smtp, brevo, africastalking, meta_cloud, fcm
         type: string
       provider_type:
         description: email, sms, push
@@ -101,6 +182,29 @@ definitions:
       provider_name:
         type: string
       provider_type:
+        type: string
+    type: object
+  internal_http_handlers.deleteTemplatesRequest:
+    properties:
+      dry_run:
+        type: boolean
+      prefixes:
+        description: required — refuses to run with none, see Delete
+        items:
+          type: string
+        type: array
+    type: object
+  internal_http_handlers.deleteTemplatesResponse:
+    properties:
+      results:
+        items:
+          $ref: '#/definitions/github_com_bengobox_notifications-api_internal_whatsapp_templatesync.Result'
+        type: array
+      summary:
+        additionalProperties:
+          type: integer
+        type: object
+      waba_id:
         type: string
     type: object
   internal_http_handlers.enqueueResponse:
@@ -144,7 +248,7 @@ definitions:
       is_active:
         type: boolean
       provider_name:
-        description: smtp, sendgrid, twilio, etc.
+        description: smtp, brevo, africastalking, meta_cloud, fcm
         type: string
       provider_type:
         description: email, sms, push
@@ -176,6 +280,29 @@ definitions:
   internal_http_handlers.simpleMessageResponse:
     properties:
       message:
+        type: string
+    type: object
+  internal_http_handlers.syncTemplatesRequest:
+    properties:
+      dry_run:
+        type: boolean
+      only:
+        description: name prefixes, e.g. ["finance_"] — empty means every template
+        items:
+          type: string
+        type: array
+    type: object
+  internal_http_handlers.syncTemplatesResponse:
+    properties:
+      results:
+        items:
+          $ref: '#/definitions/github_com_bengobox_notifications-api_internal_whatsapp_templatesync.Result'
+        type: array
+      summary:
+        additionalProperties:
+          type: integer
+        type: object
+      waba_id:
         type: string
     type: object
   internal_http_handlers.templateGetResponse:
@@ -377,9 +504,7 @@ paths:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/internal_http_handlers.ActivityLogEntry'
-            type: array
+            $ref: '#/definitions/internal_http_handlers.ActivityLogsResponse'
       security:
       - bearerAuth: []
       - ApiKeyAuth: []
@@ -417,15 +542,108 @@ paths:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/internal_http_handlers.ActivityLogEntry'
-            type: array
+            $ref: '#/definitions/internal_http_handlers.ActivityLogsResponse'
       security:
       - bearerAuth: []
       - ApiKeyAuth: []
       summary: Delivery log
       tags:
       - Analytics
+  /api/v1/announcements/active:
+    get:
+      description: The banners an app's dashboard shows now (public, cached). Dismissal
+        is per user, client side.
+      parameters:
+      - description: App key, e.g. pos, treasury, inventory
+        in: query
+        name: service
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'announcements: []'
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Active announcements for an app
+      tags:
+      - Announcements
+  /api/v1/platform/announcements:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: List announcements (platform)
+      tags:
+      - Announcements
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Announcement
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_bengobox_notifications-api_internal_modules_announcements.Input'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Publish an announcement (platform)
+      tags:
+      - Announcements
+  /api/v1/platform/announcements/{id}:
+    delete:
+      parameters:
+      - description: Announcement ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+      summary: Delete an announcement (platform)
+      tags:
+      - Announcements
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Announcement ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Announcement
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_bengobox_notifications-api_internal_modules_announcements.Input'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Update an announcement (platform)
+      tags:
+      - Announcements
   /healthz:
     get:
       description: Returns OK when the API process is running.
@@ -476,7 +694,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: 'Create or replace a platform provider (Email: SMTP/SendGrid; SMS:
+      description: 'Create or replace a platform provider (Email: SMTP/Brevo; SMS:
         Africa''s Talking). Secrets stored encrypted at rest when ENCRYPTION_KEY is
         set.'
       parameters:
@@ -614,7 +832,7 @@ paths:
         name: provider_type
         required: true
         type: string
-      - description: Provider name (smtp|sendgrid|twilio|...)
+      - description: Provider name (smtp|brevo|africastalking|meta_cloud|fcm)
         in: query
         name: provider_name
         required: true
@@ -660,6 +878,73 @@ paths:
       security:
       - bearerAuth: []
       summary: List all tenants
+      tags:
+      - Platform
+  /platform/whatsapp/templates:
+    delete:
+      consumes:
+      - application/json
+      description: Permanently deletes every template on the WABA whose name starts
+        with one of the given prefixes. dry_run previews with no write calls to Meta.
+      parameters:
+      - description: Delete options
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_http_handlers.deleteTemplatesRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_http_handlers.deleteTemplatesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
+      security:
+      - bearerAuth: []
+      summary: Delete WhatsApp templates from Meta by name prefix
+      tags:
+      - Platform
+  /platform/whatsapp/templates/sync:
+    post:
+      consumes:
+      - application/json
+      description: Idempotently creates any drafted WhatsApp template not already
+        registered on the platform's WABA. dry_run previews with no write calls to
+        Meta.
+      parameters:
+      - description: Sync options
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_http_handlers.syncTemplatesRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_http_handlers.syncTemplatesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
+      security:
+      - bearerAuth: []
+      summary: Sync WhatsApp templates to Meta
       tags:
       - Platform
   /readyz:
