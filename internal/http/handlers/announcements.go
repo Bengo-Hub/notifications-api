@@ -75,6 +75,11 @@ func (h *AnnouncementHandler) Active(w http.ResponseWriter, r *http.Request) {
 		out = append(out, viewOf(a))
 	}
 	w.Header().Set("Cache-Control", "public, max-age=60")
+	// Public, credential-free data read by every app (pos, inventory, ...), most of which are not
+	// in HTTP_ALLOWED_ORIGINS. Allow any origin when the CORS middleware did not already name one.
+	if w.Header().Get("Access-Control-Allow-Origin") == "" {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+	}
 	respondJSON(w, http.StatusOK, map[string]any{"announcements": out})
 }
 
