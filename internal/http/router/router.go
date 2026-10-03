@@ -48,7 +48,7 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 	r.Use(httpware.Recover(log))
 	r.Use(bypassForWebsocket(middleware.Timeout(30 * time.Second)))
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   allowedOrigins,
+		AllowOriginFunc:  originAllower(allowedOrigins),
 		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "Origin", "X-Request-ID", "X-Tenant-ID", "X-Tenant-Slug", "X-API-Key", "Idempotency-Key"},
 		ExposedHeaders:   []string{"Link", "X-Request-ID", "X-RateLimit-Limit", "X-RateLimit-Remaining", "X-RateLimit-Reset", "Retry-After"},
