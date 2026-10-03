@@ -13,10 +13,12 @@
 
 | Subject | Description |
 | ------- | ----------- |
-| `notifications.delivery.accepted` | Message accepted by provider |
-| `notifications.delivery.failed` | Provider rejected delivery |
-| `notifications.delivery.completed` | Provider confirmed delivery (email opened, SMS delivered) |
+| `notifications.delivery.status` | Final outcome (`sent`, or `failed` after the fallback provider) of a message that names its source document. Emitted only for messages whose metadata carries `source_service`, `reference_type` and `reference_id`; payload has `tenant_id`, those three keys, `channel`, `template`, `recipients`, `status`, `request_id` and `error` on failure. Code: `cmd/worker/delivery_status.go` (2026-10-03). Treasury tags `invoice_sent` and dunning reminders and records the outcome on the invoice. |
 | `notifications.campaign.completed` | Campaign finished processing |
+
+Planned, not emitted yet: `notifications.delivery.accepted`, `notifications.delivery.failed` and
+`notifications.delivery.completed` (provider receipts such as SMS delivered or email opened need
+provider webhooks first). Until then `notifications.delivery.status` is the only delivery event.
 
 ## Event Fields
 

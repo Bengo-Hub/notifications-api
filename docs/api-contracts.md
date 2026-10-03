@@ -82,7 +82,7 @@ All responses include `X-Request-ID` header for traceability. Error responses fo
 ## Events
 
 - **Inbound subjects**: `notifications.events` containing messages from other services (`invoice.due`, `payment.success`)
-- **Outbound subjects**: `notifications.delivery.*` with status updates
+- **Outbound subjects**: `notifications.delivery.status` (final sent or failed outcome of a correlated message, see event-catalog.md)
 - CloudEvents envelope example:
 
 ```jsonc

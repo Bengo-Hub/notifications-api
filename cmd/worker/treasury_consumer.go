@@ -528,6 +528,15 @@ func startTreasuryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStream
 			IdempotencyKey: fmt.Sprintf("treasury-%s-%s", eventType, aggregateID),
 			QueuedAt:       time.Now(),
 		}
+		// Invoice emails (issue and dunning) report their final outcome back to treasury, which
+		// shows it on the invoice (notifications.delivery.status).
+		if eventType == "invoice_sent" || eventType == "dunning.reminder_sent" {
+			invoiceRef, _ := payload["invoice_id"].(string)
+			if invoiceRef == "" {
+				invoiceRef = aggregateID
+			}
+			msg.Metadata = withDeliveryCorrelation(msg.Metadata, "treasury", "invoice", invoiceRef)
+		}
 
 		// Dunning fires up to 3 tiers for the same invoice — key each tier independently so a later
 		// tier isn't mistaken for a duplicate of the first.
