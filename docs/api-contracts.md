@@ -53,6 +53,25 @@
 - `GET /v1/{tenantId}/templates/{id}?channel=email|sms|push`
   - Fetch raw template content for preview or client-side rendering
 
+- `GET /api/v1/announcements/active?service=pos` (public)
+  - The platform's "what's new" banners that app shows now: active, started, not ended, aimed at
+    the service or at every app; highest priority first, then newest. Cached 30s per pod,
+    `Cache-Control: public, max-age=60`, any origin allowed (no credentials).
+  - Response: `{ "announcements": [{ id, title, summary, highlights[], cta_label, cta_url,
+    audience: all|admins, tone: feature|info|warning, priority, dismissible, starts_at, ends_at,
+    updated_at }] }`
+  - Rendered by shared-ui-lib's `AnnouncementBanner` (`@bengo-hub/shared-ui-lib/announcements`):
+    admin-only ones show to admins, `{orgSlug}` in `cta_url` is substituted, and dismissals are kept
+    per viewer on the device. Mounted on the pos-ui and treasury-ui dashboards (2026-10-03).
+
+- `GET|POST /api/v1/platform/announcements`, `PUT|DELETE /api/v1/platform/announcements/{id}`
+  (platform super admin; notifications-ui Platform > Announcements)
+  - Create or edit: title, summary, highlights, `cta_label` + `cta_url` (https or an app path),
+    `services` (empty = every app), audience, tone, priority, dismissible, is_active, starts_at,
+    optional ends_at.
+  - Ended announcements are hard deleted on start and hourly (once fleet-wide via the shared
+    `RunOnce`); one with no end runs until switched off or deleted.
+
 All responses include `X-Request-ID` header for traceability. Error responses follow RFC 7807.
 
 ## Webhooks
