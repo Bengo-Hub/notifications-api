@@ -151,6 +151,52 @@ var subscriptionMappings = map[string]subscriptionNotificationMapping{
 			}
 		},
 	},
+	// Support agreements (subscriptions-api support_fee.go / support_fee_invoice.go): the standard
+	// hosting and support fee of one-time-license tenants and any special support agreement. An
+	// unpaid charge blocks create/edit/delete fleet-wide once its grace window ends, so these use
+	// the same invoice and grace templates as subscription billing.
+	"support_fee_invoice_generated": {
+		TemplateID:   "finance/invoice_sent",
+		EmailSubject: "Your support invoice is ready",
+		DataBuilder: func(payload map[string]any, tenantWebsite string) map[string]any {
+			return map[string]any{
+				"name":           "Admin",
+				"amount":         fmt.Sprintf("%v %v", payload["currency"], payload["amount"]),
+				"due_date":       formatEventDate(payload["due_date"]),
+				"invoice_number": payload["invoice_number"],
+				"invoice_link":   payload["pdf_url"],
+				"payment_link":   payload["pay_url"],
+			}
+		},
+	},
+	"support_fee_overdue": {
+		TemplateID:   "subscription/grace_reminder",
+		EmailSubject: "Your support payment is overdue",
+		DataBuilder:  supportGraceData,
+	},
+	"support_fee_grace_reminder": {
+		TemplateID:   "subscription/grace_reminder",
+		EmailSubject: "Action required: pay your support invoice to keep editing your data",
+		DataBuilder:  supportGraceData,
+	},
+}
+
+// supportGraceData fills the grace-reminder template for a support charge. plan_name carries the
+// agreement name ("Hosting and support", or the special agreement's name).
+func supportGraceData(payload map[string]any, tenantWebsite string) map[string]any {
+	amount := payload["amount"]
+	if cur, _ := payload["currency"].(string); cur != "" && amount != nil {
+		amount = fmt.Sprintf("%s %v", cur, amount)
+	}
+	return map[string]any{
+		"name":           "Admin",
+		"plan_name":      payload["agreement_name"],
+		"days_remaining": payload["days_remaining"],
+		"grace_ends_at":  payload["grace_ends_at"],
+		"amount":         amount,
+		"invoice_number": payload["invoice_number"],
+		"payment_link":   firstNonEmpty(payload["pay_link"], fmt.Sprintf("%s/settings/subscription", tenantWebsite)),
+	}
 }
 
 // fulfillCustomAddon handles a subscriptions-api CustomAddon activation that needs provisioning
@@ -220,6 +266,18 @@ func fulfillCustomAddon(ctx context.Context, evt subscriptionEvent, billingSvc *
 		logg.Debug("custom_addon.activated: unhandled service_addon_type, skipping",
 			zap.String("service_addon_type", serviceAddonType))
 	}
+}
+
+// subscriptionIdempotencyKey is stable per event. Reminder events repeat daily for the same
+// aggregate, so they key on the event id; one-shot events keep the per-aggregate key.
+func subscriptionIdempotencyKey(evt subscriptionEvent) string {
+	switch evt.EventType {
+	case "grace_reminder", "support_fee_grace_reminder":
+		if evt.ID != "" {
+			return fmt.Sprintf("subscription-%s-%s", evt.EventType, evt.ID)
+		}
+	}
+	return fmt.Sprintf("subscription-%s-%s", evt.EventType, evt.AggregateID)
 }
 
 // firstNonEmpty returns the first argument that is a non-empty string, else "".
@@ -319,7 +377,7 @@ func startSubscriptionConsumer(ctx context.Context, nc *nats.Conn, js nats.JetSt
 				"subject": mapping.EmailSubject,
 			},
 			RequestID:      uuid.New().String(),
-			IdempotencyKey: fmt.Sprintf("subscription-%s-%s", evt.EventType, evt.AggregateID),
+			IdempotencyKey: subscriptionIdempotencyKey(evt),
 			QueuedAt:       time.Now(),
 		}
 
