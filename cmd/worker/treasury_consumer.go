@@ -164,6 +164,26 @@ var treasuryMappings = map[string]treasuryNotificationMapping{
 			}
 		},
 	},
+	// Tax filing deadline: treasury's daily job emits one per obligation falling due within three
+	// days. Admin-facing, so it may fall back to the tenant contact email.
+	"tax.deadline_reminder": {
+		TemplateID:   "finance/tax_deadline",
+		EmailSubject: "Tax filing due soon",
+		DataBuilder: func(payload map[string]any, tenantWebsite string) map[string]any {
+			name, _ := payload["customer_name"].(string)
+			if name == "" {
+				name = "there"
+			}
+			return map[string]any{
+				"name":          name,
+				"obligation":    payload["obligation"],
+				"due_date":      payload["due_date"],
+				"days_left":     payload["days_left"],
+				"note":          payload["note"],
+				"calendar_link": fmt.Sprintf("%s/tax/calendar", serviceURL("NOTIFICATIONS_TREASURY_APP_URL", tenantWebsite)),
+			}
+		},
+	},
 	// AR dunning: treasury's dunning worker emits one reminder per invoice per overdue tier.
 	// Reuses the existing invoice_overdue template (same fields). Recipient is the invoice's
 	// customer_email (carried in the event payload). pay_url/pdf_url are the same durable public
@@ -427,7 +447,7 @@ func startTreasuryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStream
 			}
 		}
 		if customerEmail == "" {
-			if eventType != "payout.completed" {
+			if eventType != "payout.completed" && eventType != "tax.deadline_reminder" {
 				logg.Debug("treasury event: no customer_email on customer-facing event, skipping",
 					zap.String("tenant_id", tenantID), zap.String("type", eventType))
 				_ = m.Ack()

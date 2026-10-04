@@ -6,6 +6,7 @@
 | ------- | ----------- | -------- |
 | `treasury.invoice.due` | Invoice due reminder required | Treasury Service |
 | `treasury.payment.success` | Payment confirmed, send receipt | Treasury Service |
+| `treasury.tax.deadline_reminder` | A tax filing obligation falls due within three days; emailed with `finance/tax_deadline` to the tenant contact (payload email, else the tenant's contact email) | Treasury Service |
 | `food.orders.status.changed` | Order status update for customer push/SMS | Food Delivery Backend |
 | `erp.payroll.generated` | Payroll notification for employees | ERP System |
 

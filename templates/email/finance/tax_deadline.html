@@ -1,0 +1,9 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <p>Your {{ .obligation }} is due on <strong>{{ .due_date }}</strong>{{ if .days_left }}, in {{ .days_left }} day(s){{ end }}.</p>
+  {{ if .note }}<p>{{ .note }}</p>{{ end }}
+  <p>
+    <a class="button" href="{{ .calendar_link }}">Open the tax calendar</a>
+  </p>
+  <p class="muted">File and pay on time to avoid KRA penalties and interest. Ignore this if it is already done.</p>
+{{ end }}
