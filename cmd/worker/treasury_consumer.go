@@ -164,6 +164,25 @@ var treasuryMappings = map[string]treasuryNotificationMapping{
 			}
 		},
 	},
+	// Scheduled report: treasury's report schedule job emits one per recipient with a link to the
+	// stored file (valid seven days).
+	"report.ready": {
+		TemplateID:   "finance/report_ready",
+		EmailSubject: "Your scheduled report is ready",
+		DataBuilder: func(payload map[string]any, _ string) map[string]any {
+			period := ""
+			if f, _ := payload["period_from"].(string); f != "" {
+				t, _ := payload["period_to"].(string)
+				period = f + " to " + t
+			}
+			return map[string]any{
+				"report_name":     payload["report_name"],
+				"download_url":    payload["download_url"],
+				"expires_in_days": payload["expires_in_days"],
+				"period":          period,
+			}
+		},
+	},
 	// Tax filing deadline: treasury's daily job emits one per obligation falling due within three
 	// days. Admin-facing, so it may fall back to the tenant contact email.
 	"tax.deadline_reminder": {

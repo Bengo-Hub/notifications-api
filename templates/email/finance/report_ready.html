@@ -1,0 +1,8 @@
+{{ define "content" }}
+  <p>Hello,</p>
+  <p>Your scheduled report <strong>{{ .report_name }}</strong>{{ if .period }} for {{ .period }}{{ end }} is ready.</p>
+  <p>
+    <a class="button" href="{{ .download_url }}">Download the report</a>
+  </p>
+  <p class="muted">The link works for {{ .expires_in_days }} days. Ask your administrator to change or stop this schedule.</p>
+{{ end }}
