@@ -827,7 +827,11 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 		// codevertex-demo carries the same exemption (see whatsappExemptTenantIDs) as a deliberate,
 		// narrow carve-out for the platform's own demo tenant -- every other tenant is unaffected.
 		isPlatformTenant := whatsappExemptTenantIDs[tenantID.String()]
-		if !isPlatformTenant {
+		// A platform-scope send (the platform billing a tenant: invoices, payment reminders) goes
+		// out on the platform's own Meta account, never the tenant's, so the tenant's WhatsApp plan
+		// and quota do not apply; same as platform-scope SMS. Only internal producers set this
+		// scope (the HTTP send API never does).
+		if !isPlatformTenant && msg.EffectiveSenderScope() != messaging.SenderScopePlatform {
 			// Pre-send subscription/quota gate (applies to BOTH HTTP-enqueued and event-sourced
 			// sends). Skip+ack when the tenant has no active WhatsApp subscription or has
 			// exhausted its quota. CheckQuota also increments the monthly message counter on

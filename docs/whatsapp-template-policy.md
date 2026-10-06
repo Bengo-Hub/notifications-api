@@ -29,6 +29,13 @@ Meta fixes a button's domain when the template is approved; only the suffix vari
 | Customer order page, tracking, review, pay | `https://ordering.codevertexafrica.com/{{1}}` | `<tenant-slug>/orders/guest/<id>[?rate=1]`, `<slug>/track/<code>` |
 | POS online orders queue | `https://pos.codevertexafrica.com/{{1}}` | `<tenant-slug>/online-orders` |
 | POS receipt | `https://r.codevertexafrica.com/{{1}}` | receipt short code |
+| Platform invoice (subscription, support) | `https://books.codevertexafrica.com/{{1}}` | `i/<public token>` (the invoice page), else the pay page path |
+
+Platform billing messages (`subscription_invoice_ready_v1_btn`, `subscription_payment_due_v1_btn`)
+are sent from the platform's number (`senderScope: platform`), so the tenant's own WhatsApp plan
+and quota do not apply. They go to the tenant's billing phone from auth-api
+(`GET /api/v1/s2s/{tenant}/billing-contact`: the tenant administrator, else the main outlet, else
+the tenant's phone), next to the email (`cmd/worker/billing_whatsapp.go`).
 
 The shared apps serve every tenant under its slug, so a tenant on its own domain still gets a
 working button: the suffix is the path of its link (`buttonURLSuffix`, `posButtonSuffix`).

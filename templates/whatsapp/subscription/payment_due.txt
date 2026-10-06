@@ -1,0 +1,5 @@
+Hi {{ .name }},
+
+Your {{ .kind }} payment of *{{ .amount }}* (invoice {{ .invoice_number }}) is overdue. Your services stay on for {{ .days_remaining }} more day(s).
+
+Pay now to avoid any interruption.

@@ -347,7 +347,8 @@ func startSubscriptionConsumer(ctx context.Context, nc *nats.Conn, js nats.JetSt
 			return
 		}
 		if ti.ContactEmail == "" {
-			logg.Warn("subscription event: tenant has no contact_email, skipping", zap.String("tenant_id", tenantID))
+			logg.Warn("subscription event: tenant has no contact_email, skipping email", zap.String("tenant_id", tenantID))
+			sendBillingWhatsApp(ctx, nc, cfg, evt, tenantID, ti, logg)
 			_ = m.Ack()
 			return
 		}
@@ -395,6 +396,8 @@ func startSubscriptionConsumer(ctx context.Context, nc *nats.Conn, js nats.JetSt
 			zap.String("template", mapping.TemplateID),
 			zap.String("to", ti.ContactEmail),
 		)
+		// Bills and payment reminders also go to the tenant's billing phone over WhatsApp.
+		sendBillingWhatsApp(ctx, nc, cfg, evt, tenantID, ti, logg)
 		_ = m.Ack()
 	}
 
