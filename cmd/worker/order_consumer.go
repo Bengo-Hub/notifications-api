@@ -502,6 +502,17 @@ func startOrderConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 			}
 		}
 
+		// A failed or cancelled delivery is a staff alert only; the customer hears from the outlet.
+		if evtType == orderDeliveryFailedEvent {
+			if ti, err := tr.resolve(ctx, evtTenantID); err == nil {
+				sendBusinessDeliveryFailedAlert(ctx, nc, cfg, ti, evtTenantID, evtData, logg)
+			} else {
+				logg.Warn("delivery_failed: could not resolve tenant", zap.String("tenant_id", evtTenantID), zap.Error(err))
+			}
+			_ = m.Ack()
+			return
+		}
+
 		mapping, ok := orderMappings[evtType]
 		if !ok {
 			logg.Debug("order event: unhandled type, skipping", zap.String("type", evtType))

@@ -94,6 +94,7 @@ var Registry = []Type{
 	{Key: "ordering/order_refunded", Label: "Order refunded", Group: "Orders", Class: ClassEssential},
 	{Key: "ordering/order_scheduled", Label: "Order scheduled", Group: "Orders", Class: ClassEssential},
 	{Key: "ordering/new_order_tenant", Label: "New-order staff alert", Group: "Orders", Class: ClassEssential},
+	{Key: "ordering/delivery_failed_tenant", Label: "Delivery failed staff alert", Group: "Orders", Class: ClassEssential},
 
 	// ── POS ──────────────────────────────────────────────────────────────────
 	{Key: "pos/pos_payment_receipt", Label: "POS payment receipt", Group: "POS", Class: ClassEssential},

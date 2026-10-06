@@ -1,0 +1,13 @@
+{{ define "content" }}
+  <p>Hello {{ or .outlet_name "Team" }},</p>
+  <p><strong>A delivery did not go through</strong> and the order needs your attention.</p>
+  <p><strong>Order:</strong> #{{ or .order_number .order_id }}</p>
+  <p><strong>What happened:</strong> {{ .failure_reason }}</p>
+  {{ if .failed_at }}
+  <p><strong>Reported at:</strong> {{ .failed_at }}</p>
+  {{ end }}
+  <p>
+    <a class="button" href="{{ .manage_link }}">Open Online Orders</a>
+  </p>
+  <p class="muted">Arrange another rider from the dispatch board, or contact the customer if the order cannot be delivered.</p>
+{{ end }}

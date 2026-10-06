@@ -36,6 +36,20 @@ func posButtonSuffix(link, slug string) string {
 	return "online-orders"
 }
 
+// posOnlineOrdersLink is the POS online orders queue: the tenant's own POS domain when it has one,
+// else the shared POS app. (It used to fall back to the tenant's marketing website, which has no
+// queue.)
+func posOnlineOrdersLink(ti *tenantInfo) string {
+	posBase := strings.TrimRight(serviceURL("NOTIFICATIONS_POS_APP_URL", sharedPOSBase), "/")
+	if custom := strings.TrimRight(ti.ServiceURLs["pos"], "/"); custom != "" {
+		posBase = custom
+	}
+	if ti.Slug != "" {
+		return posBase + "/" + ti.Slug + "/online-orders"
+	}
+	return posBase + "/online-orders"
+}
+
 var businessAlertEvents = map[string]bool{
 	"ordering.order.awaiting_acceptance": true,
 	"ordering.order.confirmed":           true,
@@ -54,16 +68,7 @@ func sendBusinessNewOrderAlert(ctx context.Context, nc *nats.Conn, cfg *config.C
 	customer := waParam(evtData["customer_name"], "a customer")
 	total := formatMoney(evtData["grand_total"], evtData["currency"])
 	fulfilment := strings.Title(strings.ReplaceAll(fmt.Sprintf("%v", evtData["fulfillment_type"]), "_", " ")) //nolint:staticcheck // ASCII labels only
-	// The POS online orders queue: the tenant's own POS domain when it has one, else the shared
-	// POS app. (It used to fall back to the tenant's marketing website, which has no queue.)
-	posBase := strings.TrimRight(serviceURL("NOTIFICATIONS_POS_APP_URL", sharedPOSBase), "/")
-	if custom := strings.TrimRight(ti.ServiceURLs["pos"], "/"); custom != "" {
-		posBase = custom
-	}
-	manageLink := posBase + "/online-orders"
-	if ti.Slug != "" {
-		manageLink = posBase + "/" + ti.Slug + "/online-orders"
-	}
+	manageLink := posOnlineOrdersLink(ti)
 	data := map[string]interface{}{
 		"outlet_name":      evtData["outlet_name"],
 		"order_number":     orderNumber,
