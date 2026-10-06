@@ -21,10 +21,10 @@ import (
 	"github.com/bengobox/notifications-api/internal/ent/devicetoken"
 	entrole "github.com/bengobox/notifications-api/internal/ent/role"
 	entuser "github.com/bengobox/notifications-api/internal/ent/user"
-	"github.com/bengobox/notifications-api/internal/modules/identity"
 	"github.com/bengobox/notifications-api/internal/ent/whatsappconversation"
 	"github.com/bengobox/notifications-api/internal/ent/whatsappmessage"
 	"github.com/bengobox/notifications-api/internal/messaging"
+	"github.com/bengobox/notifications-api/internal/modules/identity"
 	"github.com/bengobox/notifications-api/internal/providers"
 	"github.com/bengobox/notifications-api/internal/providers/whatsapp"
 )
@@ -110,9 +110,9 @@ func (s *Service) notifyStaff(ctx context.Context, tenantID uuid.UUID, customerN
 		Target:      messaging.TargetStaff,
 		To:          messaging.NormalizeRecipients(toks, "push"),
 		Data: map[string]any{
-			"customer_name": customerName,
+			"customer_name":  customerName,
 			"customer_wa_id": customerWaID,
-			"preview":       preview,
+			"preview":        preview,
 		},
 		Metadata:  map[string]any{"push_title": "New WhatsApp message"},
 		RequestID: uuid.New().String(),
@@ -150,7 +150,7 @@ func (s *Service) RecordInbound(ctx context.Context, tenantID uuid.UUID, phoneNu
 		}
 	}
 	if body == "" {
-		body = fmt.Sprintf("[unsupported message type: %s]", msgType)
+		body = inboundPlaceholder(msgType)
 	}
 
 	conv, err := s.findOrCreateConversation(ctx, tenantID, phoneNumberID, fromWaID, contactName)
@@ -159,10 +159,7 @@ func (s *Service) RecordInbound(ctx context.Context, tenantID uuid.UUID, phoneNu
 	}
 
 	now := time.Now()
-	preview := body
-	if len(preview) > 140 {
-		preview = preview[:140]
-	}
+	preview := truncateRunes(body, 140)
 
 	create := s.client.WhatsAppMessage.Create().
 		SetConversationID(conv.ID).
@@ -340,10 +337,7 @@ func (s *Service) Reply(ctx context.Context, tenantID, conversationID, senderUse
 		s.log.Warn("failed to record delivery log for whatsapp reply", zap.Error(dlErr))
 	}
 
-	preview := body
-	if len(preview) > 140 {
-		preview = preview[:140]
-	}
+	preview := truncateRunes(body, 140)
 	if _, err := conv.Update().SetLastMessageAt(time.Now()).SetLastMessagePreview(preview).Save(ctx); err != nil {
 		s.log.Warn("failed to update conversation after reply", zap.Error(err))
 	}
