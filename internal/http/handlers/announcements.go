@@ -41,6 +41,8 @@ type announcementView struct {
 	StartsAt    time.Time  `json:"starts_at"`
 	EndsAt      *time.Time `json:"ends_at,omitempty"`
 	UpdatedAt   time.Time  `json:"updated_at"`
+	// Text for viewers whose app reports the flag, keyed by flag (see announcements.Variant).
+	Variants map[string]announcements.Variant `json:"variants,omitempty"`
 }
 
 func viewOf(a *ent.Announcement) announcementView {
@@ -51,7 +53,7 @@ func viewOf(a *ent.Announcement) announcementView {
 	return announcementView{
 		ID: a.ID, Title: a.Title, Summary: a.Summary, Highlights: h, CTALabel: a.CtaLabel, CTAURL: a.CtaURL,
 		Audience: string(a.Audience), Tone: string(a.Tone), Priority: a.Priority, Dismissible: a.Dismissible,
-		StartsAt: a.StartsAt, EndsAt: a.EndsAt, UpdatedAt: a.UpdatedAt,
+		StartsAt: a.StartsAt, EndsAt: a.EndsAt, UpdatedAt: a.UpdatedAt, Variants: announcements.VariantsOf(a.Metadata),
 	}
 }
 

@@ -73,7 +73,7 @@ func (in *Input) Normalize() error {
 		return fmt.Errorf("%w: cta_label and cta_url go together", ErrInvalid)
 	}
 	if in.CTAURL != "" && !safeLink(in.CTAURL) {
-		return fmt.Errorf("%w: cta_url must be an https URL or an app path starting with /", ErrInvalid)
+		return fmt.Errorf("%w: cta_url must be an https URL, a mailto address or an app path starting with /", ErrInvalid)
 	}
 	if in.Audience == "" {
 		in.Audience = string(announcement.AudienceAll)
@@ -90,17 +90,23 @@ func (in *Input) Normalize() error {
 	if in.StartsAt != nil && in.EndsAt != nil && !in.EndsAt.After(*in.StartsAt) {
 		return fmt.Errorf("%w: ends_at must be after starts_at", ErrInvalid)
 	}
-	return nil
+	return normalizeVariants(in.Metadata)
 }
 
-// safeLink allows https links and same-app paths only, so a banner can never carry a
-// javascript: or plain-http link.
+// safeLink allows https links, mailto addresses and same-app paths only, so a banner can never
+// carry a javascript: or plain-http link.
 func safeLink(raw string) bool {
 	if strings.HasPrefix(raw, "/") && !strings.HasPrefix(raw, "//") {
 		return true
 	}
 	u, err := url.Parse(strings.ReplaceAll(raw, "{orgSlug}", "org"))
-	return err == nil && u.Scheme == "https" && u.Host != ""
+	if err != nil {
+		return false
+	}
+	if u.Scheme == "mailto" {
+		return strings.Contains(u.Opaque, "@")
+	}
+	return u.Scheme == "https" && u.Host != ""
 }
 
 // ActiveFor picks what an app shows now: active, started, not ended, aimed at the service (or

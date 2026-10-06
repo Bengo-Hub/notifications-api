@@ -59,16 +59,22 @@
     `Cache-Control: public, max-age=60`, any origin allowed (no credentials).
   - Response: `{ "announcements": [{ id, title, summary, highlights[], cta_label, cta_url,
     audience: all|admins, tone: feature|info|warning, priority, dismissible, starts_at, ends_at,
-    updated_at }] }`
+    updated_at, variants? }] }`
   - Rendered by shared-ui-lib's `AnnouncementBanner` (`@bengo-hub/shared-ui-lib/announcements`):
     admin-only ones show to admins, `{orgSlug}` in `cta_url` is substituted, and dismissals are kept
     per viewer on the device. Mounted on the pos-ui and treasury-ui dashboards (2026-10-03).
+  - `variants` (from `metadata.variants`, keyed by a flag such as `payhero_active`) holds text for
+    viewers in another state: `{ title?, summary, highlights[], cta_label?, cta_url? }`. The app
+    passes `flags` to the banner (treasury-ui and pos-ui report `payhero_active` from the tenant's
+    PayHero status); a true flag swaps in that variant, false keeps the base text, and a flag still
+    loading holds the announcement back. Dismissals are per variant (shared-ui-lib v0.1.101).
 
 - `GET|POST /api/v1/platform/announcements`, `PUT|DELETE /api/v1/platform/announcements/{id}`
   (platform super admin; notifications-ui Platform > Announcements)
-  - Create or edit: title, summary, highlights, `cta_label` + `cta_url` (https or an app path),
-    `services` (empty = every app), audience, tone, priority, dismissible, is_active, starts_at,
-    optional ends_at.
+  - Create or edit: title, summary, highlights, `cta_label` + `cta_url` (https, `mailto:` or an
+    app path), `services` (empty = every app), audience, tone, priority, dismissible, is_active,
+    starts_at, optional ends_at, and optional `metadata.variants` (validated like the base text;
+    an edit without `metadata` keeps the stored variants).
   - Ended announcements are hard deleted on start and hourly (once fleet-wide via the shared
     `RunOnce`); one with no end runs until switched off or deleted.
 
