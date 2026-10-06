@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/bengobox/notifications-api/internal/messaging"
 )
 
 // MetaCloudProvider implements WhatsAppProvider using the official Meta WhatsApp
@@ -92,7 +94,8 @@ func (p *MetaCloudProvider) SendWhatsApp(ctx context.Context, from string, to []
 			}
 			params := stringSliceParam(metadata["template_params"])
 			buttonParam, _ := metadata["template_button_param"].(string)
-			err = p.sendTemplate(ctx, recipient, templateName, language, params, buttonParam)
+			var id string
+			id, err = p.sendTemplate(ctx, recipient, templateName, language, params, buttonParam)
 			// Retry with the fallback template on ANY primary-send failure, not just a button
 			// send — the primary is often a newly-drafted template (polished wording, possibly
 			// with a button) that hasn't cleared Meta review yet either, regardless of whether
@@ -102,8 +105,13 @@ func (p *MetaCloudProvider) SendWhatsApp(ctx context.Context, from string, to []
 			if err != nil {
 				if fallbackName, ok := metadata["template_fallback_name"].(string); ok && fallbackName != "" {
 					fallbackParams := stringSliceParam(metadata["template_fallback_params"])
-					err = p.sendTemplate(ctx, recipient, fallbackName, language, fallbackParams, "")
+					id, err = p.sendTemplate(ctx, recipient, fallbackName, language, fallbackParams, "")
 				}
+			}
+			// The caller can match Meta's later delivery status to this send (see
+			// messaging.ParkWhatsAppFallback).
+			if err == nil && id != "" && metadata != nil {
+				metadata[messaging.MetaSentMessageID] = id
 			}
 		} else if ctaText, _ := metadata["cta_button_text"].(string); ctaText != "" {
 			if ctaURL, _ := metadata["cta_button_url"].(string); ctaURL != "" {
@@ -192,7 +200,7 @@ func (p *MetaCloudProvider) sendText(ctx context.Context, to, body string, previ
 // language + ordered parameter values. buttonParam, when non-empty, fills the dynamic suffix of
 // the template's (single, index-0) URL button — Meta requires a SEPARATE "button" component for
 // this, scoped independently from the body's own {{1}}, {{2}}, ... numbering.
-func (p *MetaCloudProvider) sendTemplate(ctx context.Context, to, templateName, language string, params []string, buttonParam string) error {
+func (p *MetaCloudProvider) sendTemplate(ctx context.Context, to, templateName, language string, params []string, buttonParam string) (string, error) {
 	components := []map[string]interface{}{}
 	if len(params) > 0 {
 		bodyParams := make([]map[string]interface{}, 0, len(params))
@@ -224,8 +232,24 @@ func (p *MetaCloudProvider) sendTemplate(ctx context.Context, to, templateName, 
 		"type":              "template",
 		"template":          template,
 	}
-	_, err := p.post(ctx, payload)
-	return err
+	respBody, err := p.post(ctx, payload)
+	if err != nil {
+		return "", err
+	}
+	return messageIDOf(respBody), nil
+}
+
+// messageIDOf reads Meta's message id (wamid...) from a send response, "" when absent.
+func messageIDOf(respBody []byte) string {
+	var parsed struct {
+		Messages []struct {
+			ID string `json:"id"`
+		} `json:"messages"`
+	}
+	if json.Unmarshal(respBody, &parsed) == nil && len(parsed.Messages) > 0 {
+		return parsed.Messages[0].ID
+	}
+	return ""
 }
 
 // normalizeWhatsAppNumber strips everything Meta's Cloud API doesn't accept in the "to" field —

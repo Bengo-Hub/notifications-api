@@ -33,9 +33,12 @@ Meta fixes a button's domain when the template is approved; only the suffix vari
 
 Platform billing messages (`subscription_invoice_ready_v1_btn`, `subscription_payment_due_v1_btn`)
 are sent from the platform's number (`senderScope: platform`), so the tenant's own WhatsApp plan
-and quota do not apply. They go to the tenant's billing phone from auth-api
-(`GET /api/v1/s2s/{tenant}/billing-contact`: the tenant administrator, else the main outlet, else
-the tenant's phone), next to the email (`cmd/worker/billing_whatsapp.go`).
+and quota do not apply. They go to ONE number from auth-api
+(`GET /api/v1/s2s/{tenant}/billing-contact`, ordered: the tenant administrator, then the main
+outlet, then the tenant's phone), next to the email (`cmd/worker/billing_whatsapp.go`). The other
+numbers are backups in metadata `fallback_to`: a send Meta refuses moves to the next number at
+once, and a send Meta accepts but later reports `failed` (webhook) is sent to the next number then
+(`internal/messaging/whatsapp_fallback.go`, parked in Redis under Meta's message id for 24 hours).
 
 The shared apps serve every tenant under its slug, so a tenant on its own domain still gets a
 working button: the suffix is the path of its link (`buttonURLSuffix`, `posButtonSuffix`).

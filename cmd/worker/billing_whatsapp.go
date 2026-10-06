@@ -63,36 +63,49 @@ func booksButtonSuffix(links ...string) string {
 	return ""
 }
 
-// billingPhone asks auth-api where the tenant's bills go by phone: the tenant administrator, else
-// the main outlet, else the tenant's phone (GET /api/v1/s2s/{tenant}/billing-contact).
-func billingPhone(ctx context.Context, cfg *config.Config, tenantID string) (string, string, error) {
+// billingPhones asks auth-api where the tenant's bills go by phone, in order: the tenant
+// administrator, then the main outlet, then the tenant's phone
+// (GET /api/v1/s2s/{tenant}/billing-contact). The message goes to the first; the rest are backups.
+func billingPhones(ctx context.Context, cfg *config.Config, tenantID string) ([]string, string, error) {
 	if cfg.Services.AuthAPI == "" || cfg.Security.APIKey == "" {
-		return "", "", fmt.Errorf("auth url or internal key not configured")
+		return nil, "", fmt.Errorf("auth url or internal key not configured")
 	}
 	cctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 	req, err := http.NewRequestWithContext(cctx, http.MethodGet,
 		fmt.Sprintf("%s/api/v1/s2s/%s/billing-contact", strings.TrimRight(cfg.Services.AuthAPI, "/"), url.PathEscape(tenantID)), nil)
 	if err != nil {
-		return "", "", err
+		return nil, "", err
 	}
 	req.Header.Set("X-API-Key", cfg.Security.APIKey)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return "", "", err
+		return nil, "", err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return "", "", fmt.Errorf("auth billing-contact: status %d", resp.StatusCode)
+		return nil, "", fmt.Errorf("auth billing-contact: status %d", resp.StatusCode)
 	}
 	var out struct {
 		Phone  string `json:"phone"`
 		Source string `json:"source"`
+		Phones []struct {
+			Phone string `json:"phone"`
+		} `json:"phones"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
-		return "", "", err
+		return nil, "", err
 	}
-	return strings.TrimSpace(out.Phone), out.Source, nil
+	phones := make([]string, 0, len(out.Phones)+1)
+	for _, p := range out.Phones {
+		if s := strings.TrimSpace(p.Phone); s != "" {
+			phones = append(phones, s)
+		}
+	}
+	if len(phones) == 0 && strings.TrimSpace(out.Phone) != "" {
+		phones = append(phones, strings.TrimSpace(out.Phone)) // auth before the ordered list
+	}
+	return phones, out.Source, nil
 }
 
 // billingWhatsAppParams fills the template's body variables in order.
@@ -125,8 +138,8 @@ func sendBillingWhatsApp(ctx context.Context, nc *nats.Conn, cfg *config.Config,
 		logg.Info("billing whatsapp skipped: no invoice link on the books domain", zap.String("type", evt.EventType), zap.String("tenant_id", tenantID))
 		return
 	}
-	phone, source, err := billingPhone(ctx, cfg, tenantID)
-	if err != nil || phone == "" {
+	phones, source, err := billingPhones(ctx, cfg, tenantID)
+	if err != nil || len(phones) == 0 {
 		logg.Info("billing whatsapp skipped: no billing phone", zap.String("tenant_id", tenantID), zap.Error(err))
 		return
 	}
@@ -141,6 +154,10 @@ func sendBillingWhatsApp(ctx context.Context, nc *nats.Conn, cfg *config.Config,
 	if code := dialCodeForCountry(ti.Country); code != "" {
 		meta["default_dial_code"] = code
 	}
+	// One recipient; the others only if that number cannot take the message.
+	if len(phones) > 1 {
+		meta[messaging.MetaFallbackTo] = phones[1:]
+	}
 	data := map[string]any{"name": params[0], "kind": spec.kind, "invoice_number": evt.Payload["invoice_number"],
 		"amount": evt.Payload["amount"], "due_date": formatEventDate(evt.Payload["due_date"]), "days_remaining": evt.Payload["days_remaining"]}
 	key := fmt.Sprintf("billing-wa-%s-%s", evt.EventType, evt.AggregateID)
@@ -153,7 +170,7 @@ func sendBillingWhatsApp(ctx context.Context, nc *nats.Conn, cfg *config.Config,
 		TemplateID:     spec.textID,
 		SenderScope:    messaging.SenderScopePlatform,
 		Target:         messaging.TargetTenantAdmin,
-		To:             []string{phone},
+		To:             phones[:1],
 		Data:           data,
 		Metadata:       meta,
 		RequestID:      uuid.New().String(),

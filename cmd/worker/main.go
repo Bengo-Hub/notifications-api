@@ -273,7 +273,7 @@ func main() {
 		}
 
 		// Deliver via provider
-		deliverErr := deliver(ctx, cfg, pm, emailGuardian, billingSvc, whatsappSubsSvc, tr, dbPool, &msg, rendered, logg)
+		deliverErr := deliver(ctx, cfg, pm, emailGuardian, billingSvc, whatsappSubsSvc, tr, dbPool, nilIfTyped(redisClient), &msg, rendered, logg)
 		if errors.Is(deliverErr, errSkippedNoSend) {
 			// Deliberately not sent (no valid/verified recipient, no SMS credit, no WhatsApp
 			// subscription/quota, etc.) — deliver() already logged the specific reason. Ack so
@@ -593,7 +593,7 @@ var errSkippedNoSend = errors.New("notifications: send intentionally skipped")
 // codevertex-demo (the platform's own public demo tenant), populated once at startup.
 var whatsappExemptTenantIDs = map[string]bool{}
 
-func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg *emailGuard, billingSvc *billing.Service, whatsappSubsSvc *billing.WhatsAppSubscriptionService, tr *tenantResolver, dbPool *pgxpool.Pool, msg *messaging.Message, rendered string, logg *zap.Logger) error {
+func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg *emailGuard, billingSvc *billing.Service, whatsappSubsSvc *billing.WhatsAppSubscriptionService, tr *tenantResolver, dbPool *pgxpool.Pool, rdb redis.UniversalClient, msg *messaging.Message, rendered string, logg *zap.Logger) error {
 	channel := strings.ToLower(msg.Channel)
 	preferred := ""
 	if p, ok := msg.Metadata["provider"].(string); ok {
@@ -874,10 +874,30 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 		// goes out as a tappable button.
 		applyWhatsAppLinkButton(waMetadata, msg.Data)
 
-		if err := waProv.SendWhatsApp(ctx, cfg.Providers.DefaultSMSSender, msg.To, rendered, waMetadata); err != nil {
-			return err
+		// One recipient, with backups (metadata fallback_to; platform billing: tenant admin, else
+		// main outlet, else tenant phone). A send Meta refuses moves to the next number at once;
+		// a send Meta accepts parks the next attempt until its webhook reports the message
+		// undelivered (internal/messaging/whatsapp_fallback.go).
+		current := *msg
+		current.Metadata = waMetadata
+		err = waProv.SendWhatsApp(ctx, cfg.Providers.DefaultSMSSender, current.To, rendered, waMetadata)
+		for err != nil {
+			next, ok := messaging.NextFallback(current)
+			if !ok {
+				return err
+			}
+			logg.Info("whatsapp send refused, trying the next number", zap.Strings("failed", current.To), zap.Error(err))
+			current = next
+			err = waProv.SendWhatsApp(ctx, cfg.Providers.DefaultSMSSender, current.To, rendered, current.Metadata)
 		}
-		logg.Info("whatsapp message sent", zap.String("provider", waProv.Name()), zap.Strings("to", msg.To))
+		if id, _ := current.Metadata[messaging.MetaSentMessageID].(string); id != "" && rdb != nil {
+			if next, ok := messaging.NextFallback(current); ok {
+				if perr := messaging.ParkWhatsAppFallback(ctx, rdb, id, next); perr != nil {
+					logg.Warn("whatsapp: could not keep the backup number for this send", zap.Error(perr))
+				}
+			}
+		}
+		logg.Info("whatsapp message sent", zap.String("provider", waProv.Name()), zap.Strings("to", current.To))
 		return nil
 
 	case "push":

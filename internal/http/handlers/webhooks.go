@@ -8,12 +8,54 @@ import (
 	"os"
 
 	"github.com/google/uuid"
+	"github.com/nats-io/nats.go"
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 
+	"github.com/bengobox/notifications-api/internal/config"
 	"github.com/bengobox/notifications-api/internal/ent"
 	"github.com/bengobox/notifications-api/internal/ent/providersetting"
+	"github.com/bengobox/notifications-api/internal/messaging"
 	"github.com/bengobox/notifications-api/internal/modules/whatsappinbox"
 )
+
+// whatsAppFallback queues the backup number of a WhatsApp message Meta could not deliver.
+type whatsAppFallback struct {
+	rdb    redis.UniversalClient
+	nc     *nats.Conn
+	events config.EventsConfig
+}
+
+// WithWhatsAppFallback lets status webhooks move an undelivered message to its next number
+// (messaging.ParkWhatsAppFallback). Without it, failures are only logged.
+func (h *WebhookHandler) WithWhatsAppFallback(rdb redis.UniversalClient, nc *nats.Conn, events config.EventsConfig) *WebhookHandler {
+	if rdb != nil && nc != nil {
+		h.fallback = &whatsAppFallback{rdb: rdb, nc: nc, events: events}
+	}
+	return h
+}
+
+// onWhatsAppStatus acts on a delivery status for the backup-number flow: failed sends the parked
+// next attempt, delivered or read forgets it.
+func (h *WebhookHandler) onWhatsAppStatus(ctx context.Context, messageID, status string) {
+	if h.fallback == nil || messageID == "" {
+		return
+	}
+	switch status {
+	case "failed":
+		next, ok := messaging.TakeWhatsAppFallback(ctx, h.fallback.rdb, messageID)
+		if !ok {
+			return
+		}
+		if _, err := messaging.Publish(ctx, h.fallback.nc, h.fallback.events, *next); err != nil {
+			h.log.Warn("whatsapp: could not queue the backup number", zap.String("message_id", messageID), zap.Error(err))
+			return
+		}
+		h.log.Info("whatsapp: undelivered, sent to the backup number", zap.String("message_id", messageID))
+	case "delivered", "read":
+		messaging.DropWhatsAppFallback(ctx, h.fallback.rdb, messageID)
+	}
+}
 
 // WebhookHandler receives provider-initiated callbacks (SMS delivery reports, WhatsApp message/
 // status webhooks) — all public, unauthenticated routes, matching treasury-api's
@@ -24,6 +66,7 @@ type WebhookHandler struct {
 	log           *zap.Logger
 	publicBaseURL string
 	inbox         *whatsappinbox.Service
+	fallback      *whatsAppFallback
 }
 
 // NewWebhookHandler creates the webhook handler. publicBaseURL is this service's own externally
@@ -207,6 +250,7 @@ func (h *WebhookHandler) WhatsAppIncoming(w http.ResponseWriter, r *http.Request
 						zap.String("error_details", e.ErrorData.Details),
 					)
 				}
+				h.onWhatsAppStatus(ctx, status.ID, status.Status)
 				if h.inbox != nil {
 					if err := h.inbox.RecordStatusUpdate(ctx, status.ID, status.Status); err != nil {
 						h.log.Warn("failed to record whatsapp status update", zap.Error(err), zap.String("message_id", status.ID))
