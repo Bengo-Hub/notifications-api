@@ -2,4 +2,4 @@ Hi {{ .name }},
 
 Your {{ .kind }} invoice *{{ .invoice_number }}* for *{{ .amount }}* is ready. It is due on {{ .due_date }}.
 
-Open it to pay by M-Pesa or card. Thank you for choosing Codevertex.
+Open it to pay by M-Pesa or card.

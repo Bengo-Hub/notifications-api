@@ -373,7 +373,7 @@
     "category": "UTILITY",
     "language": "en_US",
     "source": "whatsapp/subscription/invoice_ready.txt (link as a URL button)",
-    "body": "Hi {{1}},\n\nYour {{2}} invoice *{{3}}* for *{{4}}* is ready. It is due on {{5}}.\n\nOpen it to pay by M-Pesa or card. Thank you for choosing Codevertex.",
+    "body": "Hi {{1}},\n\nYour {{2}} invoice *{{3}}* for *{{4}}* is ready. It is due on {{5}}.\n\nOpen it to pay by M-Pesa or card.",
     "example": ["Alpha China Market", "subscription", "INV-261005-000031", "KES 3,000.00", "08 Oct 2026"],
     "buttons": [
       {"type": "URL", "text": "View Invoice", "url": "https://books.codevertexafrica.com/{{1}}", "example": ["i/e9c7842a-4420-4505-9d1d-0f823bc65312"]}
