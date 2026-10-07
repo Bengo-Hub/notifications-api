@@ -119,7 +119,6 @@ func (s *Subscriber) Start(ctx context.Context) error {
 		{"treasury", "treasury.payroll.disbursed", "notif-payroll-disbursed", s.handlePayrollDisbursed},
 		{"erp", "erp.email.requested", "notif-erp-email-req", s.handleERPEmailRequested},
 		{"erp", "erp.notification.requested", "notif-erp-notif-req", s.handleERPNotificationRequested},
-		{"marketflow", "marketflow.campaign.sms_queued", "notif-marketflow-campaign-sms", s.handleMarketflowCampaignSMS},
 		{"isp", "isp.subscriber.created", "notif-isp-subscriber-created", s.handleISPSubscriberCreated},
 		{"isp", "isp.payment.received", "notif-isp-payment-received", s.handleISPPaymentReceived},
 		{"isp", "isp.subscription.renewed", "notif-isp-subscription-renewed", s.handleISPSubscriptionRenewed},
@@ -768,35 +767,6 @@ func (s *Subscriber) handleLoyaltyReferralEarned(msg *nats.Msg) {
 		"customer_name": e.Payload.ReferrerName,
 		"bonus_points":  e.Payload.BonusPoints,
 		"balance_after": e.Payload.BalanceAfter,
-	})
-	_ = msg.Ack()
-}
-
-// handleMarketflowCampaignSMS delivers one bulk-campaign SMS per contact (marketflow.campaign.sms_queued).
-func (s *Subscriber) handleMarketflowCampaignSMS(msg *nats.Msg) {
-	var e struct {
-		TenantID string `json:"tenant_id"`
-		Payload  struct {
-			TenantID string `json:"tenant_id"`
-			Phone    string `json:"phone"`
-			Message  string `json:"message"`
-		} `json:"payload"`
-	}
-	if err := json.Unmarshal(msg.Data, &e); err != nil {
-		s.log.Warn("marketflow_campaign_sms: unmarshal failed", zap.Error(err))
-		_ = msg.Nak()
-		return
-	}
-	tid := e.TenantID
-	if tid == "" {
-		tid = e.Payload.TenantID
-	}
-	if tid == "" || e.Payload.Phone == "" || e.Payload.Message == "" {
-		_ = msg.Ack()
-		return
-	}
-	s.publish(tid, "sms", "marketflow/campaign_sms", messaging.TargetCustomer, []string{e.Payload.Phone}, map[string]any{
-		"message": e.Payload.Message,
 	})
 	_ = msg.Ack()
 }
