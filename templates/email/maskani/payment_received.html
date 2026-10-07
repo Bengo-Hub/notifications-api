@@ -1,0 +1,36 @@
+{{ define "content" }}
+  <p>Hello {{ or .name "there" }},</p>
+  <p>Thank you. We have received your payment.</p>
+  <table role="presentation" style="width:100%;border-collapse:collapse;margin:16px 0;">
+    <tr>
+      <td style="padding:8px 0;color:#6b7280;width:45%;border-bottom:1px solid #f3f4f6;">Amount paid</td>
+      <td style="padding:8px 0;font-weight:700;font-size:16px;color:#059669;border-bottom:1px solid #f3f4f6;">{{ .amount }}</td>
+    </tr>
+    <tr>
+      <td style="padding:8px 0;color:#6b7280;border-bottom:1px solid #f3f4f6;">Account</td>
+      <td style="padding:8px 0;font-weight:600;border-bottom:1px solid #f3f4f6;">{{ .account_ref }}</td>
+    </tr>
+    {{ if .receipt }}
+    <tr>
+      <td style="padding:8px 0;color:#6b7280;border-bottom:1px solid #f3f4f6;">Receipt</td>
+      <td style="padding:8px 0;font-family:monospace;font-size:13px;border-bottom:1px solid #f3f4f6;">{{ .receipt }}</td>
+    </tr>
+    {{ end }}
+    {{ if .method }}
+    <tr>
+      <td style="padding:8px 0;color:#6b7280;border-bottom:1px solid #f3f4f6;">Method</td>
+      <td style="padding:8px 0;border-bottom:1px solid #f3f4f6;">{{ .method }}</td>
+    </tr>
+    {{ end }}
+    <tr>
+      <td style="padding:8px 0;color:#6b7280;">Balance now</td>
+      <td style="padding:8px 0;font-weight:600;">{{ .balance }}</td>
+    </tr>
+  </table>
+  {{ if .action_link }}
+  <p style="margin:20px 0;">
+    <a href="{{ .action_link }}" style="background:{{ or .brand_primary_color "#0F766E" }};color:#ffffff !important;text-decoration:none;padding:10px 16px;border-radius:6px;display:inline-block;">View statement</a>
+  </p>
+  {{ end }}
+  <p style="color:#6b7280;font-size:13px;">Keep this email as your payment confirmation. The payment has been applied to your oldest outstanding bills first.</p>
+{{ end }}

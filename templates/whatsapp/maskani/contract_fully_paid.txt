@@ -1,0 +1,5 @@
+Hello {{ or .name "there" }},
+
+Sale agreement *{{ .contract_number }}* (account {{ .account_ref }}) is now fully paid.
+
+Thank you. We will contact you about handover and title.

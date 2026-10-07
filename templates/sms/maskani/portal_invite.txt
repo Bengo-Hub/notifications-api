@@ -1,1 +1,0 @@
-{{ or .brand_name "Maskani" }}: {{ .name }}, view your bills, payments and visitor passes at {{ .portal_link }}. Sign in with this phone number.

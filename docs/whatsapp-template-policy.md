@@ -30,6 +30,7 @@ Meta fixes a button's domain when the template is approved; only the suffix vari
 | POS online orders queue | `https://pos.codevertexafrica.com/{{1}}` | `<tenant-slug>/online-orders` |
 | POS receipt | `https://r.codevertexafrica.com/{{1}}` | receipt short code |
 | Platform invoice (subscription, support) | `https://books.codevertexafrica.com/{{1}}` | `i/<public token>` (the invoice page), else the pay page path |
+| Maskani portal and console | `https://maskaniapp.codevertexafrica.com/{{1}}` | `<tenant-slug>/portal`, `<slug>/portal/purchase`, `<slug>/portal/walk-ins/<id>`, `<slug>/security/incidents/<id>`, `<slug>/works/<id>` |
 
 Platform billing messages (`subscription_invoice_ready_v1_btn`, `subscription_payment_due_v1_btn`)
 are sent from the platform's number (`senderScope: platform`), so the tenant's own WhatsApp plan

@@ -1,0 +1,7 @@
+Hello {{ or .host_name "there" }},
+
+*{{ .visitor_name }}* is at the gate asking to visit unit *{{ .unit_code }}*.
+
+Please allow or decline within 5 minutes. If there is no answer the guard will not let the visitor in.
+
+Thank you.

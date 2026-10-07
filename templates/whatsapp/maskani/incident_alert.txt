@@ -1,0 +1,5 @@
+Security alert for {{ .estate }}.
+
+A *{{ .severity }}* incident was reported: *{{ .title }}* ({{ .number }}).
+
+Please review it now.

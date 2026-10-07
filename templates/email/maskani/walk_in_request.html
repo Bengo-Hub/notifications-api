@@ -1,0 +1,13 @@
+{{ define "content" }}
+  <p>Hello {{ or .host_name "there" }},</p>
+  <p><strong>{{ .visitor_name }}</strong> is at the gate asking to visit unit <strong>{{ .unit_code }}</strong>.</p>
+  <div style="background:#fffbeb;border:1px solid #fde68a;padding:12px 16px;border-radius:8px;margin:16px 0;">
+    <p style="margin:0;color:#92400e;">Please allow or decline within <strong>5 minutes</strong>. If there is no answer the guard will not let the visitor in.</p>
+  </div>
+  {{ if .action_link }}
+  <p style="margin:20px 0;">
+    <a href="{{ .action_link }}" style="background:{{ or .brand_primary_color "#0F766E" }};color:#ffffff !important;text-decoration:none;padding:10px 16px;border-radius:6px;display:inline-block;">Allow or decline</a>
+  </p>
+  {{ end }}
+  <p style="color:#6b7280;font-size:13px;">You can also call the gate to answer.</p>
+{{ end }}

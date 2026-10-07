@@ -1,0 +1,19 @@
+{{ define "content" }}
+  <p>Hello {{ or .visitor_name "there" }},</p>
+  <p>You have a visitor pass for <strong>{{ .estate }}</strong>.</p>
+  <div style="background:#f0fdfa;border:1px solid #99f6e4;padding:16px;border-radius:8px;margin:16px 0;text-align:center;">
+    <p style="margin:0 0 6px 0;color:#115e59;font-size:13px;">Gate code</p>
+    <p style="margin:0;font-family:monospace;font-size:28px;font-weight:700;letter-spacing:6px;color:#134e4a;">{{ .code }}</p>
+  </div>
+  <table role="presentation" style="width:100%;border-collapse:collapse;margin:16px 0;">
+    <tr>
+      <td style="padding:8px 0;color:#6b7280;width:45%;border-bottom:1px solid #f3f4f6;">Valid from</td>
+      <td style="padding:8px 0;font-weight:600;border-bottom:1px solid #f3f4f6;">{{ .valid_from }}</td>
+    </tr>
+    <tr>
+      <td style="padding:8px 0;color:#6b7280;">Valid until</td>
+      <td style="padding:8px 0;font-weight:600;">{{ .valid_to }}</td>
+    </tr>
+  </table>
+  <p style="color:#6b7280;font-size:13px;">Show this code to the guard when you arrive. Please do not share it; it only works within the times above.</p>
+{{ end }}

@@ -469,5 +469,106 @@
     "source": "broadcasts: service notices such as planned maintenance (params: first_name, sender_name, message)",
     "body": "Hello {{1}},\n\nA service notice from {{2}}:\n\n{{3}}\n\nReply to this message if you need help.",
     "example": ["Titus", "Codevertex Africa", "Our systems will be down for planned maintenance on Sunday from 1am to 3am."]
+  },
+  {
+    "name": "maskani_bill_issued_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/maskani/bill_issued.txt (params: name, period, account_ref, amount, due_date, paybill, account_ref; button: <slug>/portal)",
+    "body": "Hello {{1}},\n\nYour *{{2}}* bill for account *{{3}}* is *{{4}}*, due on {{5}}.\n\nPay by M-Pesa to paybill *{{6}}*, account number *{{7}}*.\n\nThank you.",
+    "example": ["Jane", "November 2026", "B07", "KES 6,450.00", "10 Nov 2026", "4012345", "B07"],
+    "buttons": [
+      {"type": "URL", "text": "View Statement", "url": "https://maskaniapp.codevertexafrica.com/{{1}}", "example": ["shaba-village/portal"]}
+    ]
+  },
+  {
+    "name": "maskani_payment_received_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/maskani/payment_received.txt (params: name, amount, account_ref, receipt, balance; button: <slug>/portal)",
+    "body": "Hello {{1}},\n\nWe have received *{{2}}* for account *{{3}}*.\n\nReceipt: {{4}}\nBalance: *{{5}}*\n\nThank you for your payment.",
+    "example": ["Jane", "KES 6,450.00", "B07", "SJK4H7Q2LM", "KES 0.00"],
+    "buttons": [
+      {"type": "URL", "text": "View Statement", "url": "https://maskaniapp.codevertexafrica.com/{{1}}", "example": ["shaba-village/portal"]}
+    ]
+  },
+  {
+    "name": "maskani_visitor_pass_v1",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/maskani/visitor_pass.txt (params: visitor_name, estate, code, valid_from, valid_to)",
+    "body": "Hello {{1}},\n\nYour gate code for *{{2}}* is *{{3}}*.\n\nValid from {{4}} to {{5}}. Show this code to the guard when you arrive.\n\nHave a good visit.",
+    "example": ["Peter", "Shaba Village", "482915", "11 Oct 09:00", "11 Oct 21:00"]
+  },
+  {
+    "name": "maskani_visitor_arrived_v1",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/maskani/visitor_arrived.txt (params: host_name, visitor_name, unit_code, time)",
+    "body": "Hello {{1}},\n\n*{{2}}* has arrived at the gate for unit *{{3}}* at {{4}}.\n\nThis is an automatic gate notification.",
+    "example": ["Jane", "Peter Mwangi", "B07", "11 Oct 14:32"]
+  },
+  {
+    "name": "maskani_walk_in_request_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/maskani/walk_in_request.txt (params: host_name, visitor_name, unit_code; button: <slug>/portal/walk-ins/<id>)",
+    "body": "Hello {{1}},\n\n*{{2}}* is at the gate asking to visit unit *{{3}}*.\n\nPlease allow or decline within 5 minutes. If there is no answer the guard will not let the visitor in.\n\nThank you.",
+    "example": ["Jane", "Peter Mwangi", "B07"],
+    "buttons": [
+      {"type": "URL", "text": "Allow or Decline", "url": "https://maskaniapp.codevertexafrica.com/{{1}}", "example": ["shaba-village/portal/walk-ins/0f3b7c1e-2a4d-4c55-9b1f-6d2e8a9c4b10"]}
+    ]
+  },
+  {
+    "name": "maskani_portal_invite_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/maskani/portal_invite.txt (params: name, estate; button: <slug>/portal)",
+    "body": "Hello {{1}},\n\n*{{2}}* has set up your owner portal. You can see your bills and payments, pay, and create visitor passes there.\n\nSign in with this phone number. We will send you a one-time code.",
+    "example": ["Jane", "Shaba Village"],
+    "buttons": [
+      {"type": "URL", "text": "Open Portal", "url": "https://maskaniapp.codevertexafrica.com/{{1}}", "example": ["shaba-village/portal"]}
+    ]
+  },
+  {
+    "name": "maskani_contract_activated_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/maskani/contract_activated.txt (params: name, contract_number, unit_code, account_ref; button: <slug>/portal/purchase)",
+    "body": "Hello {{1}},\n\nYour sale agreement *{{2}}* for unit *{{3}}* is now active.\n\nPay instalments by M-Pesa using account number *{{4}}*. Your schedule and payments are in the portal.\n\nThank you.",
+    "example": ["Jane", "SC-000014", "B07", "S-B07"],
+    "buttons": [
+      {"type": "URL", "text": "View Purchase", "url": "https://maskaniapp.codevertexafrica.com/{{1}}", "example": ["shaba-village/portal/purchase"]}
+    ]
+  },
+  {
+    "name": "maskani_contract_fully_paid_v1",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/maskani/contract_fully_paid.txt (params: name, contract_number, account_ref)",
+    "body": "Hello {{1}},\n\nSale agreement *{{2}}* (account {{3}}) is now fully paid.\n\nThank you. We will contact you about handover and title.",
+    "example": ["Jane", "SC-000014", "S-B07"]
+  },
+  {
+    "name": "maskani_incident_alert_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/maskani/incident_alert.txt (params: estate, severity, title, number; button: <slug>/security/incidents/<id>)",
+    "body": "Security alert for {{1}}.\n\nA *{{2}}* incident was reported: *{{3}}* ({{4}}).\n\nPlease review it now.",
+    "example": ["Shaba Village", "critical", "Perimeter fence breached", "INC-000012"],
+    "buttons": [
+      {"type": "URL", "text": "Open Incident", "url": "https://maskaniapp.codevertexafrica.com/{{1}}", "example": ["shaba-village/security/incidents/0f3b7c1e-2a4d-4c55-9b1f-6d2e8a9c4b10"]}
+    ]
+  },
+  {
+    "name": "maskani_work_order_overdue_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/maskani/work_order_sla_breached.txt (params: estate, number, priority, title; button: <slug>/works/<id>)",
+    "body": "Work order update for {{1}}.\n\nWork order *{{2}}* ({{3}} priority) is past its response time: {{4}}.\n\nPlease follow up with the assignee.",
+    "example": ["Shaba Village", "WO-000031", "high", "Borehole pump not running"],
+    "buttons": [
+      {"type": "URL", "text": "Open Work Order", "url": "https://maskaniapp.codevertexafrica.com/{{1}}", "example": ["shaba-village/works/0f3b7c1e-2a4d-4c55-9b1f-6d2e8a9c4b10"]}
+    ]
   }
 ]

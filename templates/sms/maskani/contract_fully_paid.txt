@@ -1,1 +1,0 @@
-{{ or .brand_name "Maskani" }}: sale agreement {{ .contract_number }} ({{ .account_ref }}) is fully paid. Thank you.

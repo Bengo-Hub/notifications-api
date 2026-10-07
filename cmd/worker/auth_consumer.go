@@ -274,16 +274,18 @@ func startAuthNotificationConsumer(ctx context.Context, nc *nats.Conn, cfg *conf
 		tenantID, _ := payload["tenant_id"].(string)
 		email, _ := payload["email"].(string)
 
-		// Phone code sign-in (customer portals): auth-api sends phone instead of email. Platform
-		// sender, so a tenant's SMS credits never block a sign-in.
+		// Phone code sign-in (customer portals): auth-api sends phone instead of email. Delivered
+		// on WhatsApp with Meta's AUTHENTICATION template (auth_otp: the code is the body parameter
+		// and the copy-code button parameter) from the platform number, so a tenant's own WhatsApp
+		// plan and quota never block a sign-in.
 		if phone, _ := payload["phone"].(string); email == "" && phone != "" {
 			ttl := 5
 			if v, ok := payload["ttl_minutes"].(float64); ok && v > 0 {
 				ttl = int(v)
 			}
-			sms := messaging.Message{
+			wa := messaging.Message{
 				TenantID:    tenantID,
-				Channel:     "sms",
+				Channel:     "whatsapp",
 				TemplateID:  "auth/otp",
 				SenderScope: messaging.SenderScopePlatform,
 				Target:      messaging.TargetCustomer,
@@ -293,15 +295,22 @@ func startAuthNotificationConsumer(ctx context.Context, nc *nats.Conn, cfg *conf
 					"ttl_minutes": ttl,
 					"brand_name":  payload["brand_name"],
 				},
+				Metadata: map[string]any{
+					"template_name":         "auth_otp",
+					"template_language":     "en_US",
+					"template_params":       []string{otp},
+					"template_button_param": otp,
+					"default_dial_code":     "254",
+				},
 				RequestID:      uuid.New().String(),
-				IdempotencyKey: fmt.Sprintf("auth-otp-sms-%s-%s", userID, hashOTPForKey(otp)),
+				IdempotencyKey: fmt.Sprintf("auth-otp-wa-%s-%s", userID, hashOTPForKey(otp)),
 				QueuedAt:       time.Now(),
 			}
-			if _, err := messaging.Publish(ctx, nc, cfg.Events, sms); err != nil {
-				logg.Error("auth otp: failed to dispatch sms", zap.Error(err))
+			if _, err := messaging.Publish(ctx, nc, cfg.Events, wa); err != nil {
+				logg.Error("auth otp: failed to dispatch whatsapp", zap.Error(err))
 				return
 			}
-			logg.Info("OTP sms dispatched", zap.String("user_id", userID))
+			logg.Info("OTP whatsapp dispatched", zap.String("user_id", userID))
 			return
 		}
 

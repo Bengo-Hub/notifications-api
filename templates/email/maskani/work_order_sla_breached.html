@@ -1,0 +1,26 @@
+{{ define "content" }}
+  <p>Hello,</p>
+  <p>Work order <strong>{{ .number }}</strong> at {{ .estate }} is past its response time.</p>
+  <table role="presentation" style="width:100%;border-collapse:collapse;margin:16px 0;">
+    <tr>
+      <td style="padding:8px 0;color:#6b7280;width:45%;border-bottom:1px solid #f3f4f6;">Issue</td>
+      <td style="padding:8px 0;font-weight:600;border-bottom:1px solid #f3f4f6;">{{ .title }}</td>
+    </tr>
+    <tr>
+      <td style="padding:8px 0;color:#6b7280;border-bottom:1px solid #f3f4f6;">Priority</td>
+      <td style="padding:8px 0;border-bottom:1px solid #f3f4f6;">{{ .priority }}</td>
+    </tr>
+    {{ if .due_at }}
+    <tr>
+      <td style="padding:8px 0;color:#6b7280;">Was due</td>
+      <td style="padding:8px 0;color:#b91c1c;font-weight:600;">{{ .due_at }}</td>
+    </tr>
+    {{ end }}
+  </table>
+  {{ if .action_link }}
+  <p style="margin:20px 0;">
+    <a href="{{ .action_link }}" style="background:{{ or .brand_primary_color "#0F766E" }};color:#ffffff !important;text-decoration:none;padding:10px 16px;border-radius:6px;display:inline-block;">Open work order</a>
+  </p>
+  {{ end }}
+  <p style="color:#6b7280;font-size:13px;">Please follow up with the assignee and update the work order.</p>
+{{ end }}

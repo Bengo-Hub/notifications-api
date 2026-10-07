@@ -1,1 +1,0 @@
-{{ or .brand_name "Maskani" }} ALERT: {{ .severity }} incident {{ .number }}: {{ .title }}. Check the console now.

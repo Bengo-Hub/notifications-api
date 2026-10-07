@@ -1,0 +1,8 @@
+Hello {{ or .name "there" }},
+
+We have received *{{ .amount }}* for account *{{ .account_ref }}*.
+
+Receipt: {{ or .receipt "-" }}
+Balance: *{{ .balance }}*
+
+Thank you for your payment.

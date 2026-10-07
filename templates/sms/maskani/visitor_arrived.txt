@@ -1,1 +1,0 @@
-{{ or .brand_name "Maskani" }}: {{ .visitor_name }} has arrived for {{ .unit_code }} at {{ .time }}.

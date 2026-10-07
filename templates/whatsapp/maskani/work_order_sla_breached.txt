@@ -1,0 +1,5 @@
+Work order update for {{ .estate }}.
+
+Work order *{{ .number }}* ({{ .priority }} priority) is past its response time: {{ .title }}.
+
+Please follow up with the assignee.

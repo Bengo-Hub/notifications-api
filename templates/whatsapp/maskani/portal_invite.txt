@@ -1,0 +1,5 @@
+Hello {{ or .name "there" }},
+
+*{{ .estate }}* has set up your owner portal. You can see your bills and payments, pay, and create visitor passes there.
+
+Sign in with this phone number. We will send you a one-time code.

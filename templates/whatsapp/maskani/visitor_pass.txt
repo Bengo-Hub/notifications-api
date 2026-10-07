@@ -1,0 +1,7 @@
+Hello {{ or .visitor_name "there" }},
+
+Your gate code for *{{ .estate }}* is *{{ .code }}*.
+
+Valid from {{ .valid_from }} to {{ .valid_to }}. Show this code to the guard when you arrive.
+
+Have a good visit.

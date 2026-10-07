@@ -1,1 +1,0 @@
-{{ or .brand_name "Maskani" }}: {{ .period }} bill for {{ .account_ref }} is KES {{ .amount }}, due {{ .due_date }}. Pay to paybill {{ .paybill }}, account {{ .account_ref }}.

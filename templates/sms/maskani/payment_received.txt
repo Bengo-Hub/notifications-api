@@ -1,1 +1,0 @@
-{{ or .brand_name "Maskani" }}: KES {{ .amount }} received for {{ .account_ref }}{{ if .receipt }}, ref {{ .receipt }}{{ end }}. Balance KES {{ .balance }}. Thank you.

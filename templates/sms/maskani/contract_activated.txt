@@ -1,1 +1,0 @@
-{{ or .brand_name "Maskani" }}: {{ .name }}, sale agreement {{ .contract_number }} for {{ .unit_code }} is active. Pay instalments to account {{ .account_ref }}.

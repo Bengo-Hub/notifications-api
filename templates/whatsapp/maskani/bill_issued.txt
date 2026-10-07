@@ -1,0 +1,7 @@
+Hello {{ or .name "there" }},
+
+Your *{{ .period }}* bill for account *{{ .account_ref }}* is *{{ .amount }}*, due on {{ .due_date }}.
+
+Pay by M-Pesa to paybill *{{ .paybill }}*, account number *{{ .account_ref }}*.
+
+Thank you.

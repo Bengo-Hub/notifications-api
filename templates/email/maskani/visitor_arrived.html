@@ -1,0 +1,17 @@
+{{ define "content" }}
+  <p>Hello {{ or .host_name "there" }},</p>
+  <p><strong>{{ .visitor_name }}</strong> has arrived at the gate for unit <strong>{{ .unit_code }}</strong>.</p>
+  <table role="presentation" style="width:100%;border-collapse:collapse;margin:16px 0;">
+    <tr>
+      <td style="padding:8px 0;color:#6b7280;width:45%;border-bottom:1px solid #f3f4f6;">Time</td>
+      <td style="padding:8px 0;font-weight:600;border-bottom:1px solid #f3f4f6;">{{ .time }}</td>
+    </tr>
+    {{ if .vehicle_plate }}
+    <tr>
+      <td style="padding:8px 0;color:#6b7280;">Vehicle</td>
+      <td style="padding:8px 0;font-family:monospace;font-size:13px;">{{ .vehicle_plate }}</td>
+    </tr>
+    {{ end }}
+  </table>
+  <p style="color:#6b7280;font-size:13px;">This is an automatic gate notification. If you were not expecting this visitor, call the gate.</p>
+{{ end }}

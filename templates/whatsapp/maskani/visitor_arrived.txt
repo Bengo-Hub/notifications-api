@@ -1,0 +1,5 @@
+Hello {{ or .host_name "there" }},
+
+*{{ .visitor_name }}* has arrived at the gate for unit *{{ .unit_code }}* at {{ .time }}.
+
+This is an automatic gate notification.

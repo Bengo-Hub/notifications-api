@@ -1,0 +1,7 @@
+Hello {{ or .name "there" }},
+
+Your sale agreement *{{ .contract_number }}* for unit *{{ .unit_code }}* is now active.
+
+Pay instalments by M-Pesa using account number *{{ .account_ref }}*. Your schedule and payments are in the portal.
+
+Thank you.
