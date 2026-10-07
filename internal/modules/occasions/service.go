@@ -332,7 +332,9 @@ func (s *Service) DueSoon(ctx context.Context, now time.Time, loc *time.Location
 		if c, ok := catalogByKey[o.Key]; ok {
 			base := toView(c)
 			base.Settings = mergeSettings(Settings{Variants: base.Settings.Variants, Channels: base.Settings.Channels, WhatsAppTemplate: base.Settings.WhatsAppTemplate}, v.Settings)
-			base.ID = o.ID
+			// Keep the catalogue id: a tenant's customised occasion is the same occasion, and the
+			// one-broadcast-per-occasion-year guard keys on it. Using the tenant row's id here (as
+			// List and DraftNow do not) let the planner and "Prepare this year's" make two drafts.
 			v = base
 		}
 		tid := *o.TenantID
