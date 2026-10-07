@@ -85,7 +85,9 @@ func (h *AnalyticsHandler) resolveScope(r *http.Request) analyticsScope {
 	platformOwner := httpware.IsPlatformOwner(ctx)
 	tenantID := ""
 	if platformOwner {
-		if r.URL.Query().Get("scope") == "all" && r.Header.Get("X-Tenant-ID") == "" && chi.URLParam(r, "tenantId") == "" {
+		// The UI asks for scope=all only when no tenant is picked in the switcher (it still sends
+		// the owner's own tenant header on business pages, so the header is not a signal here).
+		if r.URL.Query().Get("scope") == "all" && chi.URLParam(r, "tenantId") == "" {
 			return analyticsScope{all: true}
 		}
 		tenantID = chi.URLParam(r, "tenantId")
