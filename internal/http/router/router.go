@@ -234,20 +234,8 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 			protected.Group(func(tenantRouter chi.Router) {
 				tenantRouter.Use(tenantContext())
 
-				// Analytics (tenant-scoped; platform owners may pick a tenant or ask for all). Mounted
-				// inside tenantContext so the platform-owner flag is set: outside it the tenant
-				// switcher was ignored and every admin saw only their own tenant's numbers.
-				tenantRouter.Route("/analytics", func(analyticsRouter chi.Router) {
-					if authenticator != nil {
-						analyticsRouter.Use(authenticator.RequirePermissions(identity.PermAnalyticsRead))
-					}
-					analyticsRouter.Get("/delivery", analytics.Delivery)
-					analyticsRouter.Get("/delivery/{tenantId}", analytics.Delivery)
-					analyticsRouter.Get("/logs", analytics.Logs)
-					analyticsRouter.Get("/logs/{tenantId}", analytics.Logs)
-				})
-
-				// JIT tenant sync: ensure tenant exists in local DB when slug is in context
+				// JIT tenant sync: ensure tenant exists in local DB when slug is in context.
+				// Every Use on this group must come before its first route (chi panics otherwise).
 				if tenantSyncer != nil {
 					tenantRouter.Use(func(next http.Handler) http.Handler {
 						return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -261,6 +249,19 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 						})
 					})
 				}
+
+				// Analytics (tenant-scoped; platform owners may pick a tenant or ask for all). Mounted
+				// inside tenantContext so the platform-owner flag is set: outside it the tenant
+				// switcher was ignored and every admin saw only their own tenant's numbers.
+				tenantRouter.Route("/analytics", func(analyticsRouter chi.Router) {
+					if authenticator != nil {
+						analyticsRouter.Use(authenticator.RequirePermissions(identity.PermAnalyticsRead))
+					}
+					analyticsRouter.Get("/delivery", analytics.Delivery)
+					analyticsRouter.Get("/delivery/{tenantId}", analytics.Delivery)
+					analyticsRouter.Get("/logs", analytics.Logs)
+					analyticsRouter.Get("/logs/{tenantId}", analytics.Logs)
+				})
 
 				// Service-level auth/me — returns user profile with local RBAC roles & permissions
 				tenantRouter.Get("/auth/me", authMeHandler.GetMe)
