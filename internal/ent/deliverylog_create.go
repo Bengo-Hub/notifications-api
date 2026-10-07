@@ -62,6 +62,20 @@ func (_c *DeliveryLogCreate) SetNillableStatus(v *string) *DeliveryLogCreate {
 	return _c
 }
 
+// SetMessageID sets the "message_id" field.
+func (_c *DeliveryLogCreate) SetMessageID(v string) *DeliveryLogCreate {
+	_c.mutation.SetMessageID(v)
+	return _c
+}
+
+// SetNillableMessageID sets the "message_id" field if the given value is not nil.
+func (_c *DeliveryLogCreate) SetNillableMessageID(v *string) *DeliveryLogCreate {
+	if v != nil {
+		_c.SetMessageID(*v)
+	}
+	return _c
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (_c *DeliveryLogCreate) SetCreatedAt(v time.Time) *DeliveryLogCreate {
 	_c.mutation.SetCreatedAt(v)
@@ -235,6 +249,10 @@ func (_c *DeliveryLogCreate) createSpec() (*DeliveryLog, *sqlgraph.CreateSpec) {
 		_spec.SetField(deliverylog.FieldStatus, field.TypeString, value)
 		_node.Status = value
 	}
+	if value, ok := _c.mutation.MessageID(); ok {
+		_spec.SetField(deliverylog.FieldMessageID, field.TypeString, value)
+		_node.MessageID = value
+	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(deliverylog.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
@@ -348,6 +366,24 @@ func (u *DeliveryLogUpsert) SetStatus(v string) *DeliveryLogUpsert {
 // UpdateStatus sets the "status" field to the value that was provided on create.
 func (u *DeliveryLogUpsert) UpdateStatus() *DeliveryLogUpsert {
 	u.SetExcluded(deliverylog.FieldStatus)
+	return u
+}
+
+// SetMessageID sets the "message_id" field.
+func (u *DeliveryLogUpsert) SetMessageID(v string) *DeliveryLogUpsert {
+	u.Set(deliverylog.FieldMessageID, v)
+	return u
+}
+
+// UpdateMessageID sets the "message_id" field to the value that was provided on create.
+func (u *DeliveryLogUpsert) UpdateMessageID() *DeliveryLogUpsert {
+	u.SetExcluded(deliverylog.FieldMessageID)
+	return u
+}
+
+// ClearMessageID clears the value of the "message_id" field.
+func (u *DeliveryLogUpsert) ClearMessageID() *DeliveryLogUpsert {
+	u.SetNull(deliverylog.FieldMessageID)
 	return u
 }
 
@@ -469,6 +505,27 @@ func (u *DeliveryLogUpsertOne) SetStatus(v string) *DeliveryLogUpsertOne {
 func (u *DeliveryLogUpsertOne) UpdateStatus() *DeliveryLogUpsertOne {
 	return u.Update(func(s *DeliveryLogUpsert) {
 		s.UpdateStatus()
+	})
+}
+
+// SetMessageID sets the "message_id" field.
+func (u *DeliveryLogUpsertOne) SetMessageID(v string) *DeliveryLogUpsertOne {
+	return u.Update(func(s *DeliveryLogUpsert) {
+		s.SetMessageID(v)
+	})
+}
+
+// UpdateMessageID sets the "message_id" field to the value that was provided on create.
+func (u *DeliveryLogUpsertOne) UpdateMessageID() *DeliveryLogUpsertOne {
+	return u.Update(func(s *DeliveryLogUpsert) {
+		s.UpdateMessageID()
+	})
+}
+
+// ClearMessageID clears the value of the "message_id" field.
+func (u *DeliveryLogUpsertOne) ClearMessageID() *DeliveryLogUpsertOne {
+	return u.Update(func(s *DeliveryLogUpsert) {
+		s.ClearMessageID()
 	})
 }
 
@@ -757,6 +814,27 @@ func (u *DeliveryLogUpsertBulk) SetStatus(v string) *DeliveryLogUpsertBulk {
 func (u *DeliveryLogUpsertBulk) UpdateStatus() *DeliveryLogUpsertBulk {
 	return u.Update(func(s *DeliveryLogUpsert) {
 		s.UpdateStatus()
+	})
+}
+
+// SetMessageID sets the "message_id" field.
+func (u *DeliveryLogUpsertBulk) SetMessageID(v string) *DeliveryLogUpsertBulk {
+	return u.Update(func(s *DeliveryLogUpsert) {
+		s.SetMessageID(v)
+	})
+}
+
+// UpdateMessageID sets the "message_id" field to the value that was provided on create.
+func (u *DeliveryLogUpsertBulk) UpdateMessageID() *DeliveryLogUpsertBulk {
+	return u.Update(func(s *DeliveryLogUpsert) {
+		s.UpdateMessageID()
+	})
+}
+
+// ClearMessageID clears the value of the "message_id" field.
+func (u *DeliveryLogUpsertBulk) ClearMessageID() *DeliveryLogUpsertBulk {
+	return u.Update(func(s *DeliveryLogUpsert) {
+		s.ClearMessageID()
 	})
 }
 

@@ -26,8 +26,10 @@ type DeliveryLog struct {
 	Channel string `json:"channel,omitempty"`
 	// Recipient holds the value of the "recipient" field.
 	Recipient string `json:"recipient,omitempty"`
-	// sent, delivered, failed
+	// sent, delivered, failed, skipped
 	Status string `json:"status,omitempty"`
+	// The queued message's request id, so provider callbacks can find the row
+	MessageID string `json:"message_id,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt    time.Time `json:"created_at,omitempty"`
 	selectValues sql.SelectValues
@@ -38,7 +40,7 @@ func (*DeliveryLog) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case deliverylog.FieldTenantID, deliverylog.FieldTemplateID, deliverylog.FieldChannel, deliverylog.FieldRecipient, deliverylog.FieldStatus:
+		case deliverylog.FieldTenantID, deliverylog.FieldTemplateID, deliverylog.FieldChannel, deliverylog.FieldRecipient, deliverylog.FieldStatus, deliverylog.FieldMessageID:
 			values[i] = new(sql.NullString)
 		case deliverylog.FieldCreatedAt:
 			values[i] = new(sql.NullTime)
@@ -94,6 +96,12 @@ func (_m *DeliveryLog) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field status", values[i])
 			} else if value.Valid {
 				_m.Status = value.String
+			}
+		case deliverylog.FieldMessageID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field message_id", values[i])
+			} else if value.Valid {
+				_m.MessageID = value.String
 			}
 		case deliverylog.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -151,6 +159,9 @@ func (_m *DeliveryLog) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("status=")
 	builder.WriteString(_m.Status)
+	builder.WriteString(", ")
+	builder.WriteString("message_id=")
+	builder.WriteString(_m.MessageID)
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))

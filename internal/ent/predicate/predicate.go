@@ -15,6 +15,12 @@ type Backup func(*sql.Selector)
 // BackupSetting is the predicate function for backupsetting builders.
 type BackupSetting func(*sql.Selector)
 
+// Broadcast is the predicate function for broadcast builders.
+type Broadcast func(*sql.Selector)
+
+// BroadcastRecipient is the predicate function for broadcastrecipient builders.
+type BroadcastRecipient func(*sql.Selector)
+
 // CreditTransaction is the predicate function for credittransaction builders.
 type CreditTransaction func(*sql.Selector)
 
@@ -32,6 +38,9 @@ type NotificationRole func(*sql.Selector)
 
 // NotificationRolePermission is the predicate function for notificationrolepermission builders.
 type NotificationRolePermission func(*sql.Selector)
+
+// Occasion is the predicate function for occasion builders.
+type Occasion func(*sql.Selector)
 
 // OutboxEvent is the predicate function for outboxevent builders.
 type OutboxEvent func(*sql.Selector)
@@ -53,6 +62,9 @@ type Role func(*sql.Selector)
 
 // ServiceConfig is the predicate function for serviceconfig builders.
 type ServiceConfig func(*sql.Selector)
+
+// Suppression is the predicate function for suppression builders.
+type Suppression func(*sql.Selector)
 
 // Template is the predicate function for template builders.
 type Template func(*sql.Selector)

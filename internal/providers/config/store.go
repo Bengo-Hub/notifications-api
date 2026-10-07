@@ -2,11 +2,17 @@ package config
 
 import (
 	"context"
+	"maps"
 	"os"
+	"strconv"
+	"strings"
+	"sync"
+	"time"
 
 	"github.com/bengobox/notifications-api/internal/config"
 	"github.com/bengobox/notifications-api/internal/database"
 	"github.com/bengobox/notifications-api/internal/encryption"
+	"github.com/bengobox/notifications-api/internal/ent"
 	"github.com/bengobox/notifications-api/internal/ent/providersetting"
 )
 
@@ -33,6 +39,47 @@ func LoadTenantOnlyProviderSettings(ctx context.Context, dbCfg config.PostgresCo
 	return loadProviderSettings(ctx, dbCfg, tenantID, environment, channel, provider, decryptionKey, false)
 }
 
+// settingsTTL is how long a resolved provider lookup is reused on this pod. A credential change
+// takes effect within this window everywhere, which keeps bulk sends from querying the same rows
+// for every message.
+const settingsTTL = 30 * time.Second
+
+var (
+	clientsMu sync.Mutex
+	clients   = map[string]*ent.Client{} // one pooled client per DSN for the process lifetime
+
+	cacheMu sync.Mutex
+	cache   = map[string]cachedSettings{}
+)
+
+type cachedSettings struct {
+	settings Settings
+	expires  time.Time
+}
+
+// sharedClient opens the ent client for dsn once and reuses it. Opening (and closing) a client
+// per call, three times per send, was the main cost of a send under load.
+func sharedClient(ctx context.Context, dsn string) (*ent.Client, error) {
+	clientsMu.Lock()
+	defer clientsMu.Unlock()
+	if c, ok := clients[dsn]; ok {
+		return c, nil
+	}
+	c, err := database.NewClient(ctx, config.PostgresConfig{URL: dsn})
+	if err != nil {
+		return nil, err
+	}
+	clients[dsn] = c
+	return c, nil
+}
+
+// InvalidateCache drops every cached lookup on this pod (call after saving provider settings).
+func InvalidateCache() {
+	cacheMu.Lock()
+	cache = map[string]cachedSettings{}
+	cacheMu.Unlock()
+}
+
 func loadProviderSettings(ctx context.Context, dbCfg config.PostgresConfig, tenantID, environment, channel, provider string, decryptionKey []byte, includePlatformTiers bool) (Settings, error) {
 	dsn := dbCfg.URL
 	if env := os.Getenv("POSTGRES_URL"); env != "" {
@@ -43,11 +90,30 @@ func loadProviderSettings(ctx context.Context, dbCfg config.PostgresConfig, tena
 	if dsn == "" {
 		return Settings{}, nil
 	}
-	client, err := database.NewClient(ctx, config.PostgresConfig{URL: dsn})
+
+	key := strings.Join([]string{tenantID, environment, channel, provider, strconv.FormatBool(includePlatformTiers)}, "|")
+	cacheMu.Lock()
+	if hit, ok := cache[key]; ok && time.Now().Before(hit.expires) {
+		cacheMu.Unlock()
+		return maps.Clone(hit.settings), nil
+	}
+	cacheMu.Unlock()
+
+	client, err := sharedClient(ctx, dsn)
 	if err != nil {
 		return Settings{}, err
 	}
-	defer client.Close()
+	out, err := querySettings(ctx, client, tenantID, environment, channel, provider, decryptionKey, includePlatformTiers)
+	if err != nil {
+		return Settings{}, err
+	}
+	cacheMu.Lock()
+	cache[key] = cachedSettings{settings: maps.Clone(out), expires: time.Now().Add(settingsTTL)}
+	cacheMu.Unlock()
+	return out, nil
+}
+
+func querySettings(ctx context.Context, client *ent.Client, tenantID, environment, channel, provider string, decryptionKey []byte, includePlatformTiers bool) (Settings, error) {
 
 	// Query tenant settings, plus platform settings too unless the caller explicitly wants only
 	// what's saved directly under tenantID (see LoadTenantOnlyProviderSettings).

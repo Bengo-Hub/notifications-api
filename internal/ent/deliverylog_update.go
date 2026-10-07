@@ -98,6 +98,26 @@ func (_u *DeliveryLogUpdate) SetNillableStatus(v *string) *DeliveryLogUpdate {
 	return _u
 }
 
+// SetMessageID sets the "message_id" field.
+func (_u *DeliveryLogUpdate) SetMessageID(v string) *DeliveryLogUpdate {
+	_u.mutation.SetMessageID(v)
+	return _u
+}
+
+// SetNillableMessageID sets the "message_id" field if the given value is not nil.
+func (_u *DeliveryLogUpdate) SetNillableMessageID(v *string) *DeliveryLogUpdate {
+	if v != nil {
+		_u.SetMessageID(*v)
+	}
+	return _u
+}
+
+// ClearMessageID clears the value of the "message_id" field.
+func (_u *DeliveryLogUpdate) ClearMessageID() *DeliveryLogUpdate {
+	_u.mutation.ClearMessageID()
+	return _u
+}
+
 // Mutation returns the DeliveryLogMutation object of the builder.
 func (_u *DeliveryLogUpdate) Mutation() *DeliveryLogMutation {
 	return _u.mutation
@@ -188,6 +208,12 @@ func (_u *DeliveryLogUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(deliverylog.FieldStatus, field.TypeString, value)
 	}
+	if value, ok := _u.mutation.MessageID(); ok {
+		_spec.SetField(deliverylog.FieldMessageID, field.TypeString, value)
+	}
+	if _u.mutation.MessageIDCleared() {
+		_spec.ClearField(deliverylog.FieldMessageID, field.TypeString)
+	}
 	_spec.AddModifiers(_u.modifiers...)
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -277,6 +303,26 @@ func (_u *DeliveryLogUpdateOne) SetNillableStatus(v *string) *DeliveryLogUpdateO
 	if v != nil {
 		_u.SetStatus(*v)
 	}
+	return _u
+}
+
+// SetMessageID sets the "message_id" field.
+func (_u *DeliveryLogUpdateOne) SetMessageID(v string) *DeliveryLogUpdateOne {
+	_u.mutation.SetMessageID(v)
+	return _u
+}
+
+// SetNillableMessageID sets the "message_id" field if the given value is not nil.
+func (_u *DeliveryLogUpdateOne) SetNillableMessageID(v *string) *DeliveryLogUpdateOne {
+	if v != nil {
+		_u.SetMessageID(*v)
+	}
+	return _u
+}
+
+// ClearMessageID clears the value of the "message_id" field.
+func (_u *DeliveryLogUpdateOne) ClearMessageID() *DeliveryLogUpdateOne {
+	_u.mutation.ClearMessageID()
 	return _u
 }
 
@@ -399,6 +445,12 @@ func (_u *DeliveryLogUpdateOne) sqlSave(ctx context.Context) (_node *DeliveryLog
 	}
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(deliverylog.FieldStatus, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.MessageID(); ok {
+		_spec.SetField(deliverylog.FieldMessageID, field.TypeString, value)
+	}
+	if _u.mutation.MessageIDCleared() {
+		_spec.ClearField(deliverylog.FieldMessageID, field.TypeString)
 	}
 	_spec.AddModifiers(_u.modifiers...)
 	_node = &DeliveryLog{config: _u.config}

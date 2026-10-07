@@ -14,12 +14,12 @@ import (
 	"github.com/bengobox/notifications-api/internal/config"
 	"github.com/bengobox/notifications-api/internal/database"
 	"github.com/bengobox/notifications-api/internal/ent"
-	enttemplate "github.com/bengobox/notifications-api/internal/ent/template"
 	"github.com/bengobox/notifications-api/internal/ent/notificationpermission"
 	"github.com/bengobox/notifications-api/internal/ent/notificationrole"
 	"github.com/bengobox/notifications-api/internal/ent/providersetting"
 	"github.com/bengobox/notifications-api/internal/ent/ratelimitconfig"
 	"github.com/bengobox/notifications-api/internal/ent/serviceconfig"
+	enttemplate "github.com/bengobox/notifications-api/internal/ent/template"
 	"github.com/bengobox/notifications-api/internal/modules/identity"
 	tenantmodule "github.com/bengobox/notifications-api/internal/modules/tenant"
 	"github.com/google/uuid"
@@ -241,6 +241,8 @@ func seedPermissions(ctx context.Context, client *ent.Client) {
 		// on the missing foreign key (role_permissions_permission_id), so no role got inbox access.
 		{"notifications.whatsapp_inbox.view", "whatsapp_inbox", "Read WhatsApp inbox conversations"},
 		{"notifications.whatsapp_inbox.reply", "whatsapp_inbox", "Reply to WhatsApp inbox conversations"},
+		{"notifications.broadcasts.manage", "broadcasts", "Write bulk messages and occasion greetings"},
+		{"notifications.broadcasts.approve", "broadcasts", "Approve bulk messages for sending"},
 	}
 
 	for _, p := range perms {
@@ -428,6 +430,9 @@ func seedNotificationPermissions(ctx context.Context, client *ent.Client) {
 		// WhatsApp Inbox
 		{"notifications.whatsapp_inbox.view", "View WhatsApp Inbox", "whatsapp_inbox", "view", "whatsapp_inbox", "View WhatsApp conversations and messages"},
 		{"notifications.whatsapp_inbox.reply", "Reply to WhatsApp Inbox", "whatsapp_inbox", "reply", "whatsapp_inbox", "Send WhatsApp replies to customers"},
+		// Broadcasts
+		{"notifications.broadcasts.manage", "Manage Broadcasts", "broadcasts", "manage", "broadcasts", "Write bulk messages and occasion greetings"},
+		{"notifications.broadcasts.approve", "Approve Broadcasts", "broadcasts", "approve", "broadcasts", "Approve bulk messages for sending"},
 	}
 
 	for _, p := range perms {
@@ -567,6 +572,7 @@ func seedNotificationRolePermissions(ctx context.Context, client *ent.Client) {
 			"notifications.analytics.manage",
 			"notifications.whatsapp_inbox.view",
 			"notifications.whatsapp_inbox.reply",
+			"notifications.broadcasts.manage",
 		},
 		"notifications_admin": {
 			"notifications.notifications.add",
@@ -601,6 +607,8 @@ func seedNotificationRolePermissions(ctx context.Context, client *ent.Client) {
 			"notifications.analytics.manage",
 			"notifications.whatsapp_inbox.view",
 			"notifications.whatsapp_inbox.reply",
+			"notifications.broadcasts.manage",
+			"notifications.broadcasts.approve",
 		},
 	}
 
@@ -639,13 +647,13 @@ func seedRateLimitConfigs(ctx context.Context, client *ent.Client) {
 	fmt.Println("  seeding rate limit configs...")
 
 	type rlConfig struct {
-		serviceName      string
-		keyType          string
-		endpointPattern  string
-		requestsPerWin   int
-		windowSecs       int
-		burstMultiplier  float64
-		description      string
+		serviceName     string
+		keyType         string
+		endpointPattern string
+		requestsPerWin  int
+		windowSecs      int
+		burstMultiplier float64
+		description     string
 	}
 
 	configs := []rlConfig{

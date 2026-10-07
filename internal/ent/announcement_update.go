@@ -367,6 +367,9 @@ func (_u *AnnouncementUpdate) sqlSave(ctx context.Context) (_node int, err error
 			}
 		}
 	}
+	if _u.mutation.TenantIDCleared() {
+		_spec.ClearField(announcement.FieldTenantID, field.TypeUUID)
+	}
 	if value, ok := _u.mutation.Title(); ok {
 		_spec.SetField(announcement.FieldTitle, field.TypeString, value)
 	}
@@ -837,6 +840,9 @@ func (_u *AnnouncementUpdateOne) sqlSave(ctx context.Context) (_node *Announceme
 				ps[i](selector)
 			}
 		}
+	}
+	if _u.mutation.TenantIDCleared() {
+		_spec.ClearField(announcement.FieldTenantID, field.TypeUUID)
 	}
 	if value, ok := _u.mutation.Title(); ok {
 		_spec.SetField(announcement.FieldTitle, field.TypeString, value)

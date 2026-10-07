@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strings"
 	"time"
 
 	authclient "github.com/Bengo-Hub/shared-auth-client"
@@ -63,10 +64,11 @@ func viewOf(a *ent.Announcement) announcementView {
 // @Tags Announcements
 // @Produce json
 // @Param service query string true "App key, e.g. pos, treasury, inventory"
+// @Param tenant query string false "Viewer's tenant (id or slug): adds that tenant's own banners"
 // @Success 200 {object} map[string]any "announcements: []"
 // @Router /api/v1/announcements/active [get]
 func (h *AnnouncementHandler) Active(w http.ResponseWriter, r *http.Request) {
-	list, err := h.svc.Active(r.Context(), r.URL.Query().Get("service"))
+	list, err := h.svc.Active(r.Context(), r.URL.Query().Get("service"), h.svc.ResolveTenant(r.Context(), r.URL.Query().Get("tenant")))
 	if err != nil {
 		h.log.Error("list active announcements", zap.Error(err))
 		jsonError(w, http.StatusInternalServerError, "failed to load announcements")
@@ -86,11 +88,33 @@ func (h *AnnouncementHandler) Active(w http.ResponseWriter, r *http.Request) {
 }
 
 // RegisterPlatformRoutes mounts the platform admin routes (the caller applies the super admin gate).
+// They manage platform banners, shown to every tenant.
 func (h *AnnouncementHandler) RegisterPlatformRoutes(r chi.Router) {
 	r.Get("/announcements", h.List)
 	r.Post("/announcements", h.Create)
 	r.Put("/announcements/{id}", h.Update)
 	r.Delete("/announcements/{id}", h.Delete)
+}
+
+// RegisterTenantRoutes mounts a tenant's own banner routes (the caller applies the tenant
+// context and the broadcasts permission). They only ever see and change the tenant's own rows.
+func (h *AnnouncementHandler) RegisterTenantRoutes(r chi.Router) {
+	r.Get("/announcements", h.List)
+	r.Post("/announcements", h.Create)
+	r.Put("/announcements/{id}", h.Update)
+	r.Delete("/announcements/{id}", h.Delete)
+}
+
+// owner is whose banners a request manages: nil under /platform, else the acting tenant.
+func announcementOwner(r *http.Request) (*uuid.UUID, bool) {
+	if strings.Contains(r.URL.Path, "/platform/") {
+		return nil, true
+	}
+	id, err := uuid.Parse(resolveActingTenantID(r))
+	if err != nil {
+		return nil, false
+	}
+	return &id, true
 }
 
 // List godoc
@@ -100,7 +124,12 @@ func (h *AnnouncementHandler) RegisterPlatformRoutes(r chi.Router) {
 // @Success 200 {object} map[string]any
 // @Router /api/v1/platform/announcements [get]
 func (h *AnnouncementHandler) List(w http.ResponseWriter, r *http.Request) {
-	list, err := h.svc.List(r.Context())
+	owner, ok := announcementOwner(r)
+	if !ok {
+		jsonError(w, http.StatusBadRequest, "tenant required")
+		return
+	}
+	list, err := h.svc.List(r.Context(), owner)
 	if err != nil {
 		h.log.Error("list announcements", zap.Error(err))
 		jsonError(w, http.StatusInternalServerError, "failed to list announcements")
@@ -127,7 +156,12 @@ func (h *AnnouncementHandler) Create(w http.ResponseWriter, r *http.Request) {
 	if claims, ok := authclient.ClaimsFromContext(r.Context()); ok && claims != nil {
 		createdBy = claims.Email
 	}
-	a, err := h.svc.Create(r.Context(), in, createdBy)
+	owner, ok := announcementOwner(r)
+	if !ok {
+		jsonError(w, http.StatusBadRequest, "tenant required")
+		return
+	}
+	a, err := h.svc.Create(r.Context(), in, createdBy, owner)
 	if h.writeErr(w, err, "create announcement") {
 		return
 	}
@@ -154,7 +188,12 @@ func (h *AnnouncementHandler) Update(w http.ResponseWriter, r *http.Request) {
 		jsonError(w, http.StatusBadRequest, "invalid JSON body")
 		return
 	}
-	a, err := h.svc.Update(r.Context(), id, in)
+	owner, ok := announcementOwner(r)
+	if !ok {
+		jsonError(w, http.StatusBadRequest, "tenant required")
+		return
+	}
+	a, err := h.svc.Update(r.Context(), id, in, owner)
 	if h.writeErr(w, err, "update announcement") {
 		return
 	}
@@ -173,7 +212,12 @@ func (h *AnnouncementHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		jsonError(w, http.StatusBadRequest, "invalid id")
 		return
 	}
-	if h.writeErr(w, h.svc.Delete(r.Context(), id), "delete announcement") {
+	owner, ok := announcementOwner(r)
+	if !ok {
+		jsonError(w, http.StatusBadRequest, "tenant required")
+		return
+	}
+	if h.writeErr(w, h.svc.Delete(r.Context(), id, owner), "delete announcement") {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)

@@ -1,0 +1,309 @@
+[
+  {
+    "key": "customer_service_week",
+    "name": "Customer Service Week",
+    "country": "",
+    "rule": {"type": "first_full_week", "month": 10},
+    "duration_days": 5,
+    "lead_days": 14,
+    "enabled": true,
+    "channels": ["email", "whatsapp"],
+    "whatsapp_template": "occasion_customer_service_week_v1",
+    "variants": [
+      {
+        "subject": "Happy Customer Service Week from {sender_name}",
+        "body": "Dear {first_name}, you are the reason we keep going the extra mile. Thank you for building your business with us. Happy Customer Service Week from all of us at {sender_name}.",
+        "sms": "Dear {first_name}, you are the reason we go the extra mile. Happy Customer Service Week from all of us at {sender_name}."
+      },
+      {
+        "subject": "Thank you, {first_name}",
+        "body": "Dear {first_name}, this Customer Service Week we want to say thank you. Every question you ask and every idea you share makes what we do better. Happy Customer Service Week from the whole team at {sender_name}.",
+        "sms": "Dear {first_name}, thank you for every question and idea you share with us. Happy Customer Service Week from {sender_name}."
+      },
+      {
+        "subject": "It is Customer Service Week, and it is about you",
+        "body": "Dear {first_name}, serving you is the best part of our work. Thank you for your trust this year. Happy Customer Service Week from all of us at {sender_name}.",
+        "sms": "Dear {first_name}, serving you is the best part of our work. Happy Customer Service Week from {sender_name}."
+      }
+    ]
+  },
+  {
+    "key": "new_year",
+    "name": "New Year",
+    "country": "",
+    "rule": {"type": "fixed", "month": 1, "day": 1},
+    "lead_days": 14,
+    "enabled": true,
+    "channels": ["email", "whatsapp"],
+    "whatsapp_template": "occasion_new_year_v1",
+    "variants": [
+      {
+        "subject": "Happy New Year from {sender_name}",
+        "body": "Dear {first_name}, thank you for being part of our year. We wish you good health, steady growth and many happy moments in {year}. Happy New Year from all of us at {sender_name}.",
+        "sms": "Dear {first_name}, happy New Year! Wishing you good health and steady growth in {year}. From all of us at {sender_name}."
+      },
+      {
+        "subject": "Here is to {year}, {first_name}",
+        "body": "Dear {first_name}, as {year} begins, we are grateful for the trust you gave us last year. May the new year bring you peace and success. Happy New Year from {sender_name}.",
+        "sms": "Dear {first_name}, may {year} bring you peace and success. Happy New Year from {sender_name}."
+      },
+      {
+        "subject": "A new year, and thanks from {sender_name}",
+        "body": "Dear {first_name}, a new year is a fresh start, and we are glad to start it with you. Happy New Year and all the best for {year}, from the team at {sender_name}.",
+        "sms": "Dear {first_name}, glad to start {year} with you. Happy New Year from the team at {sender_name}."
+      }
+    ]
+  },
+  {
+    "key": "idd_ul_fitr",
+    "name": "Idd-ul-Fitr",
+    "country": "KE",
+    "rule": {"type": "explicit", "dates": {"2026": "2026-03-20"}},
+    "lead_days": 10,
+    "enabled": true,
+    "channels": ["email", "whatsapp"],
+    "whatsapp_template": "occasion_idd_v1",
+    "variants": [
+      {
+        "subject": "Eid Mubarak from {sender_name}",
+        "body": "Dear {first_name}, Eid Mubarak. May this Idd-ul-Fitr bring peace, joy and blessings to you and your family. Warm wishes from all of us at {sender_name}.",
+        "sms": "Dear {first_name}, Eid Mubarak. Peace and blessings to you and your family from {sender_name}."
+      },
+      {
+        "subject": "Idd-ul-Fitr greetings, {first_name}",
+        "body": "Dear {first_name}, as the holy month ends, we wish you and your loved ones a joyful Idd-ul-Fitr. Eid Mubarak from the team at {sender_name}.",
+        "sms": "Dear {first_name}, wishing you a joyful Idd-ul-Fitr. Eid Mubarak from {sender_name}."
+      }
+    ]
+  },
+  {
+    "key": "easter",
+    "name": "Easter",
+    "country": "",
+    "rule": {"type": "easter_offset", "days": -2},
+    "duration_days": 4,
+    "lead_days": 14,
+    "enabled": true,
+    "channels": ["email", "whatsapp"],
+    "whatsapp_template": "occasion_easter_v1",
+    "variants": [
+      {
+        "subject": "Happy Easter from {sender_name}",
+        "body": "Dear {first_name}, we wish you a peaceful Easter with the people you love. Thank you for being with us. Happy Easter from all of us at {sender_name}.",
+        "sms": "Dear {first_name}, wishing you a peaceful Easter with your loved ones. From all of us at {sender_name}."
+      },
+      {
+        "subject": "Easter wishes, {first_name}",
+        "body": "Dear {first_name}, may this Easter bring you rest, hope and time with family. Happy Easter from the team at {sender_name}.",
+        "sms": "Dear {first_name}, may Easter bring you rest and hope. Happy Easter from {sender_name}."
+      }
+    ]
+  },
+  {
+    "key": "labour_day",
+    "name": "Labour Day",
+    "country": "KE",
+    "rule": {"type": "fixed", "month": 5, "day": 1},
+    "lead_days": 10,
+    "enabled": true,
+    "channels": ["email", "whatsapp"],
+    "whatsapp_template": "occasion_labour_day_v1",
+    "variants": [
+      {
+        "subject": "Happy Labour Day from {sender_name}",
+        "body": "Dear {first_name}, today we celebrate the hard work that keeps businesses going, yours included. Happy Labour Day from all of us at {sender_name}.",
+        "sms": "Dear {first_name}, here is to the hard work that keeps business going. Happy Labour Day from {sender_name}."
+      },
+      {
+        "subject": "To you and your team, {first_name}",
+        "body": "Dear {first_name}, thank you and your team for the work you put in every day. Enjoy the holiday. Happy Labour Day from {sender_name}.",
+        "sms": "Dear {first_name}, thank you and your team for your work. Happy Labour Day from {sender_name}."
+      }
+    ]
+  },
+  {
+    "key": "idd_ul_azha",
+    "name": "Idd-ul-Azha",
+    "country": "KE",
+    "rule": {"type": "explicit", "dates": {"2026": "2026-05-27"}},
+    "lead_days": 10,
+    "enabled": true,
+    "channels": ["email", "whatsapp"],
+    "whatsapp_template": "occasion_idd_v1",
+    "variants": [
+      {
+        "subject": "Eid al-Adha Mubarak from {sender_name}",
+        "body": "Dear {first_name}, Eid Mubarak. May this Idd-ul-Azha bring you and your family peace, joy and blessings. Warm wishes from all of us at {sender_name}.",
+        "sms": "Dear {first_name}, Eid Mubarak. Peace and blessings to you and your family from {sender_name}."
+      },
+      {
+        "subject": "Idd-ul-Azha greetings, {first_name}",
+        "body": "Dear {first_name}, we wish you a blessed Idd-ul-Azha with the people you love. Eid Mubarak from the team at {sender_name}.",
+        "sms": "Dear {first_name}, wishing you a blessed Idd-ul-Azha. Eid Mubarak from {sender_name}."
+      }
+    ]
+  },
+  {
+    "key": "madaraka_day",
+    "name": "Madaraka Day",
+    "country": "KE",
+    "rule": {"type": "fixed", "month": 6, "day": 1},
+    "lead_days": 10,
+    "enabled": true,
+    "channels": ["email", "whatsapp"],
+    "whatsapp_template": "occasion_national_day_v1",
+    "variants": [
+      {
+        "subject": "Happy Madaraka Day from {sender_name}",
+        "body": "Dear {first_name}, happy Madaraka Day. Today we celebrate self rule and the spirit that builds Kenya, the same spirit we see in your business. From all of us at {sender_name}.",
+        "sms": "Dear {first_name}, happy Madaraka Day from all of us at {sender_name}."
+      },
+      {
+        "subject": "Madaraka Day greetings, {first_name}",
+        "body": "Dear {first_name}, we wish you a proud and restful Madaraka Day. Thank you for growing with us. From the team at {sender_name}.",
+        "sms": "Dear {first_name}, wishing you a proud Madaraka Day. From {sender_name}."
+      }
+    ]
+  },
+  {
+    "key": "mazingira_day",
+    "name": "Mazingira Day",
+    "country": "KE",
+    "rule": {"type": "fixed", "month": 10, "day": 10},
+    "lead_days": 10,
+    "enabled": false,
+    "channels": ["email"],
+    "whatsapp_template": "occasion_national_day_v1",
+    "variants": [
+      {
+        "subject": "Happy Mazingira Day from {sender_name}",
+        "body": "Dear {first_name}, happy Mazingira Day. Here is to a greener Kenya and to the small choices that protect it. From all of us at {sender_name}.",
+        "sms": "Dear {first_name}, happy Mazingira Day from {sender_name}. Here is to a greener Kenya."
+      }
+    ]
+  },
+  {
+    "key": "mashujaa_day",
+    "name": "Mashujaa Day",
+    "country": "KE",
+    "rule": {"type": "fixed", "month": 10, "day": 20},
+    "lead_days": 10,
+    "enabled": true,
+    "channels": ["email", "whatsapp"],
+    "whatsapp_template": "occasion_national_day_v1",
+    "variants": [
+      {
+        "subject": "Happy Mashujaa Day from {sender_name}",
+        "body": "Dear {first_name}, happy Mashujaa Day. Today we honour Kenya's heroes, and the everyday heroes who run businesses like yours. From all of us at {sender_name}.",
+        "sms": "Dear {first_name}, happy Mashujaa Day. Here is to Kenya's heroes, you included. From {sender_name}."
+      },
+      {
+        "subject": "Mashujaa Day greetings, {first_name}",
+        "body": "Dear {first_name}, we wish you a proud Mashujaa Day. Thank you for the work you do for your customers and your community. From the team at {sender_name}.",
+        "sms": "Dear {first_name}, wishing you a proud Mashujaa Day. From {sender_name}."
+      }
+    ]
+  },
+  {
+    "key": "jamhuri_day",
+    "name": "Jamhuri Day",
+    "country": "KE",
+    "rule": {"type": "fixed", "month": 12, "day": 12},
+    "lead_days": 10,
+    "enabled": true,
+    "channels": ["email", "whatsapp"],
+    "whatsapp_template": "occasion_national_day_v1",
+    "variants": [
+      {
+        "subject": "Happy Jamhuri Day from {sender_name}",
+        "body": "Dear {first_name}, happy Jamhuri Day. We celebrate Kenya's independence with you and wish you a restful holiday. From all of us at {sender_name}.",
+        "sms": "Dear {first_name}, happy Jamhuri Day from all of us at {sender_name}."
+      },
+      {
+        "subject": "Jamhuri Day greetings, {first_name}",
+        "body": "Dear {first_name}, we wish you a proud Jamhuri Day. Thank you for building with us this year. From the team at {sender_name}.",
+        "sms": "Dear {first_name}, wishing you a proud Jamhuri Day. From {sender_name}."
+      }
+    ]
+  },
+  {
+    "key": "christmas",
+    "name": "Christmas and Utamaduni Day",
+    "country": "",
+    "rule": {"type": "fixed", "month": 12, "day": 25},
+    "duration_days": 2,
+    "lead_days": 14,
+    "send_offset_days": -1,
+    "enabled": true,
+    "channels": ["email", "whatsapp"],
+    "whatsapp_template": "occasion_christmas_v1",
+    "variants": [
+      {
+        "subject": "Merry Christmas from {sender_name}",
+        "body": "Dear {first_name}, merry Christmas. Thank you for the trust you placed in us this year. We wish you a joyful season with your family and a restful break. From all of us at {sender_name}.",
+        "sms": "Dear {first_name}, merry Christmas and a joyful season with your family. From all of us at {sender_name}."
+      },
+      {
+        "subject": "Season's greetings, {first_name}",
+        "body": "Dear {first_name}, as the year winds down, we want to thank you for growing with us. Merry Christmas and happy holidays from the team at {sender_name}.",
+        "sms": "Dear {first_name}, thank you for growing with us. Merry Christmas from {sender_name}."
+      },
+      {
+        "subject": "Warm wishes for the holidays",
+        "body": "Dear {first_name}, may this Christmas bring you rest, laughter and time with the people who matter most. Happy holidays from {sender_name}.",
+        "sms": "Dear {first_name}, may this Christmas bring you rest and laughter. Happy holidays from {sender_name}."
+      }
+    ]
+  },
+  {
+    "key": "valentines_day",
+    "name": "Valentine's Day",
+    "country": "",
+    "rule": {"type": "fixed", "month": 2, "day": 14},
+    "lead_days": 10,
+    "enabled": false,
+    "channels": ["email"],
+    "whatsapp_template": "",
+    "variants": [
+      {
+        "subject": "A little thank you from {sender_name}",
+        "body": "Dear {first_name}, on this Valentine's Day we want to say how much we appreciate you. Thank you for choosing {sender_name}.",
+        "sms": "Dear {first_name}, happy Valentine's Day. We appreciate you. From {sender_name}."
+      }
+    ]
+  },
+  {
+    "key": "mothers_day",
+    "name": "Mother's Day",
+    "country": "",
+    "rule": {"type": "nth_weekday", "month": 5, "weekday": 0, "n": 2},
+    "lead_days": 10,
+    "enabled": false,
+    "channels": ["email"],
+    "whatsapp_template": "",
+    "variants": [
+      {
+        "subject": "Happy Mother's Day from {sender_name}",
+        "body": "Dear {first_name}, happy Mother's Day to you and to the mothers in your life. From all of us at {sender_name}.",
+        "sms": "Dear {first_name}, happy Mother's Day from all of us at {sender_name}."
+      }
+    ]
+  },
+  {
+    "key": "fathers_day",
+    "name": "Father's Day",
+    "country": "",
+    "rule": {"type": "nth_weekday", "month": 6, "weekday": 0, "n": 3},
+    "lead_days": 10,
+    "enabled": false,
+    "channels": ["email"],
+    "whatsapp_template": "",
+    "variants": [
+      {
+        "subject": "Happy Father's Day from {sender_name}",
+        "body": "Dear {first_name}, happy Father's Day to you and to the fathers in your life. From all of us at {sender_name}.",
+        "sms": "Dear {first_name}, happy Father's Day from all of us at {sender_name}."
+      }
+    ]
+  }
+]

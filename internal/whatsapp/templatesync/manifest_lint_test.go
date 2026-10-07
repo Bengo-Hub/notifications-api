@@ -68,7 +68,24 @@ func TestManifestFollowsMetaRules(t *testing.T) {
 			t.Errorf("%s: body must not end with a variable", d.Name)
 		}
 
+		// Marketing templates (greetings, offers) must let the person opt out from the message
+		// itself: Meta's "Stop promotions" quick reply, which the webhook turns into a suppression.
+		if d.Category == "MARKETING" {
+			optOut := false
+			for _, b := range d.Buttons {
+				if b.Type == "QUICK_REPLY" && b.Text == "Stop promotions" {
+					optOut = true
+				}
+			}
+			if !optOut {
+				t.Errorf("%s: marketing templates need a QUICK_REPLY \"Stop promotions\" button", d.Name)
+			}
+		}
+
 		for _, b := range d.Buttons {
+			if b.Type == "QUICK_REPLY" && len([]rune(b.Text)) > 25 {
+				t.Errorf("%s: quick reply text %q is over 25 characters", d.Name, b.Text)
+			}
 			if b.Type != "URL" {
 				continue
 			}

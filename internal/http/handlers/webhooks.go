@@ -16,7 +16,10 @@ import (
 	"github.com/bengobox/notifications-api/internal/ent"
 	"github.com/bengobox/notifications-api/internal/ent/providersetting"
 	"github.com/bengobox/notifications-api/internal/messaging"
+	"github.com/bengobox/notifications-api/internal/modules/suppression"
 	"github.com/bengobox/notifications-api/internal/modules/whatsappinbox"
+
+	"github.com/Bengo-Hub/httpware/pii"
 )
 
 // whatsAppFallback queues the backup number of a WhatsApp message Meta could not deliver.
@@ -67,6 +70,7 @@ type WebhookHandler struct {
 	publicBaseURL string
 	inbox         *whatsappinbox.Service
 	fallback      *whatsAppFallback
+	optOut        *suppression.Service
 }
 
 // NewWebhookHandler creates the webhook handler. publicBaseURL is this service's own externally
@@ -86,6 +90,8 @@ func (h *WebhookHandler) Config(w http.ResponseWriter, r *http.Request) {
 		"whatsapp_callback_url":           h.publicBaseURL + "/api/v1/webhooks/whatsapp/meta",
 		"whatsapp_verify_token":           metaWebhookVerifyToken(),
 		"africastalking_dlr_callback_url": h.publicBaseURL + "/api/v1/webhooks/africastalking/dlr",
+		// Incoming messages: STOP replies opt the number out of marketing SMS.
+		"africastalking_inbound_callback_url": h.publicBaseURL + "/api/v1/webhooks/africastalking/inbound",
 	})
 }
 
@@ -161,6 +167,11 @@ type waWebhookPayload struct {
 					Text struct {
 						Body string `json:"body"`
 					} `json:"text"`
+					// A template quick-reply tap ("Stop promotions") arrives as type "button".
+					Button struct {
+						Payload string `json:"payload"`
+						Text    string `json:"text"`
+					} `json:"button"`
 				} `json:"messages"`
 				Statuses []struct {
 					ID          string `json:"id"`
@@ -216,10 +227,16 @@ func (h *WebhookHandler) WhatsAppIncoming(w http.ResponseWriter, r *http.Request
 				h.log.Info("whatsapp incoming message",
 					zap.String("tenant_id", tenantID),
 					zap.String("phone_number_id", phoneNumberID),
-					zap.String("from", msg.From),
+					pii.Phone("from", msg.From),
 					zap.String("message_id", msg.ID),
 					zap.String("type", msg.Type),
 				)
+				// "Stop promotions" button or a STOP text: opt this number out of marketing.
+				stopText := msg.Text.Body
+				if msg.Type == "button" {
+					stopText = msg.Button.Text
+				}
+				h.handleStopReply(ctx, "whatsapp", msg.From, stopText, tenantID, "whatsapp_reply")
 				if h.inbox != nil && tenantID != "" {
 					if tid, err := uuid.Parse(tenantID); err == nil {
 						if err := h.inbox.RecordInbound(ctx, tid, phoneNumberID, msg.ID, msg.From, msg.Type, msg.Text.Body, contactNames[msg.From]); err != nil {

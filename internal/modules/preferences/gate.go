@@ -80,31 +80,53 @@ func (g *Gate) Enabled(ctx context.Context, tenantID, templateID, channel string
 // ChannelsConfigKey) — absence of any override row means every channel is enabled, the
 // pre-existing behavior before per-channel selection existed. Fails open (true) on any
 // storage error or when channel is "" (caller only cares about the type-level toggle).
+// The resolved subset is cached like the type toggle ("*" = every channel), so a send costs no
+// database read once warm.
 func (g *Gate) channelEnabled(ctx context.Context, tenantID, templateID, channel string) bool {
 	if channel == "" || g.client == nil {
 		return true
 	}
-	key := ChannelsConfigKey(templateID)
+	cacheKey := "notifprefs:ch:" + tenantID + ":" + templateID
+	if g.cache != nil {
+		if v, err := g.cache.Get(ctx, cacheKey).Result(); err == nil {
+			return v == "*" || channelInList(v, channel)
+		}
+	}
+	list, ok := g.resolveChannels(ctx, tenantID, templateID)
+	if !ok {
+		return true // fail open, and do not cache a storage error
+	}
+	if g.cache != nil {
+		_ = g.cache.Set(ctx, cacheKey, list, cacheTTL).Err()
+	}
+	return list == "*" || channelInList(list, channel)
+}
 
+// resolveChannels returns the channel CSV override for (tenant, template): the tenant row, else
+// the platform row, else "*" (no override, every channel). ok is false on a storage error.
+func (g *Gate) resolveChannels(ctx context.Context, tenantID, templateID string) (string, bool) {
+	key := ChannelsConfigKey(templateID)
 	if tid, err := uuid.Parse(tenantID); err == nil && tid != uuid.Nil {
 		row, err := g.client.ServiceConfig.Query().
 			Where(serviceconfig.ConfigKeyEQ(key), serviceconfig.TenantIDEQ(tid)).
 			First(ctx)
 		if err == nil {
-			return channelInList(row.ConfigValue, channel)
+			return row.ConfigValue, true
 		}
 		if !ent.IsNotFound(err) {
-			return true // fail open
+			return "", false
 		}
 	}
-
 	row, err := g.client.ServiceConfig.Query().
 		Where(serviceconfig.ConfigKeyEQ(key), serviceconfig.TenantIDIsNil()).
 		First(ctx)
 	if err == nil {
-		return channelInList(row.ConfigValue, channel)
+		return row.ConfigValue, true
 	}
-	return true // no override at any level — every channel enabled
+	if !ent.IsNotFound(err) {
+		return "", false
+	}
+	return "*", true
 }
 
 func channelInList(csv, channel string) bool {
@@ -157,7 +179,7 @@ func (g *Gate) Invalidate(ctx context.Context, tenantID, templateID string) {
 	if g.cache == nil {
 		return
 	}
-	_ = g.cache.Del(ctx, "notifprefs:"+tenantID+":"+templateID).Err()
+	_ = g.cache.Del(ctx, "notifprefs:"+tenantID+":"+templateID, "notifprefs:ch:"+tenantID+":"+templateID).Err()
 }
 
 func parseBool(raw string, fallback bool) bool {

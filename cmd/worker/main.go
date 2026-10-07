@@ -1,10 +1,12 @@
 package main
 
 import (
-	templatesmod "github.com/bengobox/notifications-api/internal/modules/templates"
 	"context"
+	"fmt"
+
 	"encoding/json"
 	"errors"
+	templatesmod "github.com/bengobox/notifications-api/internal/modules/templates"
 	"github.com/redis/go-redis/v9"
 	"html/template"
 	"log"
@@ -19,7 +21,9 @@ import (
 	"github.com/google/uuid"
 
 	sharedcache "github.com/Bengo-Hub/cache"
+	"github.com/Bengo-Hub/httpware/pii"
 	eventslib "github.com/Bengo-Hub/shared-events"
+	ratelimit "github.com/Bengo-Hub/shared-ratelimit"
 	serviceclient "github.com/Bengo-Hub/shared-service-client"
 
 	entdb "github.com/bengobox/notifications-api/internal/database"
@@ -40,32 +44,67 @@ import (
 	"github.com/bengobox/notifications-api/internal/shared/logger"
 
 	"github.com/bengobox/notifications-api/internal/modules/billing"
+	"github.com/bengobox/notifications-api/internal/modules/broadcasts"
+	"github.com/bengobox/notifications-api/internal/modules/occasions"
 	"github.com/bengobox/notifications-api/internal/modules/preferences"
+	"github.com/bengobox/notifications-api/internal/modules/suppression"
 	"github.com/bengobox/notifications-api/internal/modules/tenant"
 )
 
-// recordDeliveryLog writes an audit-trail row for a message this worker just attempted to
-// deliver — mirrors internal/http/handlers/notification.go's recordDeliveryLog exactly (same
-// table/status vocabulary: "sent"/"failed"), but that function is unexported and lives in a
-// different package, and this is the ONLY other place a real send is attempted (every
-// domain-event consumer in this binary funnels through deliver()), so before this the async path
-// had zero persistent record of what it actually did — only an ephemeral log line, gone once the
-// pod's log buffer rotated. Best-effort: a logging failure must never affect ack/nak decisions.
-func recordDeliveryLog(ctx context.Context, client *ent.Client, tenantID, templateID, channel, status string, to []string) {
-	if client == nil || len(to) == 0 {
+// maskedTo is the log field for a message's recipients: masked addresses, or a device count for
+// push. Pod logs never carry a full address, phone number or push token.
+func maskedTo(m any) zap.Field {
+	var msg *messaging.Message
+	switch v := m.(type) {
+	case messaging.Message:
+		msg = &v
+	case *messaging.Message:
+		msg = v
+	}
+	if msg == nil {
+		return zap.Skip()
+	}
+	if msg.Channel == "push" {
+		return zap.Int("devices", len(msg.To))
+	}
+	out := make([]string, len(msg.To))
+	for i, a := range msg.To {
+		out[i] = pii.Mask(a)
+	}
+	return zap.Strings("to", out)
+}
+
+// recordDeliveryLog writes the outcome of one delivery attempt (sent, failed or skipped). This
+// worker is the only writer: every producer (HTTP enqueue, domain-event consumers, broadcasts)
+// funnels through deliver(). tenantID must be the resolved UUID. Push messages are logged as one
+// row with a device count, never the tokens themselves (a Web Push token carries the
+// subscription's keys). Best-effort: a logging failure must never affect ack/nak decisions.
+func recordDeliveryLog(ctx context.Context, client *ent.Client, msg *messaging.Message, tenantID, status string) {
+	if client == nil || len(msg.To) == 0 {
 		return
 	}
-	for _, recipient := range to {
-		if _, err := client.DeliveryLog.Create().
-			SetTenantID(tenantID).
-			SetTemplateID(templateID).
-			SetChannel(channel).
-			SetRecipient(recipient).
-			SetStatus(status).
-			Save(ctx); err != nil {
-			return
+	recipients := msg.To
+	if msg.Channel == "push" {
+		summary := fmt.Sprintf("%d devices", len(msg.To))
+		if len(msg.To) == 1 {
+			summary = "1 device"
 		}
+		recipients = []string{summary}
 	}
+	builders := make([]*ent.DeliveryLogCreate, 0, len(recipients))
+	for _, recipient := range recipients {
+		b := client.DeliveryLog.Create().
+			SetTenantID(tenantID).
+			SetTemplateID(msg.TemplateID).
+			SetChannel(msg.Channel).
+			SetRecipient(recipient).
+			SetStatus(status)
+		if msg.RequestID != "" {
+			b.SetMessageID(msg.RequestID)
+		}
+		builders = append(builders, b)
+	}
+	_ = client.DeliveryLog.CreateBulk(builders...).Exec(ctx)
 }
 
 // maxDeliveryAttempts caps how many times the worker tries to DELIVER a single
@@ -282,11 +321,12 @@ func main() {
 			// used to fall through to the "sent"/"delivered" branch below unconditionally,
 			// so delivery_log (and anyone reading these logs) reported every one of these as
 			// successfully sent.
-			recordDeliveryLog(ctx, client, gateTenant, msg.TemplateID, msg.Channel, "skipped", msg.To)
+			recordDeliveryLog(ctx, client, &msg, gateTenant, "skipped")
+			broadcasts.RecordOutcome(ctx, client, &msg, "skipped", nil)
 			logg.Info("message skipped (not delivered)",
 				zap.String("channel", msg.Channel),
 				zap.String("template", msg.TemplateID),
-				zap.Strings("to", msg.To),
+				maskedTo(msg),
 				zap.Uint64("attempt", attempt),
 			)
 			_ = m.Ack()
@@ -305,11 +345,12 @@ func main() {
 					zap.String("channel", msg.Channel),
 					zap.String("tenant_id", msg.TenantID),
 					zap.String("request_id", msg.RequestID),
-					zap.Strings("to", msg.To),
+					maskedTo(msg),
 					zap.Uint64("attempts", attempt),
 					zap.Error(deliverErr),
 				)
-				recordDeliveryLog(ctx, client, gateTenant, msg.TemplateID, msg.Channel, "failed", msg.To)
+				recordDeliveryLog(ctx, client, &msg, gateTenant, "failed")
+				broadcasts.RecordOutcome(ctx, client, &msg, "failed", deliverErr)
 				publishDeliveryStatus(nc, msg, "failed", deliverErr, logg)
 				_ = m.Ack() // dead-letter: do not redeliver and hammer a blocked/rate-limited provider
 			} else {
@@ -319,18 +360,41 @@ func main() {
 			return
 		}
 
-		recordDeliveryLog(ctx, client, gateTenant, msg.TemplateID, msg.Channel, "sent", msg.To)
+		recordDeliveryLog(ctx, client, &msg, gateTenant, "sent")
+		broadcasts.RecordOutcome(ctx, client, &msg, "sent", nil)
 		publishDeliveryStatus(nc, msg, "sent", nil, logg)
 		logg.Info("message delivered",
 			zap.String("channel", msg.Channel),
 			zap.String("template", msg.TemplateID),
-			zap.Strings("to", msg.To),
+			maskedTo(msg),
 			zap.Uint64("attempt", attempt),
 		)
 		_ = m.Ack()
 	}
 
 	eventslib.SubscribeQueueWithRebind(logg, js, cfg.Events.StreamName, subject, durable, msgHandler, nats.Durable(durable), nats.ManualAck(), nats.AckWait(30*time.Second), nats.MaxDeliver(maxDeliveryAttempts))
+
+	// Broadcasts: occasion planner, audience materialiser and paced dispatcher. Every job is safe
+	// to run on every worker pod (Redis locks, unique indexes, SKIP LOCKED claims).
+	occasionSvc := occasions.NewService(client, logg)
+	if err := occasionSvc.Seed(ctx); err != nil {
+		logg.Warn("occasion catalog seed failed", zap.Error(err))
+	}
+	broadcastEngine := &broadcasts.Engine{
+		Client:     client,
+		Pool:       dbPool,
+		NATS:       nc,
+		Events:     cfg.Events,
+		Redis:      nilIfTyped(redisClient),
+		Limiter:    ratelimit.NewLimiter(nilIfTyped(redisClient), logg, "notifications"),
+		Suppress:   suppression.NewService(client, keyProvider.Candidates(ctx)...),
+		Occasions:  occasionSvc,
+		PlatformID: platformIDStr,
+		PublicURL:  cfg.HTTP.PublicBaseURL,
+		Log:        logg,
+		Resolvers:  broadcasts.DefaultResolvers(broadcasts.ResolverConfig{AuthAPI: cfg.Services.AuthAPI, MarketflowAPI: cfg.Services.MarketflowAPI, APIKey: cfg.Security.APIKey}),
+	}
+	broadcastEngine.Start(ctx)
 
 	// Start fleet lifecycle event consumer (logistics-service → email notifications)
 	startFleetConsumer(ctx, nc, js, cfg, tr, logg)
@@ -657,7 +721,7 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 		validTo, skipped := eg.ValidRecipients(msg.To)
 		if len(skipped) > 0 {
 			logg.Warn("skipped invalid email recipients",
-				zap.Strings("skipped", skipped), zap.String("template", msg.TemplateID))
+				zap.Int("skipped", len(skipped)), zap.String("template", msg.TemplateID))
 		}
 		// Email-verification gate: drop recipients that ARE a known local user whose email
 		// is unverified — that address is either a placeholder (undeliverable) or one the
@@ -677,14 +741,14 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 				}
 				if len(gated) > 0 {
 					logg.Info("gated email to unverified account(s)",
-						zap.Strings("gated", gated), zap.String("template", msg.TemplateID))
+						zap.Int("gated", len(gated)), zap.String("template", msg.TemplateID))
 				}
 				validTo = kept
 			}
 		}
 		if len(validTo) == 0 {
 			logg.Warn("no valid email recipients — skipping send",
-				zap.Strings("to", msg.To), zap.String("template", msg.TemplateID))
+				maskedTo(msg), zap.String("template", msg.TemplateID))
 			return errSkippedNoSend
 		}
 		eg.WaitForSlot(ctx, 20*time.Second)
@@ -719,6 +783,10 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 			}
 		}
 
+		// Marketing broadcasts carry a one-click unsubscribe URL for the List-Unsubscribe headers.
+		if u, _ := msg.Metadata[broadcasts.MetaUnsubscribe].(string); u != "" {
+			ctx = email.WithListUnsubscribe(ctx, u)
+		}
 		emailProv, _ := pm.GetEmailProvider(ctx, providerTenantID, preferred)
 		err := emailProv.SendEmail(ctx, fromOverride, validTo, msg.Cc, outboundBcc, replyTo, subject, rendered, plainTextBody, atts)
 		if err != nil {
@@ -738,7 +806,7 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 						logg.Info("email sent via platform fallback",
 							zap.String("provider", platformProv.Name()),
 							zap.String("template", msg.TemplateID),
-							zap.Strings("to", validTo),
+							zap.Int("recipients", len(validTo)),
 						)
 						return nil
 					}
@@ -751,7 +819,7 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 			}
 			return err
 		}
-		logg.Info("email sent", zap.String("provider", emailProv.Name()), zap.String("template", msg.TemplateID), zap.Strings("to", validTo))
+		logg.Info("email sent", zap.String("provider", emailProv.Name()), zap.String("template", msg.TemplateID), zap.Int("recipients", len(validTo)))
 		return nil
 
 	case "sms":
@@ -777,7 +845,7 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 				return err
 			}
 			logg.Info("sms sent (platform-scope, billed to the real provider account, not a tenant wallet)",
-				zap.String("provider", smsProv.Name()), zap.Strings("to", msg.To))
+				zap.String("provider", smsProv.Name()), maskedTo(msg))
 			return nil
 		}
 
@@ -815,7 +883,7 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 		if err := billingSvc.DeductSMSCredits(ctx, tenantID, rendered, len(msg.To), "SMS Delivery"); err != nil {
 			logg.Warn("sms sent but credit deduction failed", zap.String("tenant_id", tenantID.String()), zap.Error(err))
 		}
-		logg.Info("sms sent", zap.String("provider", smsProv.Name()), zap.Strings("to", msg.To))
+		logg.Info("sms sent", zap.String("provider", smsProv.Name()), maskedTo(msg))
 		return nil
 
 	case "whatsapp":
@@ -886,7 +954,7 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 			if !ok {
 				return err
 			}
-			logg.Info("whatsapp send refused, trying the next number", zap.Strings("failed", current.To), zap.Error(err))
+			logg.Info("whatsapp send refused, trying the next number", zap.Int("failed_numbers", len(current.To)), zap.Error(err))
 			current = next
 			err = waProv.SendWhatsApp(ctx, cfg.Providers.DefaultSMSSender, current.To, rendered, current.Metadata)
 		}
@@ -897,7 +965,7 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 				}
 			}
 		}
-		logg.Info("whatsapp message sent", zap.String("provider", waProv.Name()), zap.Strings("to", current.To))
+		logg.Info("whatsapp message sent", zap.String("provider", waProv.Name()), zap.Int("recipients", len(current.To)))
 		return nil
 
 	case "push":
@@ -936,7 +1004,7 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 			}
 			return err
 		}
-		logg.Info("push notification sent", zap.String("provider", pushProv.Name()), zap.Strings("to", msg.To))
+		logg.Info("push notification sent", zap.String("provider", pushProv.Name()), maskedTo(msg))
 		return nil
 
 	default:

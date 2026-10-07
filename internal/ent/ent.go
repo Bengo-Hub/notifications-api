@@ -15,12 +15,15 @@ import (
 	"github.com/bengobox/notifications-api/internal/ent/announcement"
 	"github.com/bengobox/notifications-api/internal/ent/backup"
 	"github.com/bengobox/notifications-api/internal/ent/backupsetting"
+	"github.com/bengobox/notifications-api/internal/ent/broadcast"
+	"github.com/bengobox/notifications-api/internal/ent/broadcastrecipient"
 	"github.com/bengobox/notifications-api/internal/ent/credittransaction"
 	"github.com/bengobox/notifications-api/internal/ent/deliverylog"
 	"github.com/bengobox/notifications-api/internal/ent/devicetoken"
 	"github.com/bengobox/notifications-api/internal/ent/notificationpermission"
 	"github.com/bengobox/notifications-api/internal/ent/notificationrole"
 	"github.com/bengobox/notifications-api/internal/ent/notificationrolepermission"
+	"github.com/bengobox/notifications-api/internal/ent/occasion"
 	"github.com/bengobox/notifications-api/internal/ent/outboxevent"
 	"github.com/bengobox/notifications-api/internal/ent/permission"
 	"github.com/bengobox/notifications-api/internal/ent/platformbilling"
@@ -28,6 +31,7 @@ import (
 	"github.com/bengobox/notifications-api/internal/ent/ratelimitconfig"
 	"github.com/bengobox/notifications-api/internal/ent/role"
 	"github.com/bengobox/notifications-api/internal/ent/serviceconfig"
+	"github.com/bengobox/notifications-api/internal/ent/suppression"
 	"github.com/bengobox/notifications-api/internal/ent/template"
 	"github.com/bengobox/notifications-api/internal/ent/tenant"
 	"github.com/bengobox/notifications-api/internal/ent/tenantcredit"
@@ -100,12 +104,15 @@ func checkColumn(t, c string) error {
 			announcement.Table:               announcement.ValidColumn,
 			backup.Table:                     backup.ValidColumn,
 			backupsetting.Table:              backupsetting.ValidColumn,
+			broadcast.Table:                  broadcast.ValidColumn,
+			broadcastrecipient.Table:         broadcastrecipient.ValidColumn,
 			credittransaction.Table:          credittransaction.ValidColumn,
 			deliverylog.Table:                deliverylog.ValidColumn,
 			devicetoken.Table:                devicetoken.ValidColumn,
 			notificationpermission.Table:     notificationpermission.ValidColumn,
 			notificationrole.Table:           notificationrole.ValidColumn,
 			notificationrolepermission.Table: notificationrolepermission.ValidColumn,
+			occasion.Table:                   occasion.ValidColumn,
 			outboxevent.Table:                outboxevent.ValidColumn,
 			permission.Table:                 permission.ValidColumn,
 			platformbilling.Table:            platformbilling.ValidColumn,
@@ -113,6 +120,7 @@ func checkColumn(t, c string) error {
 			ratelimitconfig.Table:            ratelimitconfig.ValidColumn,
 			role.Table:                       role.ValidColumn,
 			serviceconfig.Table:              serviceconfig.ValidColumn,
+			suppression.Table:                suppression.ValidColumn,
 			template.Table:                   template.ValidColumn,
 			tenant.Table:                     tenant.ValidColumn,
 			tenantcredit.Table:               tenantcredit.ValidColumn,

@@ -42,6 +42,9 @@ type ServicesConfig struct {
 	TreasuryAPI      string `envconfig:"TREASURY_API_URL" default:"https://booksapi.codevertexafrica.com"`
 	SubscriptionsAPI string `envconfig:"SUBSCRIPTION_BASE_URL" default:"https://pricingapi.codevertexafrica.com"`
 	SubscriptionsURL string `envconfig:"SERVICES_SUBSCRIPTIONS_UPGRADE_URL" default:"https://pricingapi.codevertexafrica.com/upgrade"`
+	// MarketflowAPI is where a tenant's customer list lives (broadcast audiences, AI drafts).
+	// In-cluster by default, like every other caller of marketflow-api.
+	MarketflowAPI string `envconfig:"MARKETFLOW_API_URL" default:"http://marketflow-api.marketflow.svc.cluster.local:4000"`
 }
 
 type AppConfig struct {

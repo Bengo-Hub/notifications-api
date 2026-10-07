@@ -32,18 +32,22 @@ func (DeliveryLog) Fields() []ent.Field {
 			NotEmpty(),
 		field.String("status").
 			Default("sent").
-			Comment("sent, delivered, failed"),
+			Comment("sent, delivered, failed, skipped"),
+		field.String("message_id").
+			Optional().
+			Comment("The queued message's request id, so provider callbacks can find the row"),
 		field.Time("created_at").
 			Default(time.Now).
 			Immutable(),
 	}
 }
 
-// Indexes of the DeliveryLog.
+// Indexes of the DeliveryLog. (tenant_id, created_at) serves every tenant query, so there is no
+// separate tenant_id index; created_at alone serves the platform-wide view and retention.
 func (DeliveryLog) Indexes() []ent.Index {
 	return []ent.Index{
-		index.Fields("tenant_id"),
 		index.Fields("created_at"),
 		index.Fields("tenant_id", "created_at"),
+		index.Fields("message_id"),
 	}
 }

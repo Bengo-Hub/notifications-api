@@ -24,6 +24,8 @@ const (
 	FieldRecipient = "recipient"
 	// FieldStatus holds the string denoting the status field in the database.
 	FieldStatus = "status"
+	// FieldMessageID holds the string denoting the message_id field in the database.
+	FieldMessageID = "message_id"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// Table holds the table name of the deliverylog in the database.
@@ -38,6 +40,7 @@ var Columns = []string{
 	FieldChannel,
 	FieldRecipient,
 	FieldStatus,
+	FieldMessageID,
 	FieldCreatedAt,
 }
 
@@ -99,6 +102,11 @@ func ByRecipient(opts ...sql.OrderTermOption) OrderOption {
 // ByStatus orders the results by the status field.
 func ByStatus(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldStatus, opts...).ToFunc()
+}
+
+// ByMessageID orders the results by the message_id field.
+func ByMessageID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMessageID, opts...).ToFunc()
 }
 
 // ByCreatedAt orders the results by the created_at field.

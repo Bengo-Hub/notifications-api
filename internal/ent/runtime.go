@@ -8,11 +8,14 @@ import (
 	"github.com/bengobox/notifications-api/internal/ent/announcement"
 	"github.com/bengobox/notifications-api/internal/ent/backup"
 	"github.com/bengobox/notifications-api/internal/ent/backupsetting"
+	"github.com/bengobox/notifications-api/internal/ent/broadcast"
+	"github.com/bengobox/notifications-api/internal/ent/broadcastrecipient"
 	"github.com/bengobox/notifications-api/internal/ent/credittransaction"
 	"github.com/bengobox/notifications-api/internal/ent/deliverylog"
 	"github.com/bengobox/notifications-api/internal/ent/devicetoken"
 	"github.com/bengobox/notifications-api/internal/ent/notificationpermission"
 	"github.com/bengobox/notifications-api/internal/ent/notificationrole"
+	"github.com/bengobox/notifications-api/internal/ent/occasion"
 	"github.com/bengobox/notifications-api/internal/ent/outboxevent"
 	"github.com/bengobox/notifications-api/internal/ent/permission"
 	"github.com/bengobox/notifications-api/internal/ent/platformbilling"
@@ -21,6 +24,7 @@ import (
 	"github.com/bengobox/notifications-api/internal/ent/role"
 	"github.com/bengobox/notifications-api/internal/ent/schema"
 	"github.com/bengobox/notifications-api/internal/ent/serviceconfig"
+	"github.com/bengobox/notifications-api/internal/ent/suppression"
 	"github.com/bengobox/notifications-api/internal/ent/template"
 	"github.com/bengobox/notifications-api/internal/ent/tenant"
 	"github.com/bengobox/notifications-api/internal/ent/tenantcredit"
@@ -40,7 +44,7 @@ func init() {
 	announcementFields := schema.Announcement{}.Fields()
 	_ = announcementFields
 	// announcementDescTitle is the schema descriptor for title field.
-	announcementDescTitle := announcementFields[1].Descriptor()
+	announcementDescTitle := announcementFields[2].Descriptor()
 	// announcement.TitleValidator is a validator for the "title" field. It is called by the builders before save.
 	announcement.TitleValidator = func() func(string) error {
 		validators := announcementDescTitle.Validators
@@ -58,31 +62,31 @@ func init() {
 		}
 	}()
 	// announcementDescSummary is the schema descriptor for summary field.
-	announcementDescSummary := announcementFields[2].Descriptor()
+	announcementDescSummary := announcementFields[3].Descriptor()
 	// announcement.SummaryValidator is a validator for the "summary" field. It is called by the builders before save.
 	announcement.SummaryValidator = announcementDescSummary.Validators[0].(func(string) error)
 	// announcementDescPriority is the schema descriptor for priority field.
-	announcementDescPriority := announcementFields[9].Descriptor()
+	announcementDescPriority := announcementFields[10].Descriptor()
 	// announcement.DefaultPriority holds the default value on creation for the priority field.
 	announcement.DefaultPriority = announcementDescPriority.Default.(int)
 	// announcementDescDismissible is the schema descriptor for dismissible field.
-	announcementDescDismissible := announcementFields[10].Descriptor()
+	announcementDescDismissible := announcementFields[11].Descriptor()
 	// announcement.DefaultDismissible holds the default value on creation for the dismissible field.
 	announcement.DefaultDismissible = announcementDescDismissible.Default.(bool)
 	// announcementDescIsActive is the schema descriptor for is_active field.
-	announcementDescIsActive := announcementFields[11].Descriptor()
+	announcementDescIsActive := announcementFields[12].Descriptor()
 	// announcement.DefaultIsActive holds the default value on creation for the is_active field.
 	announcement.DefaultIsActive = announcementDescIsActive.Default.(bool)
 	// announcementDescStartsAt is the schema descriptor for starts_at field.
-	announcementDescStartsAt := announcementFields[12].Descriptor()
+	announcementDescStartsAt := announcementFields[13].Descriptor()
 	// announcement.DefaultStartsAt holds the default value on creation for the starts_at field.
 	announcement.DefaultStartsAt = announcementDescStartsAt.Default.(func() time.Time)
 	// announcementDescCreatedAt is the schema descriptor for created_at field.
-	announcementDescCreatedAt := announcementFields[16].Descriptor()
+	announcementDescCreatedAt := announcementFields[17].Descriptor()
 	// announcement.DefaultCreatedAt holds the default value on creation for the created_at field.
 	announcement.DefaultCreatedAt = announcementDescCreatedAt.Default.(func() time.Time)
 	// announcementDescUpdatedAt is the schema descriptor for updated_at field.
-	announcementDescUpdatedAt := announcementFields[17].Descriptor()
+	announcementDescUpdatedAt := announcementFields[18].Descriptor()
 	// announcement.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	announcement.DefaultUpdatedAt = announcementDescUpdatedAt.Default.(func() time.Time)
 	// announcement.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
@@ -145,6 +149,92 @@ func init() {
 	backupsettingDescID := backupsettingFields[0].Descriptor()
 	// backupsetting.DefaultID holds the default value on creation for the id field.
 	backupsetting.DefaultID = backupsettingDescID.Default.(func() uuid.UUID)
+	broadcastFields := schema.Broadcast{}.Fields()
+	_ = broadcastFields
+	// broadcastDescTitle is the schema descriptor for title field.
+	broadcastDescTitle := broadcastFields[6].Descriptor()
+	// broadcast.TitleValidator is a validator for the "title" field. It is called by the builders before save.
+	broadcast.TitleValidator = func() func(string) error {
+		validators := broadcastDescTitle.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(title string) error {
+			for _, fn := range fns {
+				if err := fn(title); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// broadcastDescTargetCount is the schema descriptor for target_count field.
+	broadcastDescTargetCount := broadcastFields[16].Descriptor()
+	// broadcast.DefaultTargetCount holds the default value on creation for the target_count field.
+	broadcast.DefaultTargetCount = broadcastDescTargetCount.Default.(int)
+	// broadcastDescSentCount is the schema descriptor for sent_count field.
+	broadcastDescSentCount := broadcastFields[17].Descriptor()
+	// broadcast.DefaultSentCount holds the default value on creation for the sent_count field.
+	broadcast.DefaultSentCount = broadcastDescSentCount.Default.(int)
+	// broadcastDescFailedCount is the schema descriptor for failed_count field.
+	broadcastDescFailedCount := broadcastFields[18].Descriptor()
+	// broadcast.DefaultFailedCount holds the default value on creation for the failed_count field.
+	broadcast.DefaultFailedCount = broadcastDescFailedCount.Default.(int)
+	// broadcastDescSkippedCount is the schema descriptor for skipped_count field.
+	broadcastDescSkippedCount := broadcastFields[19].Descriptor()
+	// broadcast.DefaultSkippedCount holds the default value on creation for the skipped_count field.
+	broadcast.DefaultSkippedCount = broadcastDescSkippedCount.Default.(int)
+	// broadcastDescSuppressedCount is the schema descriptor for suppressed_count field.
+	broadcastDescSuppressedCount := broadcastFields[20].Descriptor()
+	// broadcast.DefaultSuppressedCount holds the default value on creation for the suppressed_count field.
+	broadcast.DefaultSuppressedCount = broadcastDescSuppressedCount.Default.(int)
+	// broadcastDescCreatedAt is the schema descriptor for created_at field.
+	broadcastDescCreatedAt := broadcastFields[23].Descriptor()
+	// broadcast.DefaultCreatedAt holds the default value on creation for the created_at field.
+	broadcast.DefaultCreatedAt = broadcastDescCreatedAt.Default.(func() time.Time)
+	// broadcastDescUpdatedAt is the schema descriptor for updated_at field.
+	broadcastDescUpdatedAt := broadcastFields[24].Descriptor()
+	// broadcast.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	broadcast.DefaultUpdatedAt = broadcastDescUpdatedAt.Default.(func() time.Time)
+	// broadcast.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	broadcast.UpdateDefaultUpdatedAt = broadcastDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// broadcastDescID is the schema descriptor for id field.
+	broadcastDescID := broadcastFields[0].Descriptor()
+	// broadcast.DefaultID holds the default value on creation for the id field.
+	broadcast.DefaultID = broadcastDescID.Default.(func() uuid.UUID)
+	broadcastrecipientFields := schema.BroadcastRecipient{}.Fields()
+	_ = broadcastrecipientFields
+	// broadcastrecipientDescChannel is the schema descriptor for channel field.
+	broadcastrecipientDescChannel := broadcastrecipientFields[4].Descriptor()
+	// broadcastrecipient.ChannelValidator is a validator for the "channel" field. It is called by the builders before save.
+	broadcastrecipient.ChannelValidator = broadcastrecipientDescChannel.Validators[0].(func(string) error)
+	// broadcastrecipientDescAddressHash is the schema descriptor for address_hash field.
+	broadcastrecipientDescAddressHash := broadcastrecipientFields[6].Descriptor()
+	// broadcastrecipient.AddressHashValidator is a validator for the "address_hash" field. It is called by the builders before save.
+	broadcastrecipient.AddressHashValidator = broadcastrecipientDescAddressHash.Validators[0].(func(string) error)
+	// broadcastrecipientDescError is the schema descriptor for error field.
+	broadcastrecipientDescError := broadcastrecipientFields[11].Descriptor()
+	// broadcastrecipient.ErrorValidator is a validator for the "error" field. It is called by the builders before save.
+	broadcastrecipient.ErrorValidator = broadcastrecipientDescError.Validators[0].(func(string) error)
+	// broadcastrecipientDescAttempts is the schema descriptor for attempts field.
+	broadcastrecipientDescAttempts := broadcastrecipientFields[12].Descriptor()
+	// broadcastrecipient.DefaultAttempts holds the default value on creation for the attempts field.
+	broadcastrecipient.DefaultAttempts = broadcastrecipientDescAttempts.Default.(int)
+	// broadcastrecipientDescCreatedAt is the schema descriptor for created_at field.
+	broadcastrecipientDescCreatedAt := broadcastrecipientFields[15].Descriptor()
+	// broadcastrecipient.DefaultCreatedAt holds the default value on creation for the created_at field.
+	broadcastrecipient.DefaultCreatedAt = broadcastrecipientDescCreatedAt.Default.(func() time.Time)
+	// broadcastrecipientDescUpdatedAt is the schema descriptor for updated_at field.
+	broadcastrecipientDescUpdatedAt := broadcastrecipientFields[16].Descriptor()
+	// broadcastrecipient.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	broadcastrecipient.DefaultUpdatedAt = broadcastrecipientDescUpdatedAt.Default.(func() time.Time)
+	// broadcastrecipient.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	broadcastrecipient.UpdateDefaultUpdatedAt = broadcastrecipientDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// broadcastrecipientDescID is the schema descriptor for id field.
+	broadcastrecipientDescID := broadcastrecipientFields[0].Descriptor()
+	// broadcastrecipient.DefaultID holds the default value on creation for the id field.
+	broadcastrecipient.DefaultID = broadcastrecipientDescID.Default.(func() uuid.UUID)
 	credittransactionFields := schema.CreditTransaction{}.Fields()
 	_ = credittransactionFields
 	// credittransactionDescProviderCost is the schema descriptor for provider_cost field.
@@ -190,7 +280,7 @@ func init() {
 	// deliverylog.DefaultStatus holds the default value on creation for the status field.
 	deliverylog.DefaultStatus = deliverylogDescStatus.Default.(string)
 	// deliverylogDescCreatedAt is the schema descriptor for created_at field.
-	deliverylogDescCreatedAt := deliverylogFields[6].Descriptor()
+	deliverylogDescCreatedAt := deliverylogFields[7].Descriptor()
 	// deliverylog.DefaultCreatedAt holds the default value on creation for the created_at field.
 	deliverylog.DefaultCreatedAt = deliverylogDescCreatedAt.Default.(func() time.Time)
 	// deliverylogDescID is the schema descriptor for id field.
@@ -283,6 +373,78 @@ func init() {
 	notificationroleDescID := notificationroleFields[0].Descriptor()
 	// notificationrole.DefaultID holds the default value on creation for the id field.
 	notificationrole.DefaultID = notificationroleDescID.Default.(func() uuid.UUID)
+	occasionFields := schema.Occasion{}.Fields()
+	_ = occasionFields
+	// occasionDescKey is the schema descriptor for key field.
+	occasionDescKey := occasionFields[2].Descriptor()
+	// occasion.KeyValidator is a validator for the "key" field. It is called by the builders before save.
+	occasion.KeyValidator = func() func(string) error {
+		validators := occasionDescKey.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(key string) error {
+			for _, fn := range fns {
+				if err := fn(key); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// occasionDescName is the schema descriptor for name field.
+	occasionDescName := occasionFields[3].Descriptor()
+	// occasion.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	occasion.NameValidator = func() func(string) error {
+		validators := occasionDescName.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(name string) error {
+			for _, fn := range fns {
+				if err := fn(name); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// occasionDescCountry is the schema descriptor for country field.
+	occasionDescCountry := occasionFields[4].Descriptor()
+	// occasion.DefaultCountry holds the default value on creation for the country field.
+	occasion.DefaultCountry = occasionDescCountry.Default.(string)
+	// occasionDescDurationDays is the schema descriptor for duration_days field.
+	occasionDescDurationDays := occasionFields[6].Descriptor()
+	// occasion.DefaultDurationDays holds the default value on creation for the duration_days field.
+	occasion.DefaultDurationDays = occasionDescDurationDays.Default.(int)
+	// occasionDescLeadDays is the schema descriptor for lead_days field.
+	occasionDescLeadDays := occasionFields[7].Descriptor()
+	// occasion.DefaultLeadDays holds the default value on creation for the lead_days field.
+	occasion.DefaultLeadDays = occasionDescLeadDays.Default.(int)
+	// occasionDescSendOffsetDays is the schema descriptor for send_offset_days field.
+	occasionDescSendOffsetDays := occasionFields[8].Descriptor()
+	// occasion.DefaultSendOffsetDays holds the default value on creation for the send_offset_days field.
+	occasion.DefaultSendOffsetDays = occasionDescSendOffsetDays.Default.(int)
+	// occasionDescIsActive is the schema descriptor for is_active field.
+	occasionDescIsActive := occasionFields[9].Descriptor()
+	// occasion.DefaultIsActive holds the default value on creation for the is_active field.
+	occasion.DefaultIsActive = occasionDescIsActive.Default.(bool)
+	// occasionDescCreatedAt is the schema descriptor for created_at field.
+	occasionDescCreatedAt := occasionFields[11].Descriptor()
+	// occasion.DefaultCreatedAt holds the default value on creation for the created_at field.
+	occasion.DefaultCreatedAt = occasionDescCreatedAt.Default.(func() time.Time)
+	// occasionDescUpdatedAt is the schema descriptor for updated_at field.
+	occasionDescUpdatedAt := occasionFields[12].Descriptor()
+	// occasion.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	occasion.DefaultUpdatedAt = occasionDescUpdatedAt.Default.(func() time.Time)
+	// occasion.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	occasion.UpdateDefaultUpdatedAt = occasionDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// occasionDescID is the schema descriptor for id field.
+	occasionDescID := occasionFields[0].Descriptor()
+	// occasion.DefaultID holds the default value on creation for the id field.
+	occasion.DefaultID = occasionDescID.Default.(func() uuid.UUID)
 	outboxeventFields := schema.OutboxEvent{}.Fields()
 	_ = outboxeventFields
 	// outboxeventDescAggregateType is the schema descriptor for aggregate_type field.
@@ -507,6 +669,28 @@ func init() {
 	serviceconfigDescID := serviceconfigFields[0].Descriptor()
 	// serviceconfig.DefaultID holds the default value on creation for the id field.
 	serviceconfig.DefaultID = serviceconfigDescID.Default.(func() uuid.UUID)
+	suppressionFields := schema.Suppression{}.Fields()
+	_ = suppressionFields
+	// suppressionDescChannel is the schema descriptor for channel field.
+	suppressionDescChannel := suppressionFields[2].Descriptor()
+	// suppression.ChannelValidator is a validator for the "channel" field. It is called by the builders before save.
+	suppression.ChannelValidator = suppressionDescChannel.Validators[0].(func(string) error)
+	// suppressionDescAddressHash is the schema descriptor for address_hash field.
+	suppressionDescAddressHash := suppressionFields[3].Descriptor()
+	// suppression.AddressHashValidator is a validator for the "address_hash" field. It is called by the builders before save.
+	suppression.AddressHashValidator = suppressionDescAddressHash.Validators[0].(func(string) error)
+	// suppressionDescReason is the schema descriptor for reason field.
+	suppressionDescReason := suppressionFields[5].Descriptor()
+	// suppression.DefaultReason holds the default value on creation for the reason field.
+	suppression.DefaultReason = suppressionDescReason.Default.(string)
+	// suppressionDescCreatedAt is the schema descriptor for created_at field.
+	suppressionDescCreatedAt := suppressionFields[7].Descriptor()
+	// suppression.DefaultCreatedAt holds the default value on creation for the created_at field.
+	suppression.DefaultCreatedAt = suppressionDescCreatedAt.Default.(func() time.Time)
+	// suppressionDescID is the schema descriptor for id field.
+	suppressionDescID := suppressionFields[0].Descriptor()
+	// suppression.DefaultID holds the default value on creation for the id field.
+	suppression.DefaultID = suppressionDescID.Default.(func() uuid.UUID)
 	templateFields := schema.Template{}.Fields()
 	_ = templateFields
 	// templateDescName is the schema descriptor for name field.

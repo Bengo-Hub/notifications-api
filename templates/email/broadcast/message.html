@@ -1,0 +1,11 @@
+{{ define "content" }}
+  {{ range .paragraphs }}
+  <p style="margin:0 0 14px 0;line-height:1.6;">{{ . }}</p>
+  {{ end }}
+  {{ if .unsubscribe_url }}
+  <p class="muted" style="margin-top:24px;font-size:12px;color:#6b7280;">
+    You are getting this because you are a customer of {{ or .sender_name .brand_name }}.
+    <a href="{{ .unsubscribe_url }}" style="color:#6b7280;">Unsubscribe</a> from these messages.
+  </p>
+  {{ end }}
+{{ end }}

@@ -30,13 +30,16 @@ import (
 	identityhandler "github.com/bengobox/notifications-api/internal/http/handlers/identity"
 	devauth "github.com/bengobox/notifications-api/internal/http/middleware"
 	router "github.com/bengobox/notifications-api/internal/http/router"
-	backupmod "github.com/bengobox/notifications-api/internal/modules/backup"
 	"github.com/bengobox/notifications-api/internal/modules/announcements"
+	backupmod "github.com/bengobox/notifications-api/internal/modules/backup"
 	"github.com/bengobox/notifications-api/internal/modules/billing"
+	"github.com/bengobox/notifications-api/internal/modules/broadcasts"
 	eventsmod "github.com/bengobox/notifications-api/internal/modules/events"
 	"github.com/bengobox/notifications-api/internal/modules/identity"
+	"github.com/bengobox/notifications-api/internal/modules/occasions"
 	"github.com/bengobox/notifications-api/internal/modules/preferences"
 	"github.com/bengobox/notifications-api/internal/modules/rbac"
+	"github.com/bengobox/notifications-api/internal/modules/suppression"
 	templatesmod "github.com/bengobox/notifications-api/internal/modules/templates"
 	"github.com/bengobox/notifications-api/internal/modules/tenant"
 	"github.com/bengobox/notifications-api/internal/modules/whatsappinbox"
@@ -44,6 +47,7 @@ import (
 	"github.com/bengobox/notifications-api/internal/platform/events"
 	"github.com/bengobox/notifications-api/internal/platform/templates"
 	"github.com/bengobox/notifications-api/internal/providers"
+	providerconfig "github.com/bengobox/notifications-api/internal/providers/config"
 	sandboxmod "github.com/bengobox/notifications-api/internal/sandbox"
 	"github.com/bengobox/notifications-api/internal/shared/logger"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -108,6 +112,15 @@ func New(ctx context.Context) (*App, error) {
 	if err != nil {
 		return nil, fmt.Errorf("ent client init: %w", err)
 	}
+	// Provider lookups are cached per pod for a few seconds; any saved credential clears this
+	// pod's cache so a "test connection" right after saving uses the new values.
+	entClient.ProviderSetting.Use(func(next ent.Mutator) ent.Mutator {
+		return ent.MutateFunc(func(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+			v, err := next.Mutate(ctx, m)
+			providerconfig.InvalidateCache()
+			return v, err
+		})
+	})
 	// Schema migrations run once per rollout in cmd/migrate (advisory-locked, direct DSN), not
 	// here: running them from every API pod on start raced the schema diff across replicas.
 
@@ -182,6 +195,20 @@ func New(ctx context.Context) (*App, error) {
 	} else {
 		announcementSvc.StartPurger(ctx, nil, log)
 	}
+
+	// Broadcasts and occasions: the API manages drafts, approvals and opt-outs; the worker sends.
+	occasionSvc := occasions.NewService(entClient, log)
+	// One opt-out list for links, STOP replies and buttons; each opt-out is announced so MarketFlow
+	// clears the contact's consent flag.
+	suppressionSvc := suppression.NewService(entClient, keyProvider.Candidates(ctx)...).
+		WithNotifier(broadcasts.UnsubscribeNotifier(natsConn, log))
+	broadcastHandler := handlers.NewBroadcastHandler(entClient,
+		broadcasts.NewService(entClient, log),
+		&broadcasts.Drafter{Client: entClient, Occasions: occasionSvc, PlatformID: platformIDStr, Log: log},
+		occasionSvc,
+		suppressionSvc,
+		broadcasts.DefaultResolvers(broadcasts.ResolverConfig{AuthAPI: cfg.Services.AuthAPI, MarketflowAPI: cfg.Services.MarketflowAPI, APIKey: cfg.Security.APIKey}),
+		log)
 
 	deviceTokenHandler := handlers.NewDeviceTokenHandler(log, entClient)
 	deviceTokenHandler.SetPushResolver(providerManager)
@@ -341,13 +368,13 @@ func New(ctx context.Context) (*App, error) {
 	}
 	whatsappInboxService := whatsappinbox.NewService(entClient, providerManager, whatsappInboxHub, natsConn, cfg.Events, log)
 	whatsappInboxHandler := handlers.NewWhatsAppInboxHandler(whatsappInboxService, whatsappInboxHub, cfg.HTTP.AllowedOrigins, log)
-	webhookHandler := handlers.NewWebhookHandler(entClient, log, cfg.HTTP.PublicBaseURL, whatsappInboxService)
+	webhookHandler := handlers.NewWebhookHandler(entClient, log, cfg.HTTP.PublicBaseURL, whatsappInboxService).WithOptOut(suppressionSvc)
 	if redisClient != nil {
 		webhookHandler.WithWhatsAppFallback(redisClient, natsConn, cfg.Events)
 	}
 	whatsappEmbeddedSignupHandler := handlers.NewWhatsAppEmbeddedSignupHandler(entClient, log, providerManager)
 	whatsappTemplatesHandler := handlers.NewWhatsAppTemplates(providerManager, log)
-	httpRouter := router.New(log, healthHandler, notificationHandler, templateHandler, platformProviders, tenantProviders, analyticsHandler, billingHandler, platformBilling, settingsHandler, rbacHandler, authMeHandler, deviceTokenHandler, cfg.Security.APIKey, authMiddleware, authenticator, cfg.HTTP.AllowedOrigins, tenantSyncer, rateLimiter, serviceConfigHandler, whatsappSubsHandler, backupHandler, encryptionKeyHandler, backupDestHandler, notificationPrefsHandler, developerKeyAuth, swaggerHandler, webhookHandler, whatsappEmbeddedSignupHandler, whatsappTemplatesHandler, whatsappInboxHandler, announcementHandler)
+	httpRouter := router.New(log, healthHandler, notificationHandler, templateHandler, platformProviders, tenantProviders, analyticsHandler, billingHandler, platformBilling, settingsHandler, rbacHandler, authMeHandler, deviceTokenHandler, cfg.Security.APIKey, authMiddleware, authenticator, cfg.HTTP.AllowedOrigins, tenantSyncer, rateLimiter, serviceConfigHandler, whatsappSubsHandler, backupHandler, encryptionKeyHandler, backupDestHandler, notificationPrefsHandler, developerKeyAuth, swaggerHandler, webhookHandler, whatsappEmbeddedSignupHandler, whatsappTemplatesHandler, whatsappInboxHandler, announcementHandler, broadcastHandler)
 
 	httpServer := &http.Server{
 		Addr:              fmt.Sprintf("%s:%d", cfg.HTTP.Host, cfg.HTTP.Port),

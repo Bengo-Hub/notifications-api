@@ -142,18 +142,22 @@ func (p *SMTPProvider) SendEmail(ctx context.Context, from string, to []string, 
 	b.WriteString("Subject: " + subject + "\r\n")
 	// Date + Message-ID: every real MTA sets both; their absence was a
 	// confirmed, real spam signal (2026-08-19 deliverability audit) — this
-	// service never set either before. List-Unsubscribe is deliberately kept
-	// as a plain mailto (no List-Unsubscribe-Post, which RFC 8058 reserves
-	// for a real HTTPS one-click endpoint this service doesn't have) —
-	// present for the deliverability signal without pretending to be a
-	// functioning unsubscribe pipeline.
+	// service never set either before. Marketing broadcasts carry a real one-click
+	// unsubscribe URL (RFC 8058: https List-Unsubscribe plus List-Unsubscribe-Post);
+	// other mail keeps a plain mailto List-Unsubscribe for the deliverability signal.
 	b.WriteString("Date: " + time.Now().Format(time.RFC1123Z) + "\r\n")
 	b.WriteString("Message-ID: " + generateMessageID(envelopeFromDomain) + "\r\n")
 	unsubTarget := replyTo
 	if unsubTarget == "" {
 		unsubTarget = envelopeFrom
 	}
-	b.WriteString("List-Unsubscribe: <mailto:" + extractEmail(unsubTarget) + "?subject=unsubscribe>\r\n")
+	mailto := "<mailto:" + extractEmail(unsubTarget) + "?subject=unsubscribe>"
+	if oneClick := ListUnsubscribeURL(ctx); oneClick != "" {
+		b.WriteString("List-Unsubscribe: <" + oneClick + ">, " + mailto + "\r\n")
+		b.WriteString("List-Unsubscribe-Post: List-Unsubscribe=One-Click\r\n")
+	} else {
+		b.WriteString("List-Unsubscribe: " + mailto + "\r\n")
+	}
 	b.WriteString("MIME-Version: 1.0\r\n")
 
 	// Build the body MIME part (with its own Content-Type) so it can be nested inside a

@@ -157,7 +157,6 @@ func (m *Manager) GetEmailProvider(ctx context.Context, tenantID string, preferr
 			// If the resolved host is still localhost in production, skip SMTP
 			// and try the next provider (brevo, etc.)
 			if m.env != "development" && isLocalhost(host) {
-				fmt.Printf("[DEBUG] SMTP host is localhost in %s env for tenant %s, trying next provider\n", m.env, tenantID)
 				continue
 			}
 

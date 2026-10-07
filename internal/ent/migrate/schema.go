@@ -12,6 +12,7 @@ var (
 	// AnnouncementsColumns holds the columns for the "announcements" table.
 	AnnouncementsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
+		{Name: "tenant_id", Type: field.TypeUUID, Nullable: true},
 		{Name: "title", Type: field.TypeString, Size: 120},
 		{Name: "summary", Type: field.TypeString, Size: 2147483647},
 		{Name: "highlights", Type: field.TypeJSON, Nullable: true},
@@ -39,7 +40,12 @@ var (
 			{
 				Name:    "announcement_is_active_starts_at",
 				Unique:  false,
-				Columns: []*schema.Column{AnnouncementsColumns[11], AnnouncementsColumns[12]},
+				Columns: []*schema.Column{AnnouncementsColumns[12], AnnouncementsColumns[13]},
+			},
+			{
+				Name:    "announcement_tenant_id_is_active",
+				Unique:  false,
+				Columns: []*schema.Column{AnnouncementsColumns[1], AnnouncementsColumns[12]},
 			},
 		},
 	}
@@ -87,6 +93,116 @@ var (
 		Columns:    BackupSettingsColumns,
 		PrimaryKey: []*schema.Column{BackupSettingsColumns[0]},
 	}
+	// BroadcastsColumns holds the columns for the "broadcasts" table.
+	BroadcastsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "scope", Type: field.TypeEnum, Enums: []string{"platform", "tenant"}},
+		{Name: "tenant_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "kind", Type: field.TypeEnum, Enums: []string{"announcement", "greeting", "marketing", "service_notice"}, Default: "announcement"},
+		{Name: "class", Type: field.TypeEnum, Enums: []string{"marketing", "transactional"}, Default: "marketing"},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"draft", "pending_approval", "scheduled", "sending", "paused", "completed", "cancelled", "rejected", "failed"}, Default: "draft"},
+		{Name: "title", Type: field.TypeString, Size: 160},
+		{Name: "channels", Type: field.TypeJSON},
+		{Name: "content", Type: field.TypeJSON},
+		{Name: "audience", Type: field.TypeJSON},
+		{Name: "send_at", Type: field.TypeTime, Nullable: true},
+		{Name: "occasion_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "occasion_year", Type: field.TypeInt, Nullable: true},
+		{Name: "requested_by", Type: field.TypeString, Nullable: true},
+		{Name: "approved_by", Type: field.TypeString, Nullable: true},
+		{Name: "approved_at", Type: field.TypeTime, Nullable: true},
+		{Name: "target_count", Type: field.TypeInt, Default: 0},
+		{Name: "sent_count", Type: field.TypeInt, Default: 0},
+		{Name: "failed_count", Type: field.TypeInt, Default: 0},
+		{Name: "skipped_count", Type: field.TypeInt, Default: 0},
+		{Name: "suppressed_count", Type: field.TypeInt, Default: 0},
+		{Name: "metadata", Type: field.TypeJSON, Nullable: true},
+		{Name: "completed_at", Type: field.TypeTime, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// BroadcastsTable holds the schema information for the "broadcasts" table.
+	BroadcastsTable = &schema.Table{
+		Name:       "broadcasts",
+		Columns:    BroadcastsColumns,
+		PrimaryKey: []*schema.Column{BroadcastsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "broadcast_tenant_id_status_send_at",
+				Unique:  false,
+				Columns: []*schema.Column{BroadcastsColumns[2], BroadcastsColumns[5], BroadcastsColumns[10]},
+			},
+			{
+				Name:    "broadcast_status_send_at",
+				Unique:  false,
+				Columns: []*schema.Column{BroadcastsColumns[5], BroadcastsColumns[10]},
+			},
+			{
+				Name:    "broadcast_platform_occasion_year",
+				Unique:  true,
+				Columns: []*schema.Column{BroadcastsColumns[11], BroadcastsColumns[12]},
+				Annotation: &entsql.IndexAnnotation{
+					Where: "tenant_id IS NULL AND occasion_id IS NOT NULL",
+				},
+			},
+			{
+				Name:    "broadcast_tenant_occasion_year",
+				Unique:  true,
+				Columns: []*schema.Column{BroadcastsColumns[2], BroadcastsColumns[11], BroadcastsColumns[12]},
+				Annotation: &entsql.IndexAnnotation{
+					Where: "tenant_id IS NOT NULL AND occasion_id IS NOT NULL",
+				},
+			},
+		},
+	}
+	// BroadcastRecipientsColumns holds the columns for the "broadcast_recipients" table.
+	BroadcastRecipientsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "broadcast_id", Type: field.TypeUUID},
+		{Name: "tenant_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "recipient_tenant_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "channel", Type: field.TypeString},
+		{Name: "address", Type: field.TypeString, Nullable: true},
+		{Name: "address_hash", Type: field.TypeString},
+		{Name: "display_name", Type: field.TypeString, Nullable: true},
+		{Name: "vars", Type: field.TypeJSON, Nullable: true},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"pending", "dispatching", "sent", "delivered", "failed", "skipped", "suppressed"}, Default: "pending"},
+		{Name: "provider_message_id", Type: field.TypeString, Nullable: true},
+		{Name: "error", Type: field.TypeString, Nullable: true, Size: 500},
+		{Name: "attempts", Type: field.TypeInt, Default: 0},
+		{Name: "next_attempt_at", Type: field.TypeTime, Nullable: true},
+		{Name: "sent_at", Type: field.TypeTime, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// BroadcastRecipientsTable holds the schema information for the "broadcast_recipients" table.
+	BroadcastRecipientsTable = &schema.Table{
+		Name:       "broadcast_recipients",
+		Columns:    BroadcastRecipientsColumns,
+		PrimaryKey: []*schema.Column{BroadcastRecipientsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "broadcastrecipient_broadcast_id_channel_address_hash",
+				Unique:  true,
+				Columns: []*schema.Column{BroadcastRecipientsColumns[1], BroadcastRecipientsColumns[4], BroadcastRecipientsColumns[6]},
+			},
+			{
+				Name:    "broadcastrecipient_broadcast_id_status_id",
+				Unique:  false,
+				Columns: []*schema.Column{BroadcastRecipientsColumns[1], BroadcastRecipientsColumns[9], BroadcastRecipientsColumns[0]},
+			},
+			{
+				Name:    "broadcastrecipient_provider_message_id",
+				Unique:  false,
+				Columns: []*schema.Column{BroadcastRecipientsColumns[10]},
+			},
+			{
+				Name:    "broadcastrecipient_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{BroadcastRecipientsColumns[15]},
+			},
+		},
+	}
 	// CreditTransactionsColumns holds the columns for the "credit_transactions" table.
 	CreditTransactionsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -133,6 +249,7 @@ var (
 		{Name: "channel", Type: field.TypeString},
 		{Name: "recipient", Type: field.TypeString},
 		{Name: "status", Type: field.TypeString, Default: "sent"},
+		{Name: "message_id", Type: field.TypeString, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
 	}
 	// DeliveryLogsTable holds the schema information for the "delivery_logs" table.
@@ -142,19 +259,19 @@ var (
 		PrimaryKey: []*schema.Column{DeliveryLogsColumns[0]},
 		Indexes: []*schema.Index{
 			{
-				Name:    "deliverylog_tenant_id",
-				Unique:  false,
-				Columns: []*schema.Column{DeliveryLogsColumns[1]},
-			},
-			{
 				Name:    "deliverylog_created_at",
 				Unique:  false,
-				Columns: []*schema.Column{DeliveryLogsColumns[6]},
+				Columns: []*schema.Column{DeliveryLogsColumns[7]},
 			},
 			{
 				Name:    "deliverylog_tenant_id_created_at",
 				Unique:  false,
-				Columns: []*schema.Column{DeliveryLogsColumns[1], DeliveryLogsColumns[6]},
+				Columns: []*schema.Column{DeliveryLogsColumns[1], DeliveryLogsColumns[7]},
+			},
+			{
+				Name:    "deliverylog_message_id",
+				Unique:  false,
+				Columns: []*schema.Column{DeliveryLogsColumns[6]},
 			},
 		},
 	}
@@ -312,6 +429,46 @@ var (
 				Name:    "notificationrolepermission_permission_id",
 				Unique:  false,
 				Columns: []*schema.Column{NotificationRolePermissionsColumns[2]},
+			},
+		},
+	}
+	// OccasionsColumns holds the columns for the "occasions" table.
+	OccasionsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "tenant_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "key", Type: field.TypeString, Size: 80},
+		{Name: "name", Type: field.TypeString, Size: 120},
+		{Name: "country", Type: field.TypeString, Default: "KE"},
+		{Name: "rule", Type: field.TypeJSON},
+		{Name: "duration_days", Type: field.TypeInt, Default: 1},
+		{Name: "lead_days", Type: field.TypeInt, Default: 14},
+		{Name: "send_offset_days", Type: field.TypeInt, Default: 0},
+		{Name: "is_active", Type: field.TypeBool, Default: true},
+		{Name: "metadata", Type: field.TypeJSON, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// OccasionsTable holds the schema information for the "occasions" table.
+	OccasionsTable = &schema.Table{
+		Name:       "occasions",
+		Columns:    OccasionsColumns,
+		PrimaryKey: []*schema.Column{OccasionsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "occasion_platform_key",
+				Unique:  true,
+				Columns: []*schema.Column{OccasionsColumns[2]},
+				Annotation: &entsql.IndexAnnotation{
+					Where: "tenant_id IS NULL",
+				},
+			},
+			{
+				Name:    "occasion_tenant_key",
+				Unique:  true,
+				Columns: []*schema.Column{OccasionsColumns[1], OccasionsColumns[2]},
+				Annotation: &entsql.IndexAnnotation{
+					Where: "tenant_id IS NOT NULL",
+				},
 			},
 		},
 	}
@@ -513,6 +670,41 @@ var (
 				Name:    "serviceconfig_config_key",
 				Unique:  false,
 				Columns: []*schema.Column{ServiceConfigsColumns[2]},
+			},
+		},
+	}
+	// SuppressionsColumns holds the columns for the "suppressions" table.
+	SuppressionsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "tenant_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "channel", Type: field.TypeString},
+		{Name: "address_hash", Type: field.TypeString},
+		{Name: "scope", Type: field.TypeEnum, Enums: []string{"marketing", "all"}, Default: "marketing"},
+		{Name: "reason", Type: field.TypeString, Default: "unsubscribe"},
+		{Name: "source", Type: field.TypeString, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+	}
+	// SuppressionsTable holds the schema information for the "suppressions" table.
+	SuppressionsTable = &schema.Table{
+		Name:       "suppressions",
+		Columns:    SuppressionsColumns,
+		PrimaryKey: []*schema.Column{SuppressionsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "suppression_platform_address",
+				Unique:  true,
+				Columns: []*schema.Column{SuppressionsColumns[2], SuppressionsColumns[3], SuppressionsColumns[4]},
+				Annotation: &entsql.IndexAnnotation{
+					Where: "tenant_id IS NULL",
+				},
+			},
+			{
+				Name:    "suppression_tenant_address",
+				Unique:  true,
+				Columns: []*schema.Column{SuppressionsColumns[1], SuppressionsColumns[2], SuppressionsColumns[3], SuppressionsColumns[4]},
+				Annotation: &entsql.IndexAnnotation{
+					Where: "tenant_id IS NOT NULL",
+				},
 			},
 		},
 	}
@@ -933,12 +1125,15 @@ var (
 		AnnouncementsTable,
 		BackupsTable,
 		BackupSettingsTable,
+		BroadcastsTable,
+		BroadcastRecipientsTable,
 		CreditTransactionsTable,
 		DeliveryLogsTable,
 		DeviceTokensTable,
 		NotificationPermissionsTable,
 		NotificationRolesTable,
 		NotificationRolePermissionsTable,
+		OccasionsTable,
 		OutboxEventsTable,
 		PermissionsTable,
 		PlatformBillingsTable,
@@ -946,6 +1141,7 @@ var (
 		RateLimitConfigsTable,
 		RolesTable,
 		ServiceConfigsTable,
+		SuppressionsTable,
 		TemplatesTable,
 		TenantsTable,
 		TenantCreditsTable,

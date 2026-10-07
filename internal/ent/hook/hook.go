@@ -45,6 +45,30 @@ func (f BackupSettingFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Valu
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.BackupSettingMutation", m)
 }
 
+// The BroadcastFunc type is an adapter to allow the use of ordinary
+// function as Broadcast mutator.
+type BroadcastFunc func(context.Context, *ent.BroadcastMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f BroadcastFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.BroadcastMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.BroadcastMutation", m)
+}
+
+// The BroadcastRecipientFunc type is an adapter to allow the use of ordinary
+// function as BroadcastRecipient mutator.
+type BroadcastRecipientFunc func(context.Context, *ent.BroadcastRecipientMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f BroadcastRecipientFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.BroadcastRecipientMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.BroadcastRecipientMutation", m)
+}
+
 // The CreditTransactionFunc type is an adapter to allow the use of ordinary
 // function as CreditTransaction mutator.
 type CreditTransactionFunc func(context.Context, *ent.CreditTransactionMutation) (ent.Value, error)
@@ -115,6 +139,18 @@ func (f NotificationRolePermissionFunc) Mutate(ctx context.Context, m ent.Mutati
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.NotificationRolePermissionMutation", m)
+}
+
+// The OccasionFunc type is an adapter to allow the use of ordinary
+// function as Occasion mutator.
+type OccasionFunc func(context.Context, *ent.OccasionMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f OccasionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.OccasionMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.OccasionMutation", m)
 }
 
 // The OutboxEventFunc type is an adapter to allow the use of ordinary
@@ -199,6 +235,18 @@ func (f ServiceConfigFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Valu
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ServiceConfigMutation", m)
+}
+
+// The SuppressionFunc type is an adapter to allow the use of ordinary
+// function as Suppression mutator.
+type SuppressionFunc func(context.Context, *ent.SuppressionMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f SuppressionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.SuppressionMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.SuppressionMutation", m)
 }
 
 // The TemplateFunc type is an adapter to allow the use of ordinary

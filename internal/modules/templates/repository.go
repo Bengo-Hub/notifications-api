@@ -6,12 +6,13 @@ import (
 	"fmt"
 	"time"
 
+	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"github.com/Bengo-Hub/cache"
 	"github.com/Bengo-Hub/pagination"
 	"github.com/bengobox/notifications-api/internal/ent"
 	enttemplate "github.com/bengobox/notifications-api/internal/ent/template"
 	"github.com/google/uuid"
-	"entgo.io/ent/dialect/sql"
 )
 
 // TTLTemplates is the cache duration for template list queries.
@@ -57,12 +58,9 @@ func NewRepository(client *ent.Client, c *cache.Aside) *Repository {
 
 // List queries templates with pagination, filtering, and caching.
 func (r *Repository) List(ctx context.Context, p pagination.Params, f Filters) ([]TemplateSummary, int, error) {
-	fmt.Printf("[DEBUG] List called with page=%d, limit=%d, filters=%+v\n", p.Page, p.Limit, f)
 	cacheKey := cache.Key("notif", "templates", f.Channel, f.Category, f.Tag, f.Search, cache.FormatPage(p.Page, p.Limit))
-	fmt.Printf("[DEBUG] Cache key: %s\n", cacheKey)
 
 	result, err := cache.GetOrSet(ctx, r.cache, cacheKey, TTLTemplates, func(ctx context.Context) (CachedListResult, error) {
-		fmt.Printf("[DEBUG] Cache miss or error - executing fetch callback\n")
 		q := r.client.Template.Query().Where(enttemplate.IsActive(true))
 
 		if f.Channel != "" {
@@ -75,29 +73,24 @@ func (r *Repository) List(ctx context.Context, p pagination.Params, f Filters) (
 			q = q.Where(enttemplate.NameContainsFold(f.Search))
 		}
 		if f.Tag != "" {
-			// Search in tags JSON array
+			// Tag is a query-string value: matched as a bound parameter against the JSON array,
+			// never formatted into the SQL text.
 			q = q.Where(func(s *sql.Selector) {
-				s.Where(sql.ExprP(fmt.Sprintf("tags ?? '%s'", f.Tag)))
+				s.Where(sqljson.ValueContains(enttemplate.FieldTags, f.Tag))
 			})
 		}
 
 		total, err := q.Clone().Count(ctx)
-		fmt.Printf("[DEBUG] Templates count query result: total=%d, err=%v, filters=%+v\n", total, err, f)
 		if err != nil {
-			fmt.Printf("[DEBUG] ERROR in count: %v\n", err)
 			return CachedListResult{}, fmt.Errorf("count templates: %w", err)
 		}
-
-		fmt.Printf("[DEBUG] About to query rows with offset=%d, limit=%d\n", p.Offset, p.Limit)
 
 		rows, err := q.
 			Order(ent.Asc(enttemplate.FieldChannel), ent.Asc(enttemplate.FieldCategory), ent.Asc(enttemplate.FieldName)).
 			Offset(p.Offset).
 			Limit(p.Limit).
 			All(ctx)
-		fmt.Printf("[DEBUG] Rows query result: count=%d, err=%v\n", len(rows), err)
 		if err != nil {
-			fmt.Printf("[DEBUG] ERROR in All(): %v\n", err)
 			return CachedListResult{}, fmt.Errorf("query templates: %w", err)
 		}
 
@@ -127,10 +120,8 @@ func (r *Repository) List(ctx context.Context, p pagination.Params, f Filters) (
 		return CachedListResult{Data: data, Total: total}, nil
 	})
 	if err != nil {
-		fmt.Printf("[DEBUG] GetOrSet returned error: %v\n", err)
 		return nil, 0, err
 	}
-	fmt.Printf("[DEBUG] GetOrSet returned: totalCount=%d, dataLen=%d\n", result.Total, len(result.Data))
 	return result.Data, result.Total, nil
 }
 

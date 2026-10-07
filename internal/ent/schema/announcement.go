@@ -9,9 +9,10 @@ import (
 	"github.com/google/uuid"
 )
 
-// Announcement is a platform-wide "what's new" banner the platform admin publishes to the apps'
-// dashboards (a new payment gateway, a new module). Apps read the active ones for their service
-// from a public endpoint; each user dismisses them on their own device.
+// Announcement is a "what's new" banner on the apps' dashboards (a new payment gateway, a new
+// module, a holiday closing notice). The platform publishes to every tenant; a tenant publishes
+// to its own users. Apps read the active ones for their service from a public endpoint; each user
+// dismisses them on their own device.
 type Announcement struct {
 	ent.Schema
 }
@@ -22,6 +23,11 @@ func (Announcement) Fields() []ent.Field {
 		field.UUID("id", uuid.UUID{}).
 			Default(uuid.New).
 			Immutable(),
+		field.UUID("tenant_id", uuid.UUID{}).
+			Optional().
+			Nillable().
+			Immutable().
+			Comment("Tenant whose own users see it; null = platform banner shown to every tenant"),
 		field.String("title").
 			NotEmpty().
 			MaxLen(120),
@@ -75,7 +81,8 @@ func (Announcement) Fields() []ent.Field {
 // Indexes of the Announcement.
 func (Announcement) Indexes() []ent.Index {
 	return []ent.Index{
-		// The active read filters on these two.
+		// The active read filters on these two (platform rows, and one tenant's rows).
 		index.Fields("is_active", "starts_at"),
+		index.Fields("tenant_id", "is_active"),
 	}
 }

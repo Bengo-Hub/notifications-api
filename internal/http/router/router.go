@@ -39,10 +39,11 @@ func bypassForWebsocket(mw func(http.Handler) http.Handler) func(http.Handler) h
 	}
 }
 
-func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handlers.NotificationHandler, templates *handlers.TemplateHandler, platformProviders *handlers.PlatformProviders, tenantProviders *handlers.TenantProviders, analytics *handlers.AnalyticsHandler, billing *handlers.BillingHandler, platformBilling *handlers.PlatformBilling, settings *handlers.SettingsHandler, rbacHandler *handlers.RBACHandler, authMeHandler *handlers.AuthMeHandler, deviceTokens *handlers.DeviceTokenHandler, apiKey string, authMiddleware *authclient.AuthMiddleware, authenticator *identityhandler.Authenticator, allowedOrigins []string, tenantSyncer *tenant.Syncer, rateLimiter *ratelimit.Quota, serviceConfig *handlers.ServiceConfigHandler, whatsappSubs *handlers.WhatsAppSubscriptionHandler, backups *handlers.BackupHandler, encryptionKey *handlers.EncryptionKeyHandler, backupDest *handlers.BackupDestinationHandler, notificationPrefs *handlers.PreferencesHandler, developerKeyAuth *devauth.DeveloperKeyAuth, swaggerHandler *handlers.SwaggerHandler, webhooks *handlers.WebhookHandler, whatsappEmbeddedSignup *handlers.WhatsAppEmbeddedSignupHandler, whatsappTemplates *handlers.WhatsAppTemplates, whatsappInbox *handlers.WhatsAppInboxHandler, announcementsH *handlers.AnnouncementHandler) http.Handler {
+func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handlers.NotificationHandler, templates *handlers.TemplateHandler, platformProviders *handlers.PlatformProviders, tenantProviders *handlers.TenantProviders, analytics *handlers.AnalyticsHandler, billing *handlers.BillingHandler, platformBilling *handlers.PlatformBilling, settings *handlers.SettingsHandler, rbacHandler *handlers.RBACHandler, authMeHandler *handlers.AuthMeHandler, deviceTokens *handlers.DeviceTokenHandler, apiKey string, authMiddleware *authclient.AuthMiddleware, authenticator *identityhandler.Authenticator, allowedOrigins []string, tenantSyncer *tenant.Syncer, rateLimiter *ratelimit.Quota, serviceConfig *handlers.ServiceConfigHandler, whatsappSubs *handlers.WhatsAppSubscriptionHandler, backups *handlers.BackupHandler, encryptionKey *handlers.EncryptionKeyHandler, backupDest *handlers.BackupDestinationHandler, notificationPrefs *handlers.PreferencesHandler, developerKeyAuth *devauth.DeveloperKeyAuth, swaggerHandler *handlers.SwaggerHandler, webhooks *handlers.WebhookHandler, whatsappEmbeddedSignup *handlers.WhatsAppEmbeddedSignupHandler, whatsappTemplates *handlers.WhatsAppTemplates, whatsappInbox *handlers.WhatsAppInboxHandler, announcementsH *handlers.AnnouncementHandler, broadcastsH *handlers.BroadcastHandler) http.Handler {
 	r := chi.NewRouter()
 
-	r.Use(middleware.RealIP)
+	// Client IP from the edge's trusted header only (chi's RealIP trusts any forwarded header).
+	r.Use(ratelimit.TrustedRealIP)
 	r.Use(httpware.RequestID)
 	r.Use(bypassForWebsocket(httpware.Logging(log)))
 	r.Use(httpware.Recover(log))
@@ -81,6 +82,7 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 		if webhooks != nil {
 			api.Route("/webhooks", func(wh chi.Router) {
 				wh.Post("/africastalking/dlr", webhooks.AfricasTalkingDLR)
+				wh.Post("/africastalking/inbound", webhooks.AfricasTalkingInbound)
 				wh.Get("/whatsapp/meta", webhooks.WhatsAppVerify)
 				wh.Post("/whatsapp/meta", webhooks.WhatsAppIncoming)
 			})
@@ -127,6 +129,11 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 		// PIN-terminal sessions must read them too). Writes are platform admin only, below.
 		if announcementsH != nil {
 			api.Get("/announcements/active", announcementsH.Active)
+		}
+
+		// Unsubscribe links in marketing messages: public (no login), signed tokens, one-click POST.
+		if broadcastsH != nil {
+			broadcastsH.RegisterPublicRoutes(api)
 		}
 
 		// WhatsApp plans — public, no auth needed (pricing discovery)
@@ -200,6 +207,11 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 				if announcementsH != nil {
 					announcementsH.RegisterPlatformRoutes(platform)
 				}
+				// Platform broadcasts and the shared occasion catalogue (super admin already gates
+				// this group, so approving needs nothing extra).
+				if broadcastsH != nil {
+					broadcastsH.RegisterRoutes(platform, func(next http.Handler) http.Handler { return next })
+				}
 				// Platform-default backup destination (OneDrive/GDrive/S3/WebDAV/SFTP/SMB).
 				if backupDest != nil {
 					backupDest.RegisterPlatformRoutes(platform)
@@ -218,20 +230,22 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 				})
 			})
 
-			// Analytics (platform or tenant-scoped)
-			protected.Route("/analytics", func(analyticsRouter chi.Router) {
-				if authenticator != nil {
-					analyticsRouter.Use(authenticator.RequirePermissions(identity.PermAnalyticsRead))
-				}
-				analyticsRouter.Get("/delivery", analytics.Delivery)
-				analyticsRouter.Get("/delivery/{tenantId}", analytics.Delivery)
-				analyticsRouter.Get("/logs", analytics.Logs)
-				analyticsRouter.Get("/logs/{tenantId}", analytics.Logs)
-			})
-
 			// Base group for tenant-scoped operations
 			protected.Group(func(tenantRouter chi.Router) {
 				tenantRouter.Use(tenantContext())
+
+				// Analytics (tenant-scoped; platform owners may pick a tenant or ask for all). Mounted
+				// inside tenantContext so the platform-owner flag is set: outside it the tenant
+				// switcher was ignored and every admin saw only their own tenant's numbers.
+				tenantRouter.Route("/analytics", func(analyticsRouter chi.Router) {
+					if authenticator != nil {
+						analyticsRouter.Use(authenticator.RequirePermissions(identity.PermAnalyticsRead))
+					}
+					analyticsRouter.Get("/delivery", analytics.Delivery)
+					analyticsRouter.Get("/delivery/{tenantId}", analytics.Delivery)
+					analyticsRouter.Get("/logs", analytics.Logs)
+					analyticsRouter.Get("/logs/{tenantId}", analytics.Logs)
+				})
 
 				// JIT tenant sync: ensure tenant exists in local DB when slug is in context
 				if tenantSyncer != nil {
@@ -290,6 +304,22 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 							}
 							reply.Post("/{conversationId}/messages", whatsappInbox.Reply)
 						})
+					})
+				}
+
+				// A tenant's own broadcasts, occasions and dashboard banners. Writing needs the
+				// broadcasts manage permission; approving for sending needs approve.
+				if broadcastsH != nil {
+					tenantRouter.Group(func(bc chi.Router) {
+						approve := func(next http.Handler) http.Handler { return next }
+						if authenticator != nil {
+							bc.Use(authenticator.RequirePermissions(identity.PermBroadcastsManage))
+							approve = authenticator.RequirePermissions(identity.PermBroadcastsApprove)
+						}
+						broadcastsH.RegisterRoutes(bc, approve)
+						if announcementsH != nil {
+							announcementsH.RegisterTenantRoutes(bc)
+						}
 					})
 				}
 

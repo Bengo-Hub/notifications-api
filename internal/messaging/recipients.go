@@ -21,13 +21,24 @@ import (
 // non-email-shaped recipient (e.g. every phone number), which is exactly the bug this
 // channel parameter fixes: SMS/WhatsApp sends were being queued with an empty
 // recipient list and delivering to nobody.
+//
+// Push recipients are device tokens and are never split: a Web Push token is the whole
+// subscription JSON ({"endpoint":...,"keys":{"p256dh":...,"auth":...}}), and splitting it on
+// commas turned one subscription into several bogus "tokens" that were sent to FCM and logged as
+// recipients with the subscription keys in plain text.
 func NormalizeRecipients(in []string, channel string) []string {
 	seen := make(map[string]struct{})
 	out := make([]string, 0, len(in))
-	for _, raw := range in {
-		for _, part := range strings.FieldsFunc(raw, func(r rune) bool {
+	split := func(raw string) []string {
+		if channel == "push" {
+			return []string{raw}
+		}
+		return strings.FieldsFunc(raw, func(r rune) bool {
 			return r == ',' || r == ';' || r == '\n' || r == '\r'
-		}) {
+		})
+	}
+	for _, raw := range in {
+		for _, part := range split(raw) {
 			addr := strings.TrimSpace(part)
 			if addr == "" {
 				continue

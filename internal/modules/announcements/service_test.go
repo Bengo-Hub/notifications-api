@@ -36,7 +36,7 @@ func TestActiveFor(t *testing.T) {
 		ann("switched-off", 99, nil, past, nil, false),
 	}
 
-	got := titles(ActiveFor(list, "POS", now))
+	got := titles(ActiveFor(list, "POS", nil, now))
 	want := []string{"payhero", "newer-everyone", "everyone"}
 	if len(got) != len(want) {
 		t.Fatalf("pos sees %v, want %v", got, want)
@@ -46,11 +46,29 @@ func TestActiveFor(t *testing.T) {
 			t.Fatalf("pos sees %v, want %v (priority, then newest)", got, want)
 		}
 	}
-	if got := titles(ActiveFor(list, "inventory", now)); len(got) != 3 || got[0] != "inventory-only" {
+	if got := titles(ActiveFor(list, "inventory", nil, now)); len(got) != 3 || got[0] != "inventory-only" {
 		t.Fatalf("inventory sees %v", got)
 	}
-	if got := titles(ActiveFor(list, "logistics", now)); len(got) != 2 {
+	if got := titles(ActiveFor(list, "logistics", nil, now)); len(got) != 2 {
 		t.Fatalf("an app no banner targets sees only the every-app ones, got %v", got)
+	}
+}
+
+func TestActiveForTenantBannersStayWithTheirTenant(t *testing.T) {
+	now := time.Date(2026, 10, 3, 12, 0, 0, 0, time.UTC)
+	past := now.Add(-time.Hour)
+	a, b := uuid.New(), uuid.New()
+	platform := ann("platform", 0, nil, past, nil, true)
+	ownA := ann("closing early", 5, nil, past, nil, true)
+	ownA.TenantID = &a
+	if got := titles(ActiveFor([]*ent.Announcement{platform, ownA}, "pos", &a, now)); len(got) != 2 || got[0] != "closing early" {
+		t.Fatalf("tenant A sees %v", got)
+	}
+	if got := titles(ActiveFor([]*ent.Announcement{platform, ownA}, "pos", &b, now)); len(got) != 1 || got[0] != "platform" {
+		t.Fatalf("tenant B must not see tenant A's banner, got %v", got)
+	}
+	if got := titles(ActiveFor([]*ent.Announcement{platform, ownA}, "pos", nil, now)); len(got) != 1 {
+		t.Fatalf("an anonymous read sees platform banners only, got %v", got)
 	}
 }
 

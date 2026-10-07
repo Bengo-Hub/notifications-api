@@ -80,6 +80,11 @@ func Status(v string) predicate.DeliveryLog {
 	return predicate.DeliveryLog(sql.FieldEQ(FieldStatus, v))
 }
 
+// MessageID applies equality check predicate on the "message_id" field. It's identical to MessageIDEQ.
+func MessageID(v string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldEQ(FieldMessageID, v))
+}
+
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
 func CreatedAt(v time.Time) predicate.DeliveryLog {
 	return predicate.DeliveryLog(sql.FieldEQ(FieldCreatedAt, v))
@@ -408,6 +413,81 @@ func StatusEqualFold(v string) predicate.DeliveryLog {
 // StatusContainsFold applies the ContainsFold predicate on the "status" field.
 func StatusContainsFold(v string) predicate.DeliveryLog {
 	return predicate.DeliveryLog(sql.FieldContainsFold(FieldStatus, v))
+}
+
+// MessageIDEQ applies the EQ predicate on the "message_id" field.
+func MessageIDEQ(v string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldEQ(FieldMessageID, v))
+}
+
+// MessageIDNEQ applies the NEQ predicate on the "message_id" field.
+func MessageIDNEQ(v string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldNEQ(FieldMessageID, v))
+}
+
+// MessageIDIn applies the In predicate on the "message_id" field.
+func MessageIDIn(vs ...string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldIn(FieldMessageID, vs...))
+}
+
+// MessageIDNotIn applies the NotIn predicate on the "message_id" field.
+func MessageIDNotIn(vs ...string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldNotIn(FieldMessageID, vs...))
+}
+
+// MessageIDGT applies the GT predicate on the "message_id" field.
+func MessageIDGT(v string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldGT(FieldMessageID, v))
+}
+
+// MessageIDGTE applies the GTE predicate on the "message_id" field.
+func MessageIDGTE(v string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldGTE(FieldMessageID, v))
+}
+
+// MessageIDLT applies the LT predicate on the "message_id" field.
+func MessageIDLT(v string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldLT(FieldMessageID, v))
+}
+
+// MessageIDLTE applies the LTE predicate on the "message_id" field.
+func MessageIDLTE(v string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldLTE(FieldMessageID, v))
+}
+
+// MessageIDContains applies the Contains predicate on the "message_id" field.
+func MessageIDContains(v string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldContains(FieldMessageID, v))
+}
+
+// MessageIDHasPrefix applies the HasPrefix predicate on the "message_id" field.
+func MessageIDHasPrefix(v string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldHasPrefix(FieldMessageID, v))
+}
+
+// MessageIDHasSuffix applies the HasSuffix predicate on the "message_id" field.
+func MessageIDHasSuffix(v string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldHasSuffix(FieldMessageID, v))
+}
+
+// MessageIDIsNil applies the IsNil predicate on the "message_id" field.
+func MessageIDIsNil() predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldIsNull(FieldMessageID))
+}
+
+// MessageIDNotNil applies the NotNil predicate on the "message_id" field.
+func MessageIDNotNil() predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldNotNull(FieldMessageID))
+}
+
+// MessageIDEqualFold applies the EqualFold predicate on the "message_id" field.
+func MessageIDEqualFold(v string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldEqualFold(FieldMessageID, v))
+}
+
+// MessageIDContainsFold applies the ContainsFold predicate on the "message_id" field.
+func MessageIDContainsFold(v string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldContainsFold(FieldMessageID, v))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.

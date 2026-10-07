@@ -19,6 +19,8 @@ type Announcement struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID uuid.UUID `json:"id,omitempty"`
+	// Tenant whose own users see it; null = platform banner shown to every tenant
+	TenantID *uuid.UUID `json:"tenant_id,omitempty"`
 	// Title holds the value of the "title" field.
 	Title string `json:"title,omitempty"`
 	// One or two sentences shown on the banner
@@ -61,6 +63,8 @@ func (*Announcement) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case announcement.FieldTenantID:
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		case announcement.FieldHighlights, announcement.FieldServices, announcement.FieldMetadata:
 			values[i] = new([]byte)
 		case announcement.FieldDismissible, announcement.FieldIsActive:
@@ -93,6 +97,13 @@ func (_m *Announcement) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value != nil {
 				_m.ID = *value
+			}
+		case announcement.FieldTenantID:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field tenant_id", values[i])
+			} else if value.Valid {
+				_m.TenantID = new(uuid.UUID)
+				*_m.TenantID = *value.S.(*uuid.UUID)
 			}
 		case announcement.FieldTitle:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -239,6 +250,11 @@ func (_m *Announcement) String() string {
 	var builder strings.Builder
 	builder.WriteString("Announcement(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
+	if v := _m.TenantID; v != nil {
+		builder.WriteString("tenant_id=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
 	builder.WriteString("title=")
 	builder.WriteString(_m.Title)
 	builder.WriteString(", ")

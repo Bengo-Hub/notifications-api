@@ -18,6 +18,10 @@ type Tx struct {
 	Backup *BackupClient
 	// BackupSetting is the client for interacting with the BackupSetting builders.
 	BackupSetting *BackupSettingClient
+	// Broadcast is the client for interacting with the Broadcast builders.
+	Broadcast *BroadcastClient
+	// BroadcastRecipient is the client for interacting with the BroadcastRecipient builders.
+	BroadcastRecipient *BroadcastRecipientClient
 	// CreditTransaction is the client for interacting with the CreditTransaction builders.
 	CreditTransaction *CreditTransactionClient
 	// DeliveryLog is the client for interacting with the DeliveryLog builders.
@@ -30,6 +34,8 @@ type Tx struct {
 	NotificationRole *NotificationRoleClient
 	// NotificationRolePermission is the client for interacting with the NotificationRolePermission builders.
 	NotificationRolePermission *NotificationRolePermissionClient
+	// Occasion is the client for interacting with the Occasion builders.
+	Occasion *OccasionClient
 	// OutboxEvent is the client for interacting with the OutboxEvent builders.
 	OutboxEvent *OutboxEventClient
 	// Permission is the client for interacting with the Permission builders.
@@ -44,6 +50,8 @@ type Tx struct {
 	Role *RoleClient
 	// ServiceConfig is the client for interacting with the ServiceConfig builders.
 	ServiceConfig *ServiceConfigClient
+	// Suppression is the client for interacting with the Suppression builders.
+	Suppression *SuppressionClient
 	// Template is the client for interacting with the Template builders.
 	Template *TemplateClient
 	// Tenant is the client for interacting with the Tenant builders.
@@ -196,12 +204,15 @@ func (tx *Tx) init() {
 	tx.Announcement = NewAnnouncementClient(tx.config)
 	tx.Backup = NewBackupClient(tx.config)
 	tx.BackupSetting = NewBackupSettingClient(tx.config)
+	tx.Broadcast = NewBroadcastClient(tx.config)
+	tx.BroadcastRecipient = NewBroadcastRecipientClient(tx.config)
 	tx.CreditTransaction = NewCreditTransactionClient(tx.config)
 	tx.DeliveryLog = NewDeliveryLogClient(tx.config)
 	tx.DeviceToken = NewDeviceTokenClient(tx.config)
 	tx.NotificationPermission = NewNotificationPermissionClient(tx.config)
 	tx.NotificationRole = NewNotificationRoleClient(tx.config)
 	tx.NotificationRolePermission = NewNotificationRolePermissionClient(tx.config)
+	tx.Occasion = NewOccasionClient(tx.config)
 	tx.OutboxEvent = NewOutboxEventClient(tx.config)
 	tx.Permission = NewPermissionClient(tx.config)
 	tx.PlatformBilling = NewPlatformBillingClient(tx.config)
@@ -209,6 +220,7 @@ func (tx *Tx) init() {
 	tx.RateLimitConfig = NewRateLimitConfigClient(tx.config)
 	tx.Role = NewRoleClient(tx.config)
 	tx.ServiceConfig = NewServiceConfigClient(tx.config)
+	tx.Suppression = NewSuppressionClient(tx.config)
 	tx.Template = NewTemplateClient(tx.config)
 	tx.Tenant = NewTenantClient(tx.config)
 	tx.TenantCredit = NewTenantCreditClient(tx.config)

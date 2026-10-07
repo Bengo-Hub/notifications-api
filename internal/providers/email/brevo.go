@@ -77,6 +77,12 @@ func (p *BrevoProvider) SendEmail(ctx context.Context, from string, to []string,
 	if replyTo != "" {
 		payload.ReplyTo = &brevoRecipient{Email: replyTo}
 	}
+	if oneClick := ListUnsubscribeURL(ctx); oneClick != "" {
+		payload.Headers = map[string]string{
+			"List-Unsubscribe":      "<" + oneClick + ">",
+			"List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+		}
+	}
 	if textBody != "" && htmlBody == "" {
 		payload.TextContent = textBody
 		payload.HTMLContent = ""
@@ -127,6 +133,7 @@ type brevoPayload struct {
 	HTMLContent string            `json:"htmlContent,omitempty"`
 	TextContent string            `json:"textContent,omitempty"`
 	Attachment  []brevoAttachment `json:"attachment,omitempty"`
+	Headers     map[string]string `json:"headers,omitempty"`
 }
 
 type brevoAttachment struct {

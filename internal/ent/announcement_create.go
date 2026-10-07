@@ -24,6 +24,20 @@ type AnnouncementCreate struct {
 	conflict []sql.ConflictOption
 }
 
+// SetTenantID sets the "tenant_id" field.
+func (_c *AnnouncementCreate) SetTenantID(v uuid.UUID) *AnnouncementCreate {
+	_c.mutation.SetTenantID(v)
+	return _c
+}
+
+// SetNillableTenantID sets the "tenant_id" field if the given value is not nil.
+func (_c *AnnouncementCreate) SetNillableTenantID(v *uuid.UUID) *AnnouncementCreate {
+	if v != nil {
+		_c.SetTenantID(*v)
+	}
+	return _c
+}
+
 // SetTitle sets the "title" field.
 func (_c *AnnouncementCreate) SetTitle(v string) *AnnouncementCreate {
 	_c.mutation.SetTitle(v)
@@ -397,6 +411,10 @@ func (_c *AnnouncementCreate) createSpec() (*Announcement, *sqlgraph.CreateSpec)
 		_node.ID = id
 		_spec.ID.Value = &id
 	}
+	if value, ok := _c.mutation.TenantID(); ok {
+		_spec.SetField(announcement.FieldTenantID, field.TypeUUID, value)
+		_node.TenantID = &value
+	}
 	if value, ok := _c.mutation.Title(); ok {
 		_spec.SetField(announcement.FieldTitle, field.TypeString, value)
 		_node.Title = value
@@ -472,7 +490,7 @@ func (_c *AnnouncementCreate) createSpec() (*Announcement, *sqlgraph.CreateSpec)
 // of the `INSERT` statement. For example:
 //
 //	client.Announcement.Create().
-//		SetTitle(v).
+//		SetTenantID(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -481,7 +499,7 @@ func (_c *AnnouncementCreate) createSpec() (*Announcement, *sqlgraph.CreateSpec)
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.AnnouncementUpsert) {
-//			SetTitle(v+v).
+//			SetTenantID(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *AnnouncementCreate) OnConflict(opts ...sql.ConflictOption) *AnnouncementUpsertOne {
@@ -773,6 +791,9 @@ func (u *AnnouncementUpsertOne) UpdateNewValues() *AnnouncementUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
 		if _, exists := u.create.mutation.ID(); exists {
 			s.SetIgnore(announcement.FieldID)
+		}
+		if _, exists := u.create.mutation.TenantID(); exists {
+			s.SetIgnore(announcement.FieldTenantID)
 		}
 		if _, exists := u.create.mutation.CreatedAt(); exists {
 			s.SetIgnore(announcement.FieldCreatedAt)
@@ -1224,7 +1245,7 @@ func (_c *AnnouncementCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.AnnouncementUpsert) {
-//			SetTitle(v+v).
+//			SetTenantID(v+v).
 //		}).
 //		Exec(ctx)
 func (_c *AnnouncementCreateBulk) OnConflict(opts ...sql.ConflictOption) *AnnouncementUpsertBulk {
@@ -1270,6 +1291,9 @@ func (u *AnnouncementUpsertBulk) UpdateNewValues() *AnnouncementUpsertBulk {
 		for _, b := range u.create.builders {
 			if _, exists := b.mutation.ID(); exists {
 				s.SetIgnore(announcement.FieldID)
+			}
+			if _, exists := b.mutation.TenantID(); exists {
+				s.SetIgnore(announcement.FieldTenantID)
 			}
 			if _, exists := b.mutation.CreatedAt(); exists {
 				s.SetIgnore(announcement.FieldCreatedAt)

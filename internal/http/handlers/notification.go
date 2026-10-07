@@ -354,10 +354,9 @@ func (h *NotificationHandler) Enqueue(w http.ResponseWriter, r *http.Request) {
 	}
 	queued = true
 
-	// Publish per-channel usage event for subscriptions-api limit tracking.
+	// Publish per-channel usage event for subscriptions-api limit tracking. The delivery log row is
+	// written by the worker once it knows the outcome (sent, failed or skipped).
 	h.publishUsageEvent(r.Context(), tenant, req.Channel)
-
-	recordDeliveryLog(r.Context(), h.entClient, tenant, req.Template, req.Channel, req.To)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
@@ -502,25 +501,5 @@ func (h *NotificationHandler) EnqueueMessage(ctx context.Context, tenantID, chan
 	if _, err := messaging.Publish(ctx, h.nats, h.eventsCfg, msg); err != nil {
 		return "", err
 	}
-	recordDeliveryLog(ctx, h.entClient, tenantID, templateID, channel, to)
 	return rid, nil
-}
-
-func recordDeliveryLog(ctx context.Context, client *ent.Client, tenantID, templateID, channel string, to []string) {
-	if client == nil || len(to) == 0 {
-		return
-	}
-	for _, recipient := range to {
-		_, err := client.DeliveryLog.Create().
-			SetTenantID(tenantID).
-			SetTemplateID(templateID).
-			SetChannel(channel).
-			SetRecipient(recipient).
-			SetStatus("sent").
-			Save(ctx)
-		if err != nil {
-			// best-effort; do not fail the request
-			return
-		}
-	}
 }

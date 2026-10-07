@@ -42,6 +42,10 @@ const (
 	PermPlatformBilling     Permission = "notifications.platform.billing"
 	PermWhatsAppInboxRead   Permission = "notifications.whatsapp_inbox.view"
 	PermWhatsAppInboxReply  Permission = "notifications.whatsapp_inbox.reply"
+	// Broadcasts: write and send bulk notices and occasion greetings (manage), and approve them for
+	// sending (approve). Admins hold both; a manager prepares drafts an admin approves.
+	PermBroadcastsManage  Permission = "notifications.broadcasts.manage"
+	PermBroadcastsApprove Permission = "notifications.broadcasts.approve"
 )
 
 // AllPermissions returns all defined permissions.
@@ -57,6 +61,7 @@ func AllPermissions() []Permission {
 		PermUsersRead, PermUsersManage,
 		PermPlatformProviders, PermPlatformBilling,
 		PermWhatsAppInboxRead, PermWhatsAppInboxReply,
+		PermBroadcastsManage, PermBroadcastsApprove,
 	}
 }
 
@@ -84,6 +89,7 @@ func DefaultPermissions(role Role) []Permission {
 			PermAnalyticsRead, PermAnalyticsExport,
 			PermCreditsRead, PermCreditsManage,
 			PermWhatsAppInboxRead, PermWhatsAppInboxReply,
+			PermBroadcastsManage,
 		}
 	case RoleAdmin:
 		return []Permission{
@@ -96,6 +102,7 @@ func DefaultPermissions(role Role) []Permission {
 			PermCreditsRead, PermCreditsManage,
 			PermUsersRead, PermUsersManage,
 			PermWhatsAppInboxRead, PermWhatsAppInboxReply,
+			PermBroadcastsManage, PermBroadcastsApprove,
 		}
 	case RoleSuperAdmin:
 		return AllPermissions()

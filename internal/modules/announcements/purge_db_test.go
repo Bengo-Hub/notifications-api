@@ -59,7 +59,7 @@ func TestPurgeExpiredHardDeletes(t *testing.T) {
 
 	mk := func(title string, ends *time.Time) {
 		in := Input{Title: title, Summary: "s", Services: []string{"pos"}, StartsAt: ptr(now.Add(-2 * time.Hour)), EndsAt: ends}
-		if _, err := svc.Create(ctx, in, "admin@example.com"); err != nil {
+		if _, err := svc.Create(ctx, in, "admin@example.com", nil); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -67,7 +67,7 @@ func TestPurgeExpiredHardDeletes(t *testing.T) {
 	mk("running", &future)
 	mk("open-ended", nil)
 
-	active, err := svc.Active(ctx, "pos")
+	active, err := svc.Active(ctx, "pos", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -82,7 +82,7 @@ func TestPurgeExpiredHardDeletes(t *testing.T) {
 	if n != 1 {
 		t.Fatalf("purged %d, want 1", n)
 	}
-	left, _ := svc.List(ctx)
+	left, _ := svc.List(ctx, nil)
 	if len(left) != 2 {
 		t.Fatalf("left = %v, want running and open-ended", titles(left))
 	}
