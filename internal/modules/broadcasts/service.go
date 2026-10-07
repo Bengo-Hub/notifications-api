@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -500,6 +501,48 @@ func RefreshCounts(ctx context.Context, client *ent.Client, broadcastID uuid.UUI
 	return client.Broadcast.UpdateOneID(broadcastID).
 		SetTargetCount(total).SetSentCount(sent).SetFailedCount(failed).
 		SetSkippedCount(skipped).SetSuppressedCount(suppressed).Exec(ctx)
+}
+
+// SetExclusions leaves people out of (exclude) or puts them back into (include) a broadcast,
+// by their audience key, until it starts sending. Returns how many are left out.
+func (s *Service) SetExclusions(ctx context.Context, id uuid.UUID, tenantID *uuid.UUID, exclude, include []string) (int, error) {
+	b, err := s.Get(ctx, id, tenantID)
+	if err != nil {
+		return 0, err
+	}
+	switch b.Status {
+	case entbroadcast.StatusDraft, entbroadcast.StatusPendingApproval, entbroadcast.StatusRejected, entbroadcast.StatusScheduled:
+	default:
+		return 0, Invalid(errors.New("recipients can only be changed before the message starts sending"))
+	}
+	set := excludedKeys(b)
+	for _, k := range exclude {
+		if k = strings.TrimSpace(k); k != "" {
+			set[k] = true
+		}
+	}
+	for _, k := range include {
+		delete(set, strings.TrimSpace(k))
+	}
+	if len(set) > MaxExcluded {
+		return 0, Invalid(fmt.Errorf("at most %d people can be left out by hand; use a segment for a smaller audience", MaxExcluded))
+	}
+	keys := make([]string, 0, len(set))
+	for k := range set {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	meta := cloneMap(b.Metadata)
+	meta["excluded"] = keys
+	// Only while the status is unchanged, so a send that just started is not altered underneath.
+	n, err := s.client.Broadcast.Update().Where(entbroadcast.ID(b.ID), entbroadcast.StatusEQ(b.Status)).SetMetadata(meta).Save(ctx)
+	if err != nil {
+		return 0, err
+	}
+	if n == 0 {
+		return 0, ErrBadTransition
+	}
+	return len(keys), nil
 }
 
 // LastSender finds who most recently broadcast to an address on a channel, so a STOP reply

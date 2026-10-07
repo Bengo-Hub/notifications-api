@@ -465,8 +465,10 @@ func tenantContext() func(http.Handler) http.Handler {
 			if !found {
 				return "", "", false, false
 			}
-			// Slug-based platform owner check
-			isPO := claims.GetTenantSlug() == "codevertex"
+			// A platform owner is either signed in under the platform tenant or carries the signed
+			// is_platform_owner claim (a superuser whose token was issued while another tenant was
+			// active). Slug alone made such a token act as that tenant and ignore X-Tenant-ID.
+			isPO := claims.IsPlatformOwner || claims.GetTenantSlug() == "codevertex"
 			return claims.TenantID, claims.GetTenantSlug(), isPO, true
 		},
 		URLParamFunc: chi.URLParam,

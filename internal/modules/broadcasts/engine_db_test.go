@@ -168,6 +168,64 @@ func TestMaterialiseChoosesFirstValidAddressAndAppliesOptOuts(t *testing.T) {
 	}
 }
 
+func TestReviewAndExclusionsMatchWhatIsSent(t *testing.T) {
+	client, pool := testDB(t)
+	ctx := context.Background()
+	people := []Person{
+		{Key: "a", BusinessName: "Urban Loft", Region: "KE", Emails: []Address{{Value: "titus@urbanloft.co.ke", FirstName: "Titus"}}},
+		{Key: "b", BusinessName: "Shop B", Region: "KE", Emails: []Address{{Value: "owner@shopb.co.ke"}}},
+		{Key: "c", BusinessName: "Shop C", Region: "KE", Phones: []Address{{Value: "12"}}},
+	}
+	res := fakeResolver{people: people}
+	supp := suppression.NewService(client, []byte("0123456789abcdef0123456789abcdef"))
+	svc := NewService(client, zap.NewNop())
+	b := platformBroadcast(t, client, []string{"email"})
+	if err := client.Broadcast.UpdateOneID(b.ID).SetStatus(entbroadcast.StatusPendingApproval).Exec(ctx); err != nil {
+		t.Fatal(err)
+	}
+
+	rows, next, err := Review(ctx, res, supp, b, "", 50)
+	if err != nil || next != "" || len(rows) != 3 {
+		t.Fatalf("review: %d rows, next %q, %v", len(rows), next, err)
+	}
+	if r := rows[0]; r.Name != "Titus" || !r.Channels["email"].Sends || r.Channels["email"].Address != "t***@urbanloft.co.ke" {
+		t.Errorf("row a: %+v", r)
+	}
+	if r := rows[2]; r.Channels["email"].Sends || r.Channels["email"].Reason != "no valid email" {
+		t.Errorf("row c has no email and is shown as not sending: %+v", r)
+	}
+
+	// The sender unticks Shop B.
+	if n, err := svc.SetExclusions(ctx, b.ID, nil, []string{"b"}, nil); err != nil || n != 1 {
+		t.Fatalf("exclude: %d %v", n, err)
+	}
+	b, _ = client.Broadcast.Get(ctx, b.ID)
+	rows, _, _ = Review(ctx, res, supp, b, "", 50)
+	if !rows[1].Excluded || rows[1].Channels["email"].Sends || rows[1].Channels["email"].Reason != "left out" {
+		t.Errorf("Shop B is shown as left out: %+v", rows[1])
+	}
+
+	// Sending honours it.
+	if err := client.Broadcast.UpdateOneID(b.ID).SetStatus(entbroadcast.StatusSending).Exec(ctx); err != nil {
+		t.Fatal(err)
+	}
+	b, _ = client.Broadcast.Get(ctx, b.ID)
+	e := &Engine{Client: client, Pool: pool, Suppress: supp, Log: zap.NewNop(), Resolvers: map[string]Resolver{AudiencePlatformTenants: res}}
+	if err := e.materialise(ctx, b); err != nil {
+		t.Fatal(err)
+	}
+	pending, _ := client.BroadcastRecipient.Query().Where(entrecipient.BroadcastID(b.ID), entrecipient.StatusEQ(entrecipient.StatusPending)).Count(ctx)
+	left, _ := client.BroadcastRecipient.Query().Where(entrecipient.BroadcastID(b.ID), entrecipient.ErrorEQ("left out by the sender")).Count(ctx)
+	if pending != 1 || left != 1 {
+		t.Errorf("only Urban Loft is sent to (pending %d), Shop B recorded as left out (%d)", pending, left)
+	}
+
+	// Once sending, the list is fixed.
+	if _, err := svc.SetExclusions(ctx, b.ID, nil, nil, []string{"b"}); err == nil {
+		t.Error("exclusions must not change after sending starts")
+	}
+}
+
 func TestClaimNeverHandsTheSameRowToTwoWorkers(t *testing.T) {
 	client, pool := testDB(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)

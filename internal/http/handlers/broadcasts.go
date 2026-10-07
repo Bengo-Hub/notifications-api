@@ -14,7 +14,6 @@ import (
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 
-	"github.com/Bengo-Hub/httpware/contact"
 	"github.com/Bengo-Hub/httpware/pii"
 	authclient "github.com/Bengo-Hub/shared-auth-client"
 
@@ -56,6 +55,8 @@ func (h *BroadcastHandler) RegisterRoutes(r chi.Router, approve func(http.Handle
 	r.Delete("/broadcasts/{id}", h.Delete)
 	r.Get("/broadcasts/{id}/recipients", h.Recipients)
 	r.Post("/broadcasts/{id}/estimate", h.Estimate)
+	r.Get("/broadcasts/{id}/audience", h.Audience)
+	r.Put("/broadcasts/{id}/exclusions", h.Exclusions)
 	r.Post("/broadcasts/{id}/{action:submit|pause|resume|cancel}", h.Act)
 	r.With(approve).Post("/broadcasts/{id}/{action:approve|reject}", h.Act)
 
@@ -458,40 +459,35 @@ func (h *BroadcastHandler) Estimate(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, est)
 }
 
-// estimate pages the audience (capped, so a very large audience reports "at least") and counts
-// the people reachable on each channel with a valid address.
+// estimate counts, per channel, who the broadcast would actually send to now: the same review
+// as the recipient list (consent, opt-outs and people left out applied), paged and capped so a
+// very large audience reports "at least".
 func (h *BroadcastHandler) estimate(ctx context.Context, b *ent.Broadcast) (map[string]any, error) {
-	aType, _ := b.Audience["type"].(string)
-	res, ok := h.resolvers[aType]
-	if !ok {
-		return nil, broadcasts.ErrAudienceUnavailable
+	res, err := h.resolverFor(b)
+	if err != nil {
+		return nil, err
 	}
 	const maxPages = 50
-	people, cursor := 0, ""
-	reach := map[string]int{"email": 0, "sms": 0, "whatsapp": 0}
+	people, left, cursor := 0, 0, ""
+	reach := map[string]int{}
 	capped := false
 	for page := 0; ; page++ {
 		if page == maxPages {
 			capped = true
 			break
 		}
-		list, next, err := res.Page(ctx, b.Audience, b.TenantID, cursor, 200)
+		rows, next, err := broadcasts.Review(ctx, res, h.suppress, b, cursor, 200)
 		if err != nil {
 			return nil, err
 		}
-		for _, p := range list {
+		for _, r := range rows {
 			people++
-			for _, e := range p.Emails {
-				if contact.ValidEmailSyntax(e.Value) {
-					reach["email"]++
-					break
-				}
+			if r.Excluded {
+				left++
 			}
-			for _, ph := range p.Phones {
-				if contact.ValidPhone(ph.Value, p.Region) {
-					reach["sms"]++
-					reach["whatsapp"]++
-					break
+			for ch, rc := range r.Channels {
+				if rc.Sends {
+					reach[ch]++
 				}
 			}
 		}
@@ -500,7 +496,110 @@ func (h *BroadcastHandler) estimate(ctx context.Context, b *ent.Broadcast) (map[
 		}
 		cursor = next
 	}
-	return map[string]any{"people": people, "reachable": reach, "at_least": capped}, nil
+	return map[string]any{"people": people, "left_out": left, "reachable": reach, "at_least": capped}, nil
+}
+
+func (h *BroadcastHandler) resolverFor(b *ent.Broadcast) (broadcasts.Resolver, error) {
+	aType, _ := b.Audience["type"].(string)
+	res, ok := h.resolvers[aType]
+	if !ok {
+		return nil, broadcasts.ErrAudienceUnavailable
+	}
+	return res, nil
+}
+
+// Audience godoc
+// @Summary Review who a broadcast goes to (paged), with the address each channel would use
+// @Description Addresses are masked. Each row says per channel whether it sends or why not (opted out, no consent, no valid address, left out).
+// @Tags Broadcasts
+// @Produce json
+// @Param id path string true "Broadcast ID"
+// @Param after query string false "Cursor from the previous page"
+// @Param limit query int false "Page size (max 100)"
+// @Success 200 {object} map[string]any
+// @Router /api/v1/broadcasts/{id}/audience [get]
+func (h *BroadcastHandler) Audience(w http.ResponseWriter, r *http.Request) {
+	s, ok := h.senderOr400(w, r)
+	if !ok {
+		return
+	}
+	id, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		jsonError(w, http.StatusBadRequest, "invalid id")
+		return
+	}
+	b, err := h.svc.Get(r.Context(), id, s.TenantID)
+	if h.writeErr(w, err, "get broadcast") {
+		return
+	}
+	res, err := h.resolverFor(b)
+	if err != nil {
+		jsonError(w, http.StatusFailedDependency, err.Error())
+		return
+	}
+	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+	if limit <= 0 || limit > 100 {
+		limit = 50
+	}
+	rows, next, err := broadcasts.Review(r.Context(), res, h.suppress, b, r.URL.Query().Get("after"), limit)
+	if err != nil {
+		if !errors.Is(err, broadcasts.ErrAudienceUnavailable) {
+			h.log.Warn("broadcast audience review", zap.Error(err))
+			err = errors.New("could not reach the contact list right now; try again in a minute")
+		}
+		jsonError(w, http.StatusFailedDependency, err.Error())
+		return
+	}
+	respondJSON(w, http.StatusOK, map[string]any{"data": rows, "next": next, "left_out": len(stringsOf(b.Metadata["excluded"]))})
+}
+
+// Exclusions godoc
+// @Summary Leave people out of a broadcast, or put them back, before it sends
+// @Tags Broadcasts
+// @Accept json
+// @Produce json
+// @Param id path string true "Broadcast ID"
+// @Success 200 {object} map[string]any
+// @Router /api/v1/broadcasts/{id}/exclusions [put]
+func (h *BroadcastHandler) Exclusions(w http.ResponseWriter, r *http.Request) {
+	s, ok := h.senderOr400(w, r)
+	if !ok {
+		return
+	}
+	id, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		jsonError(w, http.StatusBadRequest, "invalid id")
+		return
+	}
+	var body struct {
+		Exclude []string `json:"exclude"`
+		Include []string `json:"include"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		jsonError(w, http.StatusBadRequest, "invalid JSON body")
+		return
+	}
+	n, err := h.svc.SetExclusions(r.Context(), id, s.TenantID, body.Exclude, body.Include)
+	if h.writeErr(w, err, "set exclusions") {
+		return
+	}
+	respondJSON(w, http.StatusOK, map[string]any{"left_out": n})
+}
+
+func stringsOf(v any) []string {
+	switch l := v.(type) {
+	case []string:
+		return l
+	case []any:
+		out := make([]string, 0, len(l))
+		for _, x := range l {
+			if s, ok := x.(string); ok {
+				out = append(out, s)
+			}
+		}
+		return out
+	}
+	return nil
 }
 
 // Preview godoc

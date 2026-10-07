@@ -15,7 +15,6 @@ import (
 	"go.uber.org/zap"
 
 	sharedcache "github.com/Bengo-Hub/cache"
-	"github.com/Bengo-Hub/httpware/contact"
 	"github.com/Bengo-Hub/httpware/pii"
 	ratelimit "github.com/Bengo-Hub/shared-ratelimit"
 
@@ -200,94 +199,22 @@ func deliverableChannels(channels []string) []string {
 	return out
 }
 
-// candidate is one person's chosen address on one channel, before the suppression check.
-type candidate struct {
-	person  Person
-	channel string
-	address string
-	first   string
-	backups []string
-	reason  string // set when nothing usable was found
-}
-
-// insertRecipients turns one page of people into recipient rows: per channel the first valid
-// address (owners and verified admins first, as the resolver ordered them), suppressions and
-// consent applied, one row per address per channel. Re-running a page inserts nothing new.
+// insertRecipients turns one page of people into recipient rows (selectCandidates decides the
+// address per channel; opt-outs and the sender's exclusions applied), one row per address per
+// channel. Re-running a page inserts nothing new.
 func (e *Engine) insertRecipients(ctx context.Context, b *ent.Broadcast, people []Person, channels []string) error {
 	if len(people) == 0 {
 		return nil
 	}
-	marketing := b.Class == entbroadcast.ClassMarketing
 	senderName, _ := b.Metadata["sender_name"].(string)
 	occasionName, _ := b.Metadata["occasion_name"].(string)
 	year := time.Now().Year()
 	if b.OccasionYear != nil {
 		year = *b.OccasionYear
 	}
-	attested, _ := b.Metadata["consent_attested"].(bool)
-
-	var cands []candidate
-	for _, p := range people {
-		for _, ch := range channels {
-			c := candidate{person: p, channel: ch}
-			switch ch {
-			case "email":
-				if reason := marketingBlocked(p.EmailConsent, p.ConsentRecorded, attested); marketing && reason != "" {
-					c.reason = reason
-					break
-				}
-				for _, a := range p.Emails {
-					addr, err := contact.NormalizeEmail(a.Value)
-					if err != nil {
-						continue
-					}
-					if c.address == "" {
-						c.address, c.first = addr, a.FirstName
-					}
-				}
-				if c.address == "" {
-					c.reason = "no valid email"
-				}
-			case "sms", "whatsapp":
-				if reason := marketingBlocked(p.SMSConsent, p.ConsentRecorded, attested); marketing && reason != "" {
-					c.reason = reason
-					break
-				}
-				seen := map[string]bool{}
-				for _, a := range p.Phones {
-					num, err := contact.NormalizePhone(a.Value, p.Region)
-					if err != nil || seen[contact.SubscriberDigits(num)] {
-						continue
-					}
-					seen[contact.SubscriberDigits(num)] = true
-					if c.address == "" {
-						c.address, c.first = num, a.FirstName
-					} else {
-						c.backups = append(c.backups, num)
-					}
-				}
-				if c.address == "" {
-					c.reason = "no valid phone number"
-				}
-			}
-			cands = append(cands, c)
-		}
-	}
-
-	// One suppression lookup per channel for the whole page.
-	suppressed := map[string]map[string]bool{}
-	for _, ch := range channels {
-		var hashes []string
-		for _, c := range cands {
-			if c.channel == ch && c.address != "" {
-				hashes = append(hashes, pii.HashAddress(c.address))
-			}
-		}
-		set, err := e.Suppress.Suppressed(ctx, b.TenantID, ch, hashes, marketing)
-		if err != nil {
-			return err
-		}
-		suppressed[ch] = set
+	cands := selectCandidates(b, people, channels)
+	if err := markSuppressed(ctx, e.Suppress, b, cands, channels); err != nil {
+		return err
 	}
 
 	builders := make([]*ent.BroadcastRecipientCreate, 0, len(cands))
@@ -310,8 +237,10 @@ func (e *Engine) insertRecipients(ctx context.Context, b *ent.Broadcast, people 
 			// Keep a row so the detail view shows who could not be reached and why.
 			r.SetAddressHash(pii.HashAddress("none:" + c.channel + ":" + c.person.Key)).
 				SetStatus(entrecipient.StatusSkipped).SetError(c.reason)
-		case suppressed[c.channel][pii.HashAddress(c.address)]:
+		case c.suppressed:
 			r.SetAddressHash(pii.HashAddress(c.address)).SetStatus(entrecipient.StatusSuppressed).SetError("opted out")
+		case c.excluded:
+			r.SetAddressHash(pii.HashAddress(c.address)).SetStatus(entrecipient.StatusSkipped).SetError("left out by the sender")
 		default:
 			r.SetAddress(c.address).SetAddressHash(pii.HashAddress(c.address))
 		}
