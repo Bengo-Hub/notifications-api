@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"strings"
 	"time"
 
 	authclient "github.com/Bengo-Hub/shared-auth-client"
@@ -20,6 +19,14 @@ import (
 type AnnouncementHandler struct {
 	svc *announcements.Service
 	log *zap.Logger
+	// platformTenantID: the platform tenant acting as itself manages the platform's banners.
+	platformTenantID string
+}
+
+// WithPlatformTenant sets the platform tenant, whose own banner routes manage platform banners.
+func (h *AnnouncementHandler) WithPlatformTenant(id string) *AnnouncementHandler {
+	h.platformTenantID = id
+	return h
 }
 
 // NewAnnouncementHandler builds the handler.
@@ -87,17 +94,8 @@ func (h *AnnouncementHandler) Active(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, map[string]any{"announcements": out})
 }
 
-// RegisterPlatformRoutes mounts the platform admin routes (the caller applies the super admin gate).
-// They manage platform banners, shown to every tenant.
-func (h *AnnouncementHandler) RegisterPlatformRoutes(r chi.Router) {
-	r.Get("/announcements", h.List)
-	r.Post("/announcements", h.Create)
-	r.Put("/announcements/{id}", h.Update)
-	r.Delete("/announcements/{id}", h.Delete)
-}
-
-// RegisterTenantRoutes mounts a tenant's own banner routes (the caller applies the tenant
-// context and the broadcasts permission). They only ever see and change the tenant's own rows.
+// RegisterTenantRoutes mounts the banner routes (the caller applies the tenant context and the
+// broadcasts permission). One route set for every owner: see announcementOwner.
 func (h *AnnouncementHandler) RegisterTenantRoutes(r chi.Router) {
 	r.Get("/announcements", h.List)
 	r.Post("/announcements", h.Create)
@@ -105,26 +103,28 @@ func (h *AnnouncementHandler) RegisterTenantRoutes(r chi.Router) {
 	r.Delete("/announcements/{id}", h.Delete)
 }
 
-// owner is whose banners a request manages: nil under /platform, else the acting tenant.
-func announcementOwner(r *http.Request) (*uuid.UUID, bool) {
-	if strings.Contains(r.URL.Path, "/platform/") {
-		return nil, true
-	}
+// announcementOwner is whose banners a request manages. The platform tenant acting as itself owns
+// the platform banners (nil: shown to every tenant); any other acting tenant owns its own, shown
+// only to its users.
+func (h *AnnouncementHandler) announcementOwner(r *http.Request) (*uuid.UUID, bool) {
 	id, err := uuid.Parse(resolveActingTenantID(r))
 	if err != nil {
 		return nil, false
+	}
+	if h.platformTenantID != "" && id.String() == h.platformTenantID {
+		return nil, true
 	}
 	return &id, true
 }
 
 // List godoc
-// @Summary List announcements (platform)
+// @Summary List announcements (platform tenant: every tenant; other tenants: their own users)
 // @Tags Announcements
 // @Produce json
 // @Success 200 {object} map[string]any
-// @Router /api/v1/platform/announcements [get]
+// @Router /api/v1/announcements [get]
 func (h *AnnouncementHandler) List(w http.ResponseWriter, r *http.Request) {
-	owner, ok := announcementOwner(r)
+	owner, ok := h.announcementOwner(r)
 	if !ok {
 		jsonError(w, http.StatusBadRequest, "tenant required")
 		return
@@ -139,13 +139,13 @@ func (h *AnnouncementHandler) List(w http.ResponseWriter, r *http.Request) {
 }
 
 // Create godoc
-// @Summary Publish an announcement (platform)
+// @Summary Publish an announcement (platform tenant: every tenant; other tenants: their own users)
 // @Tags Announcements
 // @Accept json
 // @Produce json
 // @Param body body announcements.Input true "Announcement"
 // @Success 201 {object} map[string]any
-// @Router /api/v1/platform/announcements [post]
+// @Router /api/v1/announcements [post]
 func (h *AnnouncementHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var in announcements.Input
 	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
@@ -156,7 +156,7 @@ func (h *AnnouncementHandler) Create(w http.ResponseWriter, r *http.Request) {
 	if claims, ok := authclient.ClaimsFromContext(r.Context()); ok && claims != nil {
 		createdBy = claims.Email
 	}
-	owner, ok := announcementOwner(r)
+	owner, ok := h.announcementOwner(r)
 	if !ok {
 		jsonError(w, http.StatusBadRequest, "tenant required")
 		return
@@ -169,14 +169,14 @@ func (h *AnnouncementHandler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 // Update godoc
-// @Summary Update an announcement (platform)
+// @Summary Update an announcement (platform tenant: every tenant; other tenants: their own users)
 // @Tags Announcements
 // @Accept json
 // @Produce json
 // @Param id path string true "Announcement ID"
 // @Param body body announcements.Input true "Announcement"
 // @Success 200 {object} map[string]any
-// @Router /api/v1/platform/announcements/{id} [put]
+// @Router /api/v1/announcements/{id} [put]
 func (h *AnnouncementHandler) Update(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -188,7 +188,7 @@ func (h *AnnouncementHandler) Update(w http.ResponseWriter, r *http.Request) {
 		jsonError(w, http.StatusBadRequest, "invalid JSON body")
 		return
 	}
-	owner, ok := announcementOwner(r)
+	owner, ok := h.announcementOwner(r)
 	if !ok {
 		jsonError(w, http.StatusBadRequest, "tenant required")
 		return
@@ -201,18 +201,18 @@ func (h *AnnouncementHandler) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 // Delete godoc
-// @Summary Delete an announcement (platform)
+// @Summary Delete an announcement (platform tenant: every tenant; other tenants: their own users)
 // @Tags Announcements
 // @Param id path string true "Announcement ID"
 // @Success 204
-// @Router /api/v1/platform/announcements/{id} [delete]
+// @Router /api/v1/announcements/{id} [delete]
 func (h *AnnouncementHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		jsonError(w, http.StatusBadRequest, "invalid id")
 		return
 	}
-	owner, ok := announcementOwner(r)
+	owner, ok := h.announcementOwner(r)
 	if !ok {
 		jsonError(w, http.StatusBadRequest, "tenant required")
 		return

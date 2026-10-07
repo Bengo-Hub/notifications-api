@@ -65,27 +65,86 @@ func (h *BroadcastHandler) RegisterRoutes(r chi.Router, approve func(http.Handle
 	r.Post("/occasions/{key}/draft", h.DraftOccasion)
 }
 
+// s2sBroadcastRequest is a broadcast a sibling service hands over (MarketFlow campaigns). It
+// enters the sending tenant's approval queue like one written in notifications-ui.
+type s2sBroadcastRequest struct {
+	TenantID    string           `json:"tenant_id"`
+	RequestedBy string           `json:"requested_by"`
+	Source      string           `json:"source"`      // e.g. "marketflow"
+	SourceRef   string           `json:"source_ref"`  // e.g. the campaign id
+	Submit      bool             `json:"submit"`      // straight to the approval queue
+	Broadcast   broadcasts.Input `json:"broadcast"`
+}
+
+// S2SCreate godoc
+// @Summary Create a tenant broadcast from another service (internal key)
+// @Description MarketFlow hands campaign sends to the broadcast engine; they wait for the tenant's approval.
+// @Tags Broadcasts
+// @Accept json
+// @Produce json
+// @Success 201 {object} map[string]any
+// @Router /api/v1/s2s/broadcasts [post]
+func (h *BroadcastHandler) S2SCreate(w http.ResponseWriter, r *http.Request) {
+	var req s2sBroadcastRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		jsonError(w, http.StatusBadRequest, "invalid JSON body")
+		return
+	}
+	tid, err := uuid.Parse(req.TenantID)
+	if err != nil {
+		jsonError(w, http.StatusBadRequest, "tenant_id required")
+		return
+	}
+	by := req.RequestedBy
+	if by == "" {
+		by = req.Source
+	}
+	s := broadcasts.Sender{TenantID: &tid, Name: h.drafter.SenderName(r.Context(), &tid), By: by}
+	b, err := h.svc.Create(r.Context(), req.Broadcast, s)
+	if h.writeErr(w, err, "s2s create broadcast") {
+		return
+	}
+	if req.Source != "" || req.SourceRef != "" {
+		meta := b.Metadata
+		if meta == nil {
+			meta = map[string]any{}
+		}
+		meta["source"], meta["source_ref"] = req.Source, req.SourceRef
+		if saved, err := h.client.Broadcast.UpdateOneID(b.ID).SetMetadata(meta).Save(r.Context()); err == nil {
+			b = saved
+		}
+	}
+	if req.Submit {
+		if submitted, err := h.svc.Act(r.Context(), b.ID, broadcasts.ActionSubmit, s, ""); err == nil {
+			b = submitted
+		}
+	}
+	respondJSON(w, http.StatusCreated, viewBroadcast(b))
+}
+
 // RegisterPublicRoutes mounts the unsubscribe endpoints (no login: a link in an email must work).
 func (h *BroadcastHandler) RegisterPublicRoutes(r chi.Router) {
 	r.Get("/public/unsubscribe/{token}", h.UnsubscribeInfo)
 	r.Post("/public/unsubscribe/{token}", h.Unsubscribe)
 }
 
-// sender works out who is sending from the route: /platform is the platform, anything else is
-// the acting tenant.
+// sender works out who is sending. The platform tenant acting as itself IS the platform: its
+// customers are the tenants, so its broadcasts, occasions and approvals are the platform's (one
+// list, not a "codevertex as a tenant" copy). Any other acting tenant, including one a platform
+// owner picked in the tenant switcher, sends as that tenant to its own customers or staff.
 func (h *BroadcastHandler) sender(r *http.Request) (broadcasts.Sender, bool) {
 	s := broadcasts.Sender{}
 	if claims, ok := authclient.ClaimsFromContext(r.Context()); ok && claims != nil {
 		s.By = claims.Email
 	}
-	if strings.Contains(r.URL.Path, "/platform/") {
-		s.Platform = true
-		s.Name = h.drafter.SenderName(r.Context(), nil)
-		return s, true
-	}
 	id, err := uuid.Parse(resolveActingTenantID(r))
 	if err != nil {
 		return s, false
+	}
+	if id.String() == h.drafter.PlatformID {
+		s.Platform = true
+		s.Name = h.drafter.SenderName(r.Context(), nil)
+		return s, true
 	}
 	s.TenantID = &id
 	s.Name = h.drafter.SenderName(r.Context(), &id)
@@ -166,7 +225,12 @@ func (h *BroadcastHandler) Summary(w http.ResponseWriter, r *http.Request) {
 		jsonError(w, http.StatusInternalServerError, "failed to count")
 		return
 	}
-	respondJSON(w, http.StatusOK, map[string]any{"pending_approval": n})
+	scope := "tenant"
+	if s.Platform {
+		scope = "platform"
+	}
+	// scope tells the UI who the audience can be: tenants (platform) or customers and staff.
+	respondJSON(w, http.StatusOK, map[string]any{"pending_approval": n, "scope": scope, "sender_name": s.Name})
 }
 
 // Create godoc
@@ -382,12 +446,13 @@ func (h *BroadcastHandler) Estimate(w http.ResponseWriter, r *http.Request) {
 	}
 	est, err := h.estimate(r.Context(), b)
 	if err != nil {
+		// 424, not 502: the edge replaces 5xx bodies with its own page, which hid the reason.
 		if errors.Is(err, broadcasts.ErrAudienceUnavailable) {
-			jsonError(w, http.StatusBadRequest, err.Error())
+			jsonError(w, http.StatusFailedDependency, err.Error())
 			return
 		}
 		h.log.Warn("broadcast estimate", zap.Error(err))
-		jsonError(w, http.StatusBadGateway, "could not reach the audience source; try again shortly")
+		jsonError(w, http.StatusFailedDependency, "could not reach the contact list right now; try again in a minute")
 		return
 	}
 	respondJSON(w, http.StatusOK, est)

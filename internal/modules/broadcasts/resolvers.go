@@ -69,9 +69,10 @@ type mfReachResponse struct {
 		Email          string `json:"email"`
 		Phone          string `json:"phone"`
 		Country        string `json:"country"`
-		EmailConsent   bool   `json:"subscribed_email"`
-		SMSConsent     bool   `json:"subscribed_sms"`
-		EmailConfirmed bool   `json:"email_verified"`
+		EmailConsent    bool   `json:"subscribed_email"`
+		SMSConsent      bool   `json:"subscribed_sms"`
+		ConsentRecorded bool   `json:"consent_recorded"`
+		EmailConfirmed  bool   `json:"email_verified"`
 	} `json:"data"`
 	Next string `json:"next"`
 }
@@ -109,8 +110,9 @@ func (m *MarketflowContacts) Page(ctx context.Context, audience map[string]any, 
 		return nil, "", err
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode == http.StatusNotFound {
-		return nil, "", ErrAudienceUnavailable
+	// 404/405: this MarketFlow does not serve the reach endpoint (or the route is gone).
+	if resp.StatusCode == http.StatusNotFound || resp.StatusCode == http.StatusMethodNotAllowed {
+		return nil, "", fmt.Errorf("%w: MarketFlow does not offer the customer list yet", ErrAudienceUnavailable)
 	}
 	if resp.StatusCode != http.StatusOK {
 		return nil, "", fmt.Errorf("marketflow contacts reach: status %d", resp.StatusCode)
@@ -123,7 +125,7 @@ func (m *MarketflowContacts) Page(ctx context.Context, audience map[string]any, 
 	for _, c := range out.Data {
 		name := strings.TrimSpace(c.FirstName + " " + c.LastName)
 		emailOK, smsOK := c.EmailConsent, c.SMSConsent
-		p := Person{Key: c.ID, Name: name, Region: c.Country, EmailConsent: &emailOK, SMSConsent: &smsOK}
+		p := Person{Key: c.ID, Name: name, Region: c.Country, EmailConsent: &emailOK, SMSConsent: &smsOK, ConsentRecorded: c.ConsentRecorded}
 		if c.Email != "" {
 			p.Emails = []Address{{Value: c.Email, Source: "contact", Verified: c.EmailConfirmed, FirstName: c.FirstName}}
 		}

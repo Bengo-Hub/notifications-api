@@ -40,8 +40,26 @@ type Person struct {
 	Emails            []Address
 	Phones            []Address
 	// Marketing consent, when the audience source tracks it (customers). nil = not tracked.
+	// false means the person opted out: never message them, whatever the sender attests.
 	EmailConsent *bool
 	SMSConsent   *bool
+	// ConsentRecorded says when and how consent was given is on file. Contacts from before
+	// consent was recorded only get marketing when the sender attests they agreed.
+	ConsentRecorded bool
+}
+
+// marketingBlocked says why a person may not get marketing on a channel ("" when they may).
+func marketingBlocked(consent *bool, recorded, attested bool) string {
+	if consent == nil {
+		return "" // the source does not track consent (tenants, staff)
+	}
+	if !*consent {
+		return "opted out of marketing"
+	}
+	if !recorded && !attested {
+		return "no recorded marketing consent"
+	}
+	return ""
 }
 
 // Resolver pages through an audience. after is the last Key of the previous page ("" for the
@@ -50,8 +68,9 @@ type Resolver interface {
 	Page(ctx context.Context, audience map[string]any, senderTenant *uuid.UUID, after string, limit int) (people []Person, next string, err error)
 }
 
-// ErrAudienceUnavailable is returned for an audience type this deployment cannot resolve yet.
-var ErrAudienceUnavailable = errors.New("this audience is not available yet")
+// ErrAudienceUnavailable is returned for an audience this deployment cannot resolve (its source
+// service does not offer the list). Retrying does not help, so a broadcast stops with it.
+var ErrAudienceUnavailable = errors.New("this audience's contact list is not available")
 
 // AuthReach resolves platform_tenants through auth-api's
 // GET /api/v1/s2s/tenants/reach?purpose=broadcast (owners and admins with verified contacts

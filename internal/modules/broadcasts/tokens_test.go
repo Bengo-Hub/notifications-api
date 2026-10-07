@@ -38,6 +38,27 @@ func TestUnknownTokensAndValidate(t *testing.T) {
 	}
 }
 
+func TestMarketingConsentRules(t *testing.T) {
+	yes, no := true, false
+	cases := []struct {
+		name               string
+		consent            *bool
+		recorded, attested bool
+		blocked            bool
+	}{
+		{"not tracked (tenants, staff)", nil, false, false, false},
+		{"opted in with a record", &yes, true, false, false},
+		{"opted in, older contact, no attestation", &yes, false, false, true},
+		{"opted in, older contact, sender attests", &yes, false, true, false},
+		{"opted out, even with an attestation", &no, true, true, true},
+	}
+	for _, c := range cases {
+		if got := marketingBlocked(c.consent, c.recorded, c.attested) != ""; got != c.blocked {
+			t.Errorf("%s: blocked=%v, want %v", c.name, got, c.blocked)
+		}
+	}
+}
+
 func TestWithSMSOptOut(t *testing.T) {
 	if got := WithSMSOptOut("Happy New Year"); got != "Happy New Year\nReply STOP to opt out" {
 		t.Errorf("got %q", got)

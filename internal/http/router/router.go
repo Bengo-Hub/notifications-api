@@ -2,6 +2,7 @@ package router
 
 import (
 	"context"
+	"crypto/subtle"
 	"net/http"
 	"strings"
 	"time"
@@ -136,6 +137,23 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 			broadcastsH.RegisterPublicRoutes(api)
 		}
 
+		// Service-to-service routes (INTERNAL_SERVICE_KEY as X-API-Key): MarketFlow campaigns
+		// hand their sends to the broadcast engine here.
+		if broadcastsH != nil && apiKey != "" {
+			api.Group(func(s2s chi.Router) {
+				s2s.Use(func(next http.Handler) http.Handler {
+					return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						if subtle.ConstantTimeCompare([]byte(r.Header.Get("X-API-Key")), []byte(apiKey)) != 1 {
+							http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
+							return
+						}
+						next.ServeHTTP(w, r)
+					})
+				})
+				s2s.Post("/s2s/broadcasts", broadcastsH.S2SCreate)
+			})
+		}
+
 		// WhatsApp plans — public, no auth needed (pricing discovery)
 		if whatsappSubs != nil {
 			api.Get("/billing/whatsapp/plans", whatsappSubs.ListPlans)
@@ -203,14 +221,6 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 				}
 				if encryptionKey != nil {
 					encryptionKey.RegisterPlatformRoutes(platform)
-				}
-				if announcementsH != nil {
-					announcementsH.RegisterPlatformRoutes(platform)
-				}
-				// Platform broadcasts and the shared occasion catalogue (super admin already gates
-				// this group, so approving needs nothing extra).
-				if broadcastsH != nil {
-					broadcastsH.RegisterRoutes(platform, func(next http.Handler) http.Handler { return next })
 				}
 				// Platform-default backup destination (OneDrive/GDrive/S3/WebDAV/SFTP/SMB).
 				if backupDest != nil {
@@ -308,8 +318,10 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 					})
 				}
 
-				// A tenant's own broadcasts, occasions and dashboard banners. Writing needs the
-				// broadcasts manage permission; approving for sending needs approve.
+				// Broadcasts, occasions and dashboard banners, one route set for every sender: the
+				// platform tenant acting as itself sends as the platform (to tenants), any other
+				// acting tenant to its own customers or staff (see BroadcastHandler.sender).
+				// Writing needs the broadcasts manage permission; approving needs approve.
 				if broadcastsH != nil {
 					tenantRouter.Group(func(bc chi.Router) {
 						approve := func(next http.Handler) http.Handler { return next }

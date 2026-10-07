@@ -37,6 +37,11 @@ func (dr *Drafter) Plan(ctx context.Context) error {
 	}
 	created := 0
 	for _, d := range due {
+		// The platform tenant's occasions are the platform catalogue; a row saved under its
+		// tenant id (before the two were unified) must never draft a second copy.
+		if d.TenantID != nil && d.TenantID.String() == dr.PlatformID {
+			continue
+		}
 		_, ok, err := dr.Draft(ctx, d, loc)
 		if err != nil {
 			dr.Log.Warn("occasion draft failed", zap.String("occasion", d.View.Key), zap.Error(err))

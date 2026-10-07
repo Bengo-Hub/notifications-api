@@ -165,6 +165,12 @@ func (e *Engine) materialise(ctx context.Context, b *ent.Broadcast) error {
 	cursor, _ := meta["cursor"].(string)
 	for i := 0; i < pagesPerTick; i++ {
 		people, next, err := resolver.Page(ctx, b.Audience, b.TenantID, cursor, pageSize)
+		if errors.Is(err, ErrAudienceUnavailable) {
+			// Retrying cannot help: stop with the reason the detail view shows.
+			meta["audience_error"] = err.Error()
+			return e.Client.Broadcast.UpdateOneID(b.ID).SetMetadata(meta).SetStatus(entbroadcast.StatusFailed).
+				SetCompletedAt(time.Now()).Exec(ctx)
+		}
 		if err != nil {
 			return err
 		}
@@ -226,8 +232,8 @@ func (e *Engine) insertRecipients(ctx context.Context, b *ent.Broadcast, people 
 			c := candidate{person: p, channel: ch}
 			switch ch {
 			case "email":
-				if marketing && p.EmailConsent != nil && !*p.EmailConsent && !attested {
-					c.reason = "no marketing consent"
+				if reason := marketingBlocked(p.EmailConsent, p.ConsentRecorded, attested); marketing && reason != "" {
+					c.reason = reason
 					break
 				}
 				for _, a := range p.Emails {
@@ -243,8 +249,8 @@ func (e *Engine) insertRecipients(ctx context.Context, b *ent.Broadcast, people 
 					c.reason = "no valid email"
 				}
 			case "sms", "whatsapp":
-				if marketing && p.SMSConsent != nil && !*p.SMSConsent && !attested {
-					c.reason = "no marketing consent"
+				if reason := marketingBlocked(p.SMSConsent, p.ConsentRecorded, attested); marketing && reason != "" {
+					c.reason = reason
 					break
 				}
 				seen := map[string]bool{}

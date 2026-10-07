@@ -187,7 +187,7 @@ func New(ctx context.Context) (*App, error) {
 	encryptionKeyHandler := handlers.NewEncryptionKeyHandler(entClient, log, keyProvider)
 	analyticsHandler := handlers.NewAnalyticsHandler(entClient, log)
 	announcementSvc := announcements.NewService(entClient)
-	announcementHandler := handlers.NewAnnouncementHandler(announcementSvc, log)
+	announcementHandler := handlers.NewAnnouncementHandler(announcementSvc, log).WithPlatformTenant(platformIDStr)
 	// Expired announcements are hard deleted (hourly, once fleet-wide). The branch keeps a nil
 	// client from turning into a non-nil interface value.
 	if redisClient != nil {
