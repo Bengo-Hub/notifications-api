@@ -1,0 +1,1 @@
+{{ or .brand_name "Maskani" }}: {{ .visitor_name }} is at the gate for {{ .unit_code }}. Allow or decline within 5 minutes: {{ .decide_link }}

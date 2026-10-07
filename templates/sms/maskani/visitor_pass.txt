@@ -1,0 +1,1 @@
+{{ or .brand_name "Maskani" }}: {{ .visitor_name }}, your gate code is {{ .code }}, valid {{ .valid_from }} to {{ .valid_to }}. Show it at the gate.

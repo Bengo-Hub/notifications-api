@@ -7,6 +7,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 ## [Unreleased]
 
 ### Added
+- Maskani consumer (2026-10-08): durable `notifications-maskani` on stream `maskani` (`maskani.>`). SMS for bill issued, payment received, visitor gate code, visitor arrived, walk-in approval (portal link), portal invite, sale agreement active and fully paid to the payload phone; urgent incidents, work orders past SLA and expiring vendor documents to the tenant contact phone. Idempotent per event id. Templates `templates/sms/maskani/*`, classified under "Property" in the preferences registry. Portal links use the tenant `service_urls.maskani` or `NOTIFICATIONS_MASKANI_APP_URL`.
+- Phone code sign-in (2026-10-08): `auth.user.otp.requested` carrying `phone` and no `email` sends the `auth/otp` SMS from the platform sender (tenant SMS credits never block sign-in).
 - Service-level RBAC: User, Role, Permission Ent schemas with 4 roles (viewer, manager, admin, superuser) and 20 fine-grained permissions
 - Identity module with NATS-driven user sync from auth-service and JIT user provisioning from JWT
 - Authenticator middleware (RequireAuth, RequireRoles, RequirePermissions) with superuser/admin bypass

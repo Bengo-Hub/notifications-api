@@ -1,0 +1,1 @@
+{{ or .brand_name "Maskani" }}: work order {{ .number }} ({{ .priority }}) is past its SLA: {{ .title }}.

@@ -97,6 +97,19 @@ var Registry = []Type{
 	{Key: "ordering/delivery_failed_tenant", Label: "Delivery failed staff alert", Group: "Orders", Class: ClassEssential},
 
 	// ── POS ──────────────────────────────────────────────────────────────────
+	// ── Maskani (property platform; SMS to owners, occupants, visitors) ─────
+	{Key: "maskani/bill_issued", Label: "Estate bill issued", Group: "Property", Class: ClassEssential},
+	{Key: "maskani/payment_received", Label: "Estate payment receipt", Group: "Property", Class: ClassEssential},
+	{Key: "maskani/visitor_pass", Label: "Visitor gate code", Group: "Property", Class: ClassEssential},
+	{Key: "maskani/visitor_arrived", Label: "Visitor arrived at the gate", Group: "Property", Class: ClassEssential},
+	{Key: "maskani/walk_in_request", Label: "Walk-in visitor approval", Group: "Property", Class: ClassEssential},
+	{Key: "maskani/portal_invite", Label: "Owner portal invitation", Group: "Property", Class: ClassEssential},
+	{Key: "maskani/contract_activated", Label: "Sale agreement active", Group: "Property", Class: ClassEssential},
+	{Key: "maskani/contract_fully_paid", Label: "Sale agreement fully paid", Group: "Property", Class: ClassEssential},
+	{Key: "maskani/incident_alert", Label: "Urgent security incident", Group: "Property", Class: ClassEssential},
+	{Key: "maskani/work_order_sla_breached", Label: "Work order past SLA", Group: "Property", Class: ClassOptional},
+	{Key: "maskani/vendor_document_expiring", Label: "Vendor document expiring", Group: "Property", Class: ClassOptional},
+
 	{Key: "pos/pos_payment_receipt", Label: "POS payment receipt", Group: "POS", Class: ClassEssential},
 	{Key: "pos/pos_order_ready", Label: "POS order ready", Group: "POS", Class: ClassEssential},
 	{Key: "pos/kds_waiter_called", Label: "Waiter called (KDS)", Group: "POS", Class: ClassEssential},

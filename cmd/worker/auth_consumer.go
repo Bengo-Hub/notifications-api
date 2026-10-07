@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -14,6 +16,12 @@ import (
 	"github.com/bengobox/notifications-api/internal/config"
 	"github.com/bengobox/notifications-api/internal/messaging"
 )
+
+// hashOTPForKey keys a send by its code without putting the code itself in the idempotency store.
+func hashOTPForKey(otp string) string {
+	sum := sha256.Sum256([]byte(otp))
+	return hex.EncodeToString(sum[:8])
+}
 
 // authUserEvent matches the payload published by auth-api's outbox for user events.
 type authUserEvent struct {
@@ -256,12 +264,6 @@ func startAuthNotificationConsumer(ctx context.Context, nc *nats.Conn, cfg *conf
 			return
 		}
 
-		email, _ := payload["email"].(string)
-		if email == "" {
-			logg.Warn("auth otp: no email in payload")
-			return
-		}
-
 		otp, _ := payload["otp"].(string)
 		if otp == "" {
 			logg.Warn("auth otp: no otp in payload")
@@ -270,6 +272,43 @@ func startAuthNotificationConsumer(ctx context.Context, nc *nats.Conn, cfg *conf
 
 		userID, _ := payload["user_id"].(string)
 		tenantID, _ := payload["tenant_id"].(string)
+		email, _ := payload["email"].(string)
+
+		// Phone code sign-in (customer portals): auth-api sends phone instead of email. Platform
+		// sender, so a tenant's SMS credits never block a sign-in.
+		if phone, _ := payload["phone"].(string); email == "" && phone != "" {
+			ttl := 5
+			if v, ok := payload["ttl_minutes"].(float64); ok && v > 0 {
+				ttl = int(v)
+			}
+			sms := messaging.Message{
+				TenantID:    tenantID,
+				Channel:     "sms",
+				TemplateID:  "auth/otp",
+				SenderScope: messaging.SenderScopePlatform,
+				Target:      messaging.TargetCustomer,
+				To:          []string{phone},
+				Data: map[string]any{
+					"otp":         otp,
+					"ttl_minutes": ttl,
+					"brand_name":  payload["brand_name"],
+				},
+				RequestID:      uuid.New().String(),
+				IdempotencyKey: fmt.Sprintf("auth-otp-sms-%s-%s", userID, hashOTPForKey(otp)),
+				QueuedAt:       time.Now(),
+			}
+			if _, err := messaging.Publish(ctx, nc, cfg.Events, sms); err != nil {
+				logg.Error("auth otp: failed to dispatch sms", zap.Error(err))
+				return
+			}
+			logg.Info("OTP sms dispatched", zap.String("user_id", userID))
+			return
+		}
+
+		if email == "" {
+			logg.Warn("auth otp: no email or phone in payload")
+			return
+		}
 
 		msg := messaging.Message{
 			TenantID:    tenantID,
