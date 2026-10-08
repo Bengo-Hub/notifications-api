@@ -42,15 +42,34 @@ type AuthUserCreatedEvent struct {
 
 // AuthUserUpdatedEvent represents an auth.user.updated event.
 type AuthUserUpdatedEvent struct {
-	UserID        string                 `json:"user_id"`
-	TenantID      string                 `json:"tenant_id,omitempty"`
-	Email         string                 `json:"email,omitempty"`
-	EmailVerified bool                   `json:"email_verified,omitempty"`
+	UserID   string `json:"user_id"`
+	TenantID string `json:"tenant_id,omitempty"`
+	Email    string `json:"email,omitempty"`
+	// EmailVerified is nil when the event does not say. auth-api sends it when a user confirms
+	// their email; until 2026-10-08 it was dropped here, so 69 verified users stayed unverified
+	// in this service and the worker's verification gate refused their emails.
+	EmailVerified *bool                  `json:"email_verified,omitempty"`
 	FullName      string                 `json:"full_name,omitempty"`
 	Phone         string                 `json:"phone,omitempty"`
 	Status        string                 `json:"status,omitempty"`
 	Metadata      map[string]interface{} `json:"metadata,omitempty"`
 	UpdatedAt     time.Time              `json:"updated_at"`
+}
+
+// userData is the update as the sync service reads it; email_verified only when the event says.
+func (e *AuthUserUpdatedEvent) userData() map[string]interface{} {
+	d := map[string]interface{}{
+		"id":        e.UserID,
+		"email":     e.Email,
+		"full_name": e.FullName,
+		"phone":     e.Phone,
+		"status":    e.Status,
+		"metadata":  e.Metadata,
+	}
+	if e.EmailVerified != nil {
+		d["email_verified"] = *e.EmailVerified
+	}
+	return d
 }
 
 // AuthUserDeactivatedEvent represents an auth.user.deactivated event.
@@ -135,15 +154,7 @@ func (h *EventHandler) HandleAuthUserUpdated(ctx context.Context, event *AuthUse
 			zap.String("user_id", event.UserID),
 			zap.Error(err))
 		if event.TenantID != "" {
-			authUserData := map[string]interface{}{
-				"id":        event.UserID,
-				"email":     event.Email,
-				"full_name": event.FullName,
-				"phone":     event.Phone,
-				"status":    event.Status,
-				"metadata":  event.Metadata,
-			}
-			_, err = h.service.SyncUserFromAuthService(ctx, authServiceUserID, event.TenantID, authUserData)
+			_, err = h.service.SyncUserFromAuthService(ctx, authServiceUserID, event.TenantID, event.userData())
 			if err != nil {
 				return fmt.Errorf("identity: create user from update event: %w", err)
 			}
@@ -152,16 +163,7 @@ func (h *EventHandler) HandleAuthUserUpdated(ctx context.Context, event *AuthUse
 		return fmt.Errorf("identity: user not found and no tenant_id: %w", err)
 	}
 
-	authUserData := map[string]interface{}{
-		"id":        event.UserID,
-		"email":     event.Email,
-		"full_name": event.FullName,
-		"phone":     event.Phone,
-		"status":    event.Status,
-		"metadata":  event.Metadata,
-	}
-
-	_, err = h.service.updateUserFromAuthService(ctx, user, authUserData)
+	_, err = h.service.updateUserFromAuthService(ctx, user, event.userData())
 	if err != nil {
 		h.logger.Error("Failed to update user from auth.user.updated event",
 			zap.String("user_id", event.UserID),
