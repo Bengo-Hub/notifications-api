@@ -79,6 +79,9 @@ type AuthReach struct {
 	BaseURL string
 	APIKey  string
 	HTTP    *http.Client
+	// PlatformTenantID (codevertex) is the sender of platform broadcasts, never one of their
+	// recipients.
+	PlatformTenantID string
 }
 
 type reachResponse struct {
@@ -108,7 +111,17 @@ func (a *AuthReach) Page(ctx context.Context, audience map[string]any, _ *uuid.U
 	if b, ok := filters["include_demo"].(bool); ok && b {
 		q.Set("include_demo", "true")
 	}
-	return a.page(ctx, q, after, limit)
+	people, next, err := a.page(ctx, q, after, limit)
+	if err != nil || a.PlatformTenantID == "" {
+		return people, next, err
+	}
+	kept := people[:0]
+	for _, p := range people {
+		if p.RecipientTenantID == nil || p.RecipientTenantID.String() != a.PlatformTenantID {
+			kept = append(kept, p)
+		}
+	}
+	return kept, next, nil
 }
 
 // page calls GET /api/v1/s2s/tenants/reach with q plus paging.

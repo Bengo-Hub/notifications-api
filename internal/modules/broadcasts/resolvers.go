@@ -19,13 +19,16 @@ type ResolverConfig struct {
 	AuthAPI       string
 	MarketflowAPI string
 	APIKey        string // INTERNAL_SERVICE_KEY, sent as X-API-Key
+	// PlatformTenantID is the platform's own tenant (codevertex), never a recipient of a
+	// platform broadcast.
+	PlatformTenantID string
 }
 
 // DefaultResolvers is the one place audience types are wired, used by both the API (estimates)
 // and the worker (sending), so the two never disagree about who an audience is.
 func DefaultResolvers(c ResolverConfig) map[string]Resolver {
 	client := &http.Client{Timeout: 25 * time.Second}
-	auth := &AuthReach{BaseURL: c.AuthAPI, APIKey: c.APIKey, HTTP: client}
+	auth := &AuthReach{BaseURL: c.AuthAPI, APIKey: c.APIKey, HTTP: client, PlatformTenantID: c.PlatformTenantID}
 	return map[string]Resolver{
 		AudiencePlatformTenants: auth,
 		AudienceTenantUsers:     &AuthStaff{Reach: auth},
@@ -63,12 +66,12 @@ type MarketflowContacts struct {
 
 type mfReachResponse struct {
 	Data []struct {
-		ID             string `json:"id"`
-		FirstName      string `json:"first_name"`
-		LastName       string `json:"last_name"`
-		Email          string `json:"email"`
-		Phone          string `json:"phone"`
-		Country        string `json:"country"`
+		ID              string `json:"id"`
+		FirstName       string `json:"first_name"`
+		LastName        string `json:"last_name"`
+		Email           string `json:"email"`
+		Phone           string `json:"phone"`
+		Country         string `json:"country"`
 		EmailConsent    bool   `json:"subscribed_email"`
 		SMSConsent      bool   `json:"subscribed_sms"`
 		ConsentRecorded bool   `json:"consent_recorded"`

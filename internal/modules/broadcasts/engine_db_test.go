@@ -122,6 +122,8 @@ func TestMaterialiseChoosesFirstValidAddressAndAppliesOptOuts(t *testing.T) {
 			Phones: []Address{{Value: "12345", Source: "tenant"}}},
 		{Key: "c", BusinessName: "Kampala Co", Region: "UG",
 			Phones: []Address{{Value: "0772123456", Source: "tenant"}}}, // local Ugandan number read with the tenant's country
+		{Key: "d", BusinessName: "No Contact Ltd", Region: "KE", // nothing valid: not in the list at all
+			Emails: []Address{{Value: "nope"}}, Phones: []Address{{Value: "123"}}},
 	}
 	e := &Engine{Client: client, Pool: pool, Suppress: supp, Log: zap.NewNop(),
 		Resolvers: map[string]Resolver{AudiencePlatformTenants: fakeResolver{people: people}}}
@@ -136,8 +138,8 @@ func TestMaterialiseChoosesFirstValidAddressAndAppliesOptOuts(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(rows) != 6 {
-		t.Fatalf("want one row per person per channel (6), got %d", len(rows))
+	if len(rows) != 4 {
+		t.Fatalf("want a row only for each channel a person has a valid address for (4), got %d", len(rows))
 	}
 	got := map[string]*ent.BroadcastRecipient{}
 	for _, r := range rows {
@@ -156,14 +158,17 @@ func TestMaterialiseChoosesFirstValidAddressAndAppliesOptOuts(t *testing.T) {
 	if r := got["Shop B/email"]; r == nil || r.Status != entrecipient.StatusSuppressed || r.Address != nil {
 		t.Errorf("opted-out address is suppressed and not stored: %+v", r)
 	}
-	if r := got["Shop B/whatsapp"]; r == nil || r.Status != entrecipient.StatusSkipped || r.Error != "no valid phone number" {
-		t.Errorf("invalid phone is skipped with a reason: %+v", r)
+	if r := got["Shop B/whatsapp"]; r != nil {
+		t.Errorf("an invalid phone means no WhatsApp row at all: %+v", r)
+	}
+	if r := got["No Contact Ltd/email"]; r != nil {
+		t.Errorf("a person with no valid address is never included: %+v", r)
 	}
 	if r := got["Kampala Co/whatsapp"]; r == nil || *r.Address != "+256772123456" {
 		t.Errorf("Ugandan local number: %+v", r)
 	}
 	fresh, _ := client.Broadcast.Get(ctx, b.ID)
-	if fresh.TargetCount != 6 || fresh.SuppressedCount != 1 || fresh.SkippedCount != 2 {
+	if fresh.TargetCount != 4 || fresh.SuppressedCount != 1 || fresh.SkippedCount != 0 {
 		t.Errorf("counts: target %d suppressed %d skipped %d", fresh.TargetCount, fresh.SuppressedCount, fresh.SkippedCount)
 	}
 }
@@ -185,14 +190,16 @@ func TestReviewAndExclusionsMatchWhatIsSent(t *testing.T) {
 	}
 
 	rows, next, err := Review(ctx, res, supp, b, "", 50)
-	if err != nil || next != "" || len(rows) != 3 {
+	if err != nil || next != "" || len(rows) != 2 {
 		t.Fatalf("review: %d rows, next %q, %v", len(rows), next, err)
 	}
 	if r := rows[0]; r.Name != "Titus" || !r.Channels["email"].Sends || r.Channels["email"].Address != "t***@urbanloft.co.ke" {
 		t.Errorf("row a: %+v", r)
 	}
-	if r := rows[2]; r.Channels["email"].Sends || r.Channels["email"].Reason != "no valid email" {
-		t.Errorf("row c has no email and is shown as not sending: %+v", r)
+	for _, r := range rows {
+		if r.Key == "c" {
+			t.Errorf("Shop C has no valid address and must not be listed: %+v", r)
+		}
 	}
 
 	// The sender unticks Shop B.

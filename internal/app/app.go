@@ -207,7 +207,7 @@ func New(ctx context.Context) (*App, error) {
 		&broadcasts.Drafter{Client: entClient, Occasions: occasionSvc, PlatformID: platformIDStr, Log: log},
 		occasionSvc,
 		suppressionSvc,
-		broadcasts.DefaultResolvers(broadcasts.ResolverConfig{AuthAPI: cfg.Services.AuthAPI, MarketflowAPI: cfg.Services.MarketflowAPI, APIKey: cfg.Security.APIKey}),
+		broadcasts.DefaultResolvers(broadcasts.ResolverConfig{AuthAPI: cfg.Services.AuthAPI, MarketflowAPI: cfg.Services.MarketflowAPI, APIKey: cfg.Security.APIKey, PlatformTenantID: platformIDStr}),
 		log)
 
 	deviceTokenHandler := handlers.NewDeviceTokenHandler(log, entClient)

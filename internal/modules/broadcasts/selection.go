@@ -37,62 +37,87 @@ func excludedKeys(b *ent.Broadcast) map[string]bool {
 	return out
 }
 
-// selectCandidates is the one rule for who gets a broadcast on which address: per person and
-// channel the first valid address in the resolver's order (owners and verified admins first),
-// marketing consent applied, people the sender left out marked. The recipient review and the
-// real send both use it, so what the sender sees is what goes out.
+// selectCandidates is the one rule for who gets a broadcast on which address, used by the
+// recipient review and the real send alike so what the sender sees is what goes out. Per person
+// it takes the first valid email and phone in the resolver's order (owners and verified admins
+// first), then picks channels from what is valid (personChannels). Someone with neither a valid
+// email nor a valid phone is not in the list at all. Marketing consent and the sender's
+// exclusions are applied on top.
 func selectCandidates(b *ent.Broadcast, people []Person, channels []string) []candidate {
 	marketing := b.Class == entbroadcast.ClassMarketing
 	attested, _ := b.Metadata["consent_attested"].(bool)
 	excluded := excludedKeys(b)
 	var cands []candidate
 	for _, p := range people {
-		for _, ch := range channels {
+		email, emailFirst := firstValidEmail(p)
+		phones, phoneFirst := validPhones(p)
+		for _, ch := range personChannels(channels, email != "", len(phones) > 0) {
 			c := candidate{person: p, channel: ch, excluded: excluded[p.Key]}
-			switch ch {
-			case "email":
-				if reason := marketingBlocked(p.EmailConsent, p.ConsentRecorded, attested); marketing && reason != "" {
-					c.reason = reason
-					break
-				}
-				for _, a := range p.Emails {
-					addr, err := contact.NormalizeEmail(a.Value)
-					if err != nil {
-						continue
-					}
-					if c.address == "" {
-						c.address, c.first = addr, a.FirstName
-					}
-				}
-				if c.address == "" {
-					c.reason = "no valid email"
-				}
-			case "sms", "whatsapp":
-				if reason := marketingBlocked(p.SMSConsent, p.ConsentRecorded, attested); marketing && reason != "" {
-					c.reason = reason
-					break
-				}
-				seen := map[string]bool{}
-				for _, a := range p.Phones {
-					num, err := contact.NormalizePhone(a.Value, p.Region)
-					if err != nil || seen[contact.SubscriberDigits(num)] {
-						continue
-					}
-					seen[contact.SubscriberDigits(num)] = true
-					if c.address == "" {
-						c.address, c.first = num, a.FirstName
-					} else {
-						c.backups = append(c.backups, num)
-					}
-				}
-				if c.address == "" {
-					c.reason = "no valid phone number"
-				}
+			consent := p.SMSConsent
+			if ch == "email" {
+				consent = p.EmailConsent
+				c.address, c.first = email, emailFirst
+			} else {
+				c.address, c.first, c.backups = phones[0], phoneFirst, phones[1:]
+			}
+			if reason := marketingBlocked(consent, p.ConsentRecorded, attested); marketing && reason != "" {
+				c.address, c.backups, c.reason = "", nil, reason
 			}
 			cands = append(cands, c)
 		}
 	}
 	return cands
+}
+
+// personChannels picks which of the broadcast's channels one person gets: every channel when both
+// a valid email and a valid phone are on file, email alone when only the email is valid, and one
+// phone channel (WhatsApp, else SMS) when only the phone is valid. No valid address: none.
+func personChannels(channels []string, hasEmail, hasPhone bool) []string {
+	switch {
+	case hasEmail && hasPhone:
+		return channels
+	case hasEmail:
+		if contains(channels, "email") {
+			return []string{"email"}
+		}
+	case hasPhone:
+		for _, ch := range []string{"whatsapp", "sms"} {
+			if contains(channels, ch) {
+				return []string{ch}
+			}
+		}
+	}
+	return nil
+}
+
+// firstValidEmail is the person's first email that normalises, with the name behind it.
+func firstValidEmail(p Person) (string, string) {
+	for _, a := range p.Emails {
+		if addr, err := contact.NormalizeEmail(a.Value); err == nil {
+			return addr, a.FirstName
+		}
+	}
+	return "", ""
+}
+
+// validPhones is every distinct valid number of the person in order (the first is used, the rest
+// are backups), with the name behind the first.
+func validPhones(p Person) ([]string, string) {
+	var out []string
+	first := ""
+	seen := map[string]bool{}
+	for _, a := range p.Phones {
+		num, err := contact.NormalizePhone(a.Value, p.Region)
+		if err != nil || seen[contact.SubscriberDigits(num)] {
+			continue
+		}
+		seen[contact.SubscriberDigits(num)] = true
+		if len(out) == 0 {
+			first = a.FirstName
+		}
+		out = append(out, num)
+	}
+	return out, first
 }
 
 // markSuppressed flags candidates whose address opted out of this sender, one lookup per channel
