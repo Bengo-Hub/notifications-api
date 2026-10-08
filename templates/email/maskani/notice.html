@@ -1,0 +1,16 @@
+{{ define "content" }}
+  {{ if eq .priority "emergency" }}
+  <div style="background:#fef2f2;border:1px solid #fecaca;padding:12px 16px;border-radius:8px;margin:0 0 16px 0;">
+    <p style="margin:0;color:#991b1b;font-weight:600;">Urgent notice{{ if .estate }} from {{ .estate }}{{ end }}</p>
+  </div>
+  {{ end }}
+  <p>Hello {{ or .name "there" }},</p>
+  <h2 style="margin:16px 0 8px 0;font-size:18px;color:#111827;">{{ .title }}</h2>
+  <div style="color:#374151;line-height:1.6;white-space:pre-line;">{{ .body }}</div>
+  {{ if .action_link }}
+  <p style="margin:20px 0;">
+    <a href="{{ .action_link }}" style="background:{{ or .brand_primary_color "#0F766E" }};color:#ffffff !important;text-decoration:none;padding:10px 16px;border-radius:6px;display:inline-block;">Open the portal</a>
+  </p>
+  {{ end }}
+  <p style="color:#6b7280;font-size:13px;">You receive estate notices as a registered owner or occupant{{ if .estate }} at {{ .estate }}{{ end }}.</p>
+{{ end }}

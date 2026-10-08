@@ -1,0 +1,8 @@
+Hello {{ or .name "there" }},
+
+A service notice from {{ or .estate "your estate" }}:
+
+*{{ .title }}*
+{{ .body }}
+
+Reply to this message if you need help.

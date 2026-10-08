@@ -109,6 +109,7 @@ var Registry = []Type{
 	{Key: "maskani/incident_alert", Label: "Urgent security incident", Group: "Property", Class: ClassEssential},
 	{Key: "maskani/work_order_sla_breached", Label: "Work order past SLA", Group: "Property", Class: ClassOptional},
 	{Key: "maskani/vendor_document_expiring", Label: "Vendor document expiring", Group: "Property", Class: ClassOptional},
+	{Key: "maskani/notice", Label: "Estate notices", Group: "Property", Class: ClassEssential},
 
 	{Key: "pos/pos_payment_receipt", Label: "POS payment receipt", Group: "POS", Class: ClassEssential},
 	{Key: "pos/pos_order_ready", Label: "POS order ready", Group: "POS", Class: ClassEssential},
