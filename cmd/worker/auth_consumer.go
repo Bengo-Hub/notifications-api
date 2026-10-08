@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -274,10 +275,40 @@ func startAuthNotificationConsumer(ctx context.Context, nc *nats.Conn, cfg *conf
 		tenantID, _ := payload["tenant_id"].(string)
 		email, _ := payload["email"].(string)
 
-		// Phone code sign-in (customer portals): auth-api sends phone instead of email. Delivered
-		// on WhatsApp with Meta's AUTHENTICATION template (auth_otp: the code is the body parameter
-		// and the copy-code button parameter) from the platform number, so a tenant's own WhatsApp
-		// plan and quota never block a sign-in.
+		// Phone code sign-in (customer portals). auth-api sets channel "email" with login_email when
+		// the member has a real address, so the code goes by email first; otherwise (no email, or the
+		// member asked for WhatsApp) it goes on WhatsApp below.
+		if loginEmail, _ := payload["login_email"].(string); email == "" && loginEmail != "" && payload["channel"] == "email" {
+			ttl := 5
+			if v, ok := payload["ttl_minutes"].(float64); ok && v > 0 {
+				ttl = int(v)
+			}
+			brand, _ := payload["brand_name"].(string)
+			msg := messaging.Message{
+				TenantID:    tenantID,
+				Channel:     "email",
+				TemplateID:  "auth/otp_verification",
+				SenderScope: messaging.SenderScopePlatform,
+				Target:      messaging.TargetCustomer,
+				To:          []string{loginEmail},
+				Data:        map[string]any{"name": loginEmail, "otp": otp, "ttl_minutes": ttl, "brand_name": brand},
+				Metadata:    map[string]any{"subject": strings.TrimSpace(brand + " sign-in code")},
+				RequestID:   uuid.New().String(),
+				// Keyed on the code so a resend (a new code) is never swallowed as a duplicate.
+				IdempotencyKey: fmt.Sprintf("auth-otp-phone-email-%s-%s", userID, hashOTPForKey(otp)),
+				QueuedAt:       time.Now(),
+			}
+			if _, err := messaging.Publish(ctx, nc, cfg.Events, msg); err != nil {
+				logg.Error("auth otp: failed to dispatch phone sign-in email", zap.Error(err))
+				return
+			}
+			logg.Info("OTP phone sign-in email dispatched", zap.String("user_id", userID))
+			return
+		}
+
+		// Delivered on WhatsApp with Meta's AUTHENTICATION template (auth_otp: the code is the body
+		// parameter and the copy-code button parameter) from the platform number, so a tenant's own
+		// WhatsApp plan and quota never block a sign-in.
 		if phone, _ := payload["phone"].(string); email == "" && phone != "" {
 			ttl := 5
 			if v, ok := payload["ttl_minutes"].(float64); ok && v > 0 {
