@@ -47,29 +47,110 @@ func TestMaskaniMappingsMatchManifest(t *testing.T) {
 		if m.Subject == nil || m.Subject(sample) == "" {
 			t.Errorf("%s: email subject is empty", event)
 		}
-		if m.WATemplate == "" {
+		if m.WATemplate == "" && m.WAVariant == nil {
 			continue
 		}
 		if _, err := os.Stat(filepath.Join(root, "whatsapp", m.TemplateID+".txt")); err != nil {
 			t.Errorf("%s: missing whatsapp body %s.txt", event, m.TemplateID)
 		}
-		want, ok := params[m.WATemplate]
-		if !ok {
-			t.Errorf("%s: %q is not in templates.json", event, m.WATemplate)
-			continue
+		// Every payload shape a mapping can meet: variants pick a template per shape.
+		shapes := []map[string]any{sample}
+		if m.WAVariant != nil {
+			shapes = maskaniBillShapes(sample)
 		}
-		got := m.WAParams(m.Data(sample, ti))
-		if len(got) != want {
-			t.Errorf("%s: %q expects %d parameters, mapping sends %d", event, m.WATemplate, want, len(got))
-		}
-		for i, v := range got {
-			if strings.TrimSpace(v) == "" {
-				t.Errorf("%s: parameter %d is empty", event, i+1)
+		for _, shape := range shapes {
+			name, got := m.WATemplate, []string(nil)
+			if m.WAVariant != nil {
+				name, got = m.WAVariant(m.Data(shape, ti))
+			} else {
+				got = m.WAParams(m.Data(shape, ti))
+			}
+			want, ok := params[name]
+			if !ok {
+				t.Errorf("%s: %q is not in templates.json", event, name)
+				continue
+			}
+			if len(got) != want {
+				t.Errorf("%s: %q expects %d parameters, mapping sends %d", event, name, want, len(got))
+			}
+			for i, v := range got {
+				if strings.TrimSpace(v) == "" || strings.ContainsAny(v, "\n\t") {
+					t.Errorf("%s: %q parameter %d is empty or multi-line (%q)", event, name, i+1, v)
+				}
+			}
+			if strings.HasSuffix(name, "_btn") && (m.Path == nil || m.Path(shape) == "") {
+				t.Errorf("%s: button template %q needs a link path", event, name)
 			}
 		}
-		if strings.HasSuffix(m.WATemplate, "_btn") && (m.Path == nil || m.Path(sample) == "") {
-			t.Errorf("%s: button template %q needs a link path", event, m.WATemplate)
+	}
+}
+
+// maskaniBillShapes covers the optional parts of a bill: VAT, a fund without a paybill, and items.
+func maskaniBillShapes(base map[string]any) []map[string]any {
+	with := func(kv map[string]any) map[string]any {
+		out := map[string]any{}
+		for k, v := range base {
+			out[k] = v
 		}
+		for k, v := range kv {
+			out[k] = v
+		}
+		return out
+	}
+	items := []any{
+		map[string]any{"description": "Service charge", "amount": "4500.00"},
+		map[string]any{"description": "Water", "amount": "1080.00", "quantity": "9", "rate": "120.00"},
+		map[string]any{"description": "Gym", "amount": "1000.00", "tax": "160.00"},
+	}
+	untaxed := []any{items[0], items[1]}
+	return []map[string]any{
+		with(map[string]any{"items": untaxed, "subtotal": "5580.00", "tax_total": "0.00", "amount": "5580.00"}),
+		with(map[string]any{"items": items, "subtotal": "6580.00", "tax_total": "160.00", "amount": "6740.00"}),
+		with(map[string]any{"items": untaxed, "paybill": "", "subtotal": "5580.00", "tax_total": "0.00", "amount": "5580.00"}),
+		with(map[string]any{"tax_total": "0.00"}), // no items on the event
+	}
+}
+
+// TestMaskaniBillGatesOptionalLines: VAT appears only on a taxed bill, quantity and rate only where
+// given, and the paybill line only when the fund has a paybill.
+func TestMaskaniBillGatesOptionalLines(t *testing.T) {
+	m := maskaniMappings["bill.issued"]
+	ti := &tenantInfo{Name: "Shaba Village", Slug: "shaba-village"}
+	shapes := maskaniBillShapes(map[string]any{"name": "Jane", "period": "2026-11", "account_ref": "B07",
+		"due_date": "10 Nov 2026", "paybill": "4012345"})
+
+	untaxed := m.Data(shapes[0], ti)
+	if untaxed["has_tax"] == true {
+		t.Error("untaxed bill reports VAT")
+	}
+	if name, params := m.WAVariant(untaxed); name != "maskani_bill_issued_v1_btn" || strings.Contains(strings.Join(params, "|"), "VAT") {
+		t.Errorf("untaxed bill uses %q with %v", name, params)
+	}
+	if !strings.Contains(untaxed["charges"].(string), "Water 9 x KES 120 = KES 1,080") ||
+		strings.Contains(untaxed["charges"].(string), "Service charge 1 x") {
+		t.Errorf("charges line = %q", untaxed["charges"])
+	}
+
+	taxed := m.Data(shapes[1], ti)
+	if name, _ := m.WAVariant(taxed); name != "maskani_bill_issued_vat_v1_btn" || taxed["has_tax"] != true {
+		t.Errorf("taxed bill uses %q", name)
+	}
+	items := taxed["items"].([]maskaniBillItem)
+	if items[0].Tax != "" || items[0].Detail != "" || items[2].Tax == "" {
+		t.Errorf("per-line tax and detail gating wrong: %+v", items)
+	}
+
+	if name, _ := m.WAVariant(m.Data(shapes[2], ti)); name != "maskani_bill_issued_nopaybill_v1_btn" {
+		t.Errorf("bill without paybill uses %q", name)
+	}
+
+	// A bill with many charges stays one bounded line.
+	many := make([]any, 60)
+	for i := range many {
+		many[i] = map[string]any{"description": "Charge with a fairly long description", "amount": "100.00"}
+	}
+	if _, line := maskaniBillItems(many); len(line) > maxChargesParam+20 || !strings.Contains(line, "more") {
+		t.Errorf("long charges line not cut: %d chars", len(line))
 	}
 }
 

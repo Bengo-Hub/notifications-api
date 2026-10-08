@@ -1,26 +1,53 @@
 {{ define "content" }}
   <p>Hello {{ or .name "there" }},</p>
-  <p>Your <strong>{{ .period }}</strong> bill is ready.</p>
-  <table role="presentation" style="width:100%;border-collapse:collapse;margin:16px 0;">
+  <p>Your <strong>{{ .period }}</strong> bill for account <strong>{{ .account_ref }}</strong>{{ if .unit_code }} (unit {{ .unit_code }}){{ end }} is ready.</p>
+
+  <table role="presentation" style="width:100%;border-collapse:collapse;margin:12px 0 4px 0;font-size:13px;color:#6b7280;">
+    {{ if .invoice_number }}<tr><td style="padding:2px 0;width:45%;">Invoice</td><td style="padding:2px 0;font-family:monospace;color:#111827;">{{ .invoice_number }}</td></tr>{{ end }}
+    {{ if .invoice_date }}<tr><td style="padding:2px 0;width:45%;">Bill date</td><td style="padding:2px 0;color:#111827;">{{ .invoice_date }}</td></tr>{{ end }}
+    {{ if .fund_name }}<tr><td style="padding:2px 0;width:45%;">Fund</td><td style="padding:2px 0;color:#111827;">{{ .fund_name }}</td></tr>{{ end }}
+  </table>
+
+  {{ if .items }}
+  <table role="presentation" style="width:100%;border-collapse:collapse;margin:16px 0 0 0;">
     <tr>
-      <td style="padding:8px 0;color:#6b7280;width:45%;border-bottom:1px solid #f3f4f6;">Account</td>
-      <td style="padding:8px 0;font-weight:600;border-bottom:1px solid #f3f4f6;">{{ .account_ref }}{{ if .unit_code }} (unit {{ .unit_code }}){{ end }}</td>
+      <td style="padding:8px 0;border-bottom:2px solid #e5e7eb;font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;">Charge</td>
+      <td style="padding:8px 0;border-bottom:2px solid #e5e7eb;font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;text-align:right;">Amount</td>
     </tr>
-    {{ if .invoice_number }}
+    {{ range .items }}
     <tr>
-      <td style="padding:8px 0;color:#6b7280;border-bottom:1px solid #f3f4f6;">Invoice</td>
-      <td style="padding:8px 0;font-family:monospace;font-size:13px;border-bottom:1px solid #f3f4f6;">{{ .invoice_number }}</td>
+      <td style="padding:10px 12px 10px 0;border-bottom:1px solid #f3f4f6;vertical-align:top;">
+        <div style="color:#111827;">{{ .Description }}</div>
+        {{ if .Detail }}<div style="color:#6b7280;font-size:12px;margin-top:2px;">{{ .Detail }}</div>{{ end }}
+        {{ if .Tax }}<div style="color:#6b7280;font-size:12px;margin-top:2px;">plus VAT {{ .Tax }}</div>{{ end }}
+      </td>
+      <td style="padding:10px 0;border-bottom:1px solid #f3f4f6;text-align:right;vertical-align:top;white-space:nowrap;color:#111827;">{{ .Amount }}</td>
+    </tr>
+    {{ end }}
+  </table>
+  {{ end }}
+
+  <table role="presentation" style="width:100%;border-collapse:collapse;margin:0 0 16px 0;">
+    {{ if .has_tax }}
+    <tr>
+      <td style="padding:8px 0 2px 0;color:#6b7280;text-align:right;">Subtotal</td>
+      <td style="padding:8px 0 2px 0;text-align:right;width:35%;white-space:nowrap;">{{ .subtotal }}</td>
+    </tr>
+    <tr>
+      <td style="padding:2px 0 8px 0;color:#6b7280;text-align:right;">VAT</td>
+      <td style="padding:2px 0 8px 0;text-align:right;white-space:nowrap;">{{ .tax_total }}</td>
     </tr>
     {{ end }}
     <tr>
-      <td style="padding:8px 0;color:#6b7280;border-bottom:1px solid #f3f4f6;">Amount due</td>
-      <td style="padding:8px 0;font-weight:700;font-size:16px;border-bottom:1px solid #f3f4f6;">{{ .amount }}</td>
+      <td style="padding:10px 0;border-top:2px solid #111827;font-weight:700;text-align:right;">Total due</td>
+      <td style="padding:10px 0;border-top:2px solid #111827;font-weight:700;font-size:16px;text-align:right;width:35%;white-space:nowrap;">{{ .amount }}</td>
     </tr>
     <tr>
-      <td style="padding:8px 0;color:#6b7280;">Due date</td>
-      <td style="padding:8px 0;font-weight:600;">{{ .due_date }}</td>
+      <td style="padding:0;color:#6b7280;font-size:13px;text-align:right;">Due by</td>
+      <td style="padding:0;color:#111827;font-size:13px;font-weight:600;text-align:right;white-space:nowrap;">{{ .due_date }}</td>
     </tr>
   </table>
+
   {{ if .paybill }}
   <div style="background:#f0fdfa;border:1px solid #99f6e4;padding:12px 16px;border-radius:8px;margin:16px 0;">
     <p style="margin:0 0 4px 0;font-weight:600;color:#115e59;">Pay by M-Pesa</p>
@@ -32,5 +59,5 @@
     <a href="{{ .action_link }}" style="background:{{ or .brand_primary_color "#0F766E" }};color:#ffffff !important;text-decoration:none;padding:10px 16px;border-radius:6px;display:inline-block;">View statement and pay</a>
   </p>
   {{ end }}
-  <p style="color:#6b7280;font-size:13px;">Payments show on your statement within a few minutes. Please use the account number exactly as shown so the payment reaches your account.</p>
+  <p style="color:#6b7280;font-size:13px;">Payments show on your statement within a few minutes{{ if .paybill }}. Please use the account number exactly as shown so the payment reaches your account{{ end }}.</p>
 {{ end }}

@@ -44,7 +44,10 @@ type maskaniMapping struct {
 	// WhatsApp template name and its body parameters, in {{1}}..{{n}} order.
 	WATemplate string
 	WAParams   func(d map[string]any) []string
-	Skip       func(p map[string]any) bool
+	// WAVariant, when set, picks the template and parameters from the data instead, for messages
+	// whose optional lines (such as VAT) need a different approved template rather than a blank.
+	WAVariant func(d map[string]any) (string, []string)
+	Skip      func(p map[string]any) bool
 }
 
 func mStr(p map[string]any, key string) string {
@@ -76,6 +79,81 @@ func mTime(p map[string]any, key string) string {
 	return s
 }
 
+// mMoneyOr formats key, or returns fallback when the payload has no such amount.
+func mMoneyOr(p map[string]any, key, fallback string) string {
+	if mStr(p, key) == "" {
+		return fallback
+	}
+	return mMoney(p, key)
+}
+
+func mPositive(p map[string]any, key string) bool {
+	f, err := strconv.ParseFloat(mStr(p, key), 64)
+	return err == nil && f > 0
+}
+
+// maskaniPeriod turns "2026-11" into "November 2026".
+func maskaniPeriod(ym string) string {
+	if t, err := time.Parse("2006-01", ym); err == nil {
+		return t.Format("January 2006")
+	}
+	return ym
+}
+
+// maskaniBillItem is one charge on a bill, formatted for the email table.
+type maskaniBillItem struct {
+	Description string
+	Detail      string // "9 x KES 120" for metered or rated charges
+	Amount      string
+	Tax         string
+}
+
+// maxChargesParam keeps the one-line WhatsApp breakdown well inside Meta's 1,024 character body.
+const maxChargesParam = 600
+
+// maskaniBillItems formats bill.issued items for the email table and as one line for WhatsApp
+// ("Service charge KES 4,500; Water 9 x KES 120 = KES 1,080"). Meta rejects newlines inside a
+// template parameter, so the WhatsApp breakdown is a single line, cut short with "and N more" when
+// a bill has many charges.
+func maskaniBillItems(raw any) ([]maskaniBillItem, string) {
+	list, _ := raw.([]any)
+	items := make([]maskaniBillItem, 0, len(list))
+	parts := make([]string, 0, len(list))
+	for _, r := range list {
+		m, ok := r.(map[string]any)
+		if !ok {
+			continue
+		}
+		it := maskaniBillItem{Description: waParam(m["description"], "Charge"), Amount: mMoney(m, "amount")}
+		if mStr(m, "quantity") != "" && mStr(m, "rate") != "" {
+			it.Detail = mStr(m, "quantity") + " x " + mMoney(m, "rate")
+		}
+		if mPositive(m, "tax") {
+			it.Tax = mMoney(m, "tax")
+		}
+		items = append(items, it)
+		part := it.Description + " " + it.Amount
+		if it.Detail != "" {
+			part = it.Description + " " + it.Detail + " = " + it.Amount
+		}
+		parts = append(parts, part)
+	}
+	line := ""
+	for i, part := range parts {
+		next := line
+		if next != "" {
+			next += "; "
+		}
+		next += part
+		if len(next) > maxChargesParam {
+			line += fmt.Sprintf("; and %d more", len(parts)-i)
+			break
+		}
+		line = next
+	}
+	return items, line
+}
+
 func mParams(d map[string]any, keys ...string) []string {
 	out := make([]string, len(keys))
 	for i, k := range keys {
@@ -105,13 +183,29 @@ var maskaniMappings = map[string]maskaniMapping{
 			return fmt.Sprintf("Your %s bill for %s", mStr(p, "period"), mStr(p, "account_ref"))
 		},
 		Data: func(p map[string]any, _ *tenantInfo) map[string]any {
-			return map[string]any{"name": waParam(p["name"], "there"), "period": mStr(p, "period"),
-				"account_ref": mStr(p, "account_ref"), "unit_code": mStr(p, "unit_code"), "amount": mMoney(p, "amount"),
+			items, charges := maskaniBillItems(p["items"])
+			total := mMoney(p, "amount")
+			if charges == "" {
+				charges = "see your statement"
+			}
+			return map[string]any{"name": waParam(p["name"], "there"), "period": maskaniPeriod(mStr(p, "period")),
+				"account_ref": mStr(p, "account_ref"), "unit_code": mStr(p, "unit_code"), "amount": total,
+				"subtotal": waParam(mMoneyOr(p, "subtotal", total), total), "tax_total": mMoney(p, "tax_total"),
+				"has_tax": mPositive(p, "tax_total"), "items": items, "charges": charges,
+				"invoice_date": mStr(p, "invoice_date"), "fund_name": mStr(p, "fund_name"),
 				"due_date": mStr(p, "due_date"), "paybill": mStr(p, "paybill"), "invoice_number": mStr(p, "invoice_number")}
 		},
-		WATemplate: "maskani_bill_issued_v1_btn",
-		WAParams: func(d map[string]any) []string {
-			return mParams(d, "name", "period", "account_ref", "amount", "due_date", "paybill", "account_ref")
+		// Subtotal and VAT lines only on a taxed bill; a bill without a paybill would leave the pay
+		// line empty, so it falls back to the portal button alone.
+		WAVariant: func(d map[string]any) (string, []string) {
+			if d["paybill"] == "" {
+				return "maskani_bill_issued_nopaybill_v1_btn", mParams(d, "name", "period", "account_ref", "charges", "amount", "due_date")
+			}
+			if d["has_tax"] == true {
+				return "maskani_bill_issued_vat_v1_btn",
+					mParams(d, "name", "period", "account_ref", "charges", "subtotal", "tax_total", "amount", "due_date", "paybill", "account_ref")
+			}
+			return "maskani_bill_issued_v1_btn", mParams(d, "name", "period", "account_ref", "charges", "amount", "due_date", "paybill", "account_ref")
 		},
 	},
 	"payment.applied": {
@@ -123,7 +217,9 @@ var maskaniMappings = map[string]maskaniMapping{
 				"method": mStr(p, "method")}
 		},
 		WATemplate: "maskani_payment_received_v1_btn",
-		WAParams:   func(d map[string]any) []string { return mParams(d, "name", "amount", "account_ref", "receipt", "balance") },
+		WAParams: func(d map[string]any) []string {
+			return mParams(d, "name", "amount", "account_ref", "receipt", "balance")
+		},
 	},
 	"pass.created": {
 		TemplateID: "maskani/visitor_pass", PhoneKey: "visitor_phone", EmailKey: "visitor_email",
@@ -133,7 +229,9 @@ var maskaniMappings = map[string]maskaniMapping{
 				"code": mStr(p, "code"), "valid_from": mTime(p, "valid_from"), "valid_to": mTime(p, "valid_to")}
 		},
 		WATemplate: "maskani_visitor_pass_v1",
-		WAParams:   func(d map[string]any) []string { return mParams(d, "visitor_name", "estate", "code", "valid_from", "valid_to") },
+		WAParams: func(d map[string]any) []string {
+			return mParams(d, "visitor_name", "estate", "code", "valid_from", "valid_to")
+		},
 		// A pass without a code (QR only) has nothing to send.
 		Skip: func(p map[string]any) bool { return mStr(p, "code") == "" },
 	},
@@ -175,11 +273,15 @@ var maskaniMappings = map[string]maskaniMapping{
 				"unit_code": mStr(p, "unit_code"), "account_ref": mStr(p, "account_ref"), "net_price": mMoney(p, "net_price")}
 		},
 		WATemplate: "maskani_contract_activated_v1_btn",
-		WAParams:   func(d map[string]any) []string { return mParams(d, "name", "contract_number", "unit_code", "account_ref") },
+		WAParams: func(d map[string]any) []string {
+			return mParams(d, "name", "contract_number", "unit_code", "account_ref")
+		},
 	},
 	"sale_contract.fully_paid": {
 		TemplateID: "maskani/contract_fully_paid", PhoneKey: "phone", EmailKey: "email", Path: fixed("portal/purchase"),
-		Subject: func(p map[string]any) string { return "Sale agreement " + mStr(p, "contract_number") + " is fully paid" },
+		Subject: func(p map[string]any) string {
+			return "Sale agreement " + mStr(p, "contract_number") + " is fully paid"
+		},
 		Data: func(p map[string]any, _ *tenantInfo) map[string]any {
 			return map[string]any{"name": waParam(p["name"], "there"), "contract_number": mStr(p, "contract_number"),
 				"account_ref": mStr(p, "account_ref")}
@@ -317,13 +419,19 @@ func dispatchMaskani(ctx context.Context, nc *nats.Conn, cfg *config.Config, ti 
 			return err
 		}
 	}
-	if phone != "" && mp.WATemplate != "" {
+	waName, waParams := mp.WATemplate, []string(nil)
+	if mp.WAVariant != nil {
+		waName, waParams = mp.WAVariant(data)
+	} else if mp.WAParams != nil {
+		waParams = mp.WAParams(data)
+	}
+	if phone != "" && waName != "" {
 		meta := map[string]any{
-			"template_name":     mp.WATemplate,
+			"template_name":     waName,
 			"template_language": "en_US",
-			"template_params":   mp.WAParams(data),
+			"template_params":   waParams,
 		}
-		if strings.HasSuffix(mp.WATemplate, "_btn") {
+		if strings.HasSuffix(waName, "_btn") {
 			if suffix == "" {
 				return nil // a button template cannot go without its link
 			}

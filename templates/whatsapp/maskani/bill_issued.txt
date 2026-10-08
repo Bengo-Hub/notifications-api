@@ -1,7 +1,15 @@
 Hello {{ or .name "there" }},
 
-Your *{{ .period }}* bill for account *{{ .account_ref }}* is *{{ .amount }}*, due on {{ .due_date }}.
+Your *{{ .period }}* bill for account *{{ .account_ref }}* is ready.
 
+Charges: {{ .charges }}
+{{ if .has_tax }}
+Subtotal: {{ .subtotal }}
+VAT: {{ .tax_total }}{{ end }}
+*Total due: {{ .amount }}* by {{ .due_date }}
+{{ if .paybill }}
 Pay by M-Pesa to paybill *{{ .paybill }}*, account number *{{ .account_ref }}*.
-
+{{ else }}
+Open your statement to see the bill and pay.
+{{ end }}
 Thank you.

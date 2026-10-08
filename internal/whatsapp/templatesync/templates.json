@@ -474,9 +474,31 @@
     "name": "maskani_bill_issued_v1_btn",
     "category": "UTILITY",
     "language": "en_US",
-    "source": "whatsapp/maskani/bill_issued.txt (params: name, period, account_ref, amount, due_date, paybill, account_ref; button: <slug>/portal)",
-    "body": "Hello {{1}},\n\nYour *{{2}}* bill for account *{{3}}* is *{{4}}*, due on {{5}}.\n\nPay by M-Pesa to paybill *{{6}}*, account number *{{7}}*.\n\nThank you.",
-    "example": ["Jane", "November 2026", "B07", "KES 6,450.00", "10 Nov 2026", "4012345", "B07"],
+    "source": "whatsapp/maskani/bill_issued.txt, untaxed bill (params: name, period, account_ref, charges, total, due_date, paybill, account_ref; button: <slug>/portal)",
+    "body": "Hello {{1}},\n\nYour *{{2}}* bill for account *{{3}}* is ready.\n\nCharges: {{4}}\n\n*Total due: {{5}}* by {{6}}\n\nPay by M-Pesa to paybill *{{7}}*, account number *{{8}}*.\n\nThank you.",
+    "example": ["Jane", "November 2026", "B07", "Service charge KES 4,500; Water 9 x KES 120 = KES 1,080; Security KES 870", "KES 6,450", "10 Nov 2026", "4012345", "B07"],
+    "buttons": [
+      {"type": "URL", "text": "View Statement", "url": "https://maskaniapp.codevertexafrica.com/{{1}}", "example": ["shaba-village/portal"]}
+    ]
+  },
+  {
+    "name": "maskani_bill_issued_vat_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/maskani/bill_issued.txt, bill with VAT (params: name, period, account_ref, charges, subtotal, vat, total, due_date, paybill, account_ref; button: <slug>/portal)",
+    "body": "Hello {{1}},\n\nYour *{{2}}* bill for account *{{3}}* is ready.\n\nCharges: {{4}}\n\nSubtotal: {{5}}\nVAT: {{6}}\n*Total due: {{7}}* by {{8}}\n\nPay by M-Pesa to paybill *{{9}}*, account number *{{10}}*.\n\nThank you.",
+    "example": ["Jane", "November 2026", "B07", "Service charge KES 4,500; Water 9 x KES 120 = KES 1,080; Gym KES 1,000", "KES 6,580", "KES 160", "KES 6,740", "10 Nov 2026", "4012345", "B07"],
+    "buttons": [
+      {"type": "URL", "text": "View Statement", "url": "https://maskaniapp.codevertexafrica.com/{{1}}", "example": ["shaba-village/portal"]}
+    ]
+  },
+  {
+    "name": "maskani_bill_issued_nopaybill_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/maskani/bill_issued.txt, fund without a paybill (params: name, period, account_ref, charges, total, due_date; button: <slug>/portal)",
+    "body": "Hello {{1}},\n\nYour *{{2}}* bill for account *{{3}}* is ready.\n\nCharges: {{4}}\n\n*Total due: {{5}}* by {{6}}\n\nOpen your statement to see the bill and pay.",
+    "example": ["Jane", "November 2026", "B07", "Service charge KES 4,500; Water 9 x KES 120 = KES 1,080; Security KES 870", "KES 6,450", "10 Nov 2026"],
     "buttons": [
       {"type": "URL", "text": "View Statement", "url": "https://maskaniapp.codevertexafrica.com/{{1}}", "example": ["shaba-village/portal"]}
     ]
