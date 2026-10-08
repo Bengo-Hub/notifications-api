@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 
@@ -28,13 +29,25 @@ func NewWhatsAppTemplates(manager *providers.Manager, logger *zap.Logger) *Whats
 type syncTemplatesRequest struct {
 	DryRun bool     `json:"dry_run"`
 	Only   []string `json:"only,omitempty"` // name prefixes, e.g. ["finance_"] — empty means every template
+	// Names limits the run to these exact template names: the UI's submit queue sends one batch
+	// of names per call, so a template Meta refused is not retried by every later batch.
+	Names []string `json:"names,omitempty"`
+	// BatchSize caps how many templates one call submits (default 5, at most 10); the rest come
+	// back queued and the caller calls again until remaining is 0.
+	BatchSize int `json:"batch_size,omitempty"`
 }
 
 type syncTemplatesResponse struct {
-	WABAID  string                `json:"waba_id"`
-	Results []templatesync.Result `json:"results"`
-	Summary map[string]int        `json:"summary"`
+	WABAID    string                `json:"waba_id"`
+	Results   []templatesync.Result `json:"results"`
+	Summary   map[string]int        `json:"summary"`
+	Remaining int                   `json:"remaining"`
 }
+
+const (
+	defaultSyncBatch = 5
+	maxSyncBatch     = 10
+)
 
 // Sync runs the idempotent WhatsApp template sync against Meta. With dry_run true (the UI's
 // default), nothing is sent to Meta — it only reports what would be created versus what already
@@ -74,9 +87,20 @@ func (h *WhatsAppTemplates) Sync(w http.ResponseWriter, r *http.Request) {
 	if len(req.Only) > 0 {
 		defs = templatesync.FilterByPrefix(defs, req.Only)
 	}
+	if len(req.Names) > 0 {
+		defs = templatesync.FilterByName(defs, req.Names)
+	}
+
+	batch := req.BatchSize
+	if batch <= 0 {
+		batch = defaultSyncBatch
+	}
+	batch = min(batch, maxSyncBatch)
 
 	syncer := templatesync.NewSyncer(wabaID, token)
-	results, err := syncer.Run(ctx, defs, req.DryRun)
+	// A batch already under way finishes even if the browser gives up waiting, so a template is
+	// never half submitted; the caller's next dry run shows what reached Meta.
+	results, remaining, err := syncer.RunBatch(context.WithoutCancel(ctx), defs, req.DryRun, batch)
 	if err != nil {
 		h.logger.Error("whatsapp template sync failed", zap.Error(err))
 		jsonError(w, http.StatusBadGateway, "sync failed: "+err.Error())
@@ -97,7 +121,7 @@ func (h *WhatsAppTemplates) Sync(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	jsonResponse(w, http.StatusOK, syncTemplatesResponse{WABAID: wabaID, Results: results, Summary: summary})
+	jsonResponse(w, http.StatusOK, syncTemplatesResponse{WABAID: wabaID, Results: results, Summary: summary, Remaining: remaining})
 }
 
 type deleteTemplatesRequest struct {

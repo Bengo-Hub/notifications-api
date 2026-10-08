@@ -75,6 +75,21 @@ func FilterByPrefix(defs []TemplateDef, prefixes []string) []TemplateDef {
 	return out
 }
 
+// FilterByName keeps only definitions whose name is exactly one of names.
+func FilterByName(defs []TemplateDef, names []string) []TemplateDef {
+	want := make(map[string]bool, len(names))
+	for _, n := range names {
+		want[strings.TrimSpace(n)] = true
+	}
+	out := make([]TemplateDef, 0, len(names))
+	for _, def := range defs {
+		if want[def.Name] {
+			out = append(out, def)
+		}
+	}
+	return out
+}
+
 // Outcome is one of "created", "skipped" (already existed on Meta — idempotent no-op), "deleted",
 // or "failed".
 type Outcome string
@@ -84,6 +99,8 @@ const (
 	OutcomeSkipped Outcome = "skipped"
 	OutcomeDeleted Outcome = "deleted"
 	OutcomeFailed  Outcome = "failed"
+	// OutcomeQueued is a template still to submit, left for the next batch (RunBatch).
+	OutcomeQueued Outcome = "queued"
 	// outcomeWouldCreate/outcomeWouldDelete are dry-run only, reported to the caller as
 	// OutcomeCreated/OutcomeDeleted with DryRun=true on the Result so JSON consumers don't need
 	// extra enum values to handle.
@@ -115,12 +132,21 @@ type Syncer struct {
 	WABAID string
 	Token  string
 	client *http.Client
+	// GraphURL overrides Meta's Graph API base (tests only).
+	GraphURL string
+}
+
+func (s *Syncer) graph() string {
+	if s.GraphURL != "" {
+		return s.GraphURL
+	}
+	return "https://graph.facebook.com"
 }
 
 // NewSyncer builds a Syncer. Both wabaID and token are required — there is deliberately no
 // platform-level default: template management always targets a specific, explicit WABA.
 func NewSyncer(wabaID, token string) *Syncer {
-	return &Syncer{WABAID: wabaID, Token: token, client: &http.Client{Timeout: 20 * time.Second}}
+	return &Syncer{WABAID: wabaID, Token: token, client: &http.Client{Timeout: 15 * time.Second}}
 }
 
 // Run syncs defs against the WABA: fetches every template already registered (by name, regardless
@@ -128,12 +154,24 @@ func NewSyncer(wabaID, token string) *Syncer {
 // and skips any match; creates everything else, or — when dryRun is true — reports what WOULD be
 // created without calling Meta's create endpoint at all.
 func (s *Syncer) Run(ctx context.Context, defs []TemplateDef, dryRun bool) ([]Result, error) {
+	results, _, err := s.RunBatch(ctx, defs, dryRun, 0)
+	return results, err
+}
+
+// submitGap paces creates so a batch stays well inside Meta's template-creation rate limit.
+const submitGap = 400 * time.Millisecond
+
+// RunBatch is Run with at most limit creates per call (0 = no limit). Templates past the limit come
+// back as OutcomeQueued and remaining counts them, so a caller (the UI) submits the whole set in
+// short requests, one after another, instead of one long request that outlives its timeout.
+func (s *Syncer) RunBatch(ctx context.Context, defs []TemplateDef, dryRun bool, limit int) ([]Result, int, error) {
 	existing, err := s.fetchExisting(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("fetch existing templates from Meta: %w", err)
+		return nil, 0, fmt.Errorf("fetch existing templates from Meta: %w", err)
 	}
 
 	results := make([]Result, 0, len(defs))
+	submitted, remaining := 0, 0
 	for _, def := range defs {
 		if mt, ok := existing[def.Name]; ok {
 			reason := ""
@@ -147,13 +185,83 @@ func (s *Syncer) Run(ctx context.Context, defs []TemplateDef, dryRun bool) ([]Re
 			results = append(results, Result{Name: def.Name, Category: def.Category, Outcome: OutcomeCreated, DryRun: true})
 			continue
 		}
-		if err := s.create(ctx, def); err != nil {
-			results = append(results, Result{Name: def.Name, Category: def.Category, Outcome: OutcomeFailed, Detail: err.Error()})
+		if limit > 0 && submitted >= limit {
+			results = append(results, Result{Name: def.Name, Category: def.Category, Outcome: OutcomeQueued, Detail: "waiting for the next batch"})
+			remaining++
 			continue
 		}
-		results = append(results, Result{Name: def.Name, Category: def.Category, Outcome: OutcomeCreated})
+		if submitted > 0 {
+			select {
+			case <-ctx.Done():
+				return results, remaining, ctx.Err()
+			case <-time.After(submitGap):
+			}
+		}
+		submitted++
+		err := s.create(ctx, def)
+		switch {
+		case err == nil:
+			results = append(results, Result{Name: def.Name, Category: def.Category, Outcome: OutcomeCreated, MetaStatus: "PENDING"})
+		case isAlreadyExists(err):
+			// An earlier attempt reached Meta even though its reply was lost: it is there.
+			results = append(results, Result{Name: def.Name, Category: def.Category, Outcome: OutcomeSkipped, Detail: "already exists on Meta"})
+		default:
+			results = append(results, Result{Name: def.Name, Category: def.Category, Outcome: OutcomeFailed, Detail: err.Error()})
+		}
 	}
-	return results, nil
+	return results, remaining, nil
+}
+
+// metaError is Meta's error reply, kept readable for admins rather than a raw JSON dump.
+type metaError struct {
+	Status  int
+	Message string
+	Code    int
+	Subcode int
+}
+
+func (e *metaError) Error() string {
+	if e.Message == "" {
+		return fmt.Sprintf("Meta answered %d", e.Status)
+	}
+	if e.Subcode != 0 {
+		return fmt.Sprintf("%s (Meta error %d)", e.Message, e.Subcode)
+	}
+	return fmt.Sprintf("%s (Meta error %d)", e.Message, e.Code)
+}
+
+// parseMetaError reads Meta's {"error":{...}} body, preferring the message meant for users.
+func parseMetaError(status int, body []byte) error {
+	var r struct {
+		Error struct {
+			Message      string `json:"message"`
+			UserTitle    string `json:"error_user_title"`
+			UserMsg      string `json:"error_user_msg"`
+			Code         int    `json:"code"`
+			ErrorSubcode int    `json:"error_subcode"`
+		} `json:"error"`
+	}
+	if json.Unmarshal(body, &r) != nil {
+		return &metaError{Status: status, Message: strings.TrimSpace(string(body))}
+	}
+	msg := r.Error.UserMsg
+	if msg == "" {
+		msg = r.Error.Message
+	}
+	if r.Error.UserTitle != "" && r.Error.UserTitle != msg {
+		msg = r.Error.UserTitle + ": " + msg
+	}
+	return &metaError{Status: status, Message: msg, Code: r.Error.Code, Subcode: r.Error.ErrorSubcode}
+}
+
+// isAlreadyExists is Meta refusing a create because a template of that name and language exists.
+func isAlreadyExists(err error) bool {
+	me, ok := err.(*metaError)
+	if !ok {
+		return false
+	}
+	m := strings.ToLower(me.Message)
+	return me.Subcode == 2388023 || me.Subcode == 2388024 || strings.Contains(m, "already exists") || strings.Contains(m, "being deleted")
 }
 
 // DeleteByPrefix permanently removes every template on the WABA (regardless of review status —
@@ -199,7 +307,7 @@ func (s *Syncer) DeleteByPrefix(ctx context.Context, prefixes []string, dryRun b
 // language variants of that name at once — this manifest only ever registers one language per
 // name, so that's a non-issue here, just the documented behavior).
 func (s *Syncer) delete(ctx context.Context, name string) error {
-	url := fmt.Sprintf("https://graph.facebook.com/%s/%s/message_templates?name=%s", apiVersion, s.WABAID, name)
+	url := fmt.Sprintf("%s/%s/%s/message_templates?name=%s", s.graph(), apiVersion, s.WABAID, name)
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, url, nil)
 	if err != nil {
 		return err
@@ -213,7 +321,7 @@ func (s *Syncer) delete(ctx context.Context, name string) error {
 	defer resp.Body.Close()
 	body, _ := io.ReadAll(resp.Body)
 	if resp.StatusCode >= 300 {
-		return fmt.Errorf("status %d: %s", resp.StatusCode, string(body))
+		return parseMetaError(resp.StatusCode, body)
 	}
 	return nil
 }
@@ -221,7 +329,7 @@ func (s *Syncer) delete(ctx context.Context, name string) error {
 // fetchExisting paginates through every template already on the WABA, keyed by name.
 func (s *Syncer) fetchExisting(ctx context.Context) (map[string]metaTemplate, error) {
 	out := map[string]metaTemplate{}
-	url := fmt.Sprintf("https://graph.facebook.com/%s/%s/message_templates?fields=name,status,rejected_reason&limit=200", apiVersion, s.WABAID)
+	url := fmt.Sprintf("%s/%s/%s/message_templates?fields=name,status,rejected_reason&limit=200", s.graph(), apiVersion, s.WABAID)
 
 	for url != "" {
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
@@ -309,7 +417,7 @@ func (s *Syncer) create(ctx context.Context, def TemplateDef) error {
 		return err
 	}
 
-	url := fmt.Sprintf("https://graph.facebook.com/%s/%s/message_templates", apiVersion, s.WABAID)
+	url := fmt.Sprintf("%s/%s/%s/message_templates", s.graph(), apiVersion, s.WABAID)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(data))
 	if err != nil {
 		return err
@@ -324,7 +432,7 @@ func (s *Syncer) create(ctx context.Context, def TemplateDef) error {
 	defer resp.Body.Close()
 	body, _ := io.ReadAll(resp.Body)
 	if resp.StatusCode >= 300 {
-		return fmt.Errorf("status %d: %s", resp.StatusCode, string(body))
+		return parseMetaError(resp.StatusCode, body)
 	}
 	return nil
 }
