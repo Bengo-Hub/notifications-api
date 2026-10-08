@@ -19,6 +19,9 @@ const (
 	AudiencePlatformTenants = "platform_tenants" // the platform's tenants (platform broadcasts only)
 	AudienceTenantCustomers = "tenant_customers" // a tenant's customers, from MarketFlow
 	AudienceTenantUsers     = "tenant_users"     // a tenant's own staff
+	// AudienceMaskaniResidents is an estate's owners and residents, from maskani-api (which owns
+	// them): optionally narrowed by property_id, block_ids, unit_ids and roles (owner, occupant...).
+	AudienceMaskaniResidents = "maskani_residents"
 )
 
 // Address is one way to reach a person, in the order to try.

@@ -74,7 +74,11 @@ type s2sBroadcastRequest struct {
 	Source      string           `json:"source"`      // e.g. "marketflow"
 	SourceRef   string           `json:"source_ref"`  // e.g. the campaign id
 	Submit      bool             `json:"submit"`      // straight to the approval queue
-	Broadcast   broadcasts.Input `json:"broadcast"`
+	// Approve schedules the broadcast at once. For service notices a sibling service has already
+	// approved under its own permission (a Maskani estate notice is sent by someone holding
+	// notices.manage); marketing must not set it and stays in the tenant's approval queue.
+	Approve   bool             `json:"approve"`
+	Broadcast broadcasts.Input `json:"broadcast"`
 }
 
 // S2SCreate godoc
@@ -115,7 +119,13 @@ func (h *BroadcastHandler) S2SCreate(w http.ResponseWriter, r *http.Request) {
 			b = saved
 		}
 	}
-	if req.Submit {
+	if req.Approve && b.Kind == "service_notice" {
+		approved, err := h.svc.Act(r.Context(), b.ID, broadcasts.ActionApprove, s, "")
+		if h.writeErr(w, err, "s2s approve broadcast") {
+			return
+		}
+		b = approved
+	} else if req.Submit {
 		if submitted, err := h.svc.Act(r.Context(), b.ID, broadcasts.ActionSubmit, s, ""); err == nil {
 			b = submitted
 		}

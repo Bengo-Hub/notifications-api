@@ -397,7 +397,7 @@ func main() {
 		PlatformID: platformIDStr,
 		PublicURL:  cfg.HTTP.PublicBaseURL,
 		Log:        logg,
-		Resolvers:  broadcasts.DefaultResolvers(broadcasts.ResolverConfig{AuthAPI: cfg.Services.AuthAPI, MarketflowAPI: cfg.Services.MarketflowAPI, APIKey: cfg.Security.APIKey, PlatformTenantID: platformIDStr, ExcludedTenants: cfg.Services.BroadcastExcludedTenants}),
+		Resolvers:  broadcasts.DefaultResolvers(broadcasts.ResolverConfig{AuthAPI: cfg.Services.AuthAPI, MarketflowAPI: cfg.Services.MarketflowAPI, MaskaniAPI: cfg.Services.MaskaniAPI, APIKey: cfg.Security.APIKey, PlatformTenantID: platformIDStr, ExcludedTenants: cfg.Services.BroadcastExcludedTenants}),
 	}
 	broadcastEngine.Start(ctx)
 

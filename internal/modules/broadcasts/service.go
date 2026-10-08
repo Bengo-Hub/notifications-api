@@ -197,7 +197,7 @@ func (s *Service) Validate(in Input, sender Sender) error {
 		if !sender.Platform {
 			return errors.New("only the platform can message all tenants")
 		}
-	case AudienceTenantCustomers, AudienceTenantUsers:
+	case AudienceTenantCustomers, AudienceTenantUsers, AudienceMaskaniResidents:
 		if sender.Platform && sender.TenantID == nil {
 			return errors.New("the platform messages tenants; choose the tenants audience")
 		}

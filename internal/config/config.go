@@ -45,6 +45,8 @@ type ServicesConfig struct {
 	// MarketflowAPI is where a tenant's customer list lives (broadcast audiences, AI drafts).
 	// In-cluster by default, like every other caller of marketflow-api.
 	MarketflowAPI string `envconfig:"MARKETFLOW_API_URL" default:"http://marketflow-api.marketflow.svc.cluster.local:4000"`
+	// MaskaniAPI owns estate owners and residents (maskani_residents broadcast audiences). In-cluster.
+	MaskaniAPI string `envconfig:"MASKANI_API_URL" default:"http://maskani-api.maskani.svc.cluster.local:4000"`
 	// BroadcastExcludedTenants are tenants platform broadcasts never go to, matched against each
 	// tenant's slug and name (case-insensitive, part of the word is enough): partner and internal
 	// tenants that are not platform customers.

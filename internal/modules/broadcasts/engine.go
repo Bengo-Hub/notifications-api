@@ -574,11 +574,19 @@ func (e *Engine) publishCompleted(b *ent.Broadcast) {
 	if err != nil {
 		fresh = b
 	}
-	PublishEvent(e.NATS, e.Log, SubjectCompleted, "broadcast.completed", b.TenantID, b.ID, map[string]any{
+	payload := map[string]any{
 		"broadcast_id": b.ID.String(), "title": b.Title, "kind": string(b.Kind), "status": "completed",
 		"target": fresh.TargetCount, "sent": fresh.SentCount, "failed": fresh.FailedCount,
 		"skipped": fresh.SkippedCount, "suppressed": fresh.SuppressedCount,
-	})
+	}
+	// A broadcast another service handed over carries its source, so that service can match the
+	// completion to its own record (a Maskani notice, a MarketFlow campaign).
+	for _, k := range []string{"source", "source_ref"} {
+		if v, ok := fresh.Metadata[k].(string); ok && v != "" {
+			payload[k] = v
+		}
+	}
+	PublishEvent(e.NATS, e.Log, SubjectCompleted, "broadcast.completed", b.TenantID, b.ID, payload)
 }
 
 // reapStale returns rows stuck in dispatching (a pod died after claiming) to pending, and

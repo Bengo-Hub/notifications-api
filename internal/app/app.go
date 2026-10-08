@@ -212,7 +212,7 @@ func New(ctx context.Context) (*App, error) {
 		&broadcasts.Drafter{Client: entClient, Occasions: occasionSvc, PlatformID: platformIDStr, Log: log},
 		occasionSvc,
 		suppressionSvc,
-		broadcasts.DefaultResolvers(broadcasts.ResolverConfig{AuthAPI: cfg.Services.AuthAPI, MarketflowAPI: cfg.Services.MarketflowAPI, APIKey: cfg.Security.APIKey, PlatformTenantID: platformIDStr, ExcludedTenants: cfg.Services.BroadcastExcludedTenants}),
+		broadcasts.DefaultResolvers(broadcasts.ResolverConfig{AuthAPI: cfg.Services.AuthAPI, MarketflowAPI: cfg.Services.MarketflowAPI, MaskaniAPI: cfg.Services.MaskaniAPI, APIKey: cfg.Security.APIKey, PlatformTenantID: platformIDStr, ExcludedTenants: cfg.Services.BroadcastExcludedTenants}),
 		log)
 
 	deviceTokenHandler := handlers.NewDeviceTokenHandler(log, entClient)
