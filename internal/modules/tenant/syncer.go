@@ -47,7 +47,14 @@ func (s *Syncer) SyncTenant(ctx context.Context, slug string) (uuid.UUID, error)
 	if err == nil && existing != nil {
 		return existing.ID, nil
 	}
+	return s.Refresh(ctx, slug)
+}
 
+// Refresh always re-reads the tenant from auth-api and updates the local copy. SyncTenant only
+// fetches a tenant it does not have, so a rename in auth-api never reached an existing row: the
+// platform tenant was still "CodeVertex" here when auth-api had "CodeVertex Africa Limited", and
+// platform emails were signed with the old name. Startup refreshes the platform tenant with it.
+func (s *Syncer) Refresh(ctx context.Context, slug string) (uuid.UUID, error) {
 	endpoint := strings.TrimRight(s.authURL, "/") + "/api/v1/tenants/by-slug/" + slug
 
 	log.Printf("  [tenant-sync] dynamically fetching %s from %s", slug, endpoint)

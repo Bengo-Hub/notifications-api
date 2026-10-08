@@ -138,7 +138,12 @@ func New(ctx context.Context) (*App, error) {
 
 	// Sync platform owner tenant
 	tenantSyncer := tenant.NewSyncer(entClient, cfg.Services.AuthAPI)
-	platformID, err := tenantSyncer.SyncTenant(ctx, "codevertex")
+	// Refresh so a rename in auth-api (the platform's legal name signs platform emails) is picked
+	// up on every deploy; fall back to the local copy when auth-api is unreachable.
+	platformID, err := tenantSyncer.Refresh(ctx, "codevertex")
+	if err != nil {
+		platformID, err = tenantSyncer.SyncTenant(ctx, "codevertex")
+	}
 	if err != nil {
 		log.Warn("failed to sync platform owner, using fallback", zap.Error(err))
 	}
@@ -207,7 +212,7 @@ func New(ctx context.Context) (*App, error) {
 		&broadcasts.Drafter{Client: entClient, Occasions: occasionSvc, PlatformID: platformIDStr, Log: log},
 		occasionSvc,
 		suppressionSvc,
-		broadcasts.DefaultResolvers(broadcasts.ResolverConfig{AuthAPI: cfg.Services.AuthAPI, MarketflowAPI: cfg.Services.MarketflowAPI, APIKey: cfg.Security.APIKey, PlatformTenantID: platformIDStr}),
+		broadcasts.DefaultResolvers(broadcasts.ResolverConfig{AuthAPI: cfg.Services.AuthAPI, MarketflowAPI: cfg.Services.MarketflowAPI, APIKey: cfg.Security.APIKey, PlatformTenantID: platformIDStr, ExcludedTenants: cfg.Services.BroadcastExcludedTenants}),
 		log)
 
 	deviceTokenHandler := handlers.NewDeviceTokenHandler(log, entClient)

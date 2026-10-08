@@ -22,13 +22,15 @@ type ResolverConfig struct {
 	// PlatformTenantID is the platform's own tenant (codevertex), never a recipient of a
 	// platform broadcast.
 	PlatformTenantID string
+	// ExcludedTenants never receive platform broadcasts (see AuthReach.ExcludedTenants).
+	ExcludedTenants []string
 }
 
 // DefaultResolvers is the one place audience types are wired, used by both the API (estimates)
 // and the worker (sending), so the two never disagree about who an audience is.
 func DefaultResolvers(c ResolverConfig) map[string]Resolver {
 	client := &http.Client{Timeout: 25 * time.Second}
-	auth := &AuthReach{BaseURL: c.AuthAPI, APIKey: c.APIKey, HTTP: client, PlatformTenantID: c.PlatformTenantID}
+	auth := &AuthReach{BaseURL: c.AuthAPI, APIKey: c.APIKey, HTTP: client, PlatformTenantID: c.PlatformTenantID, ExcludedTenants: c.ExcludedTenants}
 	return map[string]Resolver{
 		AudiencePlatformTenants: auth,
 		AudienceTenantUsers:     &AuthStaff{Reach: auth},

@@ -54,23 +54,26 @@ func TestSelectCandidatesSkipsUnreachablePeople(t *testing.T) {
 	}
 }
 
-// The platform's own tenant is the sender of platform broadcasts, never a recipient.
+// The platform's own tenant is the sender of platform broadcasts, never a recipient, and partner
+// tenants on the exclusion list are never reached either.
 func TestAuthReachLeavesOutThePlatformTenant(t *testing.T) {
 	const platform = "4414b8d9-6b00-4ad1-a0b4-3094cbc5e398"
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		_ = json.NewEncoder(w).Encode(map[string]any{"data": []map[string]any{
 			{"key": platform, "tenant_id": platform, "business_name": "CodeVertex Africa Limited"},
 			{"key": "6f1c1f0e-0000-4000-8000-000000000001", "tenant_id": "6f1c1f0e-0000-4000-8000-000000000001", "business_name": "Urban Loft"},
+			{"key": "6f1c1f0e-0000-4000-8000-000000000002", "tenant_id": "6f1c1f0e-0000-4000-8000-000000000002", "slug": "kura-hq", "business_name": "KURA"},
+			{"key": "6f1c1f0e-0000-4000-8000-000000000003", "tenant_id": "6f1c1f0e-0000-4000-8000-000000000003", "slug": "mccl", "business_name": "Migori County Creameries"},
 		}, "next": "6f1c1f0e-0000-4000-8000-000000000001"})
 	}))
 	defer srv.Close()
-	a := &AuthReach{BaseURL: srv.URL, APIKey: "k", HTTP: srv.Client(), PlatformTenantID: platform}
+	a := &AuthReach{BaseURL: srv.URL, APIKey: "k", HTTP: srv.Client(), PlatformTenantID: platform, ExcludedTenants: []string{"masterspace", "kura", "mccl", "migori"}}
 	people, next, err := a.Page(context.Background(), map[string]any{"type": AudiencePlatformTenants}, nil, "", 50)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(people) != 1 || people[0].BusinessName != "Urban Loft" {
-		t.Errorf("platform tenant must be left out: %+v", people)
+		t.Errorf("platform tenant and excluded partner tenants must be left out: %+v", people)
 	}
 	if next == "" {
 		t.Error("paging cursor must still advance past a filtered page")

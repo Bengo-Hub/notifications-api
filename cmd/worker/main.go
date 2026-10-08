@@ -221,7 +221,12 @@ func main() {
 
 	// Sync platform owner tenant
 	tenantSyncer := tenant.NewSyncer(client, cfg.Services.AuthAPI)
-	platformID, err := tenantSyncer.SyncTenant(ctx, "codevertex")
+	// Refresh so a rename in auth-api (the platform's legal name signs platform emails) is picked
+	// up on every deploy; fall back to the local copy when auth-api is unreachable.
+	platformID, err := tenantSyncer.Refresh(ctx, "codevertex")
+	if err != nil {
+		platformID, err = tenantSyncer.SyncTenant(ctx, "codevertex")
+	}
 	if err != nil {
 		logg.Warn("failed to sync platform owner, using fallback", zap.Error(err))
 	}
@@ -322,7 +327,7 @@ func main() {
 			// so delivery_log (and anyone reading these logs) reported every one of these as
 			// successfully sent.
 			recordDeliveryLog(ctx, client, &msg, gateTenant, "skipped")
-			broadcasts.RecordOutcome(ctx, client, &msg, "skipped", nil)
+			broadcasts.RecordOutcome(ctx, client, &msg, "skipped", deliverErr)
 			logg.Info("message skipped (not delivered)",
 				zap.String("channel", msg.Channel),
 				zap.String("template", msg.TemplateID),
@@ -392,7 +397,7 @@ func main() {
 		PlatformID: platformIDStr,
 		PublicURL:  cfg.HTTP.PublicBaseURL,
 		Log:        logg,
-		Resolvers:  broadcasts.DefaultResolvers(broadcasts.ResolverConfig{AuthAPI: cfg.Services.AuthAPI, MarketflowAPI: cfg.Services.MarketflowAPI, APIKey: cfg.Security.APIKey, PlatformTenantID: platformIDStr}),
+		Resolvers:  broadcasts.DefaultResolvers(broadcasts.ResolverConfig{AuthAPI: cfg.Services.AuthAPI, MarketflowAPI: cfg.Services.MarketflowAPI, APIKey: cfg.Security.APIKey, PlatformTenantID: platformIDStr, ExcludedTenants: cfg.Services.BroadcastExcludedTenants}),
 	}
 	broadcastEngine.Start(ctx)
 
@@ -655,6 +660,16 @@ func unverifiedUserRecipients(ctx context.Context, db *pgxpool.Pool, to []string
 // asking "was this notification actually sent") stops recording a skipped message as sent.
 var errSkippedNoSend = errors.New("notifications: send intentionally skipped")
 
+// skipError is errSkippedNoSend with the specific reason, kept on the broadcast recipient row so
+// the sender sees why one message was not sent instead of a catch-all.
+type skipError struct{ reason string }
+
+func (e skipError) Error() string        { return e.reason }
+func (e skipError) Is(target error) bool { return target == errSkippedNoSend }
+
+// skipped reports a deliberate no-send with its reason.
+func skipped(reason string) error { return skipError{reason: reason} }
+
 // whatsappExemptTenantIDs holds tenant IDs (as strings) exempt from the per-tenant WhatsApp
 // subscription gate in deliver()'s "whatsapp" case -- the real platform tenant plus
 // codevertex-demo (the platform's own public demo tenant), populated once at startup.
@@ -721,11 +736,12 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 		// Guard the shared provider account: skip invalid/unresolvable/suppressed recipients
 		// (no guaranteed bounce, no noisy failure log) and pace the send under the provider's
 		// rate limit so a backlog/burst never trips "mail rate exceeded".
-		validTo, skipped := eg.ValidRecipients(msg.To)
-		if len(skipped) > 0 {
+		validTo, invalid := eg.ValidRecipients(msg.To)
+		if len(invalid) > 0 {
 			logg.Warn("skipped invalid email recipients",
-				zap.Int("skipped", len(skipped)), zap.String("template", msg.TemplateID))
+				zap.Int("skipped", len(invalid)), zap.String("template", msg.TemplateID))
 		}
+		var gated []string
 		// Email-verification gate: drop recipients that ARE a known local user whose email
 		// is unverified — that address is either a placeholder (undeliverable) or one the
 		// user hasn't proven, and they are being pushed to verify at login. Addresses with
@@ -734,7 +750,6 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 		if !verificationExemptTemplate(msg.TemplateID) {
 			if drop := unverifiedUserRecipients(ctx, dbPool, validTo); len(drop) > 0 {
 				kept := make([]string, 0, len(validTo))
-				var gated []string
 				for _, e := range validTo {
 					if drop[strings.ToLower(strings.TrimSpace(e))] {
 						gated = append(gated, e)
@@ -750,9 +765,12 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 			}
 		}
 		if len(validTo) == 0 {
-			logg.Warn("no valid email recipients — skipping send",
+			logg.Warn("no valid email recipients, skipping send",
 				maskedTo(msg), zap.String("template", msg.TemplateID))
-			return errSkippedNoSend
+			if len(gated) > 0 {
+				return skipped("email address not verified: the account holder has not confirmed it yet")
+			}
+			return skipped("email address is invalid, has no mail server or bounced before")
 		}
 		eg.WaitForSlot(ctx, 20*time.Second)
 
@@ -841,7 +859,7 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 				if bal, balErr := balProv.GetBalance(ctx); balErr == nil && bal <= 0 {
 					logg.Warn("sms send skipped: real provider account balance is zero (platform-scope, not tenant-billed)",
 						zap.String("template", msg.TemplateID))
-					return errSkippedNoSend
+					return skipped("the platform SMS account balance is zero")
 				}
 			}
 			if err := smsProv.SendSMS(ctx, cfg.Providers.DefaultSMSSender, msg.To, rendered); err != nil {
@@ -868,7 +886,7 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 				zap.String("template", msg.TemplateID),
 				zap.Error(balErr),
 			)
-			return errSkippedNoSend
+			return skipped("SMS credit balance could not be checked")
 		}
 		if balance <= 0 {
 			logg.Warn("sms send skipped: insufficient credits",
@@ -876,7 +894,7 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 				zap.String("template", msg.TemplateID),
 				zap.Float64("balance", balance),
 			)
-			return errSkippedNoSend
+			return skipped("the sender has no SMS credit")
 		}
 
 		if err := smsProv.SendSMS(ctx, cfg.Providers.DefaultSMSSender, msg.To, rendered); err != nil {
@@ -911,7 +929,7 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 			if whatsappSubsSvc == nil {
 				logg.Warn("whatsapp send skipped: subscription service unavailable (fail-closed)",
 					zap.String("tenant_id", tenantID.String()), zap.String("template", msg.TemplateID))
-				return errSkippedNoSend
+				return skipped("WhatsApp subscription service unavailable")
 			}
 			// The WhatsAppPlan subscription (checked above) is the ONE, centralized billing
 			// mechanism for WhatsApp — a monthly fee for a bundled message quota, matching how
@@ -928,7 +946,7 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 					zap.String("template", msg.TemplateID),
 					zap.Error(quotaErr),
 				)
-				return errSkippedNoSend
+				return skipped("the sender has no active WhatsApp plan or its monthly quota is used up")
 			}
 		}
 
@@ -975,7 +993,7 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 		pushProv, err := pm.GetPushProvider(ctx, msg.TenantID)
 		if err != nil {
 			logg.Warn("push provider unavailable", zap.Error(err))
-			return errSkippedNoSend // non-fatal: FCM may not be configured in all envs
+			return skipped("push is not configured") // non-fatal: FCM may not be configured in all envs
 		}
 		title, _ := msg.Metadata["push_title"].(string)
 		pushData := make(map[string]string)
@@ -998,7 +1016,7 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 				logg.Info("push: deactivated unregistered device tokens", zap.Int("count", len(dead.Tokens)))
 				if dead.Delivered > 0 || dead.Other == nil {
 					if dead.Delivered == 0 {
-						return errSkippedNoSend
+						return skipped("no active device for push")
 					}
 					logg.Info("push notification sent", zap.String("provider", pushProv.Name()), zap.Int("delivered", dead.Delivered))
 					return nil
@@ -1012,7 +1030,7 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 
 	default:
 		logg.Warn("unknown channel", zap.String("channel", msg.Channel))
-		return errSkippedNoSend
+		return skipped("unknown channel")
 	}
 }
 

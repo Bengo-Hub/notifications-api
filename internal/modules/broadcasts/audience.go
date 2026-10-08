@@ -34,6 +34,7 @@ type Address struct {
 type Person struct {
 	Key               string // stable id, also the paging cursor
 	RecipientTenantID *uuid.UUID
+	Slug              string // the recipient tenant's slug (platform audiences)
 	BusinessName      string
 	Name              string
 	Region            string // ISO country for reading local phone numbers
@@ -82,6 +83,23 @@ type AuthReach struct {
 	// PlatformTenantID (codevertex) is the sender of platform broadcasts, never one of their
 	// recipients.
 	PlatformTenantID string
+	// ExcludedTenants are partner and internal tenants platform broadcasts never reach: a tenant
+	// whose slug or name contains one of these (case-insensitive) is left out.
+	ExcludedTenants []string
+}
+
+// excluded is true for the platform tenant and for any tenant matching ExcludedTenants.
+func (a *AuthReach) excluded(p Person) bool {
+	if p.RecipientTenantID != nil && p.RecipientTenantID.String() == a.PlatformTenantID {
+		return true
+	}
+	hay := strings.ToLower(p.Slug + " " + p.BusinessName)
+	for _, term := range a.ExcludedTenants {
+		if term = strings.ToLower(strings.TrimSpace(term)); term != "" && strings.Contains(hay, term) {
+			return true
+		}
+	}
+	return false
 }
 
 type reachResponse struct {
@@ -112,12 +130,12 @@ func (a *AuthReach) Page(ctx context.Context, audience map[string]any, _ *uuid.U
 		q.Set("include_demo", "true")
 	}
 	people, next, err := a.page(ctx, q, after, limit)
-	if err != nil || a.PlatformTenantID == "" {
-		return people, next, err
+	if err != nil {
+		return nil, "", err
 	}
 	kept := people[:0]
 	for _, p := range people {
-		if p.RecipientTenantID == nil || p.RecipientTenantID.String() != a.PlatformTenantID {
+		if !a.excluded(p) {
 			kept = append(kept, p)
 		}
 	}
@@ -166,7 +184,7 @@ func (a *AuthReach) page(ctx context.Context, q url.Values, after string, limit 
 		if name == "" {
 			name = t.BusinessName
 		}
-		p := Person{Key: key, BusinessName: t.BusinessName, Name: name, Region: t.Country, Emails: t.Emails, Phones: t.Phones}
+		p := Person{Key: key, Slug: t.Slug, BusinessName: t.BusinessName, Name: name, Region: t.Country, Emails: t.Emails, Phones: t.Phones}
 		if id, err := uuid.Parse(t.TenantID); err == nil {
 			p.RecipientTenantID = &id
 		}

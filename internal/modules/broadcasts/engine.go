@@ -90,7 +90,19 @@ func (e *Engine) upgradeTemplates(ctx context.Context) {
 		e.Log.Warn("template upgrade: query failed", zap.Error(err))
 		return
 	}
+	platformName := e.drafter().SenderName(ctx, nil)
 	for _, b := range open {
+		// Generated platform drafts sign off with the platform's current name (a rename in
+		// auth-api reaches them); a name a sender typed is theirs to keep.
+		if generated, _ := b.Metadata["generated"].(bool); generated && b.TenantID == nil {
+			if cur, _ := b.Metadata["sender_name"].(string); cur != platformName {
+				meta := b.Metadata
+				meta["sender_name"] = platformName
+				if err := e.Client.Broadcast.UpdateOneID(b.ID).SetMetadata(meta).Exec(ctx); err != nil {
+					e.Log.Warn("sender name refresh failed", zap.String("broadcast", b.ID.String()), zap.Error(err))
+				}
+			}
+		}
 		c := ContentOf(b)
 		if c.WhatsApp == nil {
 			continue
@@ -627,7 +639,12 @@ func RecordOutcome(ctx context.Context, client *ent.Client, msg *messaging.Messa
 			up.SetProviderMessageID(mid)
 		}
 	case "skipped":
-		up.SetStatus(entrecipient.StatusSkipped).SetError("not sent: no credit, plan or valid recipient")
+		// The worker passes its specific reason (unverified email, no SMS credit, ...).
+		reason := "not sent"
+		if sendErr != nil && sendErr.Error() != "" {
+			reason = truncate(sendErr.Error())
+		}
+		up.SetStatus(entrecipient.StatusSkipped).SetError(reason)
 	default:
 		reason := "send failed"
 		if sendErr != nil {

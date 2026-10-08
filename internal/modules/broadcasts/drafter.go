@@ -233,5 +233,5 @@ func (dr *Drafter) SenderName(ctx context.Context, tenantID *uuid.UUID) string {
 			return t.Name
 		}
 	}
-	return "Codevertex Africa"
+	return "CodeVertex Africa Limited"
 }
