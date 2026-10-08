@@ -211,13 +211,13 @@ func (dr *Drafter) occasionInput(ctx context.Context, d occasions.Due, loc *time
 
 // OccasionTemplateParams maps each approved WhatsApp template to the values filling {{1}}, {{2}}...
 var OccasionTemplateParams = map[string][]string{
-	"occasion_customer_service_week_v1": {"first_name", "sender_name"},
-	"occasion_new_year_v1":              {"first_name", "year", "sender_name"},
-	"occasion_idd_v1":                   {"first_name", "occasion", "sender_name"},
-	"occasion_easter_v1":                {"first_name", "sender_name"},
-	"occasion_labour_day_v1":            {"first_name", "sender_name"},
-	"occasion_national_day_v1":          {"first_name", "occasion", "sender_name"},
-	"occasion_christmas_v1":             {"first_name", "sender_name"},
+	"occasion_customer_service_week_v2": {"first_name", "sender_name"},
+	"occasion_new_year_v2":              {"first_name", "year", "sender_name"},
+	"occasion_idd_v2":                   {"first_name", "occasion", "sender_name"},
+	"occasion_easter_v2":                {"first_name", "sender_name"},
+	"occasion_labour_day_v2":            {"first_name", "sender_name"},
+	"occasion_national_day_v2":          {"first_name", "occasion", "sender_name"},
+	"occasion_christmas_v2":             {"first_name", "sender_name"},
 	"broadcast_update_v1":               {"first_name", "sender_name", "message"},
 	"broadcast_service_notice_v1":       {"first_name", "sender_name", "message"},
 }

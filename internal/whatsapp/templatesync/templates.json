@@ -391,65 +391,65 @@
     ]
   },
   {
-    "name": "occasion_customer_service_week_v1",
+    "name": "occasion_customer_service_week_v2",
     "category": "MARKETING",
     "language": "en_US",
     "source": "broadcasts: occasion customer_service_week (params: first_name, sender_name)",
-    "body": "Dear {{1}},\n\nYou are the reason we keep going the extra mile. Thank you for building your business with us.\n\nHappy Customer Service Week from all of us at {{2}}.",
+    "body": "Dear {{1}},\n\nYou are the reason we keep going the extra mile. Thank you for building your business with us.\n\nAll of us at {{2}} wish you a happy Customer Service Week.",
     "example": ["Titus", "Codevertex Africa"],
     "buttons": [{"type": "QUICK_REPLY", "text": "Stop promotions"}]
   },
   {
-    "name": "occasion_new_year_v1",
+    "name": "occasion_new_year_v2",
     "category": "MARKETING",
     "language": "en_US",
     "source": "broadcasts: occasion new_year (params: first_name, year, sender_name)",
-    "body": "Dear {{1}},\n\nThank you for being part of our year. We wish you good health and steady growth in {{2}}.\n\nHappy New Year from all of us at {{3}}.",
+    "body": "Dear {{1}},\n\nThank you for being part of our year. We wish you good health and steady growth in {{2}}.\n\nAll of us at {{3}} wish you a happy New Year.",
     "example": ["Titus", "2027", "Codevertex Africa"],
     "buttons": [{"type": "QUICK_REPLY", "text": "Stop promotions"}]
   },
   {
-    "name": "occasion_idd_v1",
+    "name": "occasion_idd_v2",
     "category": "MARKETING",
     "language": "en_US",
     "source": "broadcasts: occasions idd_ul_fitr and idd_ul_azha (params: first_name, occasion, sender_name)",
-    "body": "Dear {{1}},\n\nEid Mubarak. May this {{2}} bring peace, joy and blessings to you and your family.\n\nWarm wishes from all of us at {{3}}.",
+    "body": "Dear {{1}},\n\nEid Mubarak. May this {{2}} bring peace, joy and blessings to you and your family.\n\nAll of us at {{3}} send you warm wishes on this special day.",
     "example": ["Amina", "Idd-ul-Fitr", "Codevertex Africa"],
     "buttons": [{"type": "QUICK_REPLY", "text": "Stop promotions"}]
   },
   {
-    "name": "occasion_easter_v1",
+    "name": "occasion_easter_v2",
     "category": "MARKETING",
     "language": "en_US",
     "source": "broadcasts: occasion easter (params: first_name, sender_name)",
-    "body": "Dear {{1}},\n\nWe wish you a peaceful Easter with the people you love. Thank you for being with us.\n\nHappy Easter from all of us at {{2}}.",
+    "body": "Dear {{1}},\n\nWe wish you a peaceful Easter with the people you love. Thank you for being with us.\n\nAll of us at {{2}} wish you a happy Easter.",
     "example": ["Titus", "Codevertex Africa"],
     "buttons": [{"type": "QUICK_REPLY", "text": "Stop promotions"}]
   },
   {
-    "name": "occasion_labour_day_v1",
+    "name": "occasion_labour_day_v2",
     "category": "MARKETING",
     "language": "en_US",
     "source": "broadcasts: occasion labour_day (params: first_name, sender_name)",
-    "body": "Dear {{1}},\n\nToday we celebrate the hard work that keeps businesses going, yours included.\n\nHappy Labour Day from all of us at {{2}}.",
+    "body": "Dear {{1}},\n\nToday we celebrate the hard work that keeps businesses going, yours included.\n\nAll of us at {{2}} wish you a happy Labour Day.",
     "example": ["Titus", "Codevertex Africa"],
     "buttons": [{"type": "QUICK_REPLY", "text": "Stop promotions"}]
   },
   {
-    "name": "occasion_national_day_v1",
+    "name": "occasion_national_day_v2",
     "category": "MARKETING",
     "language": "en_US",
     "source": "broadcasts: Kenyan national days, Madaraka, Mazingira, Mashujaa, Jamhuri (params: first_name, occasion, sender_name)",
-    "body": "Dear {{1}},\n\nHappy {{2}}. We wish you a proud and restful holiday, and thank you for growing with us.\n\nFrom all of us at {{3}}.",
+    "body": "Dear {{1}},\n\nHappy {{2}}. We wish you a proud and restful holiday, and thank you for growing with us.\n\nAll of us at {{3}} wish you a wonderful holiday.",
     "example": ["Titus", "Mashujaa Day", "Codevertex Africa"],
     "buttons": [{"type": "QUICK_REPLY", "text": "Stop promotions"}]
   },
   {
-    "name": "occasion_christmas_v1",
+    "name": "occasion_christmas_v2",
     "category": "MARKETING",
     "language": "en_US",
     "source": "broadcasts: occasion christmas (params: first_name, sender_name)",
-    "body": "Dear {{1}},\n\nMerry Christmas. Thank you for the trust you placed in us this year. We wish you a joyful season with your family.\n\nHappy holidays from all of us at {{2}}.",
+    "body": "Dear {{1}},\n\nMerry Christmas. Thank you for the trust you placed in us this year. We wish you a joyful season with your family.\n\nAll of us at {{2}} wish you happy holidays.",
     "example": ["Titus", "Codevertex Africa"],
     "buttons": [{"type": "QUICK_REPLY", "text": "Stop promotions"}]
   },

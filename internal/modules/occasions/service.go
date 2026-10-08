@@ -103,6 +103,9 @@ func (s *Service) Seed(ctx context.Context) error {
 	for _, k := range existing {
 		have[k] = true
 	}
+	if err := s.upgradeTemplates(ctx); err != nil {
+		return err
+	}
 	for _, e := range entries {
 		if have[e.Key] {
 			continue
@@ -117,6 +120,51 @@ func (s *Service) Seed(ctx context.Context) error {
 			SetSendOffsetDays(e.SendOffsetDays).SetMetadata(meta)
 		if err := c.Exec(ctx); err != nil && !ent.IsConstraintError(err) {
 			return fmt.Errorf("seed occasion %s: %w", e.Key, err)
+		}
+	}
+	return nil
+}
+
+// supersededTemplates maps a WhatsApp template name Meta refused (or a retired wording) to its
+// replacement. The v1 occasion templates ended on a variable ("...at {{2}}."), which Meta rejects
+// (error 2388299), so they never existed on Meta; v2 ends with plain text.
+var supersededTemplates = map[string]string{
+	"occasion_customer_service_week_v1": "occasion_customer_service_week_v2",
+	"occasion_new_year_v1":              "occasion_new_year_v2",
+	"occasion_idd_v1":                   "occasion_idd_v2",
+	"occasion_easter_v1":                "occasion_easter_v2",
+	"occasion_labour_day_v1":            "occasion_labour_day_v2",
+	"occasion_national_day_v1":          "occasion_national_day_v2",
+	"occasion_christmas_v1":             "occasion_christmas_v2",
+}
+
+// ReplacementTemplate returns the template that replaces a superseded name.
+func ReplacementTemplate(name string) (string, bool) {
+	next, ok := supersededTemplates[name]
+	return next, ok
+}
+
+// upgradeTemplates points occasions (catalogue and tenant rows) still naming a superseded
+// WhatsApp template at its replacement. Only an exact old name is rewritten, so a sender's own
+// choice is never touched; running it again changes nothing.
+func (s *Service) upgradeTemplates(ctx context.Context) error {
+	rows, err := s.client.Occasion.Query().All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, o := range rows {
+		old, _ := o.Metadata["whatsapp_template"].(string)
+		next, ok := supersededTemplates[old]
+		if !ok {
+			continue
+		}
+		meta := map[string]any{}
+		for k, v := range o.Metadata {
+			meta[k] = v
+		}
+		meta["whatsapp_template"] = next
+		if err := s.client.Occasion.UpdateOneID(o.ID).SetMetadata(meta).Exec(ctx); err != nil {
+			return fmt.Errorf("upgrade occasion %s template: %w", o.Key, err)
 		}
 	}
 	return nil

@@ -78,9 +78,40 @@ func (e *Engine) drafter() *Drafter {
 	return &Drafter{Client: e.Client, Occasions: e.Occasions, PlatformID: e.PlatformID, Log: e.Log}
 }
 
+// upgradeTemplates points broadcasts that have not started sending at the replacement of a
+// superseded WhatsApp template (see occasions.ReplacementTemplate). Exact names only; safe to
+// run on every start and on every pod.
+func (e *Engine) upgradeTemplates(ctx context.Context) {
+	open, err := e.Client.Broadcast.Query().
+		Where(entbroadcast.StatusIn(entbroadcast.StatusDraft, entbroadcast.StatusPendingApproval,
+			entbroadcast.StatusRejected, entbroadcast.StatusScheduled, entbroadcast.StatusPaused)).
+		All(ctx)
+	if err != nil {
+		e.Log.Warn("template upgrade: query failed", zap.Error(err))
+		return
+	}
+	for _, b := range open {
+		c := ContentOf(b)
+		if c.WhatsApp == nil {
+			continue
+		}
+		next, ok := occasions.ReplacementTemplate(c.WhatsApp.Template)
+		if !ok {
+			continue
+		}
+		c.WhatsApp.Template = next
+		if err := e.Client.Broadcast.UpdateOneID(b.ID).SetContent(contentMap(c)).Exec(ctx); err != nil {
+			e.Log.Warn("template upgrade failed", zap.String("broadcast", b.ID.String()), zap.Error(err))
+			continue
+		}
+		e.Log.Info("broadcast moved to the replacement WhatsApp template", zap.String("broadcast", b.ID.String()), zap.String("template", next))
+	}
+}
+
 // Start runs the loops until ctx ends.
 func (e *Engine) Start(ctx context.Context) {
 	e.Log = e.Log.Named("broadcasts")
+	e.upgradeTemplates(ctx)
 	go e.loop(ctx, "planner", time.Hour, func(ctx context.Context) {
 		_, _ = sharedcache.RunOnce(ctx, e.Redis, e.Log, sharedcache.PeriodKey("notifications:broadcasts:planner", time.Hour), 10*time.Minute, e.drafter().Plan)
 	})

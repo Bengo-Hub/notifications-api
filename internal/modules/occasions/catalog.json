@@ -8,7 +8,7 @@
     "lead_days": 14,
     "enabled": true,
     "channels": ["email", "whatsapp"],
-    "whatsapp_template": "occasion_customer_service_week_v1",
+    "whatsapp_template": "occasion_customer_service_week_v2",
     "variants": [
       {
         "subject": "Happy Customer Service Week from {sender_name}",
@@ -35,7 +35,7 @@
     "lead_days": 14,
     "enabled": true,
     "channels": ["email", "whatsapp"],
-    "whatsapp_template": "occasion_new_year_v1",
+    "whatsapp_template": "occasion_new_year_v2",
     "variants": [
       {
         "subject": "Happy New Year from {sender_name}",
@@ -62,7 +62,7 @@
     "lead_days": 10,
     "enabled": true,
     "channels": ["email", "whatsapp"],
-    "whatsapp_template": "occasion_idd_v1",
+    "whatsapp_template": "occasion_idd_v2",
     "variants": [
       {
         "subject": "Eid Mubarak from {sender_name}",
@@ -85,7 +85,7 @@
     "lead_days": 14,
     "enabled": true,
     "channels": ["email", "whatsapp"],
-    "whatsapp_template": "occasion_easter_v1",
+    "whatsapp_template": "occasion_easter_v2",
     "variants": [
       {
         "subject": "Happy Easter from {sender_name}",
@@ -107,7 +107,7 @@
     "lead_days": 10,
     "enabled": true,
     "channels": ["email", "whatsapp"],
-    "whatsapp_template": "occasion_labour_day_v1",
+    "whatsapp_template": "occasion_labour_day_v2",
     "variants": [
       {
         "subject": "Happy Labour Day from {sender_name}",
@@ -129,7 +129,7 @@
     "lead_days": 10,
     "enabled": true,
     "channels": ["email", "whatsapp"],
-    "whatsapp_template": "occasion_idd_v1",
+    "whatsapp_template": "occasion_idd_v2",
     "variants": [
       {
         "subject": "Eid al-Adha Mubarak from {sender_name}",
@@ -151,7 +151,7 @@
     "lead_days": 10,
     "enabled": true,
     "channels": ["email", "whatsapp"],
-    "whatsapp_template": "occasion_national_day_v1",
+    "whatsapp_template": "occasion_national_day_v2",
     "variants": [
       {
         "subject": "Happy Madaraka Day from {sender_name}",
@@ -173,7 +173,7 @@
     "lead_days": 10,
     "enabled": false,
     "channels": ["email"],
-    "whatsapp_template": "occasion_national_day_v1",
+    "whatsapp_template": "occasion_national_day_v2",
     "variants": [
       {
         "subject": "Happy Mazingira Day from {sender_name}",
@@ -190,7 +190,7 @@
     "lead_days": 10,
     "enabled": true,
     "channels": ["email", "whatsapp"],
-    "whatsapp_template": "occasion_national_day_v1",
+    "whatsapp_template": "occasion_national_day_v2",
     "variants": [
       {
         "subject": "Happy Mashujaa Day from {sender_name}",
@@ -212,7 +212,7 @@
     "lead_days": 10,
     "enabled": true,
     "channels": ["email", "whatsapp"],
-    "whatsapp_template": "occasion_national_day_v1",
+    "whatsapp_template": "occasion_national_day_v2",
     "variants": [
       {
         "subject": "Happy Jamhuri Day from {sender_name}",
@@ -236,7 +236,7 @@
     "send_offset_days": -1,
     "enabled": true,
     "channels": ["email", "whatsapp"],
-    "whatsapp_template": "occasion_christmas_v1",
+    "whatsapp_template": "occasion_christmas_v2",
     "variants": [
       {
         "subject": "Merry Christmas from {sender_name}",

@@ -15,6 +15,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/bengobox/notifications-api/internal/ent"
+	"github.com/bengobox/notifications-api/internal/ent/occasion"
 )
 
 func testClient(t *testing.T) *ent.Client {
@@ -45,6 +46,44 @@ func testClient(t *testing.T) *ent.Client {
 		t.Fatal(err)
 	}
 	return client
+}
+
+// Occasions still naming a template Meta refused move to its replacement on the next seed; any
+// other name (a sender's own choice) is left alone.
+func TestSeedUpgradesSupersededTemplates(t *testing.T) {
+	client := testClient(t)
+	ctx := context.Background()
+	svc := NewService(client, zap.NewNop())
+	if err := svc.Seed(ctx); err != nil {
+		t.Fatal(err)
+	}
+	set := func(key, tpl string) {
+		o, err := client.Occasion.Query().Where(occasion.TenantIDIsNil(), occasion.Key(key)).Only(ctx)
+		if err != nil {
+			t.Fatal(err)
+		}
+		meta := o.Metadata
+		meta["whatsapp_template"] = tpl
+		if err := client.Occasion.UpdateOneID(o.ID).SetMetadata(meta).Exec(ctx); err != nil {
+			t.Fatal(err)
+		}
+	}
+	get := func(key string) string {
+		o, _ := client.Occasion.Query().Where(occasion.TenantIDIsNil(), occasion.Key(key)).Only(ctx)
+		s, _ := o.Metadata["whatsapp_template"].(string)
+		return s
+	}
+	set("customer_service_week", "occasion_customer_service_week_v1")
+	set("easter", "my_own_easter_template")
+	if err := svc.Seed(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if got := get("customer_service_week"); got != "occasion_customer_service_week_v2" {
+		t.Errorf("superseded name not upgraded: %s", got)
+	}
+	if got := get("easter"); got != "my_own_easter_template" {
+		t.Errorf("a sender's own template must not change: %s", got)
+	}
 }
 
 // A tenant's customised catalogue occasion must carry the catalogue id everywhere (List, Get and

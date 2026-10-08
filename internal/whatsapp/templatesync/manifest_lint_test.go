@@ -60,12 +60,15 @@ func TestManifestFollowsMetaRules(t *testing.T) {
 				t.Errorf("%s: body variable {{%d}} is a link (%q); put it in a URL button instead", d.Name, i+1, ex)
 			}
 		}
-		body := strings.TrimSpace(d.Body)
+		// Meta error 2388299: a variable followed (or preceded) only by punctuation still counts as
+		// leading or trailing ("Thanks {{1}}!" is rejected), so punctuation is ignored here.
+		// 2026-10-07: seven occasion templates ending "...at {{2}}." failed this way.
+		body := strings.Trim(strings.TrimSpace(d.Body), " \n.,!?:;")
 		if strings.HasPrefix(body, "{{") {
-			t.Errorf("%s: body must not start with a variable", d.Name)
+			t.Errorf("%s: body must not start with a variable (punctuation does not count as text)", d.Name)
 		}
 		if strings.HasSuffix(body, "}}") {
-			t.Errorf("%s: body must not end with a variable", d.Name)
+			t.Errorf("%s: body must not end with a variable (punctuation does not count as text)", d.Name)
 		}
 
 		// Marketing templates (greetings, offers) must let the person opt out from the message

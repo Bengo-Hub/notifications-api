@@ -94,7 +94,7 @@ func platformBroadcast(t *testing.T, client *ent.Client, channels []string) *ent
 		SetContent(contentMap(Content{
 			Email:    &EmailContent{Subject: "Happy {occasion}", Body: "Dear {first_name},\n\nThank you.\n\nFrom {sender_name}."},
 			SMS:      &SMSContent{Body: "Dear {first_name}, thank you. {sender_name}"},
-			WhatsApp: &WhatsAppContent{Template: "occasion_customer_service_week_v1", Params: []string{"first_name", "sender_name"}},
+			WhatsApp: &WhatsAppContent{Template: "occasion_customer_service_week_v2", Params: []string{"first_name", "sender_name"}},
 		})).
 		SetAudience(map[string]any{"type": AudiencePlatformTenants}).SetSendAt(time.Now()).
 		SetMetadata(map[string]any{"sender_name": "Codevertex Africa", "occasion_name": "Customer Service Week", "timezone": "Africa/Nairobi"}).
@@ -318,7 +318,7 @@ func TestBuildMessagePersonalisesAndAddsOptOuts(t *testing.T) {
 	content := Content{
 		Email:    &EmailContent{Subject: "Happy {occasion}", Body: "Dear {first_name},\n\nThank you.\n\nFrom {sender_name}."},
 		SMS:      &SMSContent{Body: "Dear {first_name}, thank you."},
-		WhatsApp: &WhatsAppContent{Template: "occasion_customer_service_week_v1", Params: []string{"first_name", "sender_name"}},
+		WhatsApp: &WhatsAppContent{Template: "occasion_customer_service_week_v2", Params: []string{"first_name", "sender_name"}},
 	}
 	vars := Vars{FirstName: "Titus", SenderName: "Codevertex Africa", Occasion: "Customer Service Week"}.Map()
 
@@ -344,7 +344,7 @@ func TestBuildMessagePersonalisesAndAddsOptOuts(t *testing.T) {
 
 	wa, _ := e.buildMessage(b, content, claimedRow{ID: uuid.New(), Channel: "whatsapp", Address: "+254712345678", Vars: vars})
 	params := wa.Metadata["template_params"].([]string)
-	if wa.Metadata["template_name"] != "occasion_customer_service_week_v1" || len(params) != 2 || params[0] != "Titus" || params[1] != "Codevertex Africa" {
+	if wa.Metadata["template_name"] != "occasion_customer_service_week_v2" || len(params) != 2 || params[0] != "Titus" || params[1] != "Codevertex Africa" {
 		t.Errorf("whatsapp template: %+v", wa.Metadata)
 	}
 }
@@ -377,7 +377,7 @@ func TestDraftIsCreatedOncePerOccasionYear(t *testing.T) {
 		t.Errorf("generated drafts wait for approval, got %s", b1.Status)
 	}
 	c := ContentOf(b1)
-	if c.Email == nil || c.WhatsApp == nil || c.WhatsApp.Template != "occasion_customer_service_week_v1" {
+	if c.Email == nil || c.WhatsApp == nil || c.WhatsApp.Template != "occasion_customer_service_week_v2" {
 		t.Errorf("CSW draft channels: %+v", c)
 	}
 	if typ, _ := b1.Audience["type"].(string); typ != AudiencePlatformTenants {

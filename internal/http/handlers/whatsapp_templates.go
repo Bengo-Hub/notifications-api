@@ -90,6 +90,11 @@ func (h *WhatsAppTemplates) Sync(w http.ResponseWriter, r *http.Request) {
 			key = "would_create"
 		}
 		summary[key]++
+		// Keep Meta's reason in the logs too: the response is the only other place it appears,
+		// and a dropped connection (a 502 at the edge) lost it on 2026-10-07.
+		if res.Outcome == templatesync.OutcomeFailed {
+			h.logger.Warn("whatsapp template refused by Meta", zap.String("template", res.Name), zap.String("detail", res.Detail))
+		}
 	}
 
 	jsonResponse(w, http.StatusOK, syncTemplatesResponse{WABAID: wabaID, Results: results, Summary: summary})
