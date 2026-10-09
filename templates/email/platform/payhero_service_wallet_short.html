@@ -1,0 +1,31 @@
+{{ define "content" }}
+  <h2>PayHero is refusing payments on account {{ .vendor_id }}</h2>
+  <p>
+    PayHero refused an M-Pesa prompt because the account's <strong>service wallet</strong> cannot pay
+    the channel fee. Every prompt on this account will be refused until the service wallet is topped up.
+    Payers see a "pay another way" message.
+  </p>
+  <p>
+    On the PayHero dashboard, switch to account {{ .vendor_id }} and use <strong>Top up service wallet</strong>.
+    Do not use Deposit: that funds the payments wallet, which never pays channel fees.
+  </p>
+
+  <table role="presentation" style="width:100%;border-collapse:collapse;margin:16px 0">
+    <tbody>
+      <tr><td style="padding:6px 12px 6px 0"><strong>PayHero account</strong></td><td style="padding:6px 0">{{ .vendor_id }}{{ if .mode }} ({{ .mode }}){{ end }}</td></tr>
+      {{ if .service_wallet_balance }}<tr><td style="padding:6px 12px 6px 0"><strong>Service wallet balance</strong></td><td style="padding:6px 0">{{ .currency }} {{ .service_wallet_balance }}</td></tr>{{ end }}
+      {{ if .channel_fee }}<tr><td style="padding:6px 12px 6px 0"><strong>Channel fee needed</strong></td><td style="padding:6px 0">{{ .currency }} {{ .channel_fee }}</td></tr>{{ end }}
+      <tr><td style="padding:6px 12px 6px 0"><strong>Payment refused</strong></td><td style="padding:6px 0">{{ .currency }} {{ .amount }}{{ if .personal }} (personal invoice){{ end }}</td></tr>
+      {{ if .reference }}<tr><td style="padding:6px 12px 6px 0"><strong>Reference</strong></td><td style="padding:6px 0">{{ .reference }}</td></tr>{{ end }}
+      {{ if .intent_id }}<tr><td style="padding:6px 12px 6px 0"><strong>Payment intent</strong></td><td style="padding:6px 0"><code>{{ .intent_id }}</code></td></tr>{{ end }}
+      <tr><td style="padding:6px 12px 6px 0"><strong>Tenant ID</strong></td><td style="padding:6px 0"><code>{{ .tenant_id }}</code></td></tr>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Refused at</strong></td><td style="padding:6px 0">{{ .refused_at }}</td></tr>
+    </tbody>
+  </table>
+
+  {{ if .window_h }}<p>This alert is sent once per account every {{ .window_h }} hours while payments keep being refused.</p>{{ end }}
+
+  <p>
+    <a class="button" href="{{ .dashboard_link }}">Open the PayHero dashboard</a>
+  </p>
+{{ end }}

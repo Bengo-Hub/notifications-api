@@ -96,10 +96,11 @@ type EventsConfig struct {
 	Subject    string        `envconfig:"EVENTS_NATS_SUBJECT" default:"notifications.events"`
 	AckWait    time.Duration `envconfig:"EVENTS_NATS_ACK_WAIT" default:"30s"`
 
-	// PlatformAlertEmails receives internal platform-ops notices — currently the
-	// "a new tenant just registered" alert, which carries the registrant's contact
-	// details so the team can follow up. Comma-separated for multiple recipients.
-	// Set to an empty value to switch the alert off entirely.
+	// PlatformAlertEmails receives internal platform-ops notices: the "a new tenant
+	// just registered" alert, which carries the registrant's contact details so the
+	// team can follow up, and the "PayHero service wallet needs a top up" alert.
+	// Comma-separated for multiple recipients. Set to an empty value to switch the
+	// alerts off entirely.
 	PlatformAlertEmails string `envconfig:"PLATFORM_ALERT_EMAILS" default:"codevertexitsolutions@gmail.com"`
 
 	// AdminConsoleURL builds the "open in admin console" deep link in that alert.

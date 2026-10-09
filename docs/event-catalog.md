@@ -8,6 +8,7 @@
 | `treasury.payment.success` | Payment confirmed, send receipt | Treasury Service |
 | `treasury.report.ready` | A scheduled treasury report was generated; emailed with `finance/report_ready` (seven-day download link) to each schedule recipient | Treasury Service |
 | `treasury.tax.deadline_reminder` | A tax filing obligation falls due within three days; emailed with `finance/tax_deadline` to the tenant contact (payload email, else the tenant's contact email) | Treasury Service |
+| `treasury.payhero.service_wallet_short` | PayHero refused a payment because an account's service wallet cannot pay the channel fee (sent at most once per account every 6 hours); emailed with `platform/payhero_service_wallet_short` to the platform alert recipients (`PLATFORM_ALERT_EMAILS`), locked so no preference can mute it | Treasury Service |
 | `food.orders.status.changed` | Order status update for customer push/SMS | Food Delivery Backend |
 | `erp.payroll.generated` | Payroll notification for employees | ERP System |
 

@@ -74,7 +74,8 @@ func (s *Subscriber) Start(ctx context.Context) error {
 	// consumer is first created — the auth stream holds every tenant created in the last
 	// 72h, so a DeliverAll consumer would email an alert for each one on first rollout.
 	deliverNewDurables := map[string]bool{
-		"notif-platform-new-tenant": true,
+		"notif-platform-new-tenant":          true,
+		"notif-payhero-service-wallet-short": true,
 	}
 
 	streams := map[string][]string{
@@ -117,6 +118,8 @@ func (s *Subscriber) Start(ctx context.Context) error {
 		{"pos", "pos.loyalty.tier_upgraded", "notif-loyalty-tier-upgraded", s.handleLoyaltyTierUpgraded},
 		{"pos", "pos.loyalty.referral_earned", "notif-loyalty-referral-earned", s.handleLoyaltyReferralEarned},
 		{"treasury", "treasury.payroll.disbursed", "notif-payroll-disbursed", s.handlePayrollDisbursed},
+		// Platform-ops alert: PayHero refuses prompts until an account's service wallet is topped up.
+		{"treasury", "treasury.payhero.service_wallet_short", "notif-payhero-service-wallet-short", s.handlePayHeroServiceWalletShort},
 		{"erp", "erp.email.requested", "notif-erp-email-req", s.handleERPEmailRequested},
 		{"erp", "erp.notification.requested", "notif-erp-notif-req", s.handleERPNotificationRequested},
 		{"isp", "isp.subscriber.created", "notif-isp-subscriber-created", s.handleISPSubscriberCreated},
