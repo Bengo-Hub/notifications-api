@@ -2,7 +2,8 @@
 
 ## REST Endpoints
 
-- `POST /v1/{tenantId}/notifications/messages`
+- `POST /api/v1/notifications/messages`
+  - Tenant named in the body (`tenant`, ID or slug). Optional `cc`, `attachments` (base64) and an `Idempotency-Key` header; a repeat returns `{ status: "duplicate", requestId }` with the original id
   - Create notification intent with channel metadata, template reference, personalization data
   - Response: `202 Accepted` with `{ status: "queued", requestId: "..." }`
   - **Rate Limited**: Per-channel daily limits based on subscription plan:
@@ -15,7 +16,7 @@
 ```json
 {
   "channel": "email",
-  "tenant": codevertex,
+  "tenant": "codevertex",
   "template": "invoice_due",
   "to": ["customer@example.com"],
   "data": {
@@ -24,7 +25,7 @@
     "amount": "KES 1,200",
     "due_date": "2025-11-30",
     "payment_link": "https://pay.example.com/invoices/INV-1001",
-    "brand_name": codevertex,             // optional overrides; if absent, defaults from DB or tenant slug
+    "brand_name": "codevertex",           // optional overrides; if absent, defaults from DB or tenant slug
     "brand_email": "hello@bengobox.com",  // optional
     "brand_phone": "+254700000000",       // optional
     "brand_logo_url": "https://cdn.example.com/logo.png" // optional
@@ -39,18 +40,18 @@
 ```json
 {
   "channel": "sms",
-  "tenant": codevertex,
+  "tenant": "codevertex",
   "template": "otp",
   "to": ["+254700000000"],
-  "data": { "otp": "123456", "ttl_minutes": 5, "brand_name": codevertex },
+  "data": { "otp": "123456", "ttl_minutes": 5, "brand_name": "codevertex" },
   "metadata": { "provider": "africastalking" }
 }
 ```
 
-- `GET /v1/{tenantId}/templates`
-  - List available templates for tenant (id, channel, locale)
+- `GET /api/v1/templates`
+  - List available templates (id, channel, locale)
 
-- `GET /v1/{tenantId}/templates/{id}?channel=email|sms|push`
+- `GET /api/v1/templates/{id}?channel=email|sms|push|whatsapp`
   - Fetch raw template content for preview or client-side rendering
 
 - `GET /api/v1/announcements/active?service=pos` (public)
@@ -82,8 +83,12 @@ All responses include `X-Request-ID` header for traceability. Error responses fo
 
 ## Webhooks
 
-- Providers (SendGrid, Mailgun, Twilio, FCM, APNS) POST to `/webhooks/{provider}` (to be implemented)
-- Verify signatures per provider best practices; store events for compliance/audit
+Public provider callbacks under `/api/v1/webhooks`:
+
+- `POST /africastalking/dlr`: SMS delivery reports
+- `POST /africastalking/inbound`: inbound SMS
+- `GET /whatsapp/meta`: Meta webhook verification
+- `POST /whatsapp/meta`: WhatsApp message status and inbound messages
 
 ## Events
 

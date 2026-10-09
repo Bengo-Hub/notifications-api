@@ -24,30 +24,41 @@ The Notifications Service is a centralized communications platform for all Codev
 
 **Use Case**: Immediate notification delivery
 
-**Endpoint**: `POST /v1/{tenantId}/notifications/messages`
+**Endpoint**: `POST https://notificationsapi.codevertexafrica.com/api/v1/notifications/messages`
+
+**Headers**: `Authorization: Bearer <JWT>` or `X-API-Key`; optional `Idempotency-Key`
 
 **Request**:
 ```json
 {
   "channel": "email",
+  "tenant": "<tenant-id-or-slug>",
   "template": "order_confirmation",
-  "recipient": "customer@example.com",
+  "to": ["customer@example.com"],
+  "cc": [],
   "data": {
     "order_id": "ORD-123",
     "customer_name": "John Doe"
   },
-  "idempotency_key": "unique-key-123"
+  "metadata": {
+    "subject": "Your order ORD-123",
+    "source_service": "ordering",
+    "reference_type": "order",
+    "reference_id": "ORD-123"
+  },
+  "attachments": []
 }
 ```
 
-**Response**:
+**Response** (`202 Accepted`):
 ```json
 {
-  "message_id": "msg-uuid",
-  "status": "accepted",
-  "estimated_delivery": "2024-12-05T10:31:00Z"
+  "status": "queued",
+  "requestId": "uuid"
 }
 ```
+
+A repeat with the same idempotency key returns `"status": "duplicate"` and the original `requestId`. Plan limits return `429`; an exhausted SMS credit balance or WhatsApp quota returns `402`.
 
 ### 2. Event-Driven Pattern (Asynchronous)
 
@@ -60,27 +71,17 @@ The Notifications Service is a centralized communications platform for all Codev
 2. Notifications service consumes event
 3. Maps event to template and channel
 4. Sends notification
-5. Publishes delivery status event
+5. Publishes `notifications.delivery.status` when the message carries correlation metadata
 
-### 3. gRPC Pattern (High-Throughput)
+### 3. Webhook Pattern (Provider Callbacks)
 
-**Use Case**: Bulk notifications, high-volume scenarios
+**Use Case**: Provider delivery reports and inbound messages
 
-**Service**: `NotificationService.Send`
-
-**Advantages**:
-- Lower latency
-- Binary protocol
-- Streaming support
-
-### 4. Webhook Pattern (Callbacks)
-
-**Use Case**: Provider delivery status callbacks
-
-**Endpoints**:
-- `/v1/webhooks/sendgrid` - SendGrid delivery callbacks
-- `/v1/webhooks/twilio` - Twilio SMS status callbacks
-- `/v1/webhooks/fcm` - Firebase Cloud Messaging delivery callbacks
+**Endpoints** (public, under `/api/v1/webhooks`):
+- `POST /africastalking/dlr`: SMS delivery reports
+- `POST /africastalking/inbound`: inbound SMS
+- `GET /whatsapp/meta`: Meta webhook verification
+- `POST /whatsapp/meta`: WhatsApp message status and inbound messages
 
 ---
 
@@ -276,127 +277,59 @@ Onboarding:
 
 ### Email Providers
 
-#### SendGrid (Primary)
+#### SMTP
 
-**Configuration** (Tier 1 - Developer Only):
-- API Key: Stored encrypted at rest in database
-- From Email: Configured per tenant (Tier 2)
-- From Name: Configured per tenant (Tier 2)
+**Configuration** (Tier 1): host, port, username and password, stored encrypted.
 
-**Integration**:
-- REST API: `https://api.sendgrid.com/v3/mail/send`
-- Authentication: Bearer token (API key)
-- Webhook: Delivery status callbacks
+**Use Case**: Default email delivery through the platform or a tenant's own mail server.
 
-**Features**:
-- Template support
-- Attachment support
-- Bounce handling
-- Open/click tracking
+#### Brevo
 
-#### Mailgun (Fallback)
+**Configuration** (Tier 1): API key, stored encrypted; sender name and address per tenant (Tier 2).
 
-**Configuration** (Tier 1):
-- API Key: Stored encrypted at rest
-- Domain: Configured per tenant (Tier 2)
-
-**Integration**:
-- REST API: `https://api.mailgun.net/v3/{domain}/messages`
-- Authentication: Basic auth (API key)
-
-**Use Case**: Failover when SendGrid unavailable
-
-#### SMTP (Fallback)
-
-**Configuration** (Tier 1):
-- SMTP Host: Stored encrypted
-- SMTP Port: Stored encrypted
-- Username: Stored encrypted
-- Password: Stored encrypted
-
-**Use Case**: Custom SMTP server fallback
+**Integration**: Brevo transactional email REST API.
 
 ### SMS Providers
 
-#### Twilio (Primary)
-
-**Configuration** (Tier 1):
-- Account SID: Stored encrypted at rest
-- Auth Token: Stored encrypted at rest
-- Phone Number: Configured per tenant (Tier 2)
-
-**Integration**:
-- REST API: `https://api.twilio.com/2010-04-01/Accounts/{AccountSid}/Messages.json`
-- Authentication: Basic auth (AccountSid:AuthToken)
-- Webhook: Delivery status callbacks
-
-**Features**:
-- Global coverage
-- Delivery receipts
-- Status callbacks
-
-#### Africa's Talking (Regional)
+#### Africa's Talking
 
 **Configuration** (Tier 1):
 - API Key: Stored encrypted at rest
 - Username: Stored encrypted
-- Short Code: Configured per tenant (Tier 2)
+- Sender ID or short code: Configured per tenant (Tier 2)
 
 **Integration**:
 - REST API: `https://api.africastalking.com/version1/messaging`
 - Authentication: API key header
-
-**Use Case**: Kenya-specific SMS delivery
-
-#### Custom SMS Provider
-
-**Configuration** (Tier 1):
-- Provider URL: Stored encrypted
-- API Key: Stored encrypted
-- Custom headers: Stored encrypted
-
-**Use Case**: Tenant-specific SMS provider
+- Delivery reports and inbound SMS: `/api/v1/webhooks/africastalking/dlr` and `/inbound`
 
 ### Push Notification Providers
 
 #### Firebase Cloud Messaging (FCM)
 
-**Configuration** (Tier 1):
-- Server Key: Stored encrypted at rest
-- Project ID: Stored encrypted
+**Configuration** (Tier 1): service account credentials and project ID, stored encrypted.
 
 **Integration**:
 - REST API: `https://fcm.googleapis.com/v1/projects/{project_id}/messages:send`
 - Authentication: OAuth 2.0 access token
 
-**Features**:
-- Android push notifications
-- iOS push notifications (via APNs)
-- Web push notifications
-- Topic subscriptions
+**Use Case**: Android and iOS app push (iOS through FCM).
 
-#### Apple Push Notification Service (APNs)
+#### Web Push
 
-**Configuration** (Tier 1):
-- Key ID: Stored encrypted
-- Team ID: Stored encrypted
-- Bundle ID: Configured per tenant (Tier 2)
-- Private Key: Stored encrypted
+**Configuration**: VAPID keys managed by the service; browsers register device tokens through the device token routes.
 
-**Integration**:
-- HTTP/2 API: `https://api.push.apple.com/3/device/{token}`
-- Authentication: JWT (signed with private key)
+**Use Case**: Browser push for the web apps.
 
-**Use Case**: Direct iOS push notifications
+### WhatsApp
 
-### WhatsApp Business API (Future)
+#### Meta Cloud API
 
-**Configuration** (Tier 1):
-- Business Account ID: Stored encrypted
-- Access Token: Stored encrypted
-- Phone Number ID: Stored encrypted
+**Configuration** (Tier 1): WhatsApp Business Account ID, phone number ID and access token, stored encrypted. Tenants connect their own number through Embedded Signup.
 
-**Status**: Planned for future implementation
+**Integration**: Meta Graph API for template and session messages; message status and inbound messages arrive on `/api/v1/webhooks/whatsapp/meta`.
+
+**Templates**: Approved templates are synced from `internal/whatsapp/templatesync/templates.json`; see [whatsapp-template-policy.md](whatsapp-template-policy.md).
 
 ---
 
@@ -432,56 +365,24 @@ Onboarding:
 
 ### Outbound Events (Published)
 
-**notifications.delivery.accepted**
-```json
-{
-  "event_id": "uuid",
-  "event_type": "notifications.delivery.accepted",
-  "tenant_id": "tenant-uuid",
-  "timestamp": "2024-12-05T10:30:00Z",
-  "data": {
-    "message_id": "msg-uuid",
-    "channel": "email",
-    "recipient": "customer@example.com",
-    "provider": "sendgrid",
-    "provider_message_id": "sg-msg-id"
-  }
-}
-```
+**notifications.delivery.status** (JetStream): the final outcome of a message whose metadata carries `source_service`, `reference_type` and `reference_id`. Messages without these keys publish nothing.
 
-**notifications.delivery.completed**
 ```json
 {
-  "event_id": "uuid",
-  "event_type": "notifications.delivery.completed",
+  "event_type": "delivery.status",
+  "aggregate_type": "notification",
   "tenant_id": "tenant-uuid",
-  "timestamp": "2024-12-05T10:30:00Z",
-  "data": {
-    "message_id": "msg-uuid",
+  "payload": {
+    "tenant_id": "tenant-uuid",
+    "source_service": "treasury",
+    "reference_type": "invoice",
+    "reference_id": "INV-1001",
     "channel": "email",
-    "recipient": "customer@example.com",
-    "provider": "sendgrid",
-    "delivered_at": "2024-12-05T10:30:05Z",
-    "opened_at": "2024-12-05T10:35:00Z"
-  }
-}
-```
-
-**notifications.delivery.failed**
-```json
-{
-  "event_id": "uuid",
-  "event_type": "notifications.delivery.failed",
-  "tenant_id": "tenant-uuid",
-  "timestamp": "2024-12-05T10:30:00Z",
-  "data": {
-    "message_id": "msg-uuid",
-    "channel": "email",
-    "recipient": "customer@example.com",
-    "provider": "sendgrid",
-    "error_code": "bounce",
-    "error_message": "Invalid email address",
-    "retry_count": 3
+    "template": "invoice_due",
+    "recipients": ["customer@example.com"],
+    "status": "sent",
+    "request_id": "uuid",
+    "error": "present only when status is failed"
   }
 }
 ```
@@ -631,8 +532,9 @@ Onboarding:
 
 ## References
 
-- [SendGrid API Documentation](https://docs.sendgrid.com/)
-- [Twilio API Documentation](https://www.twilio.com/docs)
+- [Brevo API Documentation](https://developers.brevo.com/)
+- [Africa's Talking SMS Documentation](https://developers.africastalking.com/docs/sms/overview)
+- [WhatsApp Cloud API Documentation](https://developers.facebook.com/docs/whatsapp/cloud-api)
 - [Firebase Cloud Messaging Documentation](https://firebase.google.com/docs/cloud-messaging)
 - [NATS JetStream Documentation](https://docs.nats.io/nats-concepts/jetstream)
 

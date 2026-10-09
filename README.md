@@ -1,11 +1,11 @@
 # Notifications Service
 
-Multi-channel notifications orchestration platform for Codevertex products. Handles tenant-aware email, SMS, and push messaging, template management, provider routing, and compliance logging.
+Multi-channel notifications orchestration platform for Codevertex products. Handles tenant-aware email, SMS, WhatsApp and push messaging, template management, provider routing, and compliance logging.
 
 ## Key Features
 
-- Go 1.22 service with Gin HTTP API and event-driven architecture
-- Modular providers for SendGrid/Mailgun, Twilio/Africa's Talking, FCM/APNS
+- Go 1.26 service with a chi HTTP API and event-driven architecture
+- Providers: SMTP and Brevo (email), Africa's Talking (SMS), Meta Cloud API (WhatsApp), FCM and Web Push (push)
 - PostgreSQL for templates/audit logs, Redis for idempotency + rate limits, NATS JetStream for event ingestion
 - Observability via zap logging, Prometheus metrics, OTEL-ready instrumentation
 - Hexagonal architecture with domain-driven modules (tenancy, templates, channels, orchestration)
@@ -72,9 +72,9 @@ cmd/
 internal/
   app/         # bootstrap + lifecycle
   config/      # environment configuration loader
-  http/        # Gin handlers & routes
+  http/        # chi handlers & routes
   messaging/   # domain services (channel routing, idempotency)
-  providers/   # channel providers (email, sms, push)
+  providers/   # channel providers (email, sms, whatsapp, push)
   platform/    # infrastructure adapters (database, cache, events, templates)
   shared/      # logger and middleware
 ```
