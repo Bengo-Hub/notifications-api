@@ -1,0 +1,1 @@
+{{ .visitor_name }} has come in through the gate{{ if .unit_code }} for {{ .unit_code }}{{ end }}.

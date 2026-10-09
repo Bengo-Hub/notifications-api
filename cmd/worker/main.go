@@ -448,7 +448,7 @@ func main() {
 	startProjectsConsumer(ctx, nc, js, cfg, tr, logg)
 
 	// Start maskani event consumer (property platform: bills, receipts, visitor passes, gate alerts)
-	startMaskaniConsumer(ctx, nc, js, cfg, tr, logg)
+	startMaskaniConsumer(ctx, nc, js, cfg, tr, client, logg)
 
 	// Ensure digitika JetStream stream exists (published by codevertex-website)
 	if _, streamErr := js.StreamInfo("digitika"); streamErr != nil {

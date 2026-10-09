@@ -14,6 +14,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/bengobox/notifications-api/internal/config"
+	"github.com/bengobox/notifications-api/internal/ent"
 	"github.com/bengobox/notifications-api/internal/messaging"
 	"github.com/bengobox/notifications-api/internal/moneyfmt"
 )
@@ -329,7 +330,7 @@ var maskaniMappings = map[string]maskaniMapping{
 }
 
 // startMaskaniConsumer subscribes to maskani.> and sends each mapped event by email and WhatsApp.
-func startMaskaniConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamContext, cfg *config.Config, tr *tenantResolver, logg *zap.Logger) {
+func startMaskaniConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamContext, cfg *config.Config, tr *tenantResolver, client *ent.Client, logg *zap.Logger) {
 	if nc == nil || js == nil {
 		logg.Warn("skipping maskani consumer: NATS not available")
 		return
@@ -364,6 +365,8 @@ func startMaskaniConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamC
 			_ = m.Nak()
 			return
 		}
+		// Best effort on top of WhatsApp and email: the host's own devices.
+		pushMaskaniHost(ctx, nc, cfg, client, ti, evt, log)
 		_ = m.Ack()
 	}
 

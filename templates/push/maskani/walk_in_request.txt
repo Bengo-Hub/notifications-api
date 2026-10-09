@@ -1,0 +1,1 @@
+{{ .visitor_name }} is at the gate for {{ .unit_code }}. Tap to let them in or turn them away.
