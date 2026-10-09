@@ -226,5 +226,15 @@ func (h *DeviceTokenHandler) WebConfig(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	w.Header().Set("Cache-Control", "public, max-age=300")
+	// An app without the Firebase SDK asks for kinds=webpush: the router delivers Web Push
+	// subscriptions on their own channel even when the tenant also has a Firebase project.
+	if r.URL.Query().Get("kinds") == "webpush" {
+		if wp, err := h.push.WebPushKeys(r.Context()); err == nil {
+			respondJSON(w, http.StatusOK, providers.BrowserPushConfig{Enabled: true, Kind: "webpush", Source: "platform", VAPIDPublicKey: wp.PublicKey})
+			return
+		}
+		respondJSON(w, http.StatusOK, map[string]any{"enabled": false})
+		return
+	}
 	respondJSON(w, http.StatusOK, h.push.ResolveBrowserPush(r.Context(), tenantID))
 }
