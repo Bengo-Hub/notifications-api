@@ -49,6 +49,30 @@ type maskaniMapping struct {
 	// whose optional lines (such as VAT) need a different approved template rather than a blank.
 	WAVariant func(d map[string]any) (string, []string)
 	Skip      func(p map[string]any) bool
+	// Responders: a staff alert goes to each of the payload's "responders" (the property staff
+	// maskani-api picked) instead of the tenant contact, which stays the fallback.
+	Responders bool
+}
+
+// maskaniResponder is one entry of a payload's "responders".
+type maskaniResponder struct {
+	UserID string
+	Name   string
+	Email  string
+	Phone  string
+}
+
+func maskaniResponders(p map[string]any) []maskaniResponder {
+	list, _ := p["responders"].([]any)
+	out := make([]maskaniResponder, 0, len(list))
+	for _, raw := range list {
+		m, ok := raw.(map[string]any)
+		if !ok {
+			continue
+		}
+		out = append(out, maskaniResponder{UserID: mStr(m, "user_id"), Name: mStr(m, "name"), Email: mStr(m, "email"), Phone: mStr(m, "phone")})
+	}
+	return out
 }
 
 func mStr(p map[string]any, key string) string {
@@ -302,6 +326,20 @@ var maskaniMappings = map[string]maskaniMapping{
 		WAParams:   func(d map[string]any) []string { return mParams(d, "estate", "severity", "title", "number") },
 		Skip:       func(p map[string]any) bool { urgent, _ := p["urgent"].(bool); return !urgent },
 	},
+	// A resident's request: to the property's caretaker and manager (or the estate contact).
+	"work_order.created": {
+		TemplateID: "maskani/resident_request", Staff: true, Responders: true,
+		Path:    withID("works", "work_order_id"),
+		Subject: func(p map[string]any) string { return "New request from " + waParam(p["unit_code"], "a resident") + ": " + mStr(p, "title") },
+		Data: func(p map[string]any, ti *tenantInfo) map[string]any {
+			return map[string]any{"estate": ti.Name, "number": mStr(p, "number"), "priority": mStr(p, "priority"),
+				"title": mStr(p, "title"), "unit_code": waParam(p["unit_code"], "a resident"), "category": mStr(p, "category"),
+				"description": mStr(p, "description"), "requested_by": mStr(p, "requested_by")}
+		},
+		WATemplate: "maskani_resident_request_v1_btn",
+		WAParams:   func(d map[string]any) []string { return mParams(d, "estate", "number", "unit_code", "priority", "title") },
+		Skip:       func(p map[string]any) bool { return mStr(p, "source") != "resident" },
+	},
 	"work_order.sla_breached": {
 		TemplateID: "maskani/work_order_sla_breached", Staff: true,
 		Path:    withID("works", "work_order_id"),
@@ -398,7 +436,29 @@ func dispatchMaskani(ctx context.Context, nc *nats.Conn, cfg *config.Config, ti 
 	if mp.Staff {
 		target, email, phone = messaging.TargetStaff, ti.ContactEmail, ti.ContactPhone
 	}
+	if mp.Responders {
+		if rs := maskaniResponders(p); len(rs) > 0 {
+			for _, r := range rs {
+				d := make(map[string]any, len(data)+1)
+				for k, v := range data {
+					d[k] = v
+				}
+				d["name"] = r.Name
+				if err := deliverMaskani(ctx, nc, cfg, ti, tenantID, evt, mp, target, d, suffix, r.Email, r.Phone, "-"+r.UserID); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}
+	return deliverMaskani(ctx, nc, cfg, ti, tenantID, evt, mp, target, data, suffix, email, phone, "")
+}
 
+// deliverMaskani queues one recipient's email and WhatsApp. keySuffix tells recipients of the same
+// event apart in the idempotency key.
+func deliverMaskani(ctx context.Context, nc *nats.Conn, cfg *config.Config, ti *tenantInfo, tenantID string, evt eventslib.Event,
+	mp maskaniMapping, target string, data map[string]any, suffix, email, phone, keySuffix string) error {
+	p := evt.Payload
 	send := func(channel, to string, meta map[string]any) error {
 		meta["service_id"] = "maskani"
 		_, err := messaging.Publish(ctx, nc, cfg.Events, messaging.Message{
@@ -411,7 +471,7 @@ func dispatchMaskani(ctx context.Context, nc *nats.Conn, cfg *config.Config, ti 
 			Data:           data,
 			Metadata:       meta,
 			RequestID:      uuid.New().String(),
-			IdempotencyKey: fmt.Sprintf("maskani-%s-%s", evt.ID, channel),
+			IdempotencyKey: fmt.Sprintf("maskani-%s-%s%s", evt.ID, channel, keySuffix),
 			QueuedAt:       time.Now(),
 		})
 		return err

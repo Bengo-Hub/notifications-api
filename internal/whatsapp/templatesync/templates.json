@@ -592,5 +592,16 @@
     "buttons": [
       {"type": "URL", "text": "Open Work Order", "url": "https://maskaniapp.codevertexafrica.com/{{1}}", "example": ["shaba-village/works/0f3b7c1e-2a4d-4c55-9b1f-6d2e8a9c4b10"]}
     ]
+  },
+  {
+    "name": "maskani_resident_request_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/maskani/resident_request.txt (params: estate, number, unit_code, priority, title; button: <slug>/works/<id>)",
+    "body": "New resident request at {{1}}.\n\nRequest *{{2}}* from {{3}} ({{4}} priority): {{5}}.\n\nPlease take it up and update the resident.",
+    "example": ["Shaba Village", "WO-000042", "B-12", "high", "Kitchen sink is leaking"],
+    "buttons": [
+      {"type": "URL", "text": "Open Request", "url": "https://maskaniapp.codevertexafrica.com/{{1}}", "example": ["shaba-village/works/0f3b7c1e-2a4d-4c55-9b1f-6d2e8a9c4b10"]}
+    ]
   }
 ]

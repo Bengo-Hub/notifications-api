@@ -1,0 +1,5 @@
+New resident request at {{ .estate }}.
+
+Request *{{ .number }}* from {{ .unit_code }} ({{ .priority }} priority): {{ .title }}.
+
+Please take it up and update the resident.

@@ -1,0 +1,38 @@
+{{ define "content" }}
+  <p>Hello{{ if .name }} {{ .name }}{{ end }},</p>
+  <p>A resident at {{ .estate }} has sent a request that needs your attention.</p>
+  <table role="presentation" style="width:100%;border-collapse:collapse;margin:16px 0;">
+    <tr>
+      <td style="padding:8px 0;color:#6b7280;width:45%;border-bottom:1px solid #f3f4f6;">Request</td>
+      <td style="padding:8px 0;font-weight:600;border-bottom:1px solid #f3f4f6;">{{ .number }}: {{ .title }}</td>
+    </tr>
+    {{ if .unit_code }}
+    <tr>
+      <td style="padding:8px 0;color:#6b7280;border-bottom:1px solid #f3f4f6;">Unit</td>
+      <td style="padding:8px 0;border-bottom:1px solid #f3f4f6;">{{ .unit_code }}{{ if .requested_by }}, {{ .requested_by }}{{ end }}</td>
+    </tr>
+    {{ end }}
+    <tr>
+      <td style="padding:8px 0;color:#6b7280;border-bottom:1px solid #f3f4f6;">Priority</td>
+      <td style="padding:8px 0;border-bottom:1px solid #f3f4f6;">{{ .priority }}</td>
+    </tr>
+    {{ if .category }}
+    <tr>
+      <td style="padding:8px 0;color:#6b7280;border-bottom:1px solid #f3f4f6;">Category</td>
+      <td style="padding:8px 0;border-bottom:1px solid #f3f4f6;">{{ .category }}</td>
+    </tr>
+    {{ end }}
+    {{ if .description }}
+    <tr>
+      <td style="padding:8px 0;color:#6b7280;vertical-align:top;">Details</td>
+      <td style="padding:8px 0;">{{ .description }}</td>
+    </tr>
+    {{ end }}
+  </table>
+  {{ if .action_link }}
+  <p style="margin:20px 0;">
+    <a href="{{ .action_link }}" style="background:{{ or .brand_primary_color "#0F766E" }};color:#ffffff !important;text-decoration:none;padding:10px 16px;border-radius:6px;display:inline-block;">Open the request</a>
+  </p>
+  {{ end }}
+  <p style="color:#6b7280;font-size:13px;">Assign it or start it in Maskani so the resident sees progress.</p>
+{{ end }}

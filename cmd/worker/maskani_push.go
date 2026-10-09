@@ -16,31 +16,55 @@ import (
 	"github.com/bengobox/notifications-api/internal/messaging"
 )
 
-// maskaniPush is a push sent to the host's own devices (registered from the Maskani portal) for gate
-// events, alongside the WhatsApp and email the mapping sends. A walk-in push is the fast path: it
-// pops up on the host's phone and opens the page where they answer in one tap.
+// maskaniPush is a push sent to people's own devices (registered from the Maskani app) alongside
+// the WhatsApp and email the mapping sends. A walk-in push is the fast path: it pops up on the
+// host's phone and opens the page where they answer in one tap. A resident request pops up on the
+// caretaker's and manager's phones and opens the work order.
 var maskaniPush = map[string]struct {
 	Template string
 	Title    string
 	Path     func(p map[string]any) string
+	// Users picks the auth user ids to reach; nil means the payload's host_user_id.
+	Users func(p map[string]any) []string
+	Skip  func(p map[string]any) bool
 }{
 	"walk_in.requested": {Template: "maskani/walk_in_request", Title: "Visitor at the gate", Path: withID("portal/walk-ins", "event_id")},
 	"visitor.arrived":   {Template: "maskani/visitor_arrived", Title: "Visitor arrived", Path: fixed("portal/visitors")},
+	"work_order.created": {
+		Template: "maskani/resident_request", Title: "New resident request", Path: withID("works", "work_order_id"),
+		Users: func(p map[string]any) []string {
+			var ids []string
+			for _, r := range maskaniResponders(p) {
+				ids = append(ids, r.UserID)
+			}
+			return ids
+		},
+		Skip: func(p map[string]any) bool { return mStr(p, "source") != "resident" },
+	},
 }
 
-// pushMaskaniHost sends the push for evt to host_user_id's active devices in the tenant. A ring (the
-// guard asked again) gets its own idempotency key per ring so it is not dropped as a repeat.
+// pushMaskaniHost sends the push for evt to the chosen users' active devices in the tenant. A ring
+// (the guard asked again) gets its own idempotency key per ring so it is not dropped as a repeat.
 func pushMaskaniHost(ctx context.Context, nc *nats.Conn, cfg *config.Config, client *ent.Client, ti *tenantInfo, evt eventslib.Event, log *zap.Logger) {
 	spec, ok := maskaniPush[evt.EventType]
-	if !ok || client == nil {
+	if !ok || client == nil || (spec.Skip != nil && spec.Skip(evt.Payload)) {
 		return
 	}
-	userID, err := uuid.Parse(mStr(evt.Payload, "host_user_id"))
-	if err != nil {
+	raw := []string{mStr(evt.Payload, "host_user_id")}
+	if spec.Users != nil {
+		raw = spec.Users(evt.Payload)
+	}
+	users := make([]uuid.UUID, 0, len(raw))
+	for _, s := range raw {
+		if id, err := uuid.Parse(s); err == nil {
+			users = append(users, id)
+		}
+	}
+	if len(users) == 0 {
 		return
 	}
 	tokens, err := client.DeviceToken.Query().
-		Where(devicetoken.TenantID(evt.TenantID), devicetoken.UserID(userID), devicetoken.IsActive(true)).All(ctx)
+		Where(devicetoken.TenantID(evt.TenantID), devicetoken.UserIDIn(users...), devicetoken.IsActive(true)).All(ctx)
 	if err != nil {
 		log.Warn("maskani push: device token lookup failed", zap.String("type", evt.EventType), zap.Error(err))
 		return
@@ -53,10 +77,14 @@ func pushMaskaniHost(ctx context.Context, nc *nats.Conn, cfg *config.Config, cli
 		toks = append(toks, t.Token)
 	}
 	data := map[string]any{"visitor_name": waParam(evt.Payload["visitor_name"], "A visitor"), "unit_code": mStr(evt.Payload, "unit_code"),
-		"type": "maskani_" + evt.EventType}
+		"title": mStr(evt.Payload, "title"), "type": "maskani_" + evt.EventType}
 	if path := spec.Path(evt.Payload); path != "" && ti.Slug != "" {
-		data["url"] = "/" + ti.Slug + "/" + path // opens inside the portal when tapped
+		data["url"] = "/" + ti.Slug + "/" + path // opens inside the app when tapped
 	}
+	if evt.Payload["ring"] == true {
+		data["ring"] = "true"
+	}
+	key := fmt.Sprintf("maskani-%s-push", evt.ID)
 	msg := messaging.Message{
 		TenantID:       evt.TenantID.String(),
 		Channel:        "push",
@@ -67,7 +95,7 @@ func pushMaskaniHost(ctx context.Context, nc *nats.Conn, cfg *config.Config, cli
 		Data:           data,
 		Metadata:       map[string]any{"push_title": spec.Title, "service_id": "maskani", "urgent": evt.EventType == "walk_in.requested"},
 		RequestID:      uuid.New().String(),
-		IdempotencyKey: fmt.Sprintf("maskani-%s-push", evt.ID),
+		IdempotencyKey: key,
 		QueuedAt:       time.Now(),
 	}
 	if _, err := messaging.Publish(ctx, nc, cfg.Events, msg); err != nil {
