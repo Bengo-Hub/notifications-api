@@ -1,0 +1,5 @@
+Meter readings needed at {{ .estate }}.
+
+{{ .missing_count }} meters at {{ .property }} have no reading for {{ .period }} yet ({{ .missing_units }}). The bills are due on {{ .billing_date }}.
+
+Please record them so the water bills go out.

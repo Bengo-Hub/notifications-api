@@ -31,16 +31,28 @@ var maskaniPush = map[string]struct {
 	"walk_in.requested": {Template: "maskani/walk_in_request", Title: "Visitor at the gate", Path: withID("portal/walk-ins", "event_id")},
 	"visitor.arrived":   {Template: "maskani/visitor_arrived", Title: "Visitor arrived", Path: fixed("portal/visitors")},
 	"work_order.created": {
-		Template: "maskani/resident_request", Title: "New resident request", Path: withID("works", "work_order_id"),
-		Users: func(p map[string]any) []string {
-			var ids []string
-			for _, r := range maskaniResponders(p) {
-				ids = append(ids, r.UserID)
-			}
-			return ids
-		},
+		Template: "maskani/resident_request", Title: "New resident request", Path: withID("works", "work_order_id"), Users: responderIDs,
 		Skip: func(p map[string]any) bool { return mStr(p, "source") != "resident" },
 	},
+	"billing.readings_missing": {
+		Template: "maskani/readings_missing", Title: "Meter readings needed", Users: responderIDs,
+		Path: func(p map[string]any) string {
+			return "utilities/readings?property_id=" + mStr(p, "property_id") + "&period=" + mStr(p, "period")
+		},
+	},
+	"billing.run_ready": {
+		Template: "maskani/run_ready", Title: "Bills ready to run", Users: responderIDs,
+		Path: func(p map[string]any) string { return "billing/runs?property_id=" + mStr(p, "property_id") },
+	},
+}
+
+// responderIDs are the auth user ids of a payload's responders.
+func responderIDs(p map[string]any) []string {
+	var ids []string
+	for _, r := range maskaniResponders(p) {
+		ids = append(ids, r.UserID)
+	}
+	return ids
 }
 
 // pushMaskaniHost sends the push for evt to the chosen users' active devices in the tenant. A ring
@@ -77,7 +89,11 @@ func pushMaskaniHost(ctx context.Context, nc *nats.Conn, cfg *config.Config, cli
 		toks = append(toks, t.Token)
 	}
 	data := map[string]any{"visitor_name": waParam(evt.Payload["visitor_name"], "A visitor"), "unit_code": mStr(evt.Payload, "unit_code"),
-		"title": mStr(evt.Payload, "title"), "type": "maskani_" + evt.EventType}
+		"title": mStr(evt.Payload, "title"), "property": mStr(evt.Payload, "property"), "missing_count": mStr(evt.Payload, "missing_count"),
+		"type": "maskani_" + evt.EventType}
+	if per := mStr(evt.Payload, "period"); per != "" {
+		data["period"] = maskaniPeriod(per)
+	}
 	if path := spec.Path(evt.Payload); path != "" && ti.Slug != "" {
 		data["url"] = "/" + ti.Slug + "/" + path // opens inside the app when tapped
 	}

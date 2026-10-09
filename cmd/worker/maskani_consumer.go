@@ -340,6 +340,42 @@ var maskaniMappings = map[string]maskaniMapping{
 		WAParams:   func(d map[string]any) []string { return mParams(d, "estate", "number", "unit_code", "priority", "title") },
 		Skip:       func(p map[string]any) bool { return mStr(p, "source") != "resident" },
 	},
+	// Billing schedule: meters still unread before (or on) the billing day.
+	"billing.readings_missing": {
+		TemplateID: "maskani/readings_missing", Staff: true, Responders: true,
+		Path: func(p map[string]any) string {
+			return "utilities/readings?property_id=" + mStr(p, "property_id") + "&period=" + mStr(p, "period")
+		},
+		Subject: func(p map[string]any) string {
+			return mStr(p, "missing_count") + " meter readings needed at " + mStr(p, "property") + " for " + maskaniPeriod(mStr(p, "period"))
+		},
+		Data: func(p map[string]any, ti *tenantInfo) map[string]any {
+			count, _ := strconv.Atoi(mStr(p, "missing_count"))
+			more := count - 10
+			if more < 0 {
+				more = 0
+			}
+			return map[string]any{"estate": ti.Name, "property": mStr(p, "property"), "period": maskaniPeriod(mStr(p, "period")),
+				"stage": mStr(p, "stage"), "billing_date": mStr(p, "billing_date"), "missing_count": mStr(p, "missing_count"),
+				"missing_units": mStr(p, "missing_units"), "missing_more": more}
+		},
+		WATemplate: "maskani_readings_missing_v1_btn",
+		WAParams: func(d map[string]any) []string {
+			return mParams(d, "estate", "missing_count", "property", "period", "missing_units", "billing_date")
+		},
+	},
+	// Billing schedule in remind mode: the run is ready for finance to start.
+	"billing.run_ready": {
+		TemplateID: "maskani/run_ready", Staff: true, Responders: true,
+		Path:    func(p map[string]any) string { return "billing/runs?property_id=" + mStr(p, "property_id") },
+		Subject: func(p map[string]any) string { return "Bills ready to run: " + mStr(p, "property") + ", " + maskaniPeriod(mStr(p, "period")) },
+		Data: func(p map[string]any, ti *tenantInfo) map[string]any {
+			return map[string]any{"estate": ti.Name, "property": mStr(p, "property"), "period": maskaniPeriod(mStr(p, "period")),
+				"billing_date": mStr(p, "billing_date")}
+		},
+		WATemplate: "maskani_billing_ready_v1_btn",
+		WAParams:   func(d map[string]any) []string { return mParams(d, "estate", "period", "property", "billing_date") },
+	},
 	"work_order.sla_breached": {
 		TemplateID: "maskani/work_order_sla_breached", Staff: true,
 		Path:    withID("works", "work_order_id"),

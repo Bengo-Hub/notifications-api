@@ -603,5 +603,27 @@
     "buttons": [
       {"type": "URL", "text": "Open Request", "url": "https://maskaniapp.codevertexafrica.com/{{1}}", "example": ["shaba-village/works/0f3b7c1e-2a4d-4c55-9b1f-6d2e8a9c4b10"]}
     ]
+  },
+  {
+    "name": "maskani_readings_missing_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/maskani/readings_missing.txt (params: estate, missing_count, property, period, missing_units, billing_date; button: <slug>/utilities/readings?property_id=<id>&period=<YYYY-MM>)",
+    "body": "Meter readings needed at {{1}}.\n\n{{2}} meters at {{3}} have no reading for {{4}} yet ({{5}}). The bills are due on {{6}}.\n\nPlease record them so the water bills go out.",
+    "example": ["Shaba Village", "12", "Shaba Phase 2", "October 2026", "A01, A04, B12", "1 Nov"],
+    "buttons": [
+      {"type": "URL", "text": "Record Readings", "url": "https://maskaniapp.codevertexafrica.com/{{1}}", "example": ["shaba-village/utilities/readings?property_id=0f3b7c1e-2a4d-4c55-9b1f-6d2e8a9c4b10&period=2026-10"]}
+    ]
+  },
+  {
+    "name": "maskani_billing_ready_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/maskani/run_ready.txt (params: estate, period, property, billing_date; button: <slug>/billing/runs?property_id=<id>)",
+    "body": "Billing ready at {{1}}.\n\nThe {{2}} bills for {{3}} are ready to run (billing day {{4}}).\n\nPlease review and run them.",
+    "example": ["Shaba Village", "October 2026", "Shaba Phase 2", "1 Nov"],
+    "buttons": [
+      {"type": "URL", "text": "Review Bills", "url": "https://maskaniapp.codevertexafrica.com/{{1}}", "example": ["shaba-village/billing/runs?property_id=0f3b7c1e-2a4d-4c55-9b1f-6d2e8a9c4b10"]}
+    ]
   }
 ]

@@ -1,0 +1,5 @@
+Billing ready at {{ .estate }}.
+
+The {{ .period }} bills for {{ .property }} are ready to run (billing day {{ .billing_date }}).
+
+Please review and run them.
