@@ -73,6 +73,7 @@ func pushMaskaniHost(ctx context.Context, nc *nats.Conn, cfg *config.Config, cli
 		}
 	}
 	if len(users) == 0 {
+		log.Info("maskani push: no user to reach", zap.String("type", evt.EventType))
 		return
 	}
 	tokens, err := client.DeviceToken.Query().
@@ -82,6 +83,8 @@ func pushMaskaniHost(ctx context.Context, nc *nats.Conn, cfg *config.Config, cli
 		return
 	}
 	if len(tokens) == 0 {
+		// The person has not turned alerts on in the app on any device: WhatsApp and email still went.
+		log.Info("maskani push: no registered device", zap.String("type", evt.EventType), zap.Int("users", len(users)))
 		return
 	}
 	toks := make([]string, 0, len(tokens))
@@ -116,5 +119,7 @@ func pushMaskaniHost(ctx context.Context, nc *nats.Conn, cfg *config.Config, cli
 	}
 	if _, err := messaging.Publish(ctx, nc, cfg.Events, msg); err != nil {
 		log.Warn("maskani push: publish failed", zap.String("type", evt.EventType), zap.Error(err))
+		return
 	}
+	log.Info("maskani push queued", zap.String("type", evt.EventType), zap.Int("devices", len(toks)))
 }
