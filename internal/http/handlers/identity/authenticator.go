@@ -1,6 +1,7 @@
 package identityhandler
 
 import (
+	"context"
 	"net/http"
 	"strings"
 
@@ -83,7 +84,10 @@ func (a *Authenticator) RequireAuth(next http.Handler) http.Handler {
 		}
 		if existingClaims, ok := authclient.ClaimsFromContext(r.Context()); ok && existingClaims != nil {
 			if IsSuperuser(existingClaims) || IsAdmin(existingClaims) {
-				next.ServeHTTP(w, r)
+				// Admins and S2S skip the local-user requirement, but a signed-in admin still gets
+				// their local user attached when it can be loaded: /auth/me and anything else that
+				// reads it answered 401 "not authenticated" to every superuser and admin before.
+				next.ServeHTTP(w, r.WithContext(a.attachUser(r)))
 				return
 			}
 		}
@@ -133,6 +137,36 @@ func (a *Authenticator) RequireAuth(next http.Handler) http.Handler {
 		ctx := identity.ContextWithUser(r.Context(), user)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+// attachUser loads (or JIT-provisions) the local user for the request's bearer token, best effort:
+// it returns the request context unchanged when there is no token, the token does not validate,
+// or the user cannot be loaded.
+func (a *Authenticator) attachUser(r *http.Request) context.Context {
+	ctx := r.Context()
+	token := bearerToken(r.Header.Get("Authorization"))
+	if token == "" || a.authValidator == nil {
+		return ctx
+	}
+	claims, err := a.authValidator.ValidateToken(token)
+	if err != nil {
+		return ctx
+	}
+	userID, err := claims.UserID()
+	if err != nil {
+		return ctx
+	}
+	user, err := a.service.GetUser(ctx, userID)
+	if err != nil {
+		data := map[string]interface{}{"roles": claims.Roles, "permissions": claims.Permissions}
+		if claims.Email != "" {
+			data["email"] = claims.Email
+		}
+		if user, err = a.service.EnsureUserFromToken(ctx, userID, claims.GetTenantSlug(), data); err != nil {
+			return ctx
+		}
+	}
+	return identity.ContextWithUser(ctx, user)
 }
 
 // OptionalAuth attempts to authenticate the user but does not fail if missing or invalid.
