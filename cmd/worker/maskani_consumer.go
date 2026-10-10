@@ -467,6 +467,16 @@ var maskaniMappings = map[string]maskaniMapping{
 				"invoice_number": mStr(p, "invoice_number"), "requested_by": waParam(p["requested_by"], "finance")}
 		},
 	},
+	// An agreed payment plan fell behind: finance and the manager decide what next (email and push).
+	"payment_plan.broken": {
+		TemplateID: "maskani/payment_plan_broken", Staff: true, Responders: true,
+		Path:    withID("billing/accounts", "account_id"),
+		Subject: func(p map[string]any) string { return "Payment plan broken: " + mStr(p, "account_ref") },
+		Data: func(p map[string]any, ti *tenantInfo) map[string]any {
+			return map[string]any{"estate": ti.Name, "account_ref": mStr(p, "account_ref"), "unit_code": waParam(p["unit_code"], "-"),
+				"owner": waParam(p["name"], "the owner"), "total": mMoney(p, "total"), "paid": mMoney(p, "paid"), "balance": mMoney(p, "balance")}
+		},
+	},
 	// A resident queried a bill: finance and the manager hear (email and push only).
 	"bill_query.raised": {
 		TemplateID: "maskani/bill_query_raised", Staff: true, Responders: true,

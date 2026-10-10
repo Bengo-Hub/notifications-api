@@ -47,6 +47,9 @@ var maskaniPush = map[string]struct {
 	"adjustment.requested": {
 		Template: "maskani/adjustment_requested", Title: "Credit to approve", Users: responderIDs, Path: fixed("collections?tab=credits"),
 	},
+	"payment_plan.broken": {
+		Template: "maskani/payment_plan_broken", Title: "Payment plan broken", Users: responderIDs, Path: withID("billing/accounts", "account_id"),
+	},
 	"bill_query.raised": {
 		Template: "maskani/bill_query_raised", Title: "Bill query", Users: responderIDs, Path: fixed("collections?tab=queries"),
 	},
