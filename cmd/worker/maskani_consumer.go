@@ -218,7 +218,8 @@ var maskaniMappings = map[string]maskaniMapping{
 				"subtotal": waParam(mMoneyOr(p, "subtotal", total), total), "tax_total": mMoney(p, "tax_total"),
 				"has_tax": mPositive(p, "tax_total"), "items": items, "charges": charges,
 				"invoice_date": mStr(p, "invoice_date"), "fund_name": mStr(p, "fund_name"),
-				"due_date": mStr(p, "due_date"), "paybill": mStr(p, "paybill"), "invoice_number": mStr(p, "invoice_number")}
+				"due_date": mStr(p, "due_date"), "paybill": mStr(p, "paybill"), "invoice_number": mStr(p, "invoice_number"),
+				"pay_account": waParam(p["pay_account"], mStr(p, "account_ref")), "pay_reference": mStr(p, "pay_reference")}
 		},
 		// Subtotal and VAT lines only on a taxed bill; a bill without a paybill would leave the pay
 		// line empty, so it falls back to the portal button alone.
@@ -228,9 +229,9 @@ var maskaniMappings = map[string]maskaniMapping{
 			}
 			if d["has_tax"] == true {
 				return "maskani_bill_issued_vat_v1_btn",
-					mParams(d, "name", "period", "account_ref", "charges", "subtotal", "tax_total", "amount", "due_date", "paybill", "account_ref")
+					mParams(d, "name", "period", "account_ref", "charges", "subtotal", "tax_total", "amount", "due_date", "paybill", "pay_account")
 			}
-			return "maskani_bill_issued_v1_btn", mParams(d, "name", "period", "account_ref", "charges", "amount", "due_date", "paybill", "account_ref")
+			return "maskani_bill_issued_v1_btn", mParams(d, "name", "period", "account_ref", "charges", "amount", "due_date", "paybill", "pay_account")
 		},
 	},
 	"payment.applied": {
@@ -423,7 +424,7 @@ var maskaniMappings = map[string]maskaniMapping{
 		Data: func(p map[string]any, ti *tenantInfo) map[string]any {
 			return map[string]any{"estate": ti.Name, "name": waParam(p["name"], "there"), "seq": mStr(p, "seq"),
 				"contract_number": mStr(p, "contract_number"), "outstanding": mMoney(p, "outstanding"), "when": instalmentWhen(p),
-				"due_date": mStr(p, "due_date"), "account_ref": mStr(p, "account_ref"), "paybill": mStr(p, "paybill")}
+				"due_date": mStr(p, "due_date"), "account_ref": waParam(p["pay_account"], mStr(p, "account_ref")), "paybill": mStr(p, "paybill"), "pay_reference": mStr(p, "pay_reference")}
 		},
 		WATemplate: "maskani_instalment_due_v1_btn",
 		WAParams: func(d map[string]any) []string {
@@ -629,7 +630,7 @@ func deliverMaskani(ctx context.Context, nc *nats.Conn, cfg *config.Config, ti *
 // arrearsData is the template data shared by the collections ladder messages.
 func arrearsData(p map[string]any, ti *tenantInfo) map[string]any {
 	return map[string]any{"estate": ti.Name, "name": waParam(p["name"], "there"), "account_ref": mStr(p, "account_ref"),
-		"account_ref_pay": mStr(p, "account_ref"), "balance": mMoney(p, "balance"), "days_overdue": mStr(p, "days_overdue"),
+		"account_ref_pay": waParam(p["pay_account"], mStr(p, "account_ref")), "pay_reference": mStr(p, "pay_reference"), "balance": mMoney(p, "balance"), "days_overdue": mStr(p, "days_overdue"),
 		"paybill": mStr(p, "paybill"), "unit_code": waParam(p["unit_code"], "-"), "property": mStr(p, "property")}
 }
 
