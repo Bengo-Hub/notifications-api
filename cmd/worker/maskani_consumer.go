@@ -455,6 +455,39 @@ var maskaniMappings = map[string]maskaniMapping{
 				"reference": mStr(p, "reference"), "submitted_by": waParam(p["submitted_by"], "a resident")}
 		},
 	},
+	// A credit note or waiver waiting for approval (email and push only).
+	"adjustment.requested": {
+		TemplateID: "maskani/adjustment_requested", Staff: true, Responders: true,
+		Path:    fixed("collections?tab=credits"),
+		Subject: func(p map[string]any) string { return "Credit to approve: " + mStr(p, "account_ref") + ", " + mMoney(p, "amount") },
+		Data: func(p map[string]any, ti *tenantInfo) map[string]any {
+			kinds := map[string]string{"credit_note": "Credit note", "waiver": "Waiver"}
+			return map[string]any{"estate": ti.Name, "account_ref": mStr(p, "account_ref"), "unit_code": waParam(p["unit_code"], "-"),
+				"amount": mMoney(p, "amount"), "kind": waParam(kinds[mStr(p, "kind")], "Credit"), "reason": mStr(p, "reason"),
+				"invoice_number": mStr(p, "invoice_number"), "requested_by": waParam(p["requested_by"], "finance")}
+		},
+	},
+	// A resident queried a bill: finance and the manager hear (email and push only).
+	"bill_query.raised": {
+		TemplateID: "maskani/bill_query_raised", Staff: true, Responders: true,
+		Path:    fixed("collections?tab=queries"),
+		Subject: func(p map[string]any) string { return "Bill query from " + mStr(p, "account_ref") + ": " + mStr(p, "subject") },
+		Data: func(p map[string]any, ti *tenantInfo) map[string]any {
+			return map[string]any{"estate": ti.Name, "account_ref": mStr(p, "account_ref"), "unit_code": waParam(p["unit_code"], "-"),
+				"subject": mStr(p, "subject"), "invoice_number": mStr(p, "invoice_number"), "raised_by": waParam(p["raised_by"], "a resident"),
+				"due_by": mStr(p, "due_by")}
+		},
+	},
+	// The answer to a resident's bill query, by email (the portal shows it too).
+	"bill_query.answered": {
+		TemplateID: "maskani/bill_query_answered", EmailKey: "email", Path: fixed("portal"),
+		Subject: func(p map[string]any) string { return "Your bill query: " + mStr(p, "subject") },
+		Data: func(p map[string]any, ti *tenantInfo) map[string]any {
+			return map[string]any{"estate": ti.Name, "name": waParam(p["name"], "there"), "account_ref": mStr(p, "account_ref"),
+				"subject": mStr(p, "subject"), "resolved": mStr(p, "status") == "resolved", "resolution": mStr(p, "resolution"),
+				"invoice_number": mStr(p, "invoice_number")}
+		},
+	},
 	"work_order.sla_breached": {
 		TemplateID: "maskani/work_order_sla_breached", Staff: true,
 		Path:    withID("works", "work_order_id"),

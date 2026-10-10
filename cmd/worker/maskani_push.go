@@ -44,6 +44,12 @@ var maskaniPush = map[string]struct {
 	"manual_payment.submitted": {
 		Template: "maskani/manual_payment", Title: "Payment to verify", Users: responderIDs, Path: fixed("collections?tab=verify"),
 	},
+	"adjustment.requested": {
+		Template: "maskani/adjustment_requested", Title: "Credit to approve", Users: responderIDs, Path: fixed("collections?tab=credits"),
+	},
+	"bill_query.raised": {
+		Template: "maskani/bill_query_raised", Title: "Bill query", Users: responderIDs, Path: fixed("collections?tab=queries"),
+	},
 	"billing.run_ready": {
 		Template: "maskani/run_ready", Title: "Bills ready to run", Users: responderIDs,
 		Path: func(p map[string]any) string { return "billing/runs?property_id=" + mStr(p, "property_id") },

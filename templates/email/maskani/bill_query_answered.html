@@ -1,0 +1,11 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <p>{{ .estate }} has {{ if .resolved }}resolved{{ else }}answered{{ end }} your query about account {{ .account_ref }}{{ if .invoice_number }}, bill {{ .invoice_number }}{{ end }}.</p>
+  <p style="margin:16px 0;padding:12px 16px;background:#f9fafb;border-radius:6px;"><strong>{{ .subject }}</strong><br>{{ .resolution }}</p>
+  {{ if .action_link }}
+  <p style="margin:20px 0;">
+    <a href="{{ .action_link }}" style="background:{{ or .brand_primary_color "#0F766E" }};color:#ffffff !important;text-decoration:none;padding:10px 16px;border-radius:6px;display:inline-block;">Open your statement</a>
+  </p>
+  {{ end }}
+  <p style="color:#6b7280;font-size:13px;">If anything is still unclear, reply from the resident portal or contact the estate office.</p>
+{{ end }}
