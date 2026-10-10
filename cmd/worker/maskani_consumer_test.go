@@ -36,7 +36,7 @@ func TestMaskaniMappingsMatchManifest(t *testing.T) {
 		"event_id": "e1", "buyer": "Jane", "contract_number": "SC-1", "net_price": "7500000.00",
 		"severity": "critical", "title": "Fence breached", "number": "INC-1", "incident_id": "i1", "urgent": true,
 		"work_order_id": "w1", "priority": "high", "vendor": "Guardforce", "doc_type": "PSRA licence",
-		"days_left": 14, "vendor_id": "v1",
+		"days_left": 14, "vendor_id": "v1", "account_id": "a1", "contract_id": "c1", "days_overdue": 9, "document_number": "DOC-1",
 	}
 	ti := &tenantInfo{Name: "Shaba Village", Slug: "shaba-village"}
 	root := filepath.Join("..", "..", "templates")
