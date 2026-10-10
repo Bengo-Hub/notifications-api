@@ -625,5 +625,71 @@
     "buttons": [
       {"type": "URL", "text": "Review Bills", "url": "https://maskaniapp.codevertexafrica.com/{{1}}", "example": ["shaba-village/billing/runs?property_id=0f3b7c1e-2a4d-4c55-9b1f-6d2e8a9c4b10"]}
     ]
+  },
+  {
+    "name": "maskani_arrears_reminder_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/maskani/arrears_reminder.txt (params: name, account_ref, estate, balance, days_overdue, paybill, account_ref_pay; button: <slug>/portal/statement/<account_id>)",
+    "body": "Hello {{1}},\n\nAccount *{{2}}* at {{3}} has *{{4}}* outstanding, {{5}} days past due.\n\nPlease pay to paybill {{6}}, account {{7}}. If you have already paid, thank you and please ignore this.",
+    "example": ["Jane", "B07", "Shaba Village", "KES 12,400", "9", "4012345", "B07"],
+    "buttons": [
+      {"type": "URL", "text": "View Statement", "url": "https://maskaniapp.codevertexafrica.com/{{1}}", "example": ["shaba-village/portal/statement/0f3b7c1e-2a4d-4c55-9b1f-6d2e8a9c4b10"]}
+    ]
+  },
+  {
+    "name": "maskani_arrears_reminder_nopaybill_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/maskani/arrears_reminder.txt without the paybill line (params: name, account_ref, estate, balance, days_overdue)",
+    "body": "Hello {{1}},\n\nAccount *{{2}}* at {{3}} has *{{4}}* outstanding, {{5}} days past due.\n\nPlease pay from your statement in the portal. If you have already paid, thank you and please ignore this.",
+    "example": ["Jane", "B07", "Shaba Village", "KES 12,400", "9"],
+    "buttons": [
+      {"type": "URL", "text": "View Statement", "url": "https://maskaniapp.codevertexafrica.com/{{1}}", "example": ["shaba-village/portal/statement/0f3b7c1e-2a4d-4c55-9b1f-6d2e8a9c4b10"]}
+    ]
+  },
+  {
+    "name": "maskani_demand_letter_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/maskani/demand_letter.txt (params: name, document_number, account_ref, estate, balance; button: <slug>/portal/documents)",
+    "body": "Hello {{1}},\n\nA demand letter {{2}} has been issued for account *{{3}}* at {{4}}, with *{{5}}* outstanding.\n\nPlease open it in the portal and contact the estate office.",
+    "example": ["Jane", "DOC-260042", "B07", "Shaba Village", "KES 48,000"],
+    "buttons": [
+      {"type": "URL", "text": "Open Letter", "url": "https://maskaniapp.codevertexafrica.com/{{1}}", "example": ["shaba-village/portal/documents"]}
+    ]
+  },
+  {
+    "name": "maskani_instalment_due_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/maskani/instalment_due.txt (params: name, seq, contract_number, estate, outstanding, when, account_ref; button: <slug>/portal/purchase)",
+    "body": "Hello {{1}},\n\nInstalment {{2}} of contract *{{3}}* at {{4}}: *{{5}}*, {{6}}.\n\nPlease pay to account {{7}}. If you have already paid, thank you.",
+    "example": ["Jane", "4", "SC-260012", "Shaba Village", "KES 150,000", "due in 3 days", "S-B07"],
+    "buttons": [
+      {"type": "URL", "text": "Purchase Plan", "url": "https://maskaniapp.codevertexafrica.com/{{1}}", "example": ["shaba-village/portal/purchase"]}
+    ]
+  },
+  {
+    "name": "maskani_arrears_escalated_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/maskani/arrears_escalated.txt (params: estate, account_ref, unit_code, balance, days_overdue; button: <slug>/billing/accounts/<id>)",
+    "body": "Collections update for {{1}}.\n\nAccount *{{2}}* ({{3}}) has *{{4}}* outstanding, {{5}} days past due, and has reached escalation.\n\nPlease decide the next step.",
+    "example": ["Shaba Village", "B07", "B07", "KES 48,000", "61"],
+    "buttons": [
+      {"type": "URL", "text": "Open Account", "url": "https://maskaniapp.codevertexafrica.com/{{1}}", "example": ["shaba-village/billing/accounts/0f3b7c1e-2a4d-4c55-9b1f-6d2e8a9c4b10"]}
+    ]
+  },
+  {
+    "name": "maskani_contract_defaulted_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/maskani/contract_defaulted.txt (params: estate, contract_number, oldest_due, grace_days; button: <slug>/sales/contracts/<id>)",
+    "body": "Sales update for {{1}}.\n\nContract *{{2}}* is in default: an instalment due on {{3}} is unpaid after {{4}} days of grace.\n\nPlease follow up with the buyer.",
+    "example": ["Shaba Village", "SC-260012", "2026-09-01", "30"],
+    "buttons": [
+      {"type": "URL", "text": "Open Contract", "url": "https://maskaniapp.codevertexafrica.com/{{1}}", "example": ["shaba-village/sales/contracts/0f3b7c1e-2a4d-4c55-9b1f-6d2e8a9c4b10"]}
+    ]
   }
 ]

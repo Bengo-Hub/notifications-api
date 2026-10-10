@@ -1,0 +1,28 @@
+{{ define "content" }}
+  <p>Hello{{ if .name }} {{ .name }}{{ end }},</p>
+  <p>Account <strong>{{ .account_ref }}</strong> at {{ .estate }} has reached the escalation step of the collections ladder.</p>
+  <table role="presentation" style="width:100%;border-collapse:collapse;margin:16px 0;">
+    <tr>
+      <td style="padding:8px 0;color:#6b7280;width:45%;border-bottom:1px solid #f3f4f6;">Owner</td>
+      <td style="padding:8px 0;font-weight:600;border-bottom:1px solid #f3f4f6;">{{ .owner }}</td>
+    </tr>
+    <tr>
+      <td style="padding:8px 0;color:#6b7280;width:45%;border-bottom:1px solid #f3f4f6;">Unit</td>
+      <td style="padding:8px 0;font-weight:600;border-bottom:1px solid #f3f4f6;">{{ .unit_code }}</td>
+    </tr>
+    <tr>
+      <td style="padding:8px 0;color:#6b7280;width:45%;border-bottom:1px solid #f3f4f6;">Outstanding</td>
+      <td style="padding:8px 0;font-weight:600;border-bottom:1px solid #f3f4f6;">{{ .balance }}</td>
+    </tr>
+    <tr>
+      <td style="padding:8px 0;color:#6b7280;width:45%;border-bottom:1px solid #f3f4f6;">Days past due</td>
+      <td style="padding:8px 0;font-weight:600;border-bottom:1px solid #f3f4f6;">{{ .days_overdue }}</td>
+    </tr>
+  </table>
+  {{ if .action_link }}
+  <p style="margin:20px 0;">
+    <a href="{{ .action_link }}" style="background:{{ or .brand_primary_color "#0F766E" }};color:#ffffff !important;text-decoration:none;padding:10px 16px;border-radius:6px;display:inline-block;">Open the account</a>
+  </p>
+  {{ end }}
+  <p style="color:#6b7280;font-size:13px;">Reminders, the call and the demand letter have already gone out.</p>
+{{ end }}

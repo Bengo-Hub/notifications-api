@@ -1,0 +1,5 @@
+Hello {{ .name }},
+
+A demand letter {{ .document_number }} has been issued for account *{{ .account_ref }}* at {{ .estate }}, with *{{ .balance }}* outstanding.
+
+Please open it in the portal and contact the estate office.

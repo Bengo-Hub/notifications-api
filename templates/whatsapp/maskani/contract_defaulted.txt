@@ -1,0 +1,5 @@
+Sales update for {{ .estate }}.
+
+Contract *{{ .contract_number }}* is in default: an instalment due on {{ .oldest_due }} is unpaid after {{ .grace_days }} days of grace.
+
+Please follow up with the buyer.

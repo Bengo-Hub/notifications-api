@@ -1,0 +1,5 @@
+Hello {{ .name }},
+
+Instalment {{ .seq }} of contract *{{ .contract_number }}* at {{ .estate }}: *{{ .outstanding }}*, {{ .when }}.
+
+Please pay to account {{ .account_ref }}. If you have already paid, thank you.

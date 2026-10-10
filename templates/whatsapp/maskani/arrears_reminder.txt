@@ -1,0 +1,5 @@
+Hello {{ .name }},
+
+Account *{{ .account_ref }}* at {{ .estate }} has *{{ .balance }}* outstanding, {{ .days_overdue }} days past due.
+
+Please pay to paybill {{ .paybill }}, account {{ .account_ref_pay }}. If you have already paid, thank you and please ignore this.

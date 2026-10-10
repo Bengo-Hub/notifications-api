@@ -1,0 +1,5 @@
+Collections update for {{ .estate }}.
+
+Account *{{ .account_ref }}* ({{ .unit_code }}) has *{{ .balance }}* outstanding, {{ .days_overdue }} days past due, and has reached escalation.
+
+Please decide the next step.

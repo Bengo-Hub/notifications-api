@@ -376,6 +376,72 @@ var maskaniMappings = map[string]maskaniMapping{
 		WATemplate: "maskani_billing_ready_v1_btn",
 		WAParams:   func(d map[string]any) []string { return mParams(d, "estate", "period", "property", "billing_date") },
 	},
+	// Collections ladder: a reminder to the owner with the paybill and account to pay to.
+	"arrears.reminder": {
+		TemplateID: "maskani/arrears_reminder", PhoneKey: "phone", EmailKey: "email",
+		Path:    withID("portal/statement", "account_id"),
+		Subject: func(p map[string]any) string { return "Payment reminder for account " + mStr(p, "account_ref") },
+		Data:    arrearsData,
+		WAVariant: func(d map[string]any) (string, []string) {
+			if d["paybill"] == "" {
+				return "maskani_arrears_reminder_nopaybill_v1_btn", mParams(d, "name", "account_ref", "estate", "balance", "days_overdue")
+			}
+			return "maskani_arrears_reminder_v1_btn", mParams(d, "name", "account_ref", "estate", "balance", "days_overdue", "paybill", "account_ref_pay")
+		},
+	},
+	// Collections ladder: the demand letter, opened from the portal's documents.
+	"arrears.demand_letter": {
+		TemplateID: "maskani/demand_letter", PhoneKey: "phone", EmailKey: "email", Path: fixed("portal/documents"),
+		Subject: func(p map[string]any) string { return "Demand letter " + mStr(p, "document_number") + " for account " + mStr(p, "account_ref") },
+		Data: func(p map[string]any, ti *tenantInfo) map[string]any {
+			d := arrearsData(p, ti)
+			d["document_number"] = mStr(p, "document_number")
+			return d
+		},
+		WATemplate: "maskani_demand_letter_v1_btn",
+		WAParams:   func(d map[string]any) []string { return mParams(d, "name", "document_number", "account_ref", "estate", "balance") },
+	},
+	// Collections ladder: the last step, to finance and the property manager.
+	"arrears.escalated": {
+		TemplateID: "maskani/arrears_escalated", Staff: true, Responders: true,
+		Path:    withID("billing/accounts", "account_id"),
+		Subject: func(p map[string]any) string { return "Escalation: account " + mStr(p, "account_ref") + " is " + mStr(p, "days_overdue") + " days past due" },
+		Data: func(p map[string]any, ti *tenantInfo) map[string]any {
+			d := arrearsData(p, ti)
+			d["owner"], d["name"] = waParam(p["name"], "the owner"), ""
+			return d
+		},
+		WATemplate: "maskani_arrears_escalated_v1_btn",
+		WAParams:   func(d map[string]any) []string { return mParams(d, "estate", "account_ref", "unit_code", "balance", "days_overdue") },
+	},
+	// Instalment reminders: 3 days before, on the day, 7 and 14 days late.
+	"instalment.due": {
+		TemplateID: "maskani/instalment_due", PhoneKey: "phone", EmailKey: "email", Path: fixed("portal/purchase"),
+		Subject: func(p map[string]any) string {
+			return "Instalment " + mStr(p, "seq") + " of " + mStr(p, "contract_number") + " is " + instalmentWhen(p)
+		},
+		Data: func(p map[string]any, ti *tenantInfo) map[string]any {
+			return map[string]any{"estate": ti.Name, "name": waParam(p["name"], "there"), "seq": mStr(p, "seq"),
+				"contract_number": mStr(p, "contract_number"), "outstanding": mMoney(p, "outstanding"), "when": instalmentWhen(p),
+				"due_date": mStr(p, "due_date"), "account_ref": mStr(p, "account_ref"), "paybill": mStr(p, "paybill")}
+		},
+		WATemplate: "maskani_instalment_due_v1_btn",
+		WAParams: func(d map[string]any) []string {
+			return mParams(d, "name", "seq", "contract_number", "estate", "outstanding", "when", "account_ref")
+		},
+	},
+	// A sale contract in default after its grace days, to sales, finance and the manager.
+	"sale_contract.defaulted": {
+		TemplateID: "maskani/contract_defaulted", Staff: true, Responders: true,
+		Path:    withID("sales/contracts", "contract_id"),
+		Subject: func(p map[string]any) string { return "Contract " + mStr(p, "contract_number") + " is in default" },
+		Data: func(p map[string]any, ti *tenantInfo) map[string]any {
+			return map[string]any{"estate": ti.Name, "contract_number": mStr(p, "contract_number"),
+				"oldest_due": mStr(p, "oldest_due"), "grace_days": mStr(p, "grace_days")}
+		},
+		WATemplate: "maskani_contract_defaulted_v1_btn",
+		WAParams:   func(d map[string]any) []string { return mParams(d, "estate", "contract_number", "oldest_due", "grace_days") },
+	},
 	"work_order.sla_breached": {
 		TemplateID: "maskani/work_order_sla_breached", Staff: true,
 		Path:    withID("works", "work_order_id"),
@@ -546,4 +612,28 @@ func deliverMaskani(ctx context.Context, nc *nats.Conn, cfg *config.Config, ti *
 		}
 	}
 	return nil
+}
+
+// arrearsData is the template data shared by the collections ladder messages.
+func arrearsData(p map[string]any, ti *tenantInfo) map[string]any {
+	return map[string]any{"estate": ti.Name, "name": waParam(p["name"], "there"), "account_ref": mStr(p, "account_ref"),
+		"account_ref_pay": mStr(p, "account_ref"), "balance": mMoney(p, "balance"), "days_overdue": mStr(p, "days_overdue"),
+		"paybill": mStr(p, "paybill"), "unit_code": waParam(p["unit_code"], "-"), "property": mStr(p, "property")}
+}
+
+// instalmentWhen says when an instalment falls due relative to today, in words.
+func instalmentWhen(p map[string]any) string {
+	days, _ := strconv.Atoi(mStr(p, "days_to_due"))
+	switch {
+	case days > 1:
+		return "due in " + strconv.Itoa(days) + " days"
+	case days == 1:
+		return "due tomorrow"
+	case days == 0:
+		return "due today"
+	case days == -1:
+		return "1 day late"
+	default:
+		return strconv.Itoa(-days) + " days late"
+	}
 }
