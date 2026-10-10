@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	eventslib "github.com/Bengo-Hub/shared-events"
@@ -39,6 +40,9 @@ var maskaniPush = map[string]struct {
 		Path: func(p map[string]any) string {
 			return "utilities/readings?property_id=" + mStr(p, "property_id") + "&period=" + mStr(p, "period")
 		},
+	},
+	"manual_payment.submitted": {
+		Template: "maskani/manual_payment", Title: "Payment to verify", Users: responderIDs, Path: fixed("collections?tab=verify"),
 	},
 	"billing.run_ready": {
 		Template: "maskani/run_ready", Title: "Bills ready to run", Users: responderIDs,
@@ -93,7 +97,11 @@ func pushMaskaniHost(ctx context.Context, nc *nats.Conn, cfg *config.Config, cli
 	}
 	data := map[string]any{"visitor_name": waParam(evt.Payload["visitor_name"], "A visitor"), "unit_code": mStr(evt.Payload, "unit_code"),
 		"title": mStr(evt.Payload, "title"), "property": mStr(evt.Payload, "property"), "missing_count": mStr(evt.Payload, "missing_count"),
+		"account_ref": mStr(evt.Payload, "account_ref"), "method": strings.ReplaceAll(mStr(evt.Payload, "method"), "_", " "),
 		"type": "maskani_" + evt.EventType}
+	if mStr(evt.Payload, "amount") != "" {
+		data["amount"] = mMoney(evt.Payload, "amount")
+	}
 	if per := mStr(evt.Payload, "period"); per != "" {
 		data["period"] = maskaniPeriod(per)
 	}

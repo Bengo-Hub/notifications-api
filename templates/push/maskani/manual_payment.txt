@@ -1,0 +1,1 @@
+{{ .account_ref }}: {{ .amount }} by {{ .method }} to verify.

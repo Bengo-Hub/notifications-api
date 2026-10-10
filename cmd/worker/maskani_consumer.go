@@ -442,6 +442,18 @@ var maskaniMappings = map[string]maskaniMapping{
 		WATemplate: "maskani_contract_defaulted_v1_btn",
 		WAParams:   func(d map[string]any) []string { return mParams(d, "estate", "contract_number", "oldest_due", "grace_days") },
 	},
+	// A bank, cash, cheque or typed M-Pesa payment waiting for a reviewer (email and push only).
+	"manual_payment.submitted": {
+		TemplateID: "maskani/manual_payment", Staff: true, Responders: true,
+		Path:    fixed("collections?tab=verify"),
+		Subject: func(p map[string]any) string { return "Payment to verify: " + mStr(p, "account_ref") + ", " + mMoney(p, "amount") },
+		Data: func(p map[string]any, ti *tenantInfo) map[string]any {
+			methods := map[string]string{"bank_transfer": "bank transfer", "cash": "cash", "cheque": "cheque", "mpesa": "M-Pesa code"}
+			return map[string]any{"estate": ti.Name, "account_ref": mStr(p, "account_ref"), "unit_code": waParam(p["unit_code"], "-"),
+				"amount": mMoney(p, "amount"), "method": waParam(methods[mStr(p, "method")], mStr(p, "method")),
+				"reference": mStr(p, "reference"), "submitted_by": waParam(p["submitted_by"], "a resident")}
+		},
+	},
 	"work_order.sla_breached": {
 		TemplateID: "maskani/work_order_sla_breached", Staff: true,
 		Path:    withID("works", "work_order_id"),
