@@ -467,6 +467,17 @@ var maskaniMappings = map[string]maskaniMapping{
 				"invoice_number": mStr(p, "invoice_number"), "requested_by": waParam(p["requested_by"], "finance")}
 		},
 	},
+	// Someone left a metered unit: the caretakers take a final reading (email and push only).
+	"occupancy.final_reading": {
+		TemplateID: "maskani/final_reading", Staff: true, Responders: true,
+		Path: func(p map[string]any) string { return "utilities/readings?property_id=" + mStr(p, "property_id") },
+		Subject: func(p map[string]any) string { return "Final meter reading needed: unit " + mStr(p, "unit_code") },
+		Data: func(p map[string]any, ti *tenantInfo) map[string]any {
+			roles := map[string]string{"owner": "owner", "joint_owner": "joint owner", "buyer": "buyer", "occupant": "occupant", "landlord": "landlord"}
+			return map[string]any{"estate": ti.Name, "unit_code": mStr(p, "unit_code"), "meter_serial": waParam(p["meter_serial"], "-"),
+				"role": waParam(roles[mStr(p, "role")], "resident"), "left_on": mStr(p, "left_on")}
+		},
+	},
 	// A step of an approval waits for a role: the people who hold it hear (email and push only).
 	"approval.pending": {
 		TemplateID: "maskani/approval_pending", Staff: true, Responders: true,

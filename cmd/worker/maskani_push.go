@@ -47,6 +47,10 @@ var maskaniPush = map[string]struct {
 	"adjustment.requested": {
 		Template: "maskani/adjustment_requested", Title: "Credit to approve", Users: responderIDs, Path: fixed("collections?tab=credits"),
 	},
+	"occupancy.final_reading": {
+		Template: "maskani/final_reading", Title: "Final meter reading", Users: responderIDs,
+		Path: func(p map[string]any) string { return "utilities/readings?property_id=" + mStr(p, "property_id") },
+	},
 	"approval.pending": {
 		Template: "maskani/approval_pending", Title: "Approval needed", Users: responderIDs, Path: fixed("approvals"),
 	},
