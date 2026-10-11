@@ -521,6 +521,21 @@ var maskaniMappings = map[string]maskaniMapping{
 		},
 	},
 	// A resident queried a bill: finance and the manager hear (email and push only).
+	// A data subject request with its legal deadline, by email to the estate contact.
+	"privacy.requested": {
+		TemplateID: "maskani/privacy_request", Staff: true,
+		Path:    fixed("settings?tab=privacy"),
+		Subject: func(p map[string]any) string { return "Privacy request from " + waParam(p["name"], "a resident") },
+		Data: func(p map[string]any, ti *tenantInfo) map[string]any {
+			kinds := map[string]string{"access": "A copy of their data", "correction": "A correction", "deletion": "Erasure of their details"}
+			source := "In the resident portal"
+			if mStr(p, "source") == "office" {
+				source = "Recorded by the estate office"
+			}
+			return map[string]any{"estate": ti.Name, "name": waParam(p["name"], "A resident"), "kind": kinds[mStr(p, "kind")],
+				"source": source, "due_at": mStr(p, "due_at")}
+		},
+	},
 	"bill_query.raised": {
 		TemplateID: "maskani/bill_query_raised", Staff: true, Responders: true,
 		Path:    fixed("collections?tab=queries"),
