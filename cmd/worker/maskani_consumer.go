@@ -467,6 +467,16 @@ var maskaniMappings = map[string]maskaniMapping{
 				"invoice_number": mStr(p, "invoice_number"), "requested_by": waParam(p["requested_by"], "finance")}
 		},
 	},
+	// A step of an approval waits for a role: the people who hold it hear (email and push only).
+	"approval.pending": {
+		TemplateID: "maskani/approval_pending", Staff: true, Responders: true,
+		Path:    fixed("approvals"),
+		Subject: func(p map[string]any) string { return "Approval needed: " + mStr(p, "label") },
+		Data: func(p map[string]any, ti *tenantInfo) map[string]any {
+			return map[string]any{"estate": ti.Name, "label": mStr(p, "label"), "amount": mMoney(p, "amount"), "step": mStr(p, "step"),
+				"step_number": mStr(p, "step_number"), "steps": mStr(p, "steps"), "submitted_by": waParam(p["submitted_by"], "a colleague")}
+		},
+	},
 	// An agreed payment plan fell behind: finance and the manager decide what next (email and push).
 	"payment_plan.broken": {
 		TemplateID: "maskani/payment_plan_broken", Staff: true, Responders: true,

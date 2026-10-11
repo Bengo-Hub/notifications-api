@@ -1,0 +1,1 @@
+{{ .label }}, {{ .amount }}: your approval is needed.
