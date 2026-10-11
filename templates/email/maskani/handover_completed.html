@@ -1,0 +1,13 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <p>Welcome home. Unit {{ .unit_code }} at {{ .estate }} was handed over to you on {{ .handed_over_on }}.</p>
+  <p>Estate charges start from that day, so your first bill covers only the days since. Your water bill starts from the meter reading taken at handover.</p>
+  {{ if .open_snags }}
+  <p>{{ .open_snags }} item{{ if ne .open_snags "1" }}s{{ end }} from the handover walk-through {{ if ne .open_snags "1" }}are{{ else }}is{{ end }} still to be fixed. You can follow {{ if ne .open_snags "1" }}them{{ else }}it{{ end }} in the owner portal.</p>
+  {{ end }}
+  {{ if .action_link }}
+  <p style="margin:20px 0;">
+    <a href="{{ .action_link }}" style="background:{{ or .brand_primary_color "#0F766E" }};color:#ffffff !important;text-decoration:none;padding:10px 16px;border-radius:6px;display:inline-block;">Open your purchase</a>
+  </p>
+  {{ end }}
+{{ end }}

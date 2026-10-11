@@ -319,6 +319,23 @@ var maskaniMappings = map[string]maskaniMapping{
 				"amount": mMoney(p, "amount"), "payments": mStr(p, "payments"), "first_due": mStr(p, "first_due")}
 		},
 	},
+	// The handover of a sold unit, by email to the new owner, with any snags still open.
+	"unit.handed_over": {
+		TemplateID: "maskani/handover_completed", PhoneKey: "phone", EmailKey: "email", Path: fixed("portal/purchase"),
+		Subject: func(p map[string]any) string { return "Welcome home: unit " + mStr(p, "unit_code") + " is yours" },
+		Data: func(p map[string]any, ti *tenantInfo) map[string]any {
+			open := mStr(p, "open_snags")
+			if open == "0" {
+				open = ""
+			}
+			on := mStr(p, "handed_over_on")
+			if t, err := time.Parse("2006-01-02", on); err == nil {
+				on = t.Format("2 January 2006")
+			}
+			return map[string]any{"name": waParam(p["name"], "there"), "estate": ti.Name, "unit_code": mStr(p, "unit_code"),
+				"handed_over_on": on, "open_snags": open}
+		},
+	},
 	"party.invited": {
 		TemplateID: "maskani/portal_invite", PhoneKey: "phone", EmailKey: "email", Path: fixed("portal"),
 		Subject: func(p map[string]any) string { return "Your owner portal is ready" },
