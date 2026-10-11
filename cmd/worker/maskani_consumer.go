@@ -52,6 +52,15 @@ type maskaniMapping struct {
 	// Responders: a staff alert goes to each of the payload's "responders" (the property staff
 	// maskani-api picked) instead of the tenant contact, which stays the fallback.
 	Responders bool
+	// WATemplateID overrides TemplateID for the WhatsApp text when the two channels use different
+	// template files (the shared auth OTP templates).
+	WATemplateID string
+	// WAButton fills a button that is not a link, such as the copy-code button of Meta's
+	// AUTHENTICATION template.
+	WAButton func(d map[string]any) string
+	// Platform sends from the platform number, as sign-in codes do, so a tenant's own WhatsApp plan
+	// and quota never block a one-time code.
+	Platform bool
 }
 
 // maskaniResponder is one entry of a payload's "responders".
@@ -281,6 +290,19 @@ var maskaniMappings = map[string]maskaniMapping{
 		},
 		WATemplate: "maskani_walk_in_request_v1_btn",
 		WAParams:   func(d map[string]any) []string { return mParams(d, "host_name", "visitor_name", "unit_code") },
+	},
+	// A resident proving who they are for a privacy request recorded by the estate office. The
+	// shared auth OTP templates (5 minute wording) from the platform number, as sign-in codes.
+	"privacy.otp_requested": {
+		TemplateID: "auth/otp_verification", WATemplateID: "auth/otp", PhoneKey: "phone", EmailKey: "email",
+		Subject: func(p map[string]any) string { return "Your verification code" },
+		Data: func(p map[string]any, ti *tenantInfo) map[string]any {
+			return map[string]any{"name": waParam(p["name"], "there"), "otp": mStr(p, "otp"), "ttl_minutes": 5, "brand_name": ti.Name}
+		},
+		WATemplate: "auth_otp",
+		WAParams:   func(d map[string]any) []string { return mParams(d, "otp") },
+		WAButton:   func(d map[string]any) string { return fmt.Sprint(d["otp"]) },
+		Platform:   true,
 	},
 	"party.invited": {
 		TemplateID: "maskani/portal_invite", PhoneKey: "phone", EmailKey: "email", Path: fixed("portal"),
@@ -638,13 +660,21 @@ func dispatchMaskani(ctx context.Context, nc *nats.Conn, cfg *config.Config, ti 
 func deliverMaskani(ctx context.Context, nc *nats.Conn, cfg *config.Config, ti *tenantInfo, tenantID string, evt eventslib.Event,
 	mp maskaniMapping, target string, data map[string]any, suffix, email, phone, keySuffix string) error {
 	p := evt.Payload
+	scope := messaging.SenderScopeTenant
+	if mp.Platform {
+		scope = messaging.SenderScopePlatform
+	}
 	send := func(channel, to string, meta map[string]any) error {
 		meta["service_id"] = "maskani"
+		tpl := mp.TemplateID
+		if channel == "whatsapp" && mp.WATemplateID != "" {
+			tpl = mp.WATemplateID
+		}
 		_, err := messaging.Publish(ctx, nc, cfg.Events, messaging.Message{
 			TenantID:       tenantID,
 			Channel:        channel,
-			TemplateID:     mp.TemplateID,
-			SenderScope:    messaging.SenderScopeTenant,
+			TemplateID:     tpl,
+			SenderScope:    scope,
 			Target:         target,
 			To:             []string{to},
 			Data:           data,
@@ -678,6 +708,8 @@ func deliverMaskani(ctx context.Context, nc *nats.Conn, cfg *config.Config, ti *
 				return nil // a button template cannot go without its link
 			}
 			meta["template_button_param"] = suffix
+		} else if mp.WAButton != nil {
+			meta["template_button_param"] = mp.WAButton(data)
 		}
 		if code := dialCodeForCountry(ti.Country); code != "" {
 			meta["default_dial_code"] = code

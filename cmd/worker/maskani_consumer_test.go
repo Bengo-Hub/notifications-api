@@ -27,6 +27,9 @@ func TestMaskaniMappingsMatchManifest(t *testing.T) {
 			seen[m[1]] = true
 		}
 		params[d.Name] = len(seen)
+		if d.Category == "AUTHENTICATION" {
+			params[d.Name] = 1 // Meta's fixed body: the code is its one parameter
+		}
 	}
 	sample := map[string]any{
 		"name": "Jane", "period": "2026-11", "account_ref": "B07", "unit_code": "B07", "amount": "6450.00",
@@ -37,8 +40,9 @@ func TestMaskaniMappingsMatchManifest(t *testing.T) {
 		"severity": "critical", "title": "Fence breached", "number": "INC-1", "incident_id": "i1", "urgent": true,
 		"work_order_id": "w1", "priority": "high", "vendor": "Guardforce", "doc_type": "PSRA licence",
 		"days_left": 14, "vendor_id": "v1", "account_id": "a1", "contract_id": "c1", "days_overdue": 9, "document_number": "DOC-1",
+		"otp": "731904",
 	}
-	ti := &tenantInfo{Name: "Shaba Village", Slug: "shaba-village"}
+	ti := &tenantInfo{Name: "Mvumo Gardens", Slug: "mvumo-gardens"}
 	root := filepath.Join("..", "..", "templates")
 	for event, m := range maskaniMappings {
 		if _, err := os.Stat(filepath.Join(root, "email", m.TemplateID+".html")); err != nil {
@@ -50,8 +54,12 @@ func TestMaskaniMappingsMatchManifest(t *testing.T) {
 		if m.WATemplate == "" && m.WAVariant == nil {
 			continue
 		}
-		if _, err := os.Stat(filepath.Join(root, "whatsapp", m.TemplateID+".txt")); err != nil {
-			t.Errorf("%s: missing whatsapp body %s.txt", event, m.TemplateID)
+		waFile := m.TemplateID
+		if m.WATemplateID != "" {
+			waFile = m.WATemplateID
+		}
+		if _, err := os.Stat(filepath.Join(root, "whatsapp", waFile+".txt")); err != nil {
+			t.Errorf("%s: missing whatsapp body %s.txt", event, waFile)
 		}
 		// Every payload shape a mapping can meet: variants pick a template per shape.
 		shapes := []map[string]any{sample}
@@ -115,7 +123,7 @@ func maskaniBillShapes(base map[string]any) []map[string]any {
 // given, and the paybill line only when the fund has a paybill.
 func TestMaskaniBillGatesOptionalLines(t *testing.T) {
 	m := maskaniMappings["bill.issued"]
-	ti := &tenantInfo{Name: "Shaba Village", Slug: "shaba-village"}
+	ti := &tenantInfo{Name: "Mvumo Gardens", Slug: "mvumo-gardens"}
 	shapes := maskaniBillShapes(map[string]any{"name": "Jane", "period": "2026-11", "account_ref": "B07",
 		"due_date": "10 Nov 2026", "paybill": "4012345"})
 
