@@ -291,11 +291,17 @@ var maskaniMappings = map[string]maskaniMapping{
 		WATemplate: "maskani_walk_in_request_v1_btn",
 		WAParams:   func(d map[string]any) []string { return mParams(d, "host_name", "visitor_name", "unit_code") },
 	},
-	// A resident proving who they are for a privacy request recorded by the estate office. The
-	// shared auth OTP templates (5 minute wording) from the platform number, as sign-in codes.
-	"privacy.otp_requested": {
+	// A resident or buyer proving they hold the phone or email on record (a privacy request at the
+	// office, accepting a new payment plan). The shared auth OTP templates (5 minute wording) from
+	// the platform number, as sign-in codes.
+	"party.otp_requested": {
 		TemplateID: "auth/otp_verification", WATemplateID: "auth/otp", PhoneKey: "phone", EmailKey: "email",
-		Subject: func(p map[string]any) string { return "Your verification code" },
+		Subject: func(p map[string]any) string {
+			if mStr(p, "purpose") == "restructure" {
+				return "Your code to accept the new payment plan"
+			}
+			return "Your verification code"
+		},
 		Data: func(p map[string]any, ti *tenantInfo) map[string]any {
 			return map[string]any{"name": waParam(p["name"], "there"), "otp": mStr(p, "otp"), "ttl_minutes": 5, "brand_name": ti.Name}
 		},
@@ -303,6 +309,15 @@ var maskaniMappings = map[string]maskaniMapping{
 		WAParams:   func(d map[string]any) []string { return mParams(d, "otp") },
 		WAButton:   func(d map[string]any) string { return fmt.Sprint(d["otp"]) },
 		Platform:   true,
+	},
+	// An approved new payment plan waiting for the buyer, by email; they accept in the portal.
+	"sale_contract.restructure_proposed": {
+		TemplateID: "maskani/restructure_proposed", PhoneKey: "phone", EmailKey: "email", Path: fixed("portal/purchase"),
+		Subject: func(p map[string]any) string { return "A new payment plan for " + mStr(p, "contract_number") },
+		Data: func(p map[string]any, ti *tenantInfo) map[string]any {
+			return map[string]any{"name": waParam(p["name"], "there"), "estate": ti.Name, "contract_number": mStr(p, "contract_number"),
+				"amount": mMoney(p, "amount"), "payments": mStr(p, "payments"), "first_due": mStr(p, "first_due")}
+		},
 	},
 	"party.invited": {
 		TemplateID: "maskani/portal_invite", PhoneKey: "phone", EmailKey: "email", Path: fixed("portal"),
