@@ -1,0 +1,27 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  {{ if eq .account_role "parent" }}
+    <p>{{ .student_name }} is enrolled in <strong>{{ .course_name }}</strong> at Digitika Academy. You have a parent account to follow their payments and progress.</p>
+  {{ else }}
+    <p>Your place in <strong>{{ .course_name }}</strong> is confirmed. Your Digitika student account is ready.</p>
+  {{ end }}
+  {{ if .temp_password }}
+  <table style="width:100%; border-collapse:collapse; margin:16px 0;">
+    <tr>
+      <td style="padding:6px 0; color:#6b7280; width:45%;">Email</td>
+      <td style="padding:6px 0; font-weight:600;">{{ .email }}</td>
+    </tr>
+    <tr>
+      <td style="padding:6px 0; color:#6b7280;">Temporary password</td>
+      <td style="padding:6px 0; font-weight:600; font-family:monospace;">{{ .temp_password }}</td>
+    </tr>
+  </table>
+  <p style="color:#6b7280;">You will be asked to choose your own password the first time you sign in. The temporary one stops working after that.</p>
+  {{ else }}
+  <p>Sign in with the email <strong>{{ .email }}</strong> and the password you already use for your Codevertex account.</p>
+  {{ end }}
+  <p>
+    <a class="button" href="{{ .login_url }}">Sign in to the portal</a>
+  </p>
+  <p class="muted">If you did not expect this email, contact us at info@codevertexafrica.com.</p>
+{{ end }}

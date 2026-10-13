@@ -94,6 +94,11 @@ func startAuthNotificationConsumer(ctx context.Context, nc *nats.Conn, cfg *conf
 			logg.Warn("auth user created: no email, skipping", zap.String("user_id", evt.UserID))
 			return
 		}
+		// The caller sends its own onboarding email (Digitika student and parent accounts carry
+		// their temporary password there), so a second generic welcome would only confuse.
+		if skip, _ := p["skip_welcome"].(bool); skip {
+			return
+		}
 
 		// Resolve tenant for branding and per-tenant app URL
 		var tenantSlug string
