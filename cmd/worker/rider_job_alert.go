@@ -52,39 +52,8 @@ func notifyRiderAssigned(ctx context.Context, nc *nats.Conn, cfg *config.Config,
 	riderAppURL := firstNonEmpty(ti.ServiceURLs["rider"], serviceURL("NOTIFICATIONS_RIDER_APP_URL", "https://riderapp.codevertexafrica.com"))
 	data := riderJobData(evt.Payload, ti.Slug, riderAppURL)
 
-	if riderUser, _ := evt.Payload["rider_user_id"].(string); riderUser != "" && client != nil {
-		userID, uerr := uuid.Parse(riderUser)
-		tenantID, terr := uuid.Parse(evt.TenantID)
-		if uerr == nil && terr == nil {
-			tokens, err := client.DeviceToken.Query().
-				Where(devicetoken.TenantID(tenantID), devicetoken.UserID(userID), devicetoken.IsActive(true)).
-				All(ctx)
-			if err != nil {
-				logg.Warn("rider job push: device token lookup failed", zap.String("task_id", taskID), zap.Error(err))
-			} else if len(tokens) > 0 {
-				toks := make([]string, 0, len(tokens))
-				for _, t := range tokens {
-					toks = append(toks, t.Token)
-				}
-				msg := messaging.Message{
-					TenantID:       evt.TenantID,
-					Channel:        "push",
-					TemplateID:     "logistics/rider_job_assigned",
-					SenderScope:    messaging.SenderScopeTenant,
-					Target:         messaging.TargetStaff,
-					To:             messaging.NormalizeRecipients(toks, "push"),
-					Data:           data,
-					Metadata:       map[string]any{"push_title": "New delivery job"},
-					RequestID:      uuid.New().String(),
-					IdempotencyKey: fmt.Sprintf("rider-job-push-%s-%s", taskID, riderUser),
-					QueuedAt:       time.Now(),
-				}
-				if _, err := messaging.Publish(ctx, nc, cfg.Events, msg); err != nil {
-					logg.Warn("rider job push: publish failed", zap.String("task_id", taskID), zap.Error(err))
-				}
-			}
-		}
-	}
+	pushToRider(ctx, nc, cfg, client, evt, "logistics/rider_job_assigned", "New delivery job",
+		fmt.Sprintf("rider-job-push-%s", taskID), data, logg)
 
 	if email, _ := evt.Payload["rider_email"].(string); email != "" {
 		msg := messaging.Message{
@@ -103,5 +72,74 @@ func notifyRiderAssigned(ctx context.Context, nc *nats.Conn, cfg *config.Config,
 		if _, err := messaging.Publish(ctx, nc, cfg.Events, msg); err != nil {
 			logg.Warn("rider job email: publish failed", zap.String("task_id", taskID), zap.Error(err))
 		}
+	}
+}
+
+// notifyRiderJobRemoved tells the rider a job they held was cancelled or given to someone else,
+// so they stop riding to it.
+func notifyRiderJobRemoved(ctx context.Context, nc *nats.Conn, cfg *config.Config, client *ent.Client, ti *tenantInfo, evt deliveryEvent, logg *zap.Logger) {
+	taskID, _ := evt.Payload["task_id"].(string)
+	riderAppURL := firstNonEmpty(ti.ServiceURLs["rider"], serviceURL("NOTIFICATIONS_RIDER_APP_URL", "https://riderapp.codevertexafrica.com"))
+	data := riderJobData(evt.Payload, ti.Slug, riderAppURL)
+	path := "/deliveries"
+	if ti.Slug != "" {
+		path = "/" + ti.Slug + "/deliveries"
+	}
+	data["url"] = path
+	data["type"] = "rider_job_removed"
+	data["cancelled"] = evt.EventType == "task.cancelled"
+	reason, _ := evt.Payload["reason"].(string)
+	data["reason"] = reason
+	title := "Job moved to another rider"
+	if evt.EventType == "task.cancelled" {
+		title = "Job cancelled"
+	}
+	pushToRider(ctx, nc, cfg, client, evt, "logistics/rider_job_removed", title,
+		"rider-job-removed-"+firstNonEmpty(evt.ID, evt.EventType+"-"+taskID), data, logg)
+}
+
+// pushToRider sends a push to every active device the rider (payload rider_user_id) registered
+// in the rider app for this tenant.
+func pushToRider(ctx context.Context, nc *nats.Conn, cfg *config.Config, client *ent.Client, evt deliveryEvent,
+	templateID, title, idemPrefix string, data map[string]interface{}, logg *zap.Logger) {
+	riderUser, _ := evt.Payload["rider_user_id"].(string)
+	if riderUser == "" || client == nil {
+		return
+	}
+	userID, uerr := uuid.Parse(riderUser)
+	tenantID, terr := uuid.Parse(evt.TenantID)
+	if uerr != nil || terr != nil {
+		return
+	}
+	taskID, _ := evt.Payload["task_id"].(string)
+	tokens, err := client.DeviceToken.Query().
+		Where(devicetoken.TenantID(tenantID), devicetoken.UserID(userID), devicetoken.IsActive(true)).
+		All(ctx)
+	if err != nil {
+		logg.Warn("rider push: device token lookup failed", zap.String("task_id", taskID), zap.Error(err))
+		return
+	}
+	if len(tokens) == 0 {
+		return
+	}
+	toks := make([]string, 0, len(tokens))
+	for _, t := range tokens {
+		toks = append(toks, t.Token)
+	}
+	msg := messaging.Message{
+		TenantID:       evt.TenantID,
+		Channel:        "push",
+		TemplateID:     templateID,
+		SenderScope:    messaging.SenderScopeTenant,
+		Target:         messaging.TargetStaff,
+		To:             messaging.NormalizeRecipients(toks, "push"),
+		Data:           data,
+		Metadata:       map[string]any{"push_title": title},
+		RequestID:      uuid.New().String(),
+		IdempotencyKey: idemPrefix + "-" + riderUser,
+		QueuedAt:       time.Now(),
+	}
+	if _, err := messaging.Publish(ctx, nc, cfg.Events, msg); err != nil {
+		logg.Warn("rider push: publish failed", zap.String("task_id", taskID), zap.Error(err))
 	}
 }

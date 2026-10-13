@@ -100,6 +100,18 @@ func startDeliveryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStream
 			return
 		}
 
+		// A rider whose job was cancelled or taken back by a dispatcher is told at once
+		// (logistics sets rider_user_id only when the rider did not do it themselves).
+		if evt.EventType == "task.cancelled" || evt.EventType == "task.unassigned" {
+			if riderUser, _ := evt.Payload["rider_user_id"].(string); riderUser != "" {
+				if ti, err := tr.resolve(ctx, evt.TenantID); err == nil {
+					notifyRiderJobRemoved(ctx, nc, cfg, client, ti, evt, logg)
+				} else {
+					logg.Warn("rider job removed: resolve tenant", zap.String("tenant_id", evt.TenantID), zap.Error(err))
+				}
+			}
+		}
+
 		mapping, ok := deliveryMappings[evt.AggregateType + "." + evt.EventType]
 		if !ok {
 			logg.Debug("delivery event: unhandled type, skipping", zap.String("type", evt.EventType))
