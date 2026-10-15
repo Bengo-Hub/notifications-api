@@ -603,6 +603,22 @@ var maskaniMappings = map[string]maskaniMapping{
 		WAParams:   func(d map[string]any) []string { return mParams(d, "estate", "number", "priority", "title") },
 	},
 	// Email only: a renewal reminder is not urgent enough for WhatsApp.
+	// A vendor contract in its notice period, to the property's managers (the estate contact when
+	// none is assigned), once per end date.
+	"vendor_contract.renewal_due": {
+		TemplateID: "maskani/vendor_contract_renewal", Staff: true, Responders: true,
+		Path:    withID("vendors", "vendor_id"),
+		Subject: func(p map[string]any) string { return mStr(p, "vendor") + ": " + mStr(p, "service") + " contract ends soon" },
+		Data: func(p map[string]any, ti *tenantInfo) map[string]any {
+			ends := mStr(p, "ends_on")
+			if t, err := time.Parse("2006-01-02", ends); err == nil {
+				ends = t.Format("2 Jan 2006")
+			}
+			auto, _ := p["auto_renew"].(bool)
+			return map[string]any{"estate": ti.Name, "vendor": mStr(p, "vendor"), "service": mStr(p, "service"),
+				"property": mStr(p, "property"), "ends_on": ends, "days_left": mStr(p, "days_left"), "auto_renew": auto}
+		},
+	},
 	"vendor.document_expiring": {
 		TemplateID: "maskani/vendor_document_expiring", Staff: true,
 		Path:    withID("vendors", "vendor_id"),

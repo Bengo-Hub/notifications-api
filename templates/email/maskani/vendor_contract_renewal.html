@@ -1,0 +1,14 @@
+{{ define "content" }}
+  <p>Hello{{ if .name }} {{ .name }}{{ end }},</p>
+  <p>The {{ .service }} contract with {{ .vendor }}{{ if .property }} at {{ .property }}{{ end }} ends on {{ .ends_on }}, in {{ .days_left }} days.</p>
+  {{ if .auto_renew }}
+  <p>It renews by itself for the same length unless you end it before then.</p>
+  {{ else }}
+  <p>It does not renew by itself. Agree a new contract or let it end.</p>
+  {{ end }}
+  {{ if .action_link }}
+  <p style="margin:20px 0;">
+    <a href="{{ .action_link }}" style="background:{{ or .brand_primary_color "#0F766E" }};color:#ffffff !important;text-decoration:none;padding:10px 16px;border-radius:6px;display:inline-block;">Open the vendor</a>
+  </p>
+  {{ end }}
+{{ end }}
