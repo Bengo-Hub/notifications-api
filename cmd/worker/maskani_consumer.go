@@ -297,8 +297,11 @@ var maskaniMappings = map[string]maskaniMapping{
 	"party.otp_requested": {
 		TemplateID: "auth/otp_verification", WATemplateID: "auth/otp", PhoneKey: "phone", EmailKey: "email",
 		Subject: func(p map[string]any) string {
-			if mStr(p, "purpose") == "restructure" {
+			switch mStr(p, "purpose") {
+			case "restructure":
 				return "Your code to accept the new payment plan"
+			case "document":
+				return "Your code to accept the agreement"
 			}
 			return "Your verification code"
 		},
