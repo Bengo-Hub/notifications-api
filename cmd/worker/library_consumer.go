@@ -108,12 +108,13 @@ var libraryMappings = map[string]libraryNotificationMapping{
 	},
 	"library.fine.paid": {
 		TemplateID:   "library/fine_paid_receipt",
-		EmailSubject: "Your library fine has been paid — receipt",
+		EmailSubject: "Your library payment receipt",
 		DataBuilder: func(data map[string]interface{}, tenantWebsite string) map[string]interface{} {
 			return map[string]interface{}{
-				"name":      "Member",
-				"amount":    data["amount"],
-				"dashboard": fmt.Sprintf("%s/my-account", tenantWebsite),
+				"name":        "Member",
+				"amount":      data["amount"],
+				"description": data["description"],
+				"dashboard":   fmt.Sprintf("%s/my-account", tenantWebsite),
 			}
 		},
 	},

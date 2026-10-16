@@ -1,6 +1,7 @@
 {{ define "content" }}
   <p>Hello {{ .name }},</p>
-  <p>Your library fine payment has been received. Thank you!</p>
+  <p>Your library payment has been received. Thank you!</p>
+  {{ if .description }}<p><strong>For:</strong> {{ .description }}</p>{{ end }}
   <p><strong>Amount Paid:</strong> {{ .amount }}</p>
   <p>
     <a class="button" href="{{ .dashboard }}">View My Account</a>
