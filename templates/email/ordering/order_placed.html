@@ -9,6 +9,19 @@
   {{ if .delivery_address }}
   <p><strong>Delivery Address:</strong> {{ .delivery_address }}</p>
   {{ end }}
+  {{ if .delivery_fee_text }}
+  <div style="margin:20px 0;padding:16px;border:1px solid #e0e0e0;border-radius:8px;background:#f8f8f8;">
+    <p style="margin:0 0 8px;"><strong>Delivery details</strong></p>
+    <p style="margin:0 0 4px;"><strong>Delivery fee:</strong> {{ .delivery_fee_text }}</p>
+    {{ if .delivery_area }}<p style="margin:0 0 4px;"><strong>Area:</strong> {{ .delivery_area }}</p>{{ end }}
+    {{ if .delivery_priced_by }}<p style="margin:0 0 4px;"><strong>Priced by:</strong> {{ .delivery_priced_by }}</p>{{ end }}
+    {{ if .delivery_distance_text }}<p style="margin:0 0 4px;"><strong>Distance:</strong> {{ .delivery_distance_text }}</p>{{ end }}
+    {{ if .delivery_eta_text }}<p style="margin:0 0 4px;"><strong>Estimated delivery time:</strong> {{ .delivery_eta_text }}</p>{{ end }}
+    {{ if .delivery_confirm }}
+    <p class="muted" style="margin:12px 0 0;">This location is outside our listed delivery areas, so the fee is worked out from the distance. Please check the address and the fee above. If anything is wrong, reply to this email or contact us before your order is dispatched.</p>
+    {{ end }}
+  </div>
+  {{ end }}
   {{ if .pod_code }}
   <div style="margin:20px 0;padding:16px;border:1px solid #e0e0e0;border-radius:8px;background:#f8f8f8;text-align:center;">
     <p style="margin:0 0 8px;">Your delivery confirmation code:</p>

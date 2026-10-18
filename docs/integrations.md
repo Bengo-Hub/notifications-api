@@ -160,6 +160,8 @@ The Notifications Service is a centralized communications platform for all Codev
 **REST API Usage**:
 - `GET /api/v1/orders/{id}` - Fetch order details for template
 
+**Delivery details in the order placed email (2026-10-18)**: `ordering.order.created` carries flat `delivery_*` keys for delivered orders (`delivery_address`, `delivery_fee`, `delivery_free`, `delivery_area`, `delivery_method` zone or per_km, `delivery_distance_km`, `delivery_distance_type`, `delivery_eta_minutes`, `delivery_needs_confirmation`). `cmd/worker/order_delivery_details.go` turns them into template values and `templates/email/ordering/order_placed.html` prints a "Delivery details" block; when `delivery_needs_confirmation` is set (a distance-priced fee outside the named areas, tenant policy in logistics) it asks the customer to check the address and fee and to reply before dispatch. Pickup and dine-in orders show no block. WhatsApp is unchanged: the approved `ordering_order_received_v1_btn` template has fixed parameters, so a WhatsApp delivery block needs a new Meta template first.
+
 **Template Mapping**:
 - `order_created` → `order_confirmation_email` template
 - `order_status_changed` → `order_status_update` template

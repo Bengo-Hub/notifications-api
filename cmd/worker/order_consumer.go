@@ -229,7 +229,7 @@ var orderMappings = map[string]orderNotificationMapping{
 		// outlet checks a manual M-Pesa code, so it must not claim the order is confirmed.
 		EmailSubject: "We have received your order",
 		DataBuilder: func(data map[string]interface{}, orderAppURL string) map[string]interface{} {
-			return map[string]interface{}{
+			return mergeDetails(map[string]interface{}{
 				"name":                data["customer_name"],
 				"order_id":            data["order_id"],
 				"order_number":        data["order_number"],
@@ -247,7 +247,9 @@ var orderMappings = map[string]orderNotificationMapping{
 				"pod_code": data["pod_code"],
 				// Pickup orders: the code to show at the counter (never labelled as a rider code).
 				"collection_code": data["collection_code"],
-			}
+				// Delivery area, distance and fee; a distance-priced delivery also asks the customer
+				// to check them (the template only renders the block when these are present).
+			}, orderDeliveryDetails(data))
 		},
 		// "Order received" (the outlet has not accepted it yet under manual acceptance). The older
 		// placed templates say "has been confirmed", which is not true at this point; they remain
