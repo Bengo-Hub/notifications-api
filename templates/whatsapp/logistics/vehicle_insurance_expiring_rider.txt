@@ -1,0 +1,7 @@
+Hello {{ .name }},
+
+The insurance for your vehicle *{{ .license_plate }}* expires on *{{ .expires_on }}*.
+
+Renew it and record the new policy in the rider app before then.
+
+Thank you.

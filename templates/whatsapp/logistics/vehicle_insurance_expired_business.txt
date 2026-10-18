@@ -1,0 +1,5 @@
+Vehicle insurance update for {{ .business_name }}.
+
+The insurance for *{{ .license_plate }}* ({{ .rider_name }}) expired on *{{ .expires_on }}*. Status: *{{ .status }}*.
+
+Record the renewed policy to keep it on delivery jobs.

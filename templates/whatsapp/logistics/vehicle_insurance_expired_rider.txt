@@ -1,0 +1,5 @@
+Hello {{ .name }},
+
+The insurance for your vehicle *{{ .license_plate }}* expired on *{{ .expires_on }}*. Status: *{{ .status }}*.
+
+Record the renewed policy in the rider app to keep getting delivery jobs.

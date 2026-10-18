@@ -1,0 +1,27 @@
+{{ define "content" }}
+  {{ if eq .audience "rider" }}
+  <p>Hello {{ .name }},</p>
+  <p>The insurance for your vehicle <strong>{{ .license_plate }}</strong> expired on <strong>{{ .expires_on }}</strong>.</p>
+  {{ if .blocked }}
+  <p>The vehicle is now inactive and you will not get delivery jobs on it. Record the renewed policy in the rider app (Profile, Vehicle insurance) and it is reactivated at once.</p>
+  {{ else }}
+  <p>You can still take jobs, but please renew it and record the new policy in the rider app (Profile, Vehicle insurance).</p>
+  {{ end }}
+  {{ else }}
+  <p>Hello,</p>
+  <p>The insurance for <strong>{{ .license_plate }}</strong> ({{ .rider_name }}) expired on <strong>{{ .expires_on }}</strong>.</p>
+  {{ if .blocked }}
+  <p>The vehicle has been deactivated and its rider gets no delivery jobs until the renewed policy is recorded on the Vehicles page or in the rider app.</p>
+  {{ else }}
+  <p>Your settings keep the vehicle on jobs, but please record the renewed policy on the Vehicles page.</p>
+  {{ end }}
+  {{ end }}
+  <table style="width:100%; border-collapse:collapse; margin:16px 0;">
+    <tr><td style="padding:6px 0; color:#6b7280; width:45%;">Vehicle</td><td style="padding:6px 0; font-weight:600;">{{ .license_plate }}</td></tr>
+    {{ if .policy_no }}<tr><td style="padding:6px 0; color:#6b7280;">Policy</td><td style="padding:6px 0;">{{ .policy_no }}{{ if .insurer }} ({{ .insurer }}){{ end }}</td></tr>{{ end }}
+    <tr><td style="padding:6px 0; color:#6b7280;">Expired</td><td style="padding:6px 0; font-weight:600;">{{ .expires_on }}</td></tr>
+  </table>
+  {{ if .action_link }}
+  <p><a class="button" href="{{ .action_link }}" style="background:{{ or .brand_primary_color "#0F766E" }};color:#ffffff !important;text-decoration:none;padding:10px 16px;border-radius:6px;display:inline-block;">{{ if eq .audience "rider" }}Update insurance{{ else }}Open vehicles{{ end }}</a></p>
+  {{ end }}
+{{ end }}

@@ -141,6 +141,23 @@ func startFleetConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 			return
 		}
 
+		// Vehicle insurance alerts go to the rider and the business on email and WhatsApp.
+		if isVehicleInsuranceEvent(evt.Subject()) {
+			ti, err := tr.resolve(ctx, evt.TenantID)
+			if err != nil {
+				logg.Error("vehicle insurance: resolve tenant", zap.String("tenant_id", evt.TenantID), zap.Error(err))
+				_ = m.Nak()
+				return
+			}
+			if err := dispatchVehicleInsurance(ctx, nc, cfg, ti, evt.TenantID, evt.ID, evt.Subject(), evt.Payload); err != nil {
+				logg.Error("vehicle insurance: dispatch", zap.String("type", evt.Subject()), zap.Error(err))
+				_ = m.Nak()
+				return
+			}
+			_ = m.Ack()
+			return
+		}
+
 		mapping, ok := fleetMappings[evt.Subject()]
 		if !ok {
 			logg.Debug("fleet event: unhandled type, skipping", zap.String("type", evt.Subject()))

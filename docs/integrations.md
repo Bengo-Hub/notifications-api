@@ -186,6 +186,15 @@ The Notifications Service is a centralized communications platform for all Codev
 - `task_en_route` → `eta_update_push` template
 - `task_completed` → `delivery_complete_email` template
 
+**Vehicle insurance (events)**: `logistics.fleet.vehicle_insurance_expiring` and
+`logistics.fleet.vehicle_insurance_expired` (logistics-api's hourly insurance monitor; payload: plate,
+type, policy, insurer, `expires_on` YYYY-MM-DD, `days_left`, `blocked`, rider name, email and phone).
+`cmd/worker/vehicle_insurance.go` sends each through `sendToParties` to two parties: the rider on
+the vehicle (button to `<slug>/profile` on the rider app) and the business contact (button to
+`<slug>/vehicles` on the logistics app), by email (`logistics/vehicle_insurance_expiring|expired`,
+worded per `audience`) and WhatsApp (`logistics_insurance_{expiring,expired}_{rider,business}_v1_btn`).
+The WhatsApp templates need the template sync and Meta approval before they send.
+
 **Direct send (REST)**: `logistics/rider_account` (email). logistics-api posts it to
 `POST /api/v1/{tenant}/notifications/messages` with `Idempotency-Key rider-account:<member id>` when an
 admin onboards an internal rider. Data: `name`, `email`, `temp_password` (empty for a rider who

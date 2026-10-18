@@ -1,0 +1,19 @@
+{{ define "content" }}
+  {{ if eq .audience "rider" }}
+  <p>Hello {{ .name }},</p>
+  <p>The insurance for your vehicle <strong>{{ .license_plate }}</strong> expires on <strong>{{ .expires_on }}</strong>.</p>
+  <p>Renew it with your insurer, then record the new policy in the rider app (Profile, Vehicle insurance) before that day.{{ if .blocked }} Without a valid policy you will stop getting delivery jobs on this vehicle.{{ end }}</p>
+  {{ else }}
+  <p>Hello,</p>
+  <p>The insurance for <strong>{{ .license_plate }}</strong> ({{ .rider_name }}) expires on <strong>{{ .expires_on }}</strong>.</p>
+  <p>Record the renewed policy on the Vehicles page, or the rider can do it in the rider app.{{ if .blocked }} If it is not renewed, the vehicle is deactivated on expiry and its rider gets no delivery jobs until it is.{{ end }}</p>
+  {{ end }}
+  <table style="width:100%; border-collapse:collapse; margin:16px 0;">
+    <tr><td style="padding:6px 0; color:#6b7280; width:45%;">Vehicle</td><td style="padding:6px 0; font-weight:600;">{{ .license_plate }}</td></tr>
+    {{ if .policy_no }}<tr><td style="padding:6px 0; color:#6b7280;">Policy</td><td style="padding:6px 0;">{{ .policy_no }}{{ if .insurer }} ({{ .insurer }}){{ end }}</td></tr>{{ end }}
+    <tr><td style="padding:6px 0; color:#6b7280;">Expires</td><td style="padding:6px 0; font-weight:600;">{{ .expires_on }}</td></tr>
+  </table>
+  {{ if .action_link }}
+  <p><a class="button" href="{{ .action_link }}" style="background:{{ or .brand_primary_color "#0F766E" }};color:#ffffff !important;text-decoration:none;padding:10px 16px;border-radius:6px;display:inline-block;">{{ if eq .audience "rider" }}Update insurance{{ else }}Open vehicles{{ end }}</a></p>
+  {{ end }}
+{{ end }}

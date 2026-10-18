@@ -31,6 +31,19 @@ Meta fixes a button's domain when the template is approved; only the suffix vari
 | POS receipt | `https://r.codevertexafrica.com/{{1}}` | receipt short code |
 | Platform invoice (subscription, support) | `https://books.codevertexafrica.com/{{1}}` | `i/<public token>` (the invoice page), else the pay page path |
 | Maskani portal and console | `https://maskaniapp.codevertexafrica.com/{{1}}` | `<tenant-slug>/portal`, `<slug>/portal/purchase`, `<slug>/portal/walk-ins/<id>`, `<slug>/security/incidents/<id>`, `<slug>/works/<id>` |
+| Rider app (a rider's own screens) | `https://riderapp.codevertexafrica.com/{{1}}` | `<tenant-slug>/profile` |
+| Logistics app (the business's dispatch console) | `https://logistics.codevertexafrica.com/{{1}}` | `<tenant-slug>/vehicles` |
+
+## 2b. One notice, several parties
+
+A notice that reaches more than one person (the rider and the business, a customer and the
+business, every responder on an incident) is sent with `sendToParties` (`cmd/worker/notify_parties.go`):
+one `partyNotice` with a `noticeParty` per recipient, each with its own contacts, channels (email
+and WhatsApp by default; SMS and push only when the caller asks), data and WhatsApp template. The
+helper owns the shared rules: placeholder emails are skipped, a `_btn` template never goes without
+its link suffix, phone channels get the tenant's dial code, idempotency keys are
+`<base>-<channel>-<party>`, and when the caller passes the preferences Gate the tenant's channel
+choices and drafted templates apply (`fanOutTargets`). maskani and logistics vehicle insurance use it.
 
 Platform billing messages (`subscription_invoice_ready_v1_btn`, `subscription_payment_due_v1_btn`)
 are sent from the platform's number (`senderScope: platform`), so the tenant's own WhatsApp plan

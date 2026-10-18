@@ -684,9 +684,10 @@ func startMaskaniConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamC
 	)
 }
 
-// dispatchMaskani queues the email and WhatsApp messages for one event. Idempotency keys are per
-// event and channel: several payments or passes share one aggregate, so the aggregate id would drop
-// all but the first, while a redelivered event never sends twice.
+// dispatchMaskani queues the email and WhatsApp messages for one event through sendToParties.
+// Idempotency keys are per event, channel and responder: several payments or passes share one
+// aggregate, so the aggregate id would drop all but the first, while a redelivered event never
+// sends twice.
 func dispatchMaskani(ctx context.Context, nc *nats.Conn, cfg *config.Config, ti *tenantInfo, tenantID string, evt eventslib.Event, mp maskaniMapping) error {
 	p := evt.Payload
 	data := mp.Data(p, ti)
@@ -703,90 +704,63 @@ func dispatchMaskani(ctx context.Context, nc *nats.Conn, cfg *config.Config, ti 
 	if mp.Staff {
 		target, email, phone = messaging.TargetStaff, ti.ContactEmail, ti.ContactPhone
 	}
-	if mp.Responders {
-		if rs := maskaniResponders(p); len(rs) > 0 {
-			for _, r := range rs {
-				d := make(map[string]any, len(data)+1)
-				for k, v := range data {
-					d[k] = v
-				}
-				d["name"] = r.Name
-				if err := deliverMaskani(ctx, nc, cfg, ti, tenantID, evt, mp, target, d, suffix, r.Email, r.Phone, "-"+r.UserID); err != nil {
-					return err
-				}
-			}
-			return nil
-		}
-	}
-	return deliverMaskani(ctx, nc, cfg, ti, tenantID, evt, mp, target, data, suffix, email, phone, "")
-}
-
-// deliverMaskani queues one recipient's email and WhatsApp. keySuffix tells recipients of the same
-// event apart in the idempotency key.
-func deliverMaskani(ctx context.Context, nc *nats.Conn, cfg *config.Config, ti *tenantInfo, tenantID string, evt eventslib.Event,
-	mp maskaniMapping, target string, data map[string]any, suffix, email, phone, keySuffix string) error {
-	p := evt.Payload
 	scope := messaging.SenderScopeTenant
 	if mp.Platform {
 		scope = messaging.SenderScopePlatform
 	}
-	send := func(channel, to string, meta map[string]any) error {
-		meta["service_id"] = "maskani"
-		tpl := mp.TemplateID
-		if channel == "whatsapp" && mp.WATemplateID != "" {
-			tpl = mp.WATemplateID
-		}
-		_, err := messaging.Publish(ctx, nc, cfg.Events, messaging.Message{
-			TenantID:       tenantID,
-			Channel:        channel,
-			TemplateID:     tpl,
-			SenderScope:    scope,
-			Target:         target,
-			To:             []string{to},
-			Data:           data,
-			Metadata:       meta,
-			RequestID:      uuid.New().String(),
-			IdempotencyKey: fmt.Sprintf("maskani-%s-%s%s", evt.ID, channel, keySuffix),
-			QueuedAt:       time.Now(),
-		})
-		return err
-	}
 
-	if email != "" && strings.Contains(email, "@") && !strings.HasSuffix(strings.ToLower(email), ".local") {
-		if err := send("email", email, map[string]any{"subject": mp.Subject(p)}); err != nil {
-			return err
+	// A staff alert goes to each responder maskani-api picked; otherwise to the one recipient.
+	parties := []noticeParty{maskaniParty(mp, target, "", email, phone, nil, data, suffix)}
+	if mp.Responders {
+		if rs := maskaniResponders(p); len(rs) > 0 {
+			parties = parties[:0]
+			for _, r := range rs {
+				parties = append(parties, maskaniParty(mp, target, r.UserID, r.Email, r.Phone, map[string]any{"name": r.Name}, data, suffix))
+			}
 		}
+	}
+	return sendToParties(ctx, nc, cfg, partyNotice{
+		ServiceID:    "maskani",
+		TenantID:     tenantID,
+		TemplateID:   mp.TemplateID,
+		WATemplateID: mp.WATemplateID,
+		Subject:      mp.Subject(p),
+		Scope:        scope,
+		Data:         data,
+		Country:      ti.Country,
+		IdemBase:     fmt.Sprintf("maskani-%s", evt.ID),
+		Parties:      parties,
+	})
+}
+
+// maskaniParty is one recipient with its WhatsApp template, worked out from the data that
+// recipient gets (a responder's own name included).
+func maskaniParty(mp maskaniMapping, target, key, email, phone string, own map[string]any, data map[string]any, suffix string) noticeParty {
+	d := make(map[string]any, len(data)+len(own))
+	for k, v := range data {
+		d[k] = v
+	}
+	for k, v := range own {
+		d[k] = v
 	}
 	waName, waParams := mp.WATemplate, []string(nil)
 	if mp.WAVariant != nil {
-		waName, waParams = mp.WAVariant(data)
+		waName, waParams = mp.WAVariant(d)
 	} else if mp.WAParams != nil {
-		waParams = mp.WAParams(data)
+		waParams = mp.WAParams(d)
 	}
-	if phone != "" && waName != "" {
-		meta := map[string]any{
-			"template_name":     waName,
-			"template_language": "en_US",
-			"template_params":   waParams,
-		}
-		if strings.HasSuffix(waName, "_btn") {
-			if suffix == "" {
-				return nil // a button template cannot go without its link
+	party := noticeParty{Key: key, Target: target, Email: email, Phone: phone, Data: own}
+	if waName != "" {
+		button := suffix
+		if !strings.HasSuffix(waName, "_btn") {
+			button = ""
+			if mp.WAButton != nil {
+				button = mp.WAButton(d)
 			}
-			meta["template_button_param"] = suffix
-		} else if mp.WAButton != nil {
-			meta["template_button_param"] = mp.WAButton(data)
 		}
-		if code := dialCodeForCountry(ti.Country); code != "" {
-			meta["default_dial_code"] = code
-		} else {
-			meta["default_dial_code"] = "254"
-		}
-		if err := send("whatsapp", phone, meta); err != nil {
-			return err
-		}
+		party.WhatsApp = &partyWhatsApp{Name: waName, Params: waParams, Button: button}
 	}
-	return nil
+	return party
 }
 
 // arrearsData is the template data shared by the collections ladder messages.

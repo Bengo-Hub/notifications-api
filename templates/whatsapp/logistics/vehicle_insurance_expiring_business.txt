@@ -1,0 +1,5 @@
+Vehicle insurance reminder for {{ .business_name }}.
+
+The insurance for *{{ .license_plate }}* ({{ .rider_name }}) expires on *{{ .expires_on }}*.
+
+Record the renewed policy before then.
