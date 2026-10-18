@@ -14,6 +14,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 
+	"github.com/Bengo-Hub/httpware/tenantexport"
 	authclient "github.com/Bengo-Hub/shared-auth-client"
 	eventslib "github.com/Bengo-Hub/shared-events"
 
@@ -66,6 +67,15 @@ type App struct {
 	treasuryClient         *serviceclient.Client
 	crossServiceSubscriber *eventsmod.Subscriber
 	whatsappInboxHub       *whatsappinbox.Hub
+}
+
+// tenantExportHandler serves auth-api's SSO tenant backups (httpware/tenantexport). Nil without an
+// INTERNAL_SERVICE_KEY, so the export is never reachable unauthenticated.
+func tenantExportHandler(db *sql.DB, internalKey string) http.Handler {
+	if internalKey == "" {
+		return nil
+	}
+	return tenantexport.Handler(db, tenantexport.Options{Service: "notifications", InternalKey: internalKey})
 }
 
 func New(ctx context.Context) (*App, error) {
@@ -124,7 +134,8 @@ func New(ctx context.Context) (*App, error) {
 	// Schema migrations run once per rollout in cmd/migrate (advisory-locked, direct DSN), not
 	// here: running them from every API pod on start raced the schema diff across replicas.
 
-	// Dedicated sql.DB for the backup module (raw tenant-row dump + advisory lock).
+	// Dedicated small sql.DB for tenant-row reads: the backup module and the tenant export auth-api
+	// collects for SSO tenant backups.
 	backupSQLDB, err := sql.Open("pgx", cfg.Postgres.URL)
 	if err != nil {
 		return nil, fmt.Errorf("backup sql.DB init: %w", err)
@@ -379,7 +390,8 @@ func New(ctx context.Context) (*App, error) {
 	}
 	whatsappEmbeddedSignupHandler := handlers.NewWhatsAppEmbeddedSignupHandler(entClient, log, providerManager)
 	whatsappTemplatesHandler := handlers.NewWhatsAppTemplates(providerManager, log)
-	httpRouter := router.New(log, healthHandler, notificationHandler, templateHandler, platformProviders, tenantProviders, analyticsHandler, billingHandler, platformBilling, settingsHandler, rbacHandler, authMeHandler, deviceTokenHandler, cfg.Security.APIKey, authMiddleware, authenticator, cfg.HTTP.AllowedOrigins, tenantSyncer, rateLimiter, serviceConfigHandler, whatsappSubsHandler, backupHandler, encryptionKeyHandler, backupDestHandler, notificationPrefsHandler, developerKeyAuth, swaggerHandler, webhookHandler, whatsappEmbeddedSignupHandler, whatsappTemplatesHandler, whatsappInboxHandler, announcementHandler, broadcastHandler)
+	httpRouter := router.New(log, healthHandler, notificationHandler, templateHandler, platformProviders, tenantProviders, analyticsHandler, billingHandler, platformBilling, settingsHandler, rbacHandler, authMeHandler, deviceTokenHandler, cfg.Security.APIKey, authMiddleware, authenticator, cfg.HTTP.AllowedOrigins, tenantSyncer, rateLimiter, serviceConfigHandler, whatsappSubsHandler, backupHandler, encryptionKeyHandler, backupDestHandler, notificationPrefsHandler, developerKeyAuth, swaggerHandler, webhookHandler, whatsappEmbeddedSignupHandler, whatsappTemplatesHandler, whatsappInboxHandler, announcementHandler, broadcastHandler,
+		tenantExportHandler(backupSQLDB, cfg.Security.APIKey))
 
 	httpServer := &http.Server{
 		Addr:              fmt.Sprintf("%s:%d", cfg.HTTP.Host, cfg.HTTP.Port),

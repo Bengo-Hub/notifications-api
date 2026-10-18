@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/subtle"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -22,33 +21,17 @@ import (
 	"github.com/bengobox/notifications-api/internal/modules/tenant"
 )
 
-// bypassForWebsocket skips a middleware for a WebSocket upgrade request. Compress/Logging/Timeout
-// (chi/httpware) all wrap http.ResponseWriter in a way that breaks http.Hijacker, which a raw
-// WebSocket upgrade needs — see .claude/memory/reference_websocket_hijack_middleware_bugs.md and
-// pos-api/internal/http/router/router.go, which this is copied from verbatim. This router doesn't
-// use middleware.Compress, so only Logging and Timeout need the wrap.
-func bypassForWebsocket(mw func(http.Handler) http.Handler) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		wrapped := mw(next)
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if strings.EqualFold(r.Header.Get("Upgrade"), "websocket") {
-				next.ServeHTTP(w, r)
-				return
-			}
-			wrapped.ServeHTTP(w, r)
-		})
-	}
-}
-
-func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handlers.NotificationHandler, templates *handlers.TemplateHandler, platformProviders *handlers.PlatformProviders, tenantProviders *handlers.TenantProviders, analytics *handlers.AnalyticsHandler, billing *handlers.BillingHandler, platformBilling *handlers.PlatformBilling, settings *handlers.SettingsHandler, rbacHandler *handlers.RBACHandler, authMeHandler *handlers.AuthMeHandler, deviceTokens *handlers.DeviceTokenHandler, apiKey string, authMiddleware *authclient.AuthMiddleware, authenticator *identityhandler.Authenticator, allowedOrigins []string, tenantSyncer *tenant.Syncer, rateLimiter *ratelimit.Quota, serviceConfig *handlers.ServiceConfigHandler, whatsappSubs *handlers.WhatsAppSubscriptionHandler, backups *handlers.BackupHandler, encryptionKey *handlers.EncryptionKeyHandler, backupDest *handlers.BackupDestinationHandler, notificationPrefs *handlers.PreferencesHandler, developerKeyAuth *devauth.DeveloperKeyAuth, swaggerHandler *handlers.SwaggerHandler, webhooks *handlers.WebhookHandler, whatsappEmbeddedSignup *handlers.WhatsAppEmbeddedSignupHandler, whatsappTemplates *handlers.WhatsAppTemplates, whatsappInbox *handlers.WhatsAppInboxHandler, announcementsH *handlers.AnnouncementHandler, broadcastsH *handlers.BroadcastHandler) http.Handler {
+func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handlers.NotificationHandler, templates *handlers.TemplateHandler, platformProviders *handlers.PlatformProviders, tenantProviders *handlers.TenantProviders, analytics *handlers.AnalyticsHandler, billing *handlers.BillingHandler, platformBilling *handlers.PlatformBilling, settings *handlers.SettingsHandler, rbacHandler *handlers.RBACHandler, authMeHandler *handlers.AuthMeHandler, deviceTokens *handlers.DeviceTokenHandler, apiKey string, authMiddleware *authclient.AuthMiddleware, authenticator *identityhandler.Authenticator, allowedOrigins []string, tenantSyncer *tenant.Syncer, rateLimiter *ratelimit.Quota, serviceConfig *handlers.ServiceConfigHandler, whatsappSubs *handlers.WhatsAppSubscriptionHandler, backups *handlers.BackupHandler, encryptionKey *handlers.EncryptionKeyHandler, backupDest *handlers.BackupDestinationHandler, notificationPrefs *handlers.PreferencesHandler, developerKeyAuth *devauth.DeveloperKeyAuth, swaggerHandler *handlers.SwaggerHandler, webhooks *handlers.WebhookHandler, whatsappEmbeddedSignup *handlers.WhatsAppEmbeddedSignupHandler, whatsappTemplates *handlers.WhatsAppTemplates, whatsappInbox *handlers.WhatsAppInboxHandler, announcementsH *handlers.AnnouncementHandler, broadcastsH *handlers.BroadcastHandler, tenantExport http.Handler) http.Handler {
 	r := chi.NewRouter()
 
 	// Client IP from the edge's trusted header only (chi's RealIP trusts any forwarded header).
 	r.Use(ratelimit.TrustedRealIP)
 	r.Use(httpware.RequestID)
-	r.Use(bypassForWebsocket(httpware.Logging(log)))
+	// Logging and Timeout wrap the ResponseWriter in a way that breaks a WebSocket upgrade, and
+	// Timeout would cut SSE and the tenant export stream: the shared helper skips them for streams.
+	r.Use(httpware.BypassForStreaming(httpware.Logging(log)))
 	r.Use(httpware.Recover(log))
-	r.Use(bypassForWebsocket(middleware.Timeout(30 * time.Second)))
+	r.Use(httpware.BypassForStreaming(middleware.Timeout(30 * time.Second)))
 	r.Use(cors.Handler(cors.Options{
 		AllowOriginFunc:  originAllower(allowedOrigins),
 		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
@@ -152,6 +135,11 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 				})
 				s2s.Post("/s2s/broadcasts", broadcastsH.S2SCreate)
 			})
+		}
+		// Tenant export for auth-api's SSO tenant backups; the handler checks INTERNAL_SERVICE_KEY
+		// itself (httpware/tenantexport, Options.InternalKey).
+		if tenantExport != nil {
+			api.Get("/s2s/tenant-export", tenantExport.ServeHTTP)
 		}
 
 		// WhatsApp plans — public, no auth needed (pricing discovery)
