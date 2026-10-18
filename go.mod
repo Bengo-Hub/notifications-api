@@ -9,7 +9,7 @@ require (
 	ariga.io/atlas v1.1.0
 	entgo.io/ent v0.14.5
 	github.com/Bengo-Hub/cache v0.5.2
-	github.com/Bengo-Hub/httpware v0.14.2
+	github.com/Bengo-Hub/httpware v0.14.3
 	github.com/Bengo-Hub/pagination v0.3.0
 	github.com/Bengo-Hub/shared-auth-client v0.4.1
 	github.com/Bengo-Hub/shared-events v0.7.0
