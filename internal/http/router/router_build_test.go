@@ -26,8 +26,8 @@ func TestRouterBuilds(t *testing.T) {
 		new(handlers.PlatformProviders), new(handlers.TenantProviders), new(handlers.AnalyticsHandler), new(handlers.BillingHandler),
 		new(handlers.PlatformBilling), new(handlers.SettingsHandler), new(handlers.RBACHandler), new(handlers.AuthMeHandler),
 		new(handlers.DeviceTokenHandler), "test-key", nil, nil, nil, new(tenant.Syncer), nil,
-		new(handlers.ServiceConfigHandler), new(handlers.WhatsAppSubscriptionHandler), new(handlers.BackupHandler),
-		new(handlers.EncryptionKeyHandler), new(handlers.BackupDestinationHandler), new(handlers.PreferencesHandler),
+		new(handlers.ServiceConfigHandler), new(handlers.WhatsAppSubscriptionHandler),
+		new(handlers.EncryptionKeyHandler), new(handlers.PreferencesHandler),
 		new(devauth.DeveloperKeyAuth), new(handlers.SwaggerHandler), new(handlers.WebhookHandler),
 		new(handlers.WhatsAppEmbeddedSignupHandler), new(handlers.WhatsAppTemplates), new(handlers.WhatsAppInboxHandler),
 		new(handlers.AnnouncementHandler), new(handlers.BroadcastHandler), nil)

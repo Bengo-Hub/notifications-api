@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	httpware "github.com/Bengo-Hub/httpware"
+	"github.com/google/uuid"
 )
 
 // resolveActingTenantID resolves which tenant a request should operate on, supporting the
@@ -37,4 +38,16 @@ func resolveActingTenantID(r *http.Request) string {
 		}
 	}
 	return httpware.GetTenantID(ctx)
+}
+
+// tenantUUID resolves the requesting tenant from context (TenantV2 middleware), honoring the
+// platform-admin tenant-switcher (X-Tenant-ID header, then legacy ?tenantId=) via
+// resolveActingTenantID.
+func tenantUUID(r *http.Request) (uuid.UUID, bool) {
+	if s := resolveActingTenantID(r); s != "" {
+		if id, err := uuid.Parse(s); err == nil && id != uuid.Nil {
+			return id, true
+		}
+	}
+	return uuid.Nil, false
 }

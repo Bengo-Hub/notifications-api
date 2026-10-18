@@ -32,7 +32,6 @@ import (
 	devauth "github.com/bengobox/notifications-api/internal/http/middleware"
 	router "github.com/bengobox/notifications-api/internal/http/router"
 	"github.com/bengobox/notifications-api/internal/modules/announcements"
-	backupmod "github.com/bengobox/notifications-api/internal/modules/backup"
 	"github.com/bengobox/notifications-api/internal/modules/billing"
 	"github.com/bengobox/notifications-api/internal/modules/broadcasts"
 	eventsmod "github.com/bengobox/notifications-api/internal/modules/events"
@@ -134,14 +133,14 @@ func New(ctx context.Context) (*App, error) {
 	// Schema migrations run once per rollout in cmd/migrate (advisory-locked, direct DSN), not
 	// here: running them from every API pod on start raced the schema diff across replicas.
 
-	// Dedicated small sql.DB for tenant-row reads: the backup module and the tenant export auth-api
-	// collects for SSO tenant backups.
-	backupSQLDB, err := sql.Open("pgx", cfg.Postgres.URL)
+	// Dedicated small sql.DB for the tenant export auth-api collects for SSO tenant backups (tenant
+	// backups are made from the SSO client area; the platform pg_dumpall covers disaster recovery).
+	exportSQLDB, err := sql.Open("pgx", cfg.Postgres.URL)
 	if err != nil {
-		return nil, fmt.Errorf("backup sql.DB init: %w", err)
+		return nil, fmt.Errorf("export sql.DB init: %w", err)
 	}
-	backupSQLDB.SetMaxOpenConns(2)
-	backupSQLDB.SetMaxIdleConns(1)
+	exportSQLDB.SetMaxOpenConns(2)
+	exportSQLDB.SetMaxIdleConns(1)
 
 	// Initialize Treasury client
 	treasuryCfg := serviceclient.DefaultConfig(cfg.Services.TreasuryAPI, "treasury-api", log.Named("treasury.client"))
@@ -354,22 +353,6 @@ func New(ctx context.Context) (*App, error) {
 	prefGate := preferences.NewGate(entClient, redisClient, log)
 	notificationPrefsHandler := handlers.NewPreferencesHandler(log, entClient, prefGate, templateLoader)
 
-	// Pluggable backup destination (OneDrive/GDrive/S3/WebDAV/SFTP/SMB) — encrypted
-	// at rest with a SECRET_KEY-derived AES-256 key. The handler owns the destination
-	// Store; its Uploader is attached to the backup service so every PVC backup is
-	// additionally mirrored best-effort.
-	backupDestHandler := handlers.NewBackupDestinationHandler(entClient, log)
-
-	// Tenant-scoped backups + daily 02:00 auto-backup scheduler + retention churn.
-	backupSvc := backupmod.NewService(backupSQLDB, entClient, cfg.Backup.Dir, log).
-		WithMirrorer(backupDestHandler.Uploader())
-	backupHandler := handlers.NewBackupHandler(log, backupSvc, cfg.Backup.RetentionDays)
-	backupmod.NewScheduler(backupSvc, backupmod.SchedulerConfig{
-		Enabled:       cfg.Backup.ScheduleEnabled,
-		Hour:          cfg.Backup.ScheduleHour,
-		RetentionDays: cfg.Backup.RetentionDays,
-	}, log).WithRedis(redisClient).Start(ctx)
-
 	developerKeyAuth := devauth.NewDeveloperKeyAuth(cfg.Services.AuthAPI, log)
 	notificationHandler.SetSandboxStore(sandboxmod.New(redisClient))
 
@@ -390,8 +373,8 @@ func New(ctx context.Context) (*App, error) {
 	}
 	whatsappEmbeddedSignupHandler := handlers.NewWhatsAppEmbeddedSignupHandler(entClient, log, providerManager)
 	whatsappTemplatesHandler := handlers.NewWhatsAppTemplates(providerManager, log)
-	httpRouter := router.New(log, healthHandler, notificationHandler, templateHandler, platformProviders, tenantProviders, analyticsHandler, billingHandler, platformBilling, settingsHandler, rbacHandler, authMeHandler, deviceTokenHandler, cfg.Security.APIKey, authMiddleware, authenticator, cfg.HTTP.AllowedOrigins, tenantSyncer, rateLimiter, serviceConfigHandler, whatsappSubsHandler, backupHandler, encryptionKeyHandler, backupDestHandler, notificationPrefsHandler, developerKeyAuth, swaggerHandler, webhookHandler, whatsappEmbeddedSignupHandler, whatsappTemplatesHandler, whatsappInboxHandler, announcementHandler, broadcastHandler,
-		tenantExportHandler(backupSQLDB, cfg.Security.APIKey))
+	httpRouter := router.New(log, healthHandler, notificationHandler, templateHandler, platformProviders, tenantProviders, analyticsHandler, billingHandler, platformBilling, settingsHandler, rbacHandler, authMeHandler, deviceTokenHandler, cfg.Security.APIKey, authMiddleware, authenticator, cfg.HTTP.AllowedOrigins, tenantSyncer, rateLimiter, serviceConfigHandler, whatsappSubsHandler, encryptionKeyHandler, notificationPrefsHandler, developerKeyAuth, swaggerHandler, webhookHandler, whatsappEmbeddedSignupHandler, whatsappTemplatesHandler, whatsappInboxHandler, announcementHandler, broadcastHandler,
+		tenantExportHandler(exportSQLDB, cfg.Security.APIKey))
 
 	httpServer := &http.Server{
 		Addr:              fmt.Sprintf("%s:%d", cfg.HTTP.Host, cfg.HTTP.Port),
