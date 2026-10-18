@@ -186,6 +186,16 @@ The Notifications Service is a centralized communications platform for all Codev
 - `task_en_route` → `eta_update_push` template
 - `task_completed` → `delivery_complete_email` template
 
+**Direct send (REST)**: `logistics/rider_account` (email). logistics-api posts it to
+`POST /api/v1/{tenant}/notifications/messages` with `Idempotency-Key rider-account:<member id>` when an
+admin onboards an internal rider. Data: `name`, `email`, `temp_password` (empty for a rider who
+already had a platform account, which hides the password row), `login_url` (rider app). It is sent
+directly, not through the logistics outbox, so the temporary password never lands in an event table;
+it rides only in this service's NATS queue until retention drops it, the same as
+`digitika/portal_account`. Email only, like the portal-account precedent: a password in a WhatsApp
+template would also need Meta approval and is not sent there. Rider lifecycle mails for freelance
+riders still come from `logistics.fleet.*` events (`cmd/worker/fleet_consumer.go`).
+
 ### Projects Service
 
 **Integration Type**: Events (NATS) + REST API

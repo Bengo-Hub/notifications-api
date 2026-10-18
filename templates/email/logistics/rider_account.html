@@ -1,0 +1,23 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <p>You have been added as a rider. Your rider account is ready and you can start taking deliveries as soon as you sign in to the rider app.</p>
+  {{ if .temp_password }}
+  <table style="width:100%; border-collapse:collapse; margin:16px 0;">
+    <tr>
+      <td style="padding:6px 0; color:#6b7280; width:45%;">Email</td>
+      <td style="padding:6px 0; font-weight:600;">{{ .email }}</td>
+    </tr>
+    <tr>
+      <td style="padding:6px 0; color:#6b7280;">Temporary password</td>
+      <td style="padding:6px 0; font-weight:600; font-family:monospace;">{{ .temp_password }}</td>
+    </tr>
+  </table>
+  <p style="color:#6b7280;">You will be asked to choose your own password the first time you sign in. The temporary one stops working after that. Do not share it with anyone.</p>
+  {{ else }}
+  <p>Sign in with the email <strong>{{ .email }}</strong> and the password you already use for your Codevertex account. If you have forgotten it, use "Forgot password" on the sign-in page.</p>
+  {{ end }}
+  <p>
+    <a class="button" href="{{ .login_url }}" style="background:{{ or .brand_primary_color "#0F766E" }};color:#ffffff !important;text-decoration:none;padding:10px 16px;border-radius:6px;display:inline-block;">Open the rider app</a>
+  </p>
+  <p class="muted">If you did not expect this email, contact your manager.</p>
+{{ end }}

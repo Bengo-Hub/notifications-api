@@ -143,6 +143,7 @@ var Registry = []Type{
 
 	// ── Logistics / riders ───────────────────────────────────────────────────
 	{Key: "logistics/rider_invite", Label: "Rider invite (credentials)", Group: "Logistics", Class: ClassEssential},
+	{Key: "logistics/rider_account", Label: "Internal rider account (sign-in details)", Group: "Logistics", Class: ClassEssential},
 	{Key: "logistics/rider_onboarding_approved", Label: "Rider onboarding approved", Group: "Logistics", Class: ClassEssential},
 	{Key: "logistics/delivery_assigned", Label: "Delivery assigned (rider)", Group: "Logistics", Class: ClassEssential},
 	{Key: "logistics/delivery_failed", Label: "Delivery failed alert", Group: "Logistics", Class: ClassEssential},
