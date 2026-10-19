@@ -13,7 +13,7 @@ COPY . .
 RUN GOTOOLCHAIN=auto CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /bin/notifications-api ./cmd/api && \
     GOTOOLCHAIN=auto CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /bin/notifications-worker ./cmd/worker && \
     GOTOOLCHAIN=auto CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /bin/notifications-migrate ./cmd/migrate && \
-    GOTOOLCHAIN=auto CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /bin/notifications-seed ./cmd/seed
+    GOTOOLCHAIN=auto CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /bin/notifications-seed ./cmd/seed && \n    GOTOOLCHAIN=auto CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /bin/notifications-export-wallets ./cmd/export-wallets
 
 FROM alpine:3.20
 RUN apk add --no-cache ca-certificates tzdata postgresql-client && addgroup -S app && adduser -S app -G app
@@ -22,6 +22,7 @@ WORKDIR /app
 COPY --from=builder /bin/notifications-api /usr/local/bin/notifications-api
 COPY --from=builder /bin/notifications-worker /usr/local/bin/notifications-worker
 COPY --from=builder /bin/notifications-migrate /usr/local/bin/notifications-migrate
+COPY --from=builder /bin/notifications-export-wallets /usr/local/bin/notifications-export-wallets
 COPY --from=builder /bin/notifications-seed /usr/local/bin/notifications-seed
 # Entrypoint script: wait for DB, run migrations, seed, then start server
 COPY scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
