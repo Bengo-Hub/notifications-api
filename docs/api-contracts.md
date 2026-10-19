@@ -8,7 +8,11 @@
   - **Rate Limited**: Per-channel daily limits based on subscription plan:
     - `email_notifications_per_day`: Starter=50, Growth=500, Professional=5,000
     - `webhook_calls_per_day`: Starter=100, Growth=1,000, Professional=10,000
-  - **Credit-based** (no rate limit): SMS is gated by credit balance, not a daily quota — tenants can send as long as they have sufficient credit. WhatsApp is gated differently: an active monthly subscription plan with a bundled message quota (`WhatsAppSubscriptionService`), not a per-message credit balance — every tenant needs one except the platform tenant itself, which sends unmetered against its own real Meta WhatsApp Business Account.
+  - **Billed per message** (no rate limit): SMS and WhatsApp are charged by subscriptions-api. A tenant needs an active
+    subscription with the channel activated (by buying a bundle or, for WhatsApp, a monthly plan). Each message is paid from
+    the plan allowance, then bundles, then KES 1 overage billed on the next invoice, and sending pauses when unpaid overage
+    reaches the platform cap. The API answers `402` with an `error` of `no_subscription`, `service_not_activated`,
+    `insufficient_credits` or `overage_cap`. The platform tenant, the demo tenant and exempt tenants are never charged.
   - Each recipient counts as one unit. Returns `429` with `X-RateLimit-*` headers when exceeded.
   - Sample payloads:
 

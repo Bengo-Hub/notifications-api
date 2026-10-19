@@ -24,12 +24,12 @@
 1. **Tenancy & Org Management (Priority 1)**
    - Multi-organisation and multi-branch support with isolated data domains, branding overrides, and onboarding APIs for external apps to create/link tenants.
    - Per-organisation preferences, quota policies, audit trails, and billing metrics.
-3. **Credit-Based SMS/WhatsApp Billing (Priority 1)**
-   - Tracks credit balances per tenant for SMS and WhatsApp channels.
-   - Integration with **treasury-api** for credit purchases via shared pay links.
-   - Pre-send validation: prevents sending if balance is insufficient.
-   - Platform Admin: Set SMS/WhatsApp credit rates and overrides.
-   - Tenant Admin: View balance and top-up via Treasury.
+3. **SMS/WhatsApp Billing (Priority 1)**
+   - Owned by **subscriptions-api** (balances, bundles, WhatsApp monthly plans, KES 1 overage billed on the next invoice).
+   - This service charges each send through `internal/modules/credits`: consume before sending, refund when the provider
+     rejects, early 402 from the HTTP API. Exempt tenants and platform scope sends are never charged.
+   - Tenant Admin: balances, plans and bundles are shown in notifications-ui from subscriptions-api.
+   - Platform Admin: prices and bundle sizes are set in subscriptions-api, not here.
 4. **Template & Content Management (Priority 1)**
    - Versioned templates for email/SMS/push, MJML or Go templating with localization support.
    - Media asset library with CDN links, preview sandbox, approval workflow.
@@ -129,6 +129,14 @@
     - [x] Enqueue handler: WhatsApp uses subscription + quota check (HTTP 402); SMS uses credit balance
     - [x] New routes: `GET /api/v1/billing/whatsapp/plans` (public), subscription CRUD (auth required)
     - [x] notifications-ui: WhatsApp subscription page with plan comparison cards + TreasuryPaymentModal
+
+12. **Sprint 11 – Billing moved to subscriptions-api** ✅ 2026-10-19
+    - [x] Worker and HTTP API charge SMS and WhatsApp through subscriptions-api (consume, refund, check)
+    - [x] Local wallet, WhatsApp plan and subscription services, billing endpoints, top-up and add-on consumers removed
+    - [x] `notifications-export-wallets` moves old SMS balances and active WhatsApp plans (dry run by default)
+    - [x] notifications-ui billing screens read subscriptions-api; platform margin, SMS rate and WhatsApp subscription pages removed
+    - [ ] After the balances are verified in subscriptions-api: drop `tenant_credits`, `credit_transactions`, `platform_billings`,
+          `whats_app_plans`, `tenant_whats_app_subscriptions` and their Ent schemas in a separate migration
 
 ## Backlog Ideas
 - AI-assisted template writing & subject line scoring, in-app messaging channel, voice/IVR support, sentiment analysis on responses, predictive send-time optimization.

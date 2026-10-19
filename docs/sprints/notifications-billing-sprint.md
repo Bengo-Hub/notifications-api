@@ -1,5 +1,11 @@
 # Sprint Doc: Credit-Based Notifications (SMS/WhatsApp)
 
+> **Replaced on 2026-10-19.** SMS and WhatsApp billing no longer live in this service. subscriptions-api owns
+> the balances, bundles, WhatsApp monthly plans and per-message overage, and this service asks it before every send
+> (`internal/modules/credits`). The wallet and WhatsApp plan tables remain only until the balances have been moved with
+> `notifications-export-wallets` and checked. The current design is in subscriptions-api
+> `docs/messaging-credits.md`. The rest of this document is the history of the earlier design.
+
 > **Superseded for WhatsApp (2026-08-27):** this sprint's original plan billed WhatsApp through the
 > same per-message `TenantCredit` wallet as SMS. That was actually built (`DeductWhatsAppCredits`,
 > a `WHATSAPP` `TenantCredit`/`CreditTransaction` type) but never became the real product — a
