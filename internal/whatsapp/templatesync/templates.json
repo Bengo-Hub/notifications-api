@@ -226,52 +226,12 @@
     "example": ["Peter", "Home 20Mbps", "12 Sep", "2", "400200", "0712345678"]
   },
   {
-    "name": "ispbilling_hotspot_welcome_v2",
+    "name": "ispbilling_subscription_activated_v1",
     "category": "UTILITY",
     "language": "en_US",
-    "source": "whatsapp/ispbilling/hotspot_welcome.txt",
-    "body": "Welcome {{1}}! Your hotspot account is now ready to use. Login: {{2}}, Package: {{3}}, valid for {{4}} day(s). Check your account portal for your password. Enjoy your connection!",
-    "example": ["Grace", "grace254", "Daily 5GB", "1"]
-  },
-  {
-    "name": "ispbilling_pppoe_welcome_v2",
-    "category": "UTILITY",
-    "language": "en_US",
-    "source": "whatsapp/ispbilling/pppoe_welcome.txt",
-    "body": "Welcome {{1}}! Your PPPoE connection is now active and ready to use. Username: {{2}}, Package: {{3}} at {{4}} speed. Check your account portal for your password. For help, contact support: {{5}}. Thank you for choosing us!",
-    "example": ["John", "john.k", "Business 50", "50/20 Mbps", "0700111222"]
-  },
-  {
-    "name": "ispbilling_subscription_credentials_v2",
-    "category": "UTILITY",
-    "language": "en_US",
-    "source": "whatsapp/ispbilling/subscription_credentials.txt",
-    "body": "Hi {{1}}, your {{2}} ({{3}}) package is now active and ready to use. Username: {{4}}. Check your account portal for your password. This subscription is valid until {{5}}. Thank you for choosing us!",
-    "example": ["Mary", "Family 30Mbps", "PPPoE", "mary.w", "30 Sep 2026"]
-  },
-  {
-    "name": "ispbilling_subscription_credentials_v3",
-    "category": "UTILITY",
-    "language": "en_US",
-    "source": "whatsapp/ispbilling/subscription_credentials.txt (v2 rejected INCORRECT_CATEGORY: account notice wording only)",
-    "body": "Hi {{1}}, your {{2}} ({{3}}) internet account has been activated. Account username: {{4}}. Account valid until: {{5}}. Your password was sent to this number by SMS.",
-    "example": ["Mary", "Family 30Mbps", "PPPoE", "mary.w", "30 Sep 2026"]
-  },
-  {
-    "name": "ispbilling_hotspot_welcome_v3",
-    "category": "UTILITY",
-    "language": "en_US",
-    "source": "whatsapp/ispbilling/hotspot_welcome.txt (v2 rejected INCORRECT_CATEGORY: account notice wording only)",
-    "body": "Hi {{1}}, your hotspot account has been activated. Login: {{2}}. Package: {{3}}, valid for {{4}} day(s). Your password was sent to this number by SMS.",
-    "example": ["Grace", "grace254", "Daily 5GB", "1"]
-  },
-  {
-    "name": "ispbilling_pppoe_welcome_v3",
-    "category": "UTILITY",
-    "language": "en_US",
-    "source": "whatsapp/ispbilling/pppoe_welcome.txt (v2 rejected INCORRECT_CATEGORY: account notice wording only)",
-    "body": "Hi {{1}}, your PPPoE connection has been activated. Username: {{2}}. Package: {{3}} at {{4}}. Your password was sent to this number by SMS. For help, call support on {{5}} at any time.",
-    "example": ["John", "john.k", "Business 50", "50/20 Mbps", "0700111222"]
+    "source": "whatsapp/ispbilling/subscription_credentials.txt (params: customer_name, package_name, package_type, expiry_at)",
+    "body": "Hi {{1}}, your {{2}} ({{3}}) internet subscription has been activated and is valid until {{4}}. Your account details were sent to you separately. Reply to this message if you need help.",
+    "example": ["Mary", "Family 30Mbps", "PPPoE", "30 Sep 2026"]
   },
   {
     "name": "ispbilling_subscription_renewal",
@@ -559,14 +519,6 @@
     ]
   },
   {
-    "name": "maskani_visitor_pass_v1",
-    "category": "UTILITY",
-    "language": "en_US",
-    "source": "whatsapp/maskani/visitor_pass.txt (params: visitor_name, estate, code, valid_from, valid_to)",
-    "body": "Hello {{1}},\n\nYour gate code for *{{2}}* is *{{3}}*.\n\nValid from {{4}} to {{5}}. Show this code to the guard when you arrive.\n\nHave a good visit.",
-    "example": ["Peter", "Shaba Village", "482915", "11 Oct 09:00", "11 Oct 21:00"]
-  },
-  {
     "name": "maskani_visitor_arrived_v1",
     "category": "UTILITY",
     "language": "en_US",
@@ -586,11 +538,19 @@
     ]
   },
   {
-    "name": "maskani_portal_invite_v1_btn",
+    "name": "maskani_visitor_pass_v2",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/maskani/visitor_pass.txt (params: visitor_name, estate, code, valid_from, valid_to)",
+    "body": "Hello {{1}},\n\nYour visit to *{{2}}* is registered. Your visitor pass number is *{{3}}*.\n\nThe pass is valid from {{4}} to {{5}}. Please give the pass number to the guard on arrival.",
+    "example": ["Peter", "Shaba Village", "482915", "11 Oct 09:00", "11 Oct 21:00"]
+  },
+  {
+    "name": "maskani_portal_invite_v2_btn",
     "category": "UTILITY",
     "language": "en_US",
     "source": "whatsapp/maskani/portal_invite.txt (params: name, estate; button: <slug>/portal)",
-    "body": "Hello {{1}},\n\n*{{2}}* has set up your owner portal. You can see your bills and payments, pay, and create visitor passes there.\n\nSign in with this phone number. We will send you a one-time code.",
+    "body": "Hello {{1}},\n\n*{{2}}* has set up your owner portal, where you can view your bills and payments and register visitors.\n\nUse the button below to open it.",
     "example": ["Jane", "Shaba Village"],
     "buttons": [
       {"type": "URL", "text": "Open Portal", "url": "https://maskaniapp.codevertexafrica.com/{{1}}", "example": ["shaba-village/portal"]}
@@ -792,11 +752,11 @@
     ]
   },
   {
-    "name": "digitika_portal_account_v1_btn",
+    "name": "digitika_portal_account_v2_btn",
     "category": "UTILITY",
     "language": "en_US",
     "source": "whatsapp/digitika/portal_account.txt (params: name, sentence, email; button: student or digitika/parent)",
-    "body": "Hello {{1}},\n\n{{2}}\n\nWe emailed the sign-in details to {{3}}. Use the button below to open the portal.",
+    "body": "Hello {{1}},\n\n{{2}}\n\nThe account details were emailed to {{3}}. Use the button below to open the portal.",
     "example": ["Jane", "Your Digitika student account is ready.", "jane@example.com"],
     "buttons": [
       {"type": "URL", "text": "Open Portal", "url": "https://codevertexafrica.com/{{1}}", "example": ["student"]}

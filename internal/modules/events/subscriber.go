@@ -817,14 +817,15 @@ func (s *Subscriber) handleISPSubscriberCreated(msg *nats.Msg) {
 	s.publish(tid, "sms", "ispbilling/subscription_credentials", messaging.TargetCustomer, []string{e.Payload.Phone}, data)
 	// Also WhatsApp (the delivery-path gate skips it if the tenant has no active WA subscription).
 	// A new subscriber has never messaged the business, so this must be an approved template:
-	// free-form text is only delivered inside a 24h reply window. The password stays in the SMS.
+	// free-form text is only delivered inside a 24h reply window. Meta files any message that
+	// carries a username or password as a login credential, so the WhatsApp text only confirms
+	// the activation; the credentials stay in the SMS.
 	s.publishWithMetadata(tid, "whatsapp", "ispbilling/subscription_credentials", messaging.TargetCustomer, []string{e.Payload.Phone}, data, map[string]any{
-		"template_name": "ispbilling_subscription_credentials_v3",
+		"template_name": "ispbilling_subscription_activated_v1",
 		"template_params": []string{
 			nonEmpty(e.Payload.CustomerName, "there"),
 			nonEmpty(e.Payload.PackageName, "internet"),
 			nonEmpty(e.Payload.PackageType, "package"),
-			nonEmpty(e.Payload.Username, "-"),
 			nonEmpty(e.Payload.ExpiryAt, "the end of your package period"),
 		},
 	})

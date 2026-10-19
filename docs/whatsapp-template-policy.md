@@ -67,6 +67,11 @@ working button: the suffix is the path of its link (`buttonURLSuffix`, `posButto
   characters.
 - A new wording is a new template name (`_v2`, `_v3`, ...); approved names are never edited in
   place. Deleted names cannot be reused for about four weeks.
+- Meta rejects a UTILITY template as `INCORRECT_CATEGORY` when the wording reads as a login credential or
+  a promotion. Keep these words out of bodies: password, login, username, sign in, one-time code, gate
+  code, welcome, enjoy, thank you for choosing. Say "account details were sent to you separately" and
+  "pass number" instead, and send the real credential by email. A one-time code uses the
+  `AUTHENTICATION` template, never UTILITY.
 - Category `UTILITY` for transactional messages; `AUTHENTICATION` uses Meta's fixed format.
 
 ## 4. Publishing

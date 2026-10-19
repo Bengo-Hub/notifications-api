@@ -2,4 +2,4 @@ Hello {{ .name }},
 
 {{ if eq .account_role "parent" }}Your parent account for {{ .student_name }} is ready on Digitika.{{ else }}Your Digitika student account is ready.{{ end }}
 
-We emailed the sign-in details to {{ .email }}. Use the button below to open the portal.
+The account details were emailed to {{ .email }}. Use the button below to open the portal.

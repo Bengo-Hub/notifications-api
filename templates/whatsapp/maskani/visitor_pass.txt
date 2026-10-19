@@ -1,7 +1,5 @@
 Hello {{ or .visitor_name "there" }},
 
-Your gate code for *{{ .estate }}* is *{{ .code }}*.
+Your visit to *{{ .estate }}* is registered. Your visitor pass number is *{{ .code }}*.
 
-Valid from {{ .valid_from }} to {{ .valid_to }}. Show this code to the guard when you arrive.
-
-Have a good visit.
+The pass is valid from {{ .valid_from }} to {{ .valid_to }}. Please give the pass number to the guard on arrival.

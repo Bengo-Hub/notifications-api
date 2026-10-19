@@ -263,7 +263,7 @@ var maskaniMappings = map[string]maskaniMapping{
 			return map[string]any{"visitor_name": waParam(p["visitor_name"], "there"), "estate": ti.Name,
 				"code": mStr(p, "code"), "valid_from": mTime(p, "valid_from"), "valid_to": mTime(p, "valid_to")}
 		},
-		WATemplate: "maskani_visitor_pass_v1",
+		WATemplate: "maskani_visitor_pass_v2",
 		WAParams: func(d map[string]any) []string {
 			return mParams(d, "visitor_name", "estate", "code", "valid_from", "valid_to")
 		},
@@ -345,7 +345,7 @@ var maskaniMappings = map[string]maskaniMapping{
 		Data: func(p map[string]any, ti *tenantInfo) map[string]any {
 			return map[string]any{"name": waParam(p["name"], "there"), "estate": ti.Name}
 		},
-		WATemplate: "maskani_portal_invite_v1_btn",
+		WATemplate: "maskani_portal_invite_v2_btn",
 		WAParams:   func(d map[string]any) []string { return mParams(d, "name", "estate") },
 	},
 	"sale_contract.activated": {

@@ -221,7 +221,7 @@ func buildPortalAccount(p map[string]any) (digitikaNotice, bool) {
 	var wa *partyWhatsApp
 	if email != "" {
 		wa = &partyWhatsApp{
-			Name:   "digitika_portal_account_v1_btn",
+			Name:   "digitika_portal_account_v2_btn",
 			Params: []string{waParam(name, "there"), sentence, email},
 			Button: digitikaButton(loginURL),
 		}

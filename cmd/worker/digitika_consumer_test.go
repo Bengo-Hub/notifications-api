@@ -223,7 +223,7 @@ func TestDigitikaWhatsAppTemplatesMatchTheManifest(t *testing.T) {
 			t.Errorf("%s: missing email template for %s", name, n.TemplateID)
 		}
 	}
-	for _, name := range []string{"digitika_portal_account_v1_btn", "digitika_contact_received_v1"} {
+	for _, name := range []string{"digitika_portal_account_v2_btn", "digitika_contact_received_v1"} {
 		if _, ok := declared[name]; !ok {
 			t.Errorf("%q is not in templates.json", name)
 		}
