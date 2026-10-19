@@ -15,9 +15,6 @@ type Broadcast func(*sql.Selector)
 // BroadcastRecipient is the predicate function for broadcastrecipient builders.
 type BroadcastRecipient func(*sql.Selector)
 
-// CreditTransaction is the predicate function for credittransaction builders.
-type CreditTransaction func(*sql.Selector)
-
 // DeliveryLog is the predicate function for deliverylog builders.
 type DeliveryLog func(*sql.Selector)
 
@@ -42,9 +39,6 @@ type OutboxEvent func(*sql.Selector)
 // Permission is the predicate function for permission builders.
 type Permission func(*sql.Selector)
 
-// PlatformBilling is the predicate function for platformbilling builders.
-type PlatformBilling func(*sql.Selector)
-
 // ProviderSetting is the predicate function for providersetting builders.
 type ProviderSetting func(*sql.Selector)
 
@@ -66,12 +60,6 @@ type Template func(*sql.Selector)
 // Tenant is the predicate function for tenant builders.
 type Tenant func(*sql.Selector)
 
-// TenantCredit is the predicate function for tenantcredit builders.
-type TenantCredit func(*sql.Selector)
-
-// TenantWhatsAppSubscription is the predicate function for tenantwhatsappsubscription builders.
-type TenantWhatsAppSubscription func(*sql.Selector)
-
 // User is the predicate function for user builders.
 type User func(*sql.Selector)
 
@@ -83,6 +71,3 @@ type WhatsAppConversation func(*sql.Selector)
 
 // WhatsAppMessage is the predicate function for whatsappmessage builders.
 type WhatsAppMessage func(*sql.Selector)
-
-// WhatsAppPlan is the predicate function for whatsappplan builders.
-type WhatsAppPlan func(*sql.Selector)

@@ -18,8 +18,6 @@ type Tx struct {
 	Broadcast *BroadcastClient
 	// BroadcastRecipient is the client for interacting with the BroadcastRecipient builders.
 	BroadcastRecipient *BroadcastRecipientClient
-	// CreditTransaction is the client for interacting with the CreditTransaction builders.
-	CreditTransaction *CreditTransactionClient
 	// DeliveryLog is the client for interacting with the DeliveryLog builders.
 	DeliveryLog *DeliveryLogClient
 	// DeviceToken is the client for interacting with the DeviceToken builders.
@@ -36,8 +34,6 @@ type Tx struct {
 	OutboxEvent *OutboxEventClient
 	// Permission is the client for interacting with the Permission builders.
 	Permission *PermissionClient
-	// PlatformBilling is the client for interacting with the PlatformBilling builders.
-	PlatformBilling *PlatformBillingClient
 	// ProviderSetting is the client for interacting with the ProviderSetting builders.
 	ProviderSetting *ProviderSettingClient
 	// RateLimitConfig is the client for interacting with the RateLimitConfig builders.
@@ -52,10 +48,6 @@ type Tx struct {
 	Template *TemplateClient
 	// Tenant is the client for interacting with the Tenant builders.
 	Tenant *TenantClient
-	// TenantCredit is the client for interacting with the TenantCredit builders.
-	TenantCredit *TenantCreditClient
-	// TenantWhatsAppSubscription is the client for interacting with the TenantWhatsAppSubscription builders.
-	TenantWhatsAppSubscription *TenantWhatsAppSubscriptionClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 	// UserRoleAssignment is the client for interacting with the UserRoleAssignment builders.
@@ -64,8 +56,6 @@ type Tx struct {
 	WhatsAppConversation *WhatsAppConversationClient
 	// WhatsAppMessage is the client for interacting with the WhatsAppMessage builders.
 	WhatsAppMessage *WhatsAppMessageClient
-	// WhatsAppPlan is the client for interacting with the WhatsAppPlan builders.
-	WhatsAppPlan *WhatsAppPlanClient
 
 	// lazily loaded.
 	client     *Client
@@ -200,7 +190,6 @@ func (tx *Tx) init() {
 	tx.Announcement = NewAnnouncementClient(tx.config)
 	tx.Broadcast = NewBroadcastClient(tx.config)
 	tx.BroadcastRecipient = NewBroadcastRecipientClient(tx.config)
-	tx.CreditTransaction = NewCreditTransactionClient(tx.config)
 	tx.DeliveryLog = NewDeliveryLogClient(tx.config)
 	tx.DeviceToken = NewDeviceTokenClient(tx.config)
 	tx.NotificationPermission = NewNotificationPermissionClient(tx.config)
@@ -209,7 +198,6 @@ func (tx *Tx) init() {
 	tx.Occasion = NewOccasionClient(tx.config)
 	tx.OutboxEvent = NewOutboxEventClient(tx.config)
 	tx.Permission = NewPermissionClient(tx.config)
-	tx.PlatformBilling = NewPlatformBillingClient(tx.config)
 	tx.ProviderSetting = NewProviderSettingClient(tx.config)
 	tx.RateLimitConfig = NewRateLimitConfigClient(tx.config)
 	tx.Role = NewRoleClient(tx.config)
@@ -217,13 +205,10 @@ func (tx *Tx) init() {
 	tx.Suppression = NewSuppressionClient(tx.config)
 	tx.Template = NewTemplateClient(tx.config)
 	tx.Tenant = NewTenantClient(tx.config)
-	tx.TenantCredit = NewTenantCreditClient(tx.config)
-	tx.TenantWhatsAppSubscription = NewTenantWhatsAppSubscriptionClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 	tx.UserRoleAssignment = NewUserRoleAssignmentClient(tx.config)
 	tx.WhatsAppConversation = NewWhatsAppConversationClient(tx.config)
 	tx.WhatsAppMessage = NewWhatsAppMessageClient(tx.config)
-	tx.WhatsAppPlan = NewWhatsAppPlanClient(tx.config)
 }
 
 // txDriver wraps the given dialect.Tx with a nop dialect.Driver implementation.

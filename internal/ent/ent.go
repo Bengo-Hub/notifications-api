@@ -15,7 +15,6 @@ import (
 	"github.com/bengobox/notifications-api/internal/ent/announcement"
 	"github.com/bengobox/notifications-api/internal/ent/broadcast"
 	"github.com/bengobox/notifications-api/internal/ent/broadcastrecipient"
-	"github.com/bengobox/notifications-api/internal/ent/credittransaction"
 	"github.com/bengobox/notifications-api/internal/ent/deliverylog"
 	"github.com/bengobox/notifications-api/internal/ent/devicetoken"
 	"github.com/bengobox/notifications-api/internal/ent/notificationpermission"
@@ -24,7 +23,6 @@ import (
 	"github.com/bengobox/notifications-api/internal/ent/occasion"
 	"github.com/bengobox/notifications-api/internal/ent/outboxevent"
 	"github.com/bengobox/notifications-api/internal/ent/permission"
-	"github.com/bengobox/notifications-api/internal/ent/platformbilling"
 	"github.com/bengobox/notifications-api/internal/ent/providersetting"
 	"github.com/bengobox/notifications-api/internal/ent/ratelimitconfig"
 	"github.com/bengobox/notifications-api/internal/ent/role"
@@ -32,13 +30,10 @@ import (
 	"github.com/bengobox/notifications-api/internal/ent/suppression"
 	"github.com/bengobox/notifications-api/internal/ent/template"
 	"github.com/bengobox/notifications-api/internal/ent/tenant"
-	"github.com/bengobox/notifications-api/internal/ent/tenantcredit"
-	"github.com/bengobox/notifications-api/internal/ent/tenantwhatsappsubscription"
 	"github.com/bengobox/notifications-api/internal/ent/user"
 	"github.com/bengobox/notifications-api/internal/ent/userroleassignment"
 	"github.com/bengobox/notifications-api/internal/ent/whatsappconversation"
 	"github.com/bengobox/notifications-api/internal/ent/whatsappmessage"
-	"github.com/bengobox/notifications-api/internal/ent/whatsappplan"
 )
 
 // ent aliases to avoid import conflicts in user's code.
@@ -102,7 +97,6 @@ func checkColumn(t, c string) error {
 			announcement.Table:               announcement.ValidColumn,
 			broadcast.Table:                  broadcast.ValidColumn,
 			broadcastrecipient.Table:         broadcastrecipient.ValidColumn,
-			credittransaction.Table:          credittransaction.ValidColumn,
 			deliverylog.Table:                deliverylog.ValidColumn,
 			devicetoken.Table:                devicetoken.ValidColumn,
 			notificationpermission.Table:     notificationpermission.ValidColumn,
@@ -111,7 +105,6 @@ func checkColumn(t, c string) error {
 			occasion.Table:                   occasion.ValidColumn,
 			outboxevent.Table:                outboxevent.ValidColumn,
 			permission.Table:                 permission.ValidColumn,
-			platformbilling.Table:            platformbilling.ValidColumn,
 			providersetting.Table:            providersetting.ValidColumn,
 			ratelimitconfig.Table:            ratelimitconfig.ValidColumn,
 			role.Table:                       role.ValidColumn,
@@ -119,13 +112,10 @@ func checkColumn(t, c string) error {
 			suppression.Table:                suppression.ValidColumn,
 			template.Table:                   template.ValidColumn,
 			tenant.Table:                     tenant.ValidColumn,
-			tenantcredit.Table:               tenantcredit.ValidColumn,
-			tenantwhatsappsubscription.Table: tenantwhatsappsubscription.ValidColumn,
 			user.Table:                       user.ValidColumn,
 			userroleassignment.Table:         userroleassignment.ValidColumn,
 			whatsappconversation.Table:       whatsappconversation.ValidColumn,
 			whatsappmessage.Table:            whatsappmessage.ValidColumn,
-			whatsappplan.Table:               whatsappplan.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

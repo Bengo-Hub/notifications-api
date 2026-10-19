@@ -45,18 +45,6 @@ func (f BroadcastRecipientFunc) Mutate(ctx context.Context, m ent.Mutation) (ent
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.BroadcastRecipientMutation", m)
 }
 
-// The CreditTransactionFunc type is an adapter to allow the use of ordinary
-// function as CreditTransaction mutator.
-type CreditTransactionFunc func(context.Context, *ent.CreditTransactionMutation) (ent.Value, error)
-
-// Mutate calls f(ctx, m).
-func (f CreditTransactionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	if mv, ok := m.(*ent.CreditTransactionMutation); ok {
-		return f(ctx, mv)
-	}
-	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.CreditTransactionMutation", m)
-}
-
 // The DeliveryLogFunc type is an adapter to allow the use of ordinary
 // function as DeliveryLog mutator.
 type DeliveryLogFunc func(context.Context, *ent.DeliveryLogMutation) (ent.Value, error)
@@ -153,18 +141,6 @@ func (f PermissionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, 
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PermissionMutation", m)
 }
 
-// The PlatformBillingFunc type is an adapter to allow the use of ordinary
-// function as PlatformBilling mutator.
-type PlatformBillingFunc func(context.Context, *ent.PlatformBillingMutation) (ent.Value, error)
-
-// Mutate calls f(ctx, m).
-func (f PlatformBillingFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	if mv, ok := m.(*ent.PlatformBillingMutation); ok {
-		return f(ctx, mv)
-	}
-	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PlatformBillingMutation", m)
-}
-
 // The ProviderSettingFunc type is an adapter to allow the use of ordinary
 // function as ProviderSetting mutator.
 type ProviderSettingFunc func(context.Context, *ent.ProviderSettingMutation) (ent.Value, error)
@@ -249,30 +225,6 @@ func (f TenantFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, erro
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TenantMutation", m)
 }
 
-// The TenantCreditFunc type is an adapter to allow the use of ordinary
-// function as TenantCredit mutator.
-type TenantCreditFunc func(context.Context, *ent.TenantCreditMutation) (ent.Value, error)
-
-// Mutate calls f(ctx, m).
-func (f TenantCreditFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	if mv, ok := m.(*ent.TenantCreditMutation); ok {
-		return f(ctx, mv)
-	}
-	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TenantCreditMutation", m)
-}
-
-// The TenantWhatsAppSubscriptionFunc type is an adapter to allow the use of ordinary
-// function as TenantWhatsAppSubscription mutator.
-type TenantWhatsAppSubscriptionFunc func(context.Context, *ent.TenantWhatsAppSubscriptionMutation) (ent.Value, error)
-
-// Mutate calls f(ctx, m).
-func (f TenantWhatsAppSubscriptionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	if mv, ok := m.(*ent.TenantWhatsAppSubscriptionMutation); ok {
-		return f(ctx, mv)
-	}
-	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TenantWhatsAppSubscriptionMutation", m)
-}
-
 // The UserFunc type is an adapter to allow the use of ordinary
 // function as User mutator.
 type UserFunc func(context.Context, *ent.UserMutation) (ent.Value, error)
@@ -319,18 +271,6 @@ func (f WhatsAppMessageFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Va
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WhatsAppMessageMutation", m)
-}
-
-// The WhatsAppPlanFunc type is an adapter to allow the use of ordinary
-// function as WhatsAppPlan mutator.
-type WhatsAppPlanFunc func(context.Context, *ent.WhatsAppPlanMutation) (ent.Value, error)
-
-// Mutate calls f(ctx, m).
-func (f WhatsAppPlanFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	if mv, ok := m.(*ent.WhatsAppPlanMutation); ok {
-		return f(ctx, mv)
-	}
-	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WhatsAppPlanMutation", m)
 }
 
 // Condition is a hook condition function.
