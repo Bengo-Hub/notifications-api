@@ -166,7 +166,10 @@ var Registry = []Type{
 	{Key: "projects/project_milestone_reached", Label: "Project milestone reached", Group: "Support & Projects", Class: ClassOptional},
 	{Key: "digitika/enrollment_confirmed", Label: "Enrollment confirmed", Group: "Education", Class: ClassEssential},
 	{Key: "digitika/installment_receipt", Label: "Installment receipt", Group: "Education", Class: ClassEssential},
+	{Key: "digitika/installment_reminder", Label: "Installment reminder and overdue notice", Group: "Education", Class: ClassEssential},
 	{Key: "digitika/portal_account", Label: "Student or parent portal account", Group: "Education", Class: ClassEssential},
+	{Key: "digitika/certificate_issued", Label: "Certificate issued", Group: "Education", Class: ClassEssential},
+	{Key: "digitika/contact_form_reply", Label: "Contact form acknowledgement", Group: "Education", Class: ClassEssential},
 
 	// ── Generic passthrough (ERP payslips/vouchers/HR mail and other raw branded
 	//    sends route through this shared template) ─────────────────────────────

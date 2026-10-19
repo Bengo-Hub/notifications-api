@@ -1,0 +1,5 @@
+Hello {{ .name }},
+
+Payment {{ .payment_label }} of *{{ .currency }} {{ .amount }}* for {{ if .for_student }}{{ .for_student }}'s{{ else }}your{{ end }} place in *{{ .course_name }}* was due on {{ .due_date }} and is now overdue.
+
+Please pay as soon as you can to keep the enrollment active.

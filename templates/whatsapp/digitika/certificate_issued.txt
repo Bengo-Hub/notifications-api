@@ -1,0 +1,5 @@
+Hello {{ .name }},
+
+Congratulations! {{ if .for_student }}{{ .for_student }}{{ else }}You{{ end }} completed *{{ .course_name }}* and a certificate has been issued.
+
+Certificate number: *{{ .certificate_number }}*. Use the button below to view and verify it.

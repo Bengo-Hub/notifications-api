@@ -11,6 +11,19 @@
 | `treasury.payhero.service_wallet_short` | PayHero refused a payment because an account's service wallet cannot pay the channel fee (sent at most once per account every 6 hours); emailed with `platform/payhero_service_wallet_short` to the platform alert recipients (`PLATFORM_ALERT_EMAILS`), locked so no preference can mute it | Treasury Service |
 | `food.orders.status.changed` | Order status update for customer push/SMS | Food Delivery Backend |
 | `erp.payroll.generated` | Payroll notification for employees | ERP System |
+| `digitika.enrollment.confirmed` | Enrollment confirmed; `digitika/enrollment_confirmed` to the learner and any guardian | codevertex-website |
+| `digitika.payment.succeeded` | Installment received; `digitika/installment_receipt`, or the paid in full WhatsApp variant `digitika/payment_complete` when no balance remains | codevertex-website |
+| `digitika.installment.reminder` | Installment due within 3 days or overdue (daily cron; overdue every 3 days); `digitika/installment_reminder`, overdue WhatsApp variant `digitika/installment_overdue` | codevertex-website |
+| `digitika.account.created` | Student or parent portal account created; `digitika/portal_account` (temporary password by email only) | codevertex-website |
+| `digitika.access_code.requested` | Parent portal one-time code; email `auth/otp_verification`, WhatsApp `auth_otp` from the platform number, never gated | codevertex-website |
+| `digitika.contact.received` | Contact form acknowledgement; `digitika/contact_form_reply` by email and, with a phone, WhatsApp | codevertex-website |
+| `digitika.certificate.issued` | Course certificate issued; `digitika/certificate_issued` to the learner and any guardian | codevertex-website |
+
+Digitika events carry the learner (`studentId`, `studentName`, `studentEmail` real address only,
+`studentPhone`) and the guardian (`guardianName`, `guardianEmail`, `guardianPhone`).
+`cmd/worker/digitika_consumer.go` turns each into a party notice (`sendToParties`): the learner and
+the guardian are each reached on the email and WhatsApp contacts they have, a phone shared by both
+gets one message, and a placeholder (`.invalid`) email is never mailed. SMS is not used.
 
 ## Outbound Events (emitted by notifications service)
 

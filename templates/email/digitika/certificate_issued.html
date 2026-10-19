@@ -1,0 +1,22 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  {{ if .for_student }}
+  <p>Congratulations! {{ .for_student }} has completed <strong>{{ .course_name }}</strong> and a certificate has been issued.</p>
+  {{ else }}
+  <p>Congratulations! You have completed <strong>{{ .course_name }}</strong> and your certificate has been issued.</p>
+  {{ end }}
+  <table style="width:100%; border-collapse:collapse; margin:16px 0;">
+    <tr>
+      <td style="padding:8px 0; color:#6b7280; width:45%;">Course</td>
+      <td style="padding:8px 0; font-weight:600;">{{ .course_name }}</td>
+    </tr>
+    <tr>
+      <td style="padding:8px 0; color:#6b7280;">Certificate number</td>
+      <td style="padding:8px 0; font-family:monospace; font-size:13px;">{{ .certificate_number }}</td>
+    </tr>
+  </table>
+  <p>
+    <a class="button" href="{{ .certificate_link }}">View Certificate</a>
+  </p>
+  <p class="muted">Anyone can check the certificate is genuine on that page. Contact us at info@codevertexafrica.com if you need help.</p>
+{{ end }}

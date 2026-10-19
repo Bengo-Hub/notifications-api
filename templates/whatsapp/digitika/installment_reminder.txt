@@ -1,0 +1,5 @@
+Hello {{ .name }},
+
+Reminder: payment {{ .payment_label }} of *{{ .currency }} {{ .amount }}* for {{ if .for_student }}{{ .for_student }}'s{{ else }}your{{ end }} place in *{{ .course_name }}* is due on {{ .due_date }}.
+
+Please pay on time to keep the enrollment active.

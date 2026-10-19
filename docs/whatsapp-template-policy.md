@@ -33,6 +33,7 @@ Meta fixes a button's domain when the template is approved; only the suffix vari
 | Maskani portal and console | `https://maskaniapp.codevertexafrica.com/{{1}}` | `<tenant-slug>/portal`, `<slug>/portal/purchase`, `<slug>/portal/walk-ins/<id>`, `<slug>/security/incidents/<id>`, `<slug>/works/<id>` |
 | Rider app (a rider's own screens) | `https://riderapp.codevertexafrica.com/{{1}}` | `<tenant-slug>/profile` |
 | Logistics app (the business's dispatch console) | `https://logistics.codevertexafrica.com/{{1}}` | `<tenant-slug>/vehicles` |
+| Digitika (enrollment page, student and parent portal, certificate check) | `https://codevertexafrica.com/{{1}}` | `digitika/success?reference=<ref>`, `student`, `digitika/parent`, `certificates/<token>` |
 
 ## 2b. One notice, several parties
 

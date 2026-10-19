@@ -1,0 +1,5 @@
+Hello {{ .name }},
+
+Thank you for contacting Codevertex Africa Limited. We received your message and will reply within 1 business day.
+
+For anything urgent, call +254 743 793 901.

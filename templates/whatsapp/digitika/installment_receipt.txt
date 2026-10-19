@@ -1,0 +1,5 @@
+Hello {{ .name }},
+
+We received *{{ .currency }} {{ .amount_paid }}* for {{ if .for_student }}{{ .for_student }}'s{{ else }}your{{ end }} place in *{{ .course_name }}* (payment {{ .payment_label }}). Remaining balance: *{{ .currency }} {{ .remaining_balance }}*.
+
+Thank you. Use the button below for the receipt and the next payment.

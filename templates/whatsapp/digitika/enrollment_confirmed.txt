@@ -1,0 +1,5 @@
+Hello {{ .name }},
+
+{{ if .for_student }}{{ .for_student }}'s place is{{ else }}Your place is{{ end }} confirmed in *{{ .course_name }}* at Digitika. Student ID: *{{ .student_id }}*. Total fees: {{ .currency }} {{ .total_amount }}.
+
+Use the button below to follow the enrollment and pay any remaining installments.

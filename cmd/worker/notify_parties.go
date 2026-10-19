@@ -78,9 +78,10 @@ type partyNotice struct {
 	TemplateChannels map[string][]string
 }
 
-// sendableEmail rejects empty, malformed and placeholder (.local) addresses.
+// sendableEmail rejects empty, malformed and placeholder (.local, .invalid) addresses.
 func sendableEmail(email string) bool {
-	return email != "" && strings.Contains(email, "@") && !strings.HasSuffix(strings.ToLower(email), ".local")
+	return email != "" && strings.Contains(email, "@") &&
+		!strings.HasSuffix(strings.ToLower(email), ".local") && !strings.HasSuffix(strings.ToLower(email), ".invalid")
 }
 
 // partyIdemSuffix is the key suffix for a party: none for a single unnamed party, so a notice

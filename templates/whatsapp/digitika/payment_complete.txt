@@ -1,0 +1,5 @@
+Hello {{ .name }},
+
+We received *{{ .currency }} {{ .amount_paid }}* for {{ if .for_student }}{{ .for_student }}'s{{ else }}your{{ end }} place in *{{ .course_name }}*. The course is now paid in full.
+
+Thank you. Use the button below to open the enrollment.

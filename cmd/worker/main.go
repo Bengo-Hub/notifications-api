@@ -464,7 +464,7 @@ func main() {
 	}
 
 	// Start digitika event consumer (codevertex-website → enrollment/payment notifications)
-	startDigitikaConsumer(ctx, nc, js, cfg, tr, logg)
+	startDigitikaConsumer(ctx, nc, js, cfg, tr, prefGate, templateChannels, logg)
 
 	<-ctx.Done()
 	_ = nc.Drain()

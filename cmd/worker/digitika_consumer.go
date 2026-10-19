@@ -4,15 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
+	"strings"
 	"time"
 
 	eventslib "github.com/Bengo-Hub/shared-events"
-	"github.com/google/uuid"
 	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
 
 	"github.com/bengobox/notifications-api/internal/config"
 	"github.com/bengobox/notifications-api/internal/messaging"
+	"github.com/bengobox/notifications-api/internal/modules/preferences"
 )
 
 // digitikaEvent matches the platform-standard shared-events envelope published by
@@ -42,9 +44,277 @@ func ordinalLabel(n int) string {
 	return fmt.Sprintf("%dth", n)
 }
 
+// digitikaNotice is one Digitika notification ready to send: its email template, the WhatsApp
+// text file when that differs, the subject, the data every party shares and the parties.
+type digitikaNotice struct {
+	TemplateID   string // email template and preference key
+	WATemplateID string // WhatsApp text file when it differs from TemplateID
+	Subject      string
+	Scope        string // messaging.SenderScope* (default tenant)
+	Data         map[string]any
+	Parties      []noticeParty
+	// Ungated skips the tenant preference gate: a one-time code is never switched off, and its
+	// WhatsApp text file (auth/otp) is not the email template the gate is keyed on.
+	Ungated bool
+}
+
+// digitikaBuilders turn each website event into its notice. They are pure (payload in, notice
+// out) so every wording and every recipient rule is tested without NATS. One consumer, one
+// table: a new Digitika notification is one builder here, one email template and one WhatsApp
+// template.
+var digitikaBuilders = map[string]func(p map[string]any) (digitikaNotice, bool){
+	"enrollment.confirmed":  buildEnrollmentConfirmed,
+	"payment.succeeded":     buildInstallmentReceipt,
+	"installment.reminder":  buildInstallmentReminder,
+	"account.created":       buildPortalAccount,
+	"access_code.requested": buildAccessCode,
+	"contact.received":      buildContactReceived,
+	"certificate.issued":    buildCertificateIssued,
+}
+
+func buildEnrollmentConfirmed(p map[string]any) (digitikaNotice, bool) {
+	people := peopleFromPayload(p)
+	course, currency := str(p, "courseName"), str(p, "currency")
+	total := num(p, "totalAmount")
+	link := str(p, "portalLink")
+	button := digitikaButton(link)
+	return digitikaNotice{
+		TemplateID: "digitika/enrollment_confirmed",
+		Subject:    "Enrollment confirmed: " + course,
+		Data: map[string]any{
+			"student_name":         people.StudentName,
+			"course_name":          course,
+			"payment_plan":         str(p, "paymentPlan"),
+			"total_amount":         fmt.Sprintf("%.0f", total),
+			"currency":             currency,
+			"student_id":           people.StudentID,
+			"cohort_name":          str(p, "cohortName"),
+			"portal_link":          link,
+			"installments_summary": str(p, "installmentsSummary"),
+		},
+		Parties: people.parties(messaging.TargetCustomer, func(r recipient) *partyWhatsApp {
+			return &partyWhatsApp{
+				Name:   "digitika_enrollment_confirmed_v1_btn",
+				Params: []string{waParam(r.Name, "there"), r.Place(), waParam(course, "your course"), waParam(people.StudentID, "-"), amountText(total, currency)},
+				Button: button,
+			}
+		}),
+	}, hasContact(people)
+}
+
+func buildInstallmentReceipt(p map[string]any) (digitikaNotice, bool) {
+	people := peopleFromPayload(p)
+	course, currency := str(p, "courseName"), str(p, "currency")
+	no, total := int(num(p, "installmentNo")), int(num(p, "totalInstallments"))
+	paid, remaining := num(p, "amountPaid"), num(p, "remainingBalance")
+	link := str(p, "portalLink")
+	button := digitikaButton(link)
+
+	n := digitikaNotice{
+		TemplateID: "digitika/installment_receipt",
+		Subject:    fmt.Sprintf("Payment received, %s installment: %s", ordinalLabel(no), course),
+		Data: map[string]any{
+			"student_name":            people.StudentName,
+			"course_name":             course,
+			"payment_label":           ordinalLabel(no),
+			"amount_paid":             fmt.Sprintf("%.0f", paid),
+			"currency":                currency,
+			"payment_ref":             str(p, "paymentRef"),
+			"remaining_balance":       blankZero(remaining),
+			"next_installment_date":   str(p, "nextInstallmentDate"),
+			"next_installment_amount": blankZero(num(p, "nextInstallmentAmount")),
+			"student_id":              people.StudentID,
+			"portal_link":             link,
+		},
+	}
+	// A WhatsApp template cannot hide a line, so a payment that clears the balance has its own.
+	paidInFull := remaining <= 0
+	if paidInFull {
+		n.WATemplateID = "digitika/payment_complete"
+	}
+	n.Parties = people.parties(messaging.TargetCustomer, func(r recipient) *partyWhatsApp {
+		if paidInFull {
+			return &partyWhatsApp{
+				Name:   "digitika_payment_complete_v1_btn",
+				Params: []string{waParam(r.Name, "there"), amountText(paid, currency), r.Whose(), waParam(course, "the course")},
+				Button: button,
+			}
+		}
+		return &partyWhatsApp{
+			Name:   "digitika_installment_receipt_v1_btn",
+			Params: []string{waParam(r.Name, "there"), amountText(paid, currency), r.Whose(), waParam(course, "the course"), ordinalOf(no, total), amountText(remaining, currency)},
+			Button: button,
+		}
+	})
+	return n, hasContact(people)
+}
+
+func buildInstallmentReminder(p map[string]any) (digitikaNotice, bool) {
+	people := peopleFromPayload(p)
+	course, currency := str(p, "courseName"), str(p, "currency")
+	no, total := int(num(p, "installmentNo")), int(num(p, "totalInstallments"))
+	amount := num(p, "amount")
+	due := str(p, "dueDate")
+	days := int(num(p, "daysUntilDue"))
+	overdue := days < 0
+	link := str(p, "portalLink")
+	button := digitikaButton(link)
+
+	n := digitikaNotice{
+		TemplateID: "digitika/installment_reminder",
+		Subject:    fmt.Sprintf("Payment reminder, %s installment due: %s", ordinalLabel(no), course),
+		Data: map[string]any{
+			"student_name":       people.StudentName,
+			"course_name":        course,
+			"payment_label":      ordinalLabel(no),
+			"total_installments": total,
+			"amount":             fmt.Sprintf("%.0f", amount),
+			"currency":           currency,
+			"due_date":           prettyDate(due),
+			"days_until_due":     days,
+			"overdue":            overdue,
+			"days_overdue":       int(math.Abs(float64(days))),
+			"student_id":         people.StudentID,
+			"portal_link":        link,
+		},
+	}
+	waName := "digitika_installment_reminder_v1_btn"
+	if overdue {
+		n.Subject = fmt.Sprintf("Payment overdue, %s installment: %s", ordinalLabel(no), course)
+		n.WATemplateID = "digitika/installment_overdue"
+		waName = "digitika_installment_overdue_v1_btn"
+	}
+	n.Parties = people.parties(messaging.TargetCustomer, func(r recipient) *partyWhatsApp {
+		return &partyWhatsApp{
+			Name:   waName,
+			Params: []string{waParam(r.Name, "there"), ordinalOf(no, total), amountText(amount, currency), r.Whose(), waParam(course, "the course"), waParam(prettyDate(due), "the due date")},
+			Button: button,
+		}
+	})
+	return n, hasContact(people)
+}
+
+func buildPortalAccount(p map[string]any) (digitikaNotice, bool) {
+	email, phone := strings.TrimSpace(str(p, "email")), strings.TrimSpace(str(p, "phone"))
+	role, name, student := str(p, "accountRole"), str(p, "name"), str(p, "studentName")
+	loginURL := str(p, "loginUrl")
+	sentence := "Your Digitika student account is ready."
+	subject := "Your Digitika student account"
+	if role == "parent" {
+		sentence = fmt.Sprintf("Your parent account for %s is ready on Digitika.", student)
+		subject = fmt.Sprintf("Your parent account for %s at Digitika", student)
+	}
+	n := digitikaNotice{
+		TemplateID: "digitika/portal_account",
+		Subject:    subject,
+		Data: map[string]any{
+			"name":          name,
+			"email":         email,
+			"account_role":  role,
+			"course_name":   str(p, "courseName"),
+			"student_name":  student,
+			"temp_password": str(p, "tempPassword"), // email only: a password is never sent on WhatsApp
+			"login_url":     loginURL,
+		},
+	}
+	// The sign-in details go by email; WhatsApp only says the account is ready and where to sign in.
+	var wa *partyWhatsApp
+	if email != "" {
+		wa = &partyWhatsApp{
+			Name:   "digitika_portal_account_v1_btn",
+			Params: []string{waParam(name, "there"), sentence, email},
+			Button: digitikaButton(loginURL),
+		}
+	}
+	n.Parties = []noticeParty{partyOf(messaging.TargetCustomer, email, phone, nil, wa)}
+	return n, email != "" || phone != ""
+}
+
+func buildAccessCode(p map[string]any) (digitikaNotice, bool) {
+	email, phone := strings.TrimSpace(str(p, "email")), strings.TrimSpace(str(p, "phone"))
+	code := str(p, "code")
+	ttl := int(num(p, "ttlMinutes"))
+	if ttl <= 0 {
+		ttl = 10
+	}
+	n := digitikaNotice{
+		TemplateID:   "auth/otp_verification",
+		WATemplateID: "auth/otp",
+		Subject:      "Your Digitika parent portal code",
+		// A one-time code goes from the platform number, so a tenant's own WhatsApp plan and
+		// quota never block it (the same rule as sign-in codes in auth_consumer.go).
+		Scope:   messaging.SenderScopePlatform,
+		Ungated: true,
+		Data: map[string]any{
+			"name": str(p, "name"), "otp": code, "ttl_minutes": ttl, "brand_name": "Digitika parent portal",
+		},
+	}
+	var wa *partyWhatsApp
+	if code != "" {
+		wa = &partyWhatsApp{Name: "auth_otp", Params: []string{code}, Button: code}
+	}
+	n.Parties = []noticeParty{partyOf(messaging.TargetCustomer, email, phone, nil, wa)}
+	return n, code != "" && (email != "" || phone != "")
+}
+
+func buildContactReceived(p map[string]any) (digitikaNotice, bool) {
+	email, phone := strings.TrimSpace(str(p, "email")), strings.TrimSpace(str(p, "phone"))
+	name := str(p, "name")
+	n := digitikaNotice{
+		TemplateID: "digitika/contact_form_reply",
+		Subject:    "We received your message: Codevertex Africa Limited",
+		Data: map[string]any{
+			"name": name, "email": email, "message": str(p, "message"), "service": str(p, "service"),
+		},
+	}
+	n.Parties = []noticeParty{partyOf(messaging.TargetCustomer, email, phone, nil,
+		&partyWhatsApp{Name: "digitika_contact_received_v1", Params: []string{waParam(name, "there")}})}
+	return n, email != "" || phone != ""
+}
+
+func buildCertificateIssued(p map[string]any) (digitikaNotice, bool) {
+	people := peopleFromPayload(p)
+	course, number := str(p, "courseName"), str(p, "certificateNumber")
+	link := str(p, "certificateLink")
+	button := digitikaButton(link)
+	return digitikaNotice{
+		TemplateID: "digitika/certificate_issued",
+		Subject:    "Your certificate: " + course,
+		Data: map[string]any{
+			"student_name":       people.StudentName,
+			"course_name":        course,
+			"certificate_number": number,
+			"certificate_link":   link,
+		},
+		Parties: people.parties(messaging.TargetCustomer, func(r recipient) *partyWhatsApp {
+			return &partyWhatsApp{
+				Name:   "digitika_certificate_issued_v1_btn",
+				Params: []string{waParam(r.Name, "there"), r.Who(), waParam(course, "the course"), waParam(number, "-")},
+				Button: button,
+			}
+		}),
+	}, hasContact(people)
+}
+
+// hasContact reports whether anyone in the notice can be reached at all.
+func hasContact(d digitikaPeople) bool {
+	return d.StudentEmail != "" || d.StudentPhone != "" || d.GuardianEmail != "" || d.GuardianPhone != ""
+}
+
+// blankZero is "" for no amount, so a template's optional line stays hidden.
+func blankZero(v float64) string {
+	if v <= 0 {
+		return ""
+	}
+	return fmt.Sprintf("%.0f", v)
+}
+
 // startDigitikaConsumer subscribes to digitika.> JetStream events published by
-// codevertex-website and dispatches enrollment confirmation and installment receipt emails.
-func startDigitikaConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamContext, cfg *config.Config, tr *tenantResolver, logg *zap.Logger) {
+// codevertex-website and sends each as a party notice: the learner and, when there is one, the
+// parent or guardian, on email and WhatsApp (feedback_active_channels_email_whatsapp), with the
+// tenant's channel preferences applied.
+func startDigitikaConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamContext, cfg *config.Config, tr *tenantResolver,
+	gate *preferences.Gate, templateChannels map[string][]string, logg *zap.Logger) {
 	if nc == nil || js == nil {
 		logg.Warn("skipping digitika consumer: NATS not available")
 		return
@@ -57,148 +327,63 @@ func startDigitikaConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStream
 			_ = m.Ack()
 			return
 		}
-
-		payload := evt.Payload
-		if payload == nil {
-			logg.Warn("digitika event: empty payload", zap.String("event_type", evt.EventType))
-			_ = m.Ack()
-			return
-		}
-
-		// Resolve tenant by slug ("codevertex") to get its UUID for messaging.Message.
-		// TenantID from the event is a slug, not a UUID — resolveBySlug handles this.
-		tenantID := ""
-		slug := evt.TenantSlug
-		if slug == "" {
-			slug = evt.TenantID
-		}
-		if ti, err := tr.resolveBySlug(ctx, slug); err == nil {
-			tenantID = ti.ID.String()
-		} else {
-			logg.Warn("digitika event: tenant slug not resolved, using slug as fallback",
-				zap.String("slug", slug), zap.Error(err))
-			tenantID = slug
-		}
-
-		recipientEmail, _ := payload["studentEmail"].(string)
-		if recipientEmail == "" {
-			logg.Warn("digitika event: no studentEmail in payload", zap.String("event_type", evt.EventType))
-			_ = m.Ack()
-			return
-		}
-
-		var msg messaging.Message
-
-		switch evt.EventType {
-		case "enrollment.confirmed":
-			studentName, _ := payload["studentName"].(string)
-			courseName, _ := payload["courseName"].(string)
-			paymentPlan, _ := payload["paymentPlan"].(string)
-			totalAmount, _ := payload["totalAmount"].(float64)
-			currency, _ := payload["currency"].(string)
-			studentId, _ := payload["studentId"].(string)
-			portalLink, _ := payload["portalLink"].(string)
-			installmentsSummary, _ := payload["installmentsSummary"].(string)
-			enrollmentId, _ := payload["enrollmentId"].(string)
-
-			msg = messaging.Message{
-				TenantID:    tenantID,
-				Channel:     "email",
-				TemplateID:  "digitika/enrollment_confirmed",
-				SenderScope: messaging.SenderScopeTenant,
-				Target:      messaging.TargetCustomer,
-				To:          []string{recipientEmail},
-				Data: map[string]any{
-					"student_name":         studentName,
-					"course_name":          courseName,
-					"payment_plan":         paymentPlan,
-					"total_amount":         fmt.Sprintf("%.0f", totalAmount),
-					"currency":             currency,
-					"student_id":           studentId,
-					"cohort_name":          "",
-					"portal_link":          portalLink,
-					"installments_summary": installmentsSummary,
-				},
-				Metadata: map[string]any{
-					"subject": fmt.Sprintf("Enrollment Confirmed — %s", courseName),
-				},
-				RequestID:      uuid.New().String(),
-				IdempotencyKey: fmt.Sprintf("digitika-enrollment-%s", enrollmentId),
-				QueuedAt:       time.Now(),
-			}
-
-		case "payment.succeeded":
-			studentName, _ := payload["studentName"].(string)
-			courseName, _ := payload["courseName"].(string)
-			installmentNoF, _ := payload["installmentNo"].(float64)
-			installmentNo := int(installmentNoF)
-			amountPaid, _ := payload["amountPaid"].(float64)
-			currency, _ := payload["currency"].(string)
-			paymentRef, _ := payload["paymentRef"].(string)
-			remainingBalance, _ := payload["remainingBalance"].(float64)
-			nextDate, _ := payload["nextInstallmentDate"].(string)
-			nextAmtF, _ := payload["nextInstallmentAmount"].(float64)
-			studentId, _ := payload["studentId"].(string)
-			portalLink, _ := payload["portalLink"].(string)
-			enrollmentId, _ := payload["enrollmentId"].(string)
-
-			nextAmt := ""
-			if nextAmtF > 0 {
-				nextAmt = fmt.Sprintf("%.0f", nextAmtF)
-			}
-			remainingStr := ""
-			if remainingBalance > 0 {
-				remainingStr = fmt.Sprintf("%.0f", remainingBalance)
-			}
-
-			msg = messaging.Message{
-				TenantID:    tenantID,
-				Channel:     "email",
-				TemplateID:  "digitika/installment_receipt",
-				SenderScope: messaging.SenderScopeTenant,
-				Target:      messaging.TargetCustomer,
-				To:          []string{recipientEmail},
-				Data: map[string]any{
-					"student_name":            studentName,
-					"course_name":             courseName,
-					"payment_label":           ordinalLabel(installmentNo),
-					"amount_paid":             fmt.Sprintf("%.0f", amountPaid),
-					"currency":                currency,
-					"payment_ref":             paymentRef,
-					"remaining_balance":       remainingStr,
-					"next_installment_date":   nextDate,
-					"next_installment_amount": nextAmt,
-					"student_id":              studentId,
-					"portal_link":             portalLink,
-				},
-				Metadata: map[string]any{
-					"subject": fmt.Sprintf("Payment Received — %s Installment: %s", ordinalLabel(installmentNo), courseName),
-				},
-				RequestID:      uuid.New().String(),
-				IdempotencyKey: fmt.Sprintf("digitika-payment-%s-%d", enrollmentId, installmentNo),
-				QueuedAt:       time.Now(),
-			}
-
-		default:
+		build, known := digitikaBuilders[evt.EventType]
+		if !known {
 			logg.Debug("digitika event: unhandled event_type, skipping", zap.String("event_type", evt.EventType))
 			_ = m.Ack()
 			return
 		}
-
-		if _, err := messaging.Publish(ctx, nc, cfg.Events, msg); err != nil {
-			logg.Error("digitika event: failed to dispatch notification",
-				zap.String("event_type", evt.EventType),
-				zap.String("to", recipientEmail),
-				zap.Error(err),
-			)
-			_ = m.Nak()
+		if evt.Payload == nil {
+			logg.Warn("digitika event: empty payload", zap.String("event_type", evt.EventType))
+			_ = m.Ack()
+			return
+		}
+		notice, reachable := build(evt.Payload)
+		if !reachable {
+			logg.Warn("digitika event: nobody to notify (no email or phone)", zap.String("event_type", evt.EventType))
+			_ = m.Ack()
 			return
 		}
 
+		// The event carries the tenant slug ("codevertex"), not its UUID.
+		slug := evt.TenantSlug
+		if slug == "" {
+			slug = evt.TenantID
+		}
+		tenantID, country := slug, ""
+		if ti, err := tr.resolveBySlug(ctx, slug); err == nil {
+			tenantID, country = ti.ID.String(), ti.Country
+		} else {
+			logg.Warn("digitika event: tenant slug not resolved, using slug as fallback", zap.String("slug", slug), zap.Error(err))
+		}
+
+		pn := partyNotice{
+			ServiceID:        "digitika",
+			TenantID:         tenantID,
+			TemplateID:       notice.TemplateID,
+			WATemplateID:     notice.WATemplateID,
+			Subject:          notice.Subject,
+			Scope:            notice.Scope,
+			Data:             notice.Data,
+			Country:          country,
+			IdemBase:         "digitika-" + evt.EventType + "-" + evt.ID,
+			Parties:          notice.Parties,
+			Gate:             gate,
+			TemplateChannels: templateChannels,
+		}
+		if notice.Ungated {
+			pn.Gate, pn.TemplateChannels = nil, nil
+		}
+		if err := sendToParties(ctx, nc, cfg, pn); err != nil {
+			logg.Error("digitika event: failed to dispatch notification",
+				zap.String("event_type", evt.EventType), zap.Error(err))
+			_ = m.Nak()
+			return
+		}
 		logg.Info("digitika notification dispatched",
 			zap.String("event_type", evt.EventType),
-			zap.String("template", msg.TemplateID),
-			zap.String("to", recipientEmail),
+			zap.String("template", notice.TemplateID),
+			zap.Int("parties", len(notice.Parties)),
 		)
 		_ = m.Ack()
 	}

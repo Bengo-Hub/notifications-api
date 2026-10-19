@@ -1,6 +1,6 @@
 {{ define "content" }}
-  <p>Hello {{ .student_name }},</p>
-  <p>We have received your payment for <strong>{{ .course_name }}</strong>. Thank you!</p>
+  <p>Hello {{ .name }},</p>
+  <p>We have received the payment for {{ if .for_student }}{{ .for_student }}'s place in{{ else }}your place in{{ end }} <strong>{{ .course_name }}</strong>. Thank you!</p>
   <table style="width:100%; border-collapse:collapse; margin:16px 0;">
     <tr>
       <td style="padding:8px 0; color:#6b7280; width:45%;">Payment</td>
@@ -20,6 +20,11 @@
     <tr>
       <td style="padding:8px 0; color:#6b7280;">Remaining Balance</td>
       <td style="padding:8px 0; font-weight:600;">{{ .currency }} {{ .remaining_balance }}</td>
+    </tr>
+    {{ else }}
+    <tr>
+      <td style="padding:8px 0; color:#6b7280;">Balance</td>
+      <td style="padding:8px 0; font-weight:600; color:#059669;">Paid in full</td>
     </tr>
     {{ end }}
     <tr>

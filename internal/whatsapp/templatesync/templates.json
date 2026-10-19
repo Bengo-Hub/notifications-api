@@ -735,5 +735,90 @@
     "buttons": [
       {"type": "URL", "text": "Open Contract", "url": "https://maskaniapp.codevertexafrica.com/{{1}}", "example": ["shaba-village/sales/contracts/0f3b7c1e-2a4d-4c55-9b1f-6d2e8a9c4b10"]}
     ]
+  },
+  {
+    "name": "digitika_enrollment_confirmed_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/digitika/enrollment_confirmed.txt (params: name, place, course, student_id, total; button: digitika/success?reference=<ref>)",
+    "body": "Hello {{1}},\n\n{{2}} confirmed in *{{3}}* at Digitika. Student ID: *{{4}}*. Total fees: {{5}}.\n\nUse the button below to follow the enrollment and pay any remaining installments.",
+    "example": ["Jane", "Your place is", "Tech Explorers", "DGT-ABCD2345", "KES 8,000"],
+    "buttons": [
+      {"type": "URL", "text": "View Enrollment", "url": "https://codevertexafrica.com/{{1}}", "example": ["digitika/success?reference=DGT-12-DGT-ABCD2345"]}
+    ]
+  },
+  {
+    "name": "digitika_installment_receipt_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/digitika/installment_receipt.txt (params: name, amount_paid, whose, course, payment, balance; button: digitika/success?reference=<ref>)",
+    "body": "Hello {{1}},\n\nWe received *{{2}}* for {{3}} place in *{{4}}* (payment {{5}}). Remaining balance: *{{6}}*.\n\nThank you. Use the button below for the receipt and the next payment.",
+    "example": ["Jane", "KES 4,000", "your", "Tech Explorers", "1st of 2", "KES 4,000"],
+    "buttons": [
+      {"type": "URL", "text": "View Enrollment", "url": "https://codevertexafrica.com/{{1}}", "example": ["digitika/success?reference=DGT-12-DGT-ABCD2345"]}
+    ]
+  },
+  {
+    "name": "digitika_payment_complete_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/digitika/payment_complete.txt (params: name, amount_paid, whose, course; button: digitika/success?reference=<ref>)",
+    "body": "Hello {{1}},\n\nWe received *{{2}}* for {{3}} place in *{{4}}*. The course is now paid in full.\n\nThank you. Use the button below to open the enrollment.",
+    "example": ["Jane", "KES 4,000", "your", "Tech Explorers"],
+    "buttons": [
+      {"type": "URL", "text": "View Enrollment", "url": "https://codevertexafrica.com/{{1}}", "example": ["digitika/success?reference=DGT-12-DGT-ABCD2345"]}
+    ]
+  },
+  {
+    "name": "digitika_installment_reminder_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/digitika/installment_reminder.txt (params: name, payment, amount, whose, course, due_date; button: digitika/success?reference=<ref>)",
+    "body": "Hello {{1}},\n\nReminder: payment {{2}} of *{{3}}* for {{4}} place in *{{5}}* is due on {{6}}.\n\nPlease pay on time to keep the enrollment active.",
+    "example": ["Jane", "2nd of 2", "KES 4,000", "your", "Tech Explorers", "15 Nov 2026"],
+    "buttons": [
+      {"type": "URL", "text": "Pay Now", "url": "https://codevertexafrica.com/{{1}}", "example": ["digitika/success?reference=DGT-12-DGT-ABCD2345"]}
+    ]
+  },
+  {
+    "name": "digitika_installment_overdue_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/digitika/installment_overdue.txt (params: name, payment, amount, whose, course, due_date; button: digitika/success?reference=<ref>)",
+    "body": "Hello {{1}},\n\nPayment {{2}} of *{{3}}* for {{4}} place in *{{5}}* was due on {{6}} and is now overdue.\n\nPlease pay as soon as you can to keep the enrollment active.",
+    "example": ["Jane", "2nd of 2", "KES 4,000", "your", "Tech Explorers", "15 Nov 2026"],
+    "buttons": [
+      {"type": "URL", "text": "Pay Now", "url": "https://codevertexafrica.com/{{1}}", "example": ["digitika/success?reference=DGT-12-DGT-ABCD2345"]}
+    ]
+  },
+  {
+    "name": "digitika_portal_account_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/digitika/portal_account.txt (params: name, sentence, email; button: student or digitika/parent)",
+    "body": "Hello {{1}},\n\n{{2}}\n\nWe emailed the sign-in details to {{3}}. Use the button below to open the portal.",
+    "example": ["Jane", "Your Digitika student account is ready.", "jane@example.com"],
+    "buttons": [
+      {"type": "URL", "text": "Open Portal", "url": "https://codevertexafrica.com/{{1}}", "example": ["student"]}
+    ]
+  },
+  {
+    "name": "digitika_certificate_issued_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/digitika/certificate_issued.txt (params: name, who, course, certificate_number; button: certificates/<token>)",
+    "body": "Hello {{1}},\n\nCongratulations! {{2}} completed *{{3}}* and a certificate has been issued.\n\nCertificate number: *{{4}}*. Use the button below to view and verify it.",
+    "example": ["Jane", "You", "Tech Explorers", "DGT-2026-000123"],
+    "buttons": [
+      {"type": "URL", "text": "View Certificate", "url": "https://codevertexafrica.com/{{1}}", "example": ["certificates/9f4c2a7e1b3d4c58a6e0f2b1c7d9e345"]}
+    ]
+  },
+  {
+    "name": "digitika_contact_received_v1",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/digitika/contact_form_reply.txt (params: name)",
+    "body": "Hello {{1}},\n\nThank you for contacting Codevertex Africa Limited. We received your message and will reply within 1 business day.\n\nFor anything urgent, call +254 743 793 901.",
+    "example": ["Jane"]
   }
 ]
