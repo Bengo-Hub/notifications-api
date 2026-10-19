@@ -15,7 +15,6 @@ import (
 
 	"github.com/bengobox/notifications-api/internal/config"
 	"github.com/bengobox/notifications-api/internal/messaging"
-	"github.com/bengobox/notifications-api/internal/modules/billing"
 	"github.com/bengobox/notifications-api/internal/modules/preferences"
 	"github.com/bengobox/notifications-api/internal/providers"
 )
@@ -250,10 +249,9 @@ func formatEventDate(v any) string {
 }
 
 // startTreasuryConsumer subscribes to treasury.> events from the treasury-api
-// JetStream stream and dispatches payment notification emails. It also handles
-// credit top-up (reference_type=topup) and WhatsApp subscription activation
-// (reference_type=whatsapp_subscription).
-func startTreasuryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamContext, cfg *config.Config, tr *tenantResolver, billingSvc *billing.Service, whatsappSubsSvc *billing.WhatsAppSubscriptionService, pm *providers.Manager, dbPool *pgxpool.Pool, gate *preferences.Gate, templateChannels map[string][]string, logg *zap.Logger) {
+// JetStream stream and dispatches payment notification emails. SMS and WhatsApp purchases are
+// settled by subscriptions-api, not here.
+func startTreasuryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamContext, cfg *config.Config, tr *tenantResolver, pm *providers.Manager, dbPool *pgxpool.Pool, gate *preferences.Gate, templateChannels map[string][]string, logg *zap.Logger) {
 	if nc == nil || js == nil {
 		logg.Warn("skipping treasury consumer: NATS not available")
 		return
@@ -295,121 +293,6 @@ func startTreasuryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStream
 		referenceType, _ := payload["reference_type"].(string)
 		if referenceType == "digitika_enrollment" {
 			logg.Debug("treasury event: digitika_enrollment handled by codevertex-website webhook, skipping", zap.String("type", eventType))
-			_ = m.Ack()
-			return
-		}
-
-		// Handle credit top-up completion: when a tenant pays for SMS/WhatsApp credits,
-		// treasury publishes payment.succeeded with reference_type=topup.
-		// Credit the tenant balance instead of sending a generic payment email.
-		if eventType == "payment.succeeded" && referenceType == "topup" && billingSvc != nil {
-			if tenantID == "" {
-				logg.Warn("treasury topup: no tenant_id, skipping", zap.String("type", eventType))
-				_ = m.Ack()
-				return
-			}
-			tid, tidErr := uuid.Parse(tenantID)
-			if tidErr != nil {
-				logg.Warn("treasury topup: invalid tenant_id", zap.String("tenant_id", tenantID), zap.Error(tidErr))
-				_ = m.Ack()
-				return
-			}
-
-			// Extract credit_type and amount from metadata
-			meta, _ := payload["metadata"].(map[string]any)
-			creditType := "SMS"
-			if meta != nil {
-				if ct, ok := meta["credit_type"].(string); ok && ct != "" {
-					creditType = ct
-				}
-			}
-
-			var amount float64
-			switch v := payload["amount"].(type) {
-			case float64:
-				amount = v
-			case string:
-				_, _ = fmt.Sscanf(v, "%f", &amount)
-			}
-
-			referenceID, _ := payload["intent_id"].(string)
-			if referenceID == "" {
-				referenceID = aggregateID
-			}
-
-			if amount > 0 {
-				if topupErr := billingSvc.TopUpCredits(ctx, tid, creditType, amount, referenceID); topupErr != nil {
-					logg.Error("treasury topup: failed to credit balance",
-						zap.String("tenant_id", tenantID),
-						zap.String("credit_type", creditType),
-						zap.Float64("amount", amount),
-						zap.Error(topupErr),
-					)
-					_ = m.Nak()
-					return
-				}
-				logg.Info("treasury topup: credits added",
-					zap.String("tenant_id", tenantID),
-					zap.String("credit_type", creditType),
-					zap.Float64("amount", amount),
-					zap.String("reference_id", referenceID),
-				)
-				// A tenant is never blocked from buying more SMS credit than the platform's own
-				// real Africa's Talking wallet currently covers — but if this purchase pushes
-				// total outstanding tenant demand past what that real wallet can fund, alert the
-				// platform owner to recharge it. Best-effort: never fails/retries the topup itself
-				// over an alert-check hiccup.
-				if creditType == "SMS" {
-					checkSMSWalletCapacityAndAlert(ctx, nc, cfg, billingSvc, pm, dbPool, logg)
-				}
-			} else {
-				logg.Warn("treasury topup: zero or missing amount in payload", zap.String("tenant_id", tenantID))
-			}
-			_ = m.Ack()
-			return
-		}
-
-		// Handle WhatsApp subscription activation payment
-		if eventType == "payment.succeeded" && referenceType == "whatsapp_subscription" && whatsappSubsSvc != nil {
-			if tenantID == "" {
-				logg.Warn("treasury whatsapp_subscription: no tenant_id, skipping")
-				_ = m.Ack()
-				return
-			}
-			tid, tidErr := uuid.Parse(tenantID)
-			if tidErr != nil {
-				logg.Warn("treasury whatsapp_subscription: invalid tenant_id", zap.String("tenant_id", tenantID))
-				_ = m.Ack()
-				return
-			}
-
-			meta, _ := payload["metadata"].(map[string]any)
-			planIDStr, _ := meta["plan_id"].(string)
-			planID, planIDErr := uuid.Parse(planIDStr)
-			if planIDErr != nil {
-				logg.Error("treasury whatsapp_subscription: invalid plan_id in metadata", zap.String("plan_id", planIDStr))
-				_ = m.Ack()
-				return
-			}
-
-			referenceID, _ := payload["intent_id"].(string)
-			if referenceID == "" {
-				referenceID = aggregateID
-			}
-
-			if activateErr := whatsappSubsSvc.ActivateSubscription(ctx, tid, planID, referenceID); activateErr != nil {
-				logg.Error("treasury whatsapp_subscription: failed to activate",
-					zap.String("tenant_id", tenantID),
-					zap.String("plan_id", planIDStr),
-					zap.Error(activateErr),
-				)
-				_ = m.Nak()
-				return
-			}
-			logg.Info("whatsapp subscription activated via treasury payment",
-				zap.String("tenant_id", tenantID),
-				zap.String("plan_id", planIDStr),
-			)
 			_ = m.Ack()
 			return
 		}
@@ -614,91 +497,3 @@ func startTreasuryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStream
 	)
 }
 
-// checkSMSWalletCapacityAndAlert compares total outstanding tenant SMS-credit demand (every
-// tenant's purchased-but-unspent balance, converted to a real SMS count at the tenant-facing
-// rate) against how many real SMS the platform's own Africa's Talking account balance can
-// currently fund (at the real provider cost). A tenant purchase is NEVER blocked by this — it
-// only decides whether to alert the platform owner that the real wallet needs recharging to
-// cover what's now been sold. Best-effort throughout: every failure just skips the alert
-// silently rather than risking any impact on the topup that already succeeded.
-func checkSMSWalletCapacityAndAlert(ctx context.Context, nc *nats.Conn, cfg *config.Config, billingSvc *billing.Service, pm *providers.Manager, dbPool *pgxpool.Pool, logg *zap.Logger) {
-	smsProv, err := pm.GetSMSProvider(ctx, pm.PlatformID, "")
-	if err != nil {
-		logg.Debug("sms wallet capacity check: no sms provider resolved, skipping", zap.Error(err))
-		return
-	}
-	balProv, ok := smsProv.(interface{ GetBalance(context.Context) (float64, error) })
-	if !ok {
-		return // active provider has no real-balance concept (e.g. Twilio) — nothing to compare
-	}
-	realBalance, err := balProv.GetBalance(ctx)
-	if err != nil {
-		logg.Warn("sms wallet capacity check: real balance lookup failed, skipping", zap.Error(err))
-		return
-	}
-
-	providerCost := billingSvc.PlatformProviderCost(ctx, "SMS")
-	tenantRate := billingSvc.PlatformCostPerSms(ctx)
-	if providerCost <= 0 || tenantRate <= 0 {
-		return
-	}
-
-	outstandingKES, err := billingSvc.TotalOutstandingBalance(ctx, "SMS")
-	if err != nil {
-		logg.Warn("sms wallet capacity check: outstanding balance query failed, skipping", zap.Error(err))
-		return
-	}
-
-	outstandingSMSCount := outstandingKES / tenantRate
-	supportableSMSCount := realBalance / providerCost
-	if outstandingSMSCount <= supportableSMSCount {
-		return // real wallet still covers everything already sold — nothing to alert
-	}
-
-	shortfallSMS := outstandingSMSCount - supportableSMSCount
-	shortfallKES := shortfallSMS * providerCost
-
-	ccEmail := platformCCEmail(ctx, dbPool)
-	if ccEmail == "" {
-		logg.Warn("sms wallet capacity shortfall detected but no platform alert email configured",
-			zap.Float64("outstanding_sms", outstandingSMSCount), zap.Float64("supportable_sms", supportableSMSCount))
-		return
-	}
-
-	msg := messaging.Message{
-		TenantID:    pm.PlatformID,
-		Channel:     "email",
-		TemplateID:  "shared/generic_notification",
-		SenderScope: messaging.SenderScopePlatform,
-		Target:      messaging.TargetPlatformAdmin,
-		To:          []string{ccEmail},
-		Data: map[string]any{
-			"name":  "Platform Owner",
-			"title": "Africa's Talking wallet needs recharging",
-			"message": fmt.Sprintf(
-				"Tenants have now purchased more SMS credit than the platform's real Africa's Talking account balance can currently fund.",
-			),
-			"details": fmt.Sprintf(
-				"Real AT balance: KES %.2f (supports ~%.0f SMS at KES %.2f/SMS)<br>"+
-					"Outstanding tenant-purchased credit: KES %.2f (~%.0f SMS owed at KES %.2f/SMS)<br>"+
-					"Shortfall: ~%.0f SMS (recharge the AT wallet by at least KES %.2f to cover it)",
-				realBalance, supportableSMSCount, providerCost,
-				outstandingKES, outstandingSMSCount, tenantRate,
-				shortfallSMS, shortfallKES,
-			),
-		},
-		Metadata:       map[string]any{"subject": "Action needed: recharge Africa's Talking SMS wallet"},
-		RequestID:      uuid.New().String(),
-		IdempotencyKey: fmt.Sprintf("sms-wallet-shortfall-%s", time.Now().Format("2006-01-02T15")), // at most once/hour
-		QueuedAt:       time.Now(),
-	}
-	if _, err := messaging.Publish(ctx, nc, cfg.Events, msg); err != nil {
-		logg.Warn("sms wallet capacity alert: failed to publish", zap.Error(err))
-		return
-	}
-	logg.Info("sms wallet capacity shortfall alert sent",
-		zap.Float64("outstanding_sms", outstandingSMSCount),
-		zap.Float64("supportable_sms", supportableSMSCount),
-		zap.Float64("shortfall_kes", shortfallKES),
-	)
-}

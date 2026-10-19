@@ -21,7 +21,7 @@ import (
 	"github.com/bengobox/notifications-api/internal/modules/tenant"
 )
 
-func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handlers.NotificationHandler, templates *handlers.TemplateHandler, platformProviders *handlers.PlatformProviders, tenantProviders *handlers.TenantProviders, analytics *handlers.AnalyticsHandler, billing *handlers.BillingHandler, platformBilling *handlers.PlatformBilling, settings *handlers.SettingsHandler, rbacHandler *handlers.RBACHandler, authMeHandler *handlers.AuthMeHandler, deviceTokens *handlers.DeviceTokenHandler, apiKey string, authMiddleware *authclient.AuthMiddleware, authenticator *identityhandler.Authenticator, allowedOrigins []string, tenantSyncer *tenant.Syncer, rateLimiter *ratelimit.Quota, serviceConfig *handlers.ServiceConfigHandler, whatsappSubs *handlers.WhatsAppSubscriptionHandler, encryptionKey *handlers.EncryptionKeyHandler, notificationPrefs *handlers.PreferencesHandler, developerKeyAuth *devauth.DeveloperKeyAuth, swaggerHandler *handlers.SwaggerHandler, webhooks *handlers.WebhookHandler, whatsappEmbeddedSignup *handlers.WhatsAppEmbeddedSignupHandler, whatsappTemplates *handlers.WhatsAppTemplates, whatsappInbox *handlers.WhatsAppInboxHandler, announcementsH *handlers.AnnouncementHandler, broadcastsH *handlers.BroadcastHandler, tenantExport http.Handler) http.Handler {
+func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handlers.NotificationHandler, templates *handlers.TemplateHandler, platformProviders *handlers.PlatformProviders, tenantProviders *handlers.TenantProviders, analytics *handlers.AnalyticsHandler, settings *handlers.SettingsHandler, rbacHandler *handlers.RBACHandler, authMeHandler *handlers.AuthMeHandler, deviceTokens *handlers.DeviceTokenHandler, apiKey string, authMiddleware *authclient.AuthMiddleware, authenticator *identityhandler.Authenticator, allowedOrigins []string, tenantSyncer *tenant.Syncer, rateLimiter *ratelimit.Quota, serviceConfig *handlers.ServiceConfigHandler, encryptionKey *handlers.EncryptionKeyHandler, notificationPrefs *handlers.PreferencesHandler, developerKeyAuth *devauth.DeveloperKeyAuth, swaggerHandler *handlers.SwaggerHandler, webhooks *handlers.WebhookHandler, whatsappEmbeddedSignup *handlers.WhatsAppEmbeddedSignupHandler, whatsappTemplates *handlers.WhatsAppTemplates, whatsappInbox *handlers.WhatsAppInboxHandler, announcementsH *handlers.AnnouncementHandler, broadcastsH *handlers.BroadcastHandler, tenantExport http.Handler) http.Handler {
 	r := chi.NewRouter()
 
 	// Client IP from the edge's trusted header only (chi's RealIP trusts any forwarded header).
@@ -142,11 +142,6 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 			api.Get("/s2s/tenant-export", tenantExport.ServeHTTP)
 		}
 
-		// WhatsApp plans — public, no auth needed (pricing discovery)
-		if whatsappSubs != nil {
-			api.Get("/billing/whatsapp/plans", whatsappSubs.ListPlans)
-		}
-
 		// Protected routes - require authentication
 		// NOTE: Notifications is a core service included in all subscription plans for free.
 		// No RequireActiveSubscription — subscription enforcement is NOT applied.
@@ -210,18 +205,6 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 				if encryptionKey != nil {
 					encryptionKey.RegisterPlatformRoutes(platform)
 				}
-				platform.Route("/billing", func(pb chi.Router) {
-					if authenticator != nil {
-						pb.Use(authenticator.RequirePermissions(identity.PermPlatformBilling))
-					}
-					pb.Get("/", platformBilling.GetSettings)
-					pb.Post("/", platformBilling.UpdateSettings)
-					pb.Get("/margin", platformBilling.GetMargin)
-					if whatsappSubs != nil {
-						pb.Get("/whatsapp/subscriptions", whatsappSubs.ListAllSubscriptions)
-						pb.Post("/whatsapp/subscriptions/{tenantId}/record-payment", whatsappSubs.RecordPayment)
-					}
-				})
 			})
 
 			// Base group for tenant-scoped operations
@@ -323,47 +306,16 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 				// Tenant provider selection
 				tenantProviders.RegisterTenantProviderRoutes(tenantRouter)
 
-				// Billing routes
-				tenantRouter.Route("/billing", func(b chi.Router) {
-					b.Group(func(read chi.Router) {
+				// WhatsApp Business account connection. Balances, plans and purchases are owned by
+				// subscriptions-api (GET /credits, POST /credits/{service}/purchase there).
+				if whatsappEmbeddedSignup != nil {
+					tenantRouter.Route("/billing/whatsapp", func(wa chi.Router) {
 						if authenticator != nil {
-							read.Use(authenticator.RequirePermissions(identity.PermBillingRead))
+							wa.Use(authenticator.RequirePermissions(identity.PermBillingManage))
 						}
-						read.Get("/balance", billing.GetBalance)
-						read.Get("/transactions", billing.GetTransactions)
+						wa.Post("/embedded-signup/complete", whatsappEmbeddedSignup.Complete)
 					})
-					b.Group(func(write chi.Router) {
-						if authenticator != nil {
-							write.Use(authenticator.RequirePermissions(identity.PermBillingManage))
-						}
-						write.Post("/topup", billing.TopUp)
-						write.Post("/initiate", billing.Initiate)
-					})
-
-					// WhatsApp subscription routes (under /billing/whatsapp)
-					if whatsappSubs != nil {
-						b.Route("/whatsapp", func(wa chi.Router) {
-							// Public plan listing (no auth required inside the protected group context)
-							wa.Get("/plans", whatsappSubs.ListPlans)
-							wa.Group(func(read chi.Router) {
-								if authenticator != nil {
-									read.Use(authenticator.RequirePermissions(identity.PermBillingRead))
-								}
-								read.Get("/subscription", whatsappSubs.GetSubscription)
-							})
-							wa.Group(func(write chi.Router) {
-								if authenticator != nil {
-									write.Use(authenticator.RequirePermissions(identity.PermBillingManage))
-								}
-								write.Post("/subscribe", whatsappSubs.Subscribe)
-								write.Post("/cancel", whatsappSubs.Cancel)
-								if whatsappEmbeddedSignup != nil {
-									write.Post("/embedded-signup/complete", whatsappEmbeddedSignup.Complete)
-								}
-							})
-						})
-					}
-				})
+				}
 
 				// Settings routes
 				tenantRouter.Route("/settings", func(s chi.Router) {

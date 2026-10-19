@@ -1,20 +1,9 @@
-package billing
+package credits
 
-import (
-)
-
-// SegmentService provides utilities for counting message segments for billing.
-type SegmentService struct{}
-
-// NewSegmentService creates a new SegmentService.
-func NewSegmentService() *SegmentService {
-	return &SegmentService{}
-}
-
-// CountSMSSegments calculates the number of billable segments for an SMS body.
+// SMSSegments calculates the number of billable segments for an SMS body.
 // GSM-7: 160 chars for single segment, 153 for multi-segment (UDH).
 // Unicode (UCS-2): 70 chars for single segment, 67 for multi-segment (UDH).
-func (s *SegmentService) CountSMSSegments(body string) int {
+func SMSSegments(body string) int {
 	if body == "" {
 		return 0
 	}

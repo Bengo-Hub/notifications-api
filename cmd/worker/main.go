@@ -43,8 +43,8 @@ import (
 	"github.com/bengobox/notifications-api/internal/providers/push"
 	"github.com/bengobox/notifications-api/internal/shared/logger"
 
-	"github.com/bengobox/notifications-api/internal/modules/billing"
 	"github.com/bengobox/notifications-api/internal/modules/broadcasts"
+	"github.com/bengobox/notifications-api/internal/modules/credits"
 	"github.com/bengobox/notifications-api/internal/modules/occasions"
 	"github.com/bengobox/notifications-api/internal/modules/preferences"
 	"github.com/bengobox/notifications-api/internal/modules/suppression"
@@ -208,12 +208,9 @@ func main() {
 	// entrypoint — NOT here. Running Schema.Create through the runtime (pgbouncer transaction-pooled)
 	// connection is unsafe + redundant, so the worker no longer auto-migrates.
 
-	// Initialize Treasury Client for top-up monitoring
-	treasuryCfg := serviceclient.DefaultConfig(cfg.Services.TreasuryAPI, "treasury-api", logg)
-	treasuryClient := serviceclient.New(treasuryCfg)
-
-	billingSvc := billing.NewService(client, logg, treasuryClient, cfg.Security.APIKey)
-	whatsappSubsSvc := billing.NewWhatsAppSubscriptionService(client, logg, treasuryClient, cfg.Security.APIKey)
+	// SMS and WhatsApp balances, plans and overage are owned by subscriptions-api; the worker only
+	// charges each send against it.
+	creditsClient := credits.New(serviceclient.New(serviceclient.DefaultConfig(cfg.Services.SubscriptionsAPI, "subscriptions-api", logg)), cfg.Security.APIKey)
 	dbPool, err := database.NewPool(ctx, cfg.Postgres)
 	if err != nil {
 		logg.Warn("postgres not available for provider overrides", zap.Error(err))
@@ -231,21 +228,6 @@ func main() {
 		logg.Warn("failed to sync platform owner, using fallback", zap.Error(err))
 	}
 	platformIDStr := platformID.String()
-	whatsappExemptTenantIDs[platformIDStr] = true
-
-	// codevertex-demo is the platform's own public demo/showcase tenant -- at the user's
-	// explicit request, it is exempted from the WhatsApp paid-subscription gate the same
-	// way the platform tenant itself is (see the "whatsapp" case in deliver()), so demo
-	// order-workflow notifications reach real channels without requiring a purchased plan.
-	// This is a deliberate, narrow carve-out for this one named tenant, not a general
-	// "any tenant can skip billing" mechanism -- every other tenant still needs a real
-	// active subscription. Best-effort: a sync failure here just means the demo tenant
-	// falls back to the normal (gated) behavior rather than blocking worker startup.
-	if demoID, derr := tenantSyncer.SyncTenant(ctx, "codevertex-demo"); derr == nil {
-		whatsappExemptTenantIDs[demoID.String()] = true
-	} else {
-		logg.Warn("failed to sync codevertex-demo tenant for WhatsApp exemption", zap.Error(derr))
-	}
 
 	// Resolve the provider-credential decryption key DB-first (platform-owner-configurable
 	// ServiceConfig encryption_key, tenant_id IS NULL) with env fallback.
@@ -317,7 +299,13 @@ func main() {
 		}
 
 		// Deliver via provider
-		deliverErr := deliver(ctx, cfg, pm, emailGuardian, billingSvc, whatsappSubsSvc, tr, dbPool, nilIfTyped(redisClient), &msg, rendered, logg)
+		// Charge key: the stream sequence is stable per message and the attempt number separates a
+		// retry (whose earlier attempt was refunded) from a redelivery of the same attempt.
+		chargeKey := "n" + uuid.NewString()
+		if meta != nil {
+			chargeKey = fmt.Sprintf("n%d:a%d", meta.Sequence.Stream, attempt)
+		}
+		deliverErr := deliver(ctx, cfg, pm, emailGuardian, creditsClient, tr, dbPool, nilIfTyped(redisClient), &msg, rendered, chargeKey, logg)
 		if errors.Is(deliverErr, errSkippedNoSend) {
 			// Deliberately not sent (no valid/verified recipient, no SMS credit, no WhatsApp
 			// subscription/quota, etc.) — deliver() already logged the specific reason. Ack so
@@ -415,7 +403,7 @@ func main() {
 
 	// Start subscription lifecycle event consumer (subscriptions-service → tenant admin
 	// notifications, and custom-addon fulfillment for SMS credits / WhatsApp plans)
-	startSubscriptionConsumer(ctx, nc, js, cfg, tr, billingSvc, whatsappSubsSvc, logg)
+	startSubscriptionConsumer(ctx, nc, js, cfg, tr, logg)
 
 	// Start auth notification consumer (auth-service → welcome emails, plain NATS)
 	startAuthNotificationConsumer(ctx, nc, cfg, tr, logg)
@@ -425,7 +413,7 @@ func main() {
 	startResellerApplicationNotificationConsumer(ctx, nc, cfg, logg)
 
 	// Start treasury event consumer (treasury-service → payment/invoice notifications + credit top-ups)
-	startTreasuryConsumer(ctx, nc, js, cfg, tr, billingSvc, whatsappSubsSvc, pm, dbPool, prefGate, templateChannels, logg)
+	startTreasuryConsumer(ctx, nc, js, cfg, tr, pm, dbPool, prefGate, templateChannels, logg)
 
 	// Start delivery task event consumer (logistics-service → delivery status notifications)
 	startDeliveryConsumer(ctx, nc, js, cfg, tr, client, logg)
@@ -670,12 +658,7 @@ func (e skipError) Is(target error) bool { return target == errSkippedNoSend }
 // skipped reports a deliberate no-send with its reason.
 func skipped(reason string) error { return skipError{reason: reason} }
 
-// whatsappExemptTenantIDs holds tenant IDs (as strings) exempt from the per-tenant WhatsApp
-// subscription gate in deliver()'s "whatsapp" case -- the real platform tenant plus
-// codevertex-demo (the platform's own public demo tenant), populated once at startup.
-var whatsappExemptTenantIDs = map[string]bool{}
-
-func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg *emailGuard, billingSvc *billing.Service, whatsappSubsSvc *billing.WhatsAppSubscriptionService, tr *tenantResolver, dbPool *pgxpool.Pool, rdb redis.UniversalClient, msg *messaging.Message, rendered string, logg *zap.Logger) error {
+func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg *emailGuard, cc *credits.Client, tr *tenantResolver, dbPool *pgxpool.Pool, rdb redis.UniversalClient, msg *messaging.Message, rendered, chargeKey string, logg *zap.Logger) (retErr error) {
 	channel := strings.ToLower(msg.Channel)
 	preferred := ""
 	if p, ok := msg.Metadata["provider"].(string); ok {
@@ -686,12 +669,14 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 	// provider_settings rows are keyed by the notifications-api internal UUID, so
 	// resolve slug → UUID before any provider or billing lookup.
 	resolvedTenantID := msg.TenantID
+	tenantResolved := true
 	tenantID, parseErr := uuid.Parse(msg.TenantID)
 	if parseErr != nil {
 		if t, err := tr.resolve(ctx, msg.TenantID); err == nil {
 			resolvedTenantID = t.ID.String()
 			tenantID = t.ID
 		} else {
+			tenantResolved = false
 			logg.Warn("tenant resolve failed for provider lookup, using raw tenant id",
 				zap.String("tenant_id", msg.TenantID), zap.Error(err))
 		}
@@ -870,84 +855,56 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 			return nil
 		}
 
-		// Tenant-scope sends (everything else — the overwhelming majority): every tenant must
-		// have purchased SMS credit, billed in KES via PlatformBilling.CostPerSms, REGARDLESS of
-		// whether their send ends up using their own configured provider or silently falls back
-		// to the platform's shared credentials (the gate below is keyed purely on tenantID, before
-		// provider resolution, so the fallback case is charged identically — never send for free).
-		// FAIL-CLOSED: never send SMS unless we can positively confirm the tenant has credit. A
-		// missing credit account returns balance 0 (-> skip); a balance-check error also skips (we
-		// must not send uncharged). Skip+ack rather than error so the single-attempt worker
-		// doesn't noisily dead-letter; the tenant must top up.
-		balance, balErr := billingSvc.GetBalance(ctx, tenantID, "SMS")
-		if balErr != nil {
-			logg.Warn("sms send skipped: credit balance check failed (fail-closed)",
-				zap.String("tenant_id", tenantID.String()),
-				zap.String("template", msg.TemplateID),
-				zap.Error(balErr),
-			)
-			return skipped("SMS credit balance could not be checked")
+		// Tenant-scope sends (everything else): the sender must hold an active subscription with
+		// SMS activated, and every segment to every recipient is charged against its bundles and
+		// then at KES 1 as overage, whether the send uses the tenant's own provider or falls back to
+		// the platform's. The charge happens before the send and is refunded if the provider
+		// rejects it, so a failed send is never billed and an unverifiable one is never free.
+		if !tenantResolved || tenantID == uuid.Nil {
+			return skipped("the sender could not be identified for SMS billing")
 		}
-		if balance <= 0 {
-			logg.Warn("sms send skipped: insufficient credits",
-				zap.String("tenant_id", tenantID.String()),
-				zap.String("template", msg.TemplateID),
-				zap.Float64("balance", balance),
-			)
-			return skipped("the sender has no SMS credit")
+		units := int64(credits.SMSSegments(rendered)) * int64(len(msg.To))
+		dec, cerr := cc.Consume(ctx, tenantID, credits.ServiceSMS, units, chargeKey, "SMS: "+msg.TemplateID, false)
+		if cerr != nil {
+			logg.Warn("sms send held: credit check failed (fail-closed)", zap.String("tenant_id", tenantID.String()), zap.Error(cerr))
+			return cerr
 		}
+		if !dec.Allowed {
+			logg.Warn("sms send skipped by credit check", zap.String("tenant_id", tenantID.String()),
+				zap.String("template", msg.TemplateID), zap.String("reason", dec.Reason))
+			return skipped(credits.RefusalMessage(credits.ServiceSMS, dec.Reason))
+		}
+		defer refundOnFailure(ctx, cc, logg, &retErr, dec, tenantID, credits.ServiceSMS, chargeKey)
 
 		if err := smsProv.SendSMS(ctx, cfg.Providers.DefaultSMSSender, msg.To, rendered); err != nil {
 			return err
 		}
-		// Deduct credits only after a successful send (segments × recipients).
-		if err := billingSvc.DeductSMSCredits(ctx, tenantID, rendered, len(msg.To), "SMS Delivery"); err != nil {
-			logg.Warn("sms sent but credit deduction failed", zap.String("tenant_id", tenantID.String()), zap.Error(err))
-		}
-		logg.Info("sms sent", zap.String("provider", smsProv.Name()), maskedTo(msg))
+		logg.Info("sms sent", zap.String("provider", smsProv.Name()), maskedTo(msg),
+			zap.Int64("units", units), zap.Int64("overage_units", dec.Overage))
 		return nil
 
 	case "whatsapp":
-		// The platform tenant (codevertex itself) is explicitly exempt from needing a purchased
-		// WhatsApp subscription — every OTHER tenant must have one, active, to send at all. The
-		// platform sends against its own real Meta WhatsApp Business Account directly; there's no
-		// "subscription" to buy from itself, and no separate per-message credit charge either
-		// (mirrors the SMS platform-scope precedent: real-provider-billed, not tenant-wallet-billed).
-		// codevertex-demo carries the same exemption (see whatsappExemptTenantIDs) as a deliberate,
-		// narrow carve-out for the platform's own demo tenant -- every other tenant is unaffected.
-		isPlatformTenant := whatsappExemptTenantIDs[tenantID.String()]
-		// A platform-scope send (the platform billing a tenant: invoices, payment reminders) goes
-		// out on the platform's own Meta account, never the tenant's, so the tenant's WhatsApp plan
-		// and quota do not apply; same as platform-scope SMS. Only internal producers set this
-		// scope (the HTTP send API never does).
-		if !isPlatformTenant && msg.EffectiveSenderScope() != messaging.SenderScopePlatform {
-			// Pre-send subscription/quota gate (applies to BOTH HTTP-enqueued and event-sourced
-			// sends). Skip+ack when the tenant has no active WhatsApp subscription or has
-			// exhausted its quota. CheckQuota also increments the monthly message counter on
-			// success. FAIL-CLOSED: never send WhatsApp without an active subscription/quota. If
-			// the subscription service isn't wired, skip rather than send unmetered.
-			if whatsappSubsSvc == nil {
-				logg.Warn("whatsapp send skipped: subscription service unavailable (fail-closed)",
-					zap.String("tenant_id", tenantID.String()), zap.String("template", msg.TemplateID))
-				return skipped("WhatsApp subscription service unavailable")
+		// Every tenant needs an active subscription with WhatsApp activated; the platform tenant, the
+		// demo tenant and exempt tenants are answered as exempt by subscriptions-api. A platform-scope
+		// send (invoices and reminders the platform sends a tenant) goes out on the platform's own
+		// account and is never charged to the tenant. Each message is one unit per recipient, spent
+		// from the plan allowance, then bundles, then KES 1 overage, and refunded if the send fails.
+		if msg.EffectiveSenderScope() != messaging.SenderScopePlatform {
+			if !tenantResolved || tenantID == uuid.Nil {
+				return skipped("the sender could not be identified for WhatsApp billing")
 			}
-			// The WhatsAppPlan subscription (checked above) is the ONE, centralized billing
-			// mechanism for WhatsApp — a monthly fee for a bundled message quota, matching how
-			// this platform's plan pricing is actually set (see docs/sprints/notifications-billing-
-			// sprint.md). There used to ALSO be a per-message TenantCredit/PlatformBilling
-			// deduction here (billingSvc.DeductWhatsAppCredits) — a second, independent charge a
-			// tenant would need to separately fund on top of their subscription, which nothing
-			// ever surfaced as a real product (no tenant has ever had a WHATSAPP-type TenantCredit
-			// balance) and which the platform tenant's exemption above would have made
-			// inconsistent to reason about. Removed rather than left redundant.
-			if quotaErr := whatsappSubsSvc.CheckQuota(ctx, tenantID); quotaErr != nil {
-				logg.Warn("whatsapp send skipped: no active subscription/quota",
-					zap.String("tenant_id", tenantID.String()),
-					zap.String("template", msg.TemplateID),
-					zap.Error(quotaErr),
-				)
-				return skipped("the sender has no active WhatsApp plan or its monthly quota is used up")
+			units := int64(max(len(msg.To), 1))
+			dec, cerr := cc.Consume(ctx, tenantID, credits.ServiceWhatsApp, units, chargeKey, "WhatsApp: "+msg.TemplateID, false)
+			if cerr != nil {
+				logg.Warn("whatsapp send held: credit check failed (fail-closed)", zap.String("tenant_id", tenantID.String()), zap.Error(cerr))
+				return cerr
 			}
+			if !dec.Allowed {
+				logg.Warn("whatsapp send skipped by credit check", zap.String("tenant_id", tenantID.String()),
+					zap.String("template", msg.TemplateID), zap.String("reason", dec.Reason))
+				return skipped(credits.RefusalMessage(credits.ServiceWhatsApp, dec.Reason))
+			}
+			defer refundOnFailure(ctx, cc, logg, &retErr, dec, tenantID, credits.ServiceWhatsApp, chargeKey)
 		}
 
 		waProv, err := pm.GetWhatsAppProvider(ctx, providerTenantID, preferred)
@@ -1040,4 +997,18 @@ func nilIfTyped(c *redis.Client) redis.UniversalClient {
 		return nil
 	}
 	return c
+}
+
+// refundOnFailure returns the units charged for a send when it ends in a real failure. A skip is
+// not a failure: the charge is made right before sending, so nothing is held for those.
+func refundOnFailure(ctx context.Context, cc *credits.Client, logg *zap.Logger, retErr *error, dec credits.Decision, tenantID uuid.UUID, service, chargeKey string) {
+	if !dec.Charged() || *retErr == nil || errors.Is(*retErr, errSkippedNoSend) {
+		return
+	}
+	rctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 10*time.Second)
+	defer cancel()
+	if err := cc.Refund(rctx, tenantID, service, chargeKey); err != nil {
+		logg.Error("credit refund after failed send did not go through; support must reconcile",
+			zap.String("tenant_id", tenantID.String()), zap.String("service", service), zap.String("key", chargeKey), zap.Error(err))
+	}
 }

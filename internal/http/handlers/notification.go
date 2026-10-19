@@ -24,9 +24,10 @@ import (
 
 	"github.com/bengobox/notifications-api/internal/config"
 	"github.com/bengobox/notifications-api/internal/ent"
+	enttenant "github.com/bengobox/notifications-api/internal/ent/tenant"
 	devauth "github.com/bengobox/notifications-api/internal/http/middleware"
 	"github.com/bengobox/notifications-api/internal/messaging"
-	"github.com/bengobox/notifications-api/internal/modules/billing"
+	"github.com/bengobox/notifications-api/internal/modules/credits"
 	"github.com/bengobox/notifications-api/internal/sandbox"
 )
 
@@ -38,8 +39,7 @@ type NotificationHandler struct {
 	entClient      *ent.Client
 	rateLimiter    *ratelimit.Quota
 	upgradeURL     string
-	billingSvc     *billing.Service
-	whatsappSubSvc *billing.WhatsAppSubscriptionService
+	credits        *credits.Client
 	sandboxStore   *sandbox.Store
 	platformID     string
 }
@@ -85,7 +85,7 @@ func decodeAttachments(in []MessageAttachmentRequest) []messaging.Attachment {
 	return out
 }
 
-func NewNotificationHandler(log *zap.Logger, natsConn *nats.Conn, cache *redis.Client, eventsCfg config.EventsConfig, entClient *ent.Client, upgradeURL string, billingSvc *billing.Service, whatsappSubSvc *billing.WhatsAppSubscriptionService, platformID string) *NotificationHandler {
+func NewNotificationHandler(log *zap.Logger, natsConn *nats.Conn, cache *redis.Client, eventsCfg config.EventsConfig, entClient *ent.Client, upgradeURL string, creditsClient *credits.Client, platformID string) *NotificationHandler {
 	var rl *ratelimit.Quota
 	if cache != nil {
 		rl = ratelimit.NewQuota(cache)
@@ -98,8 +98,7 @@ func NewNotificationHandler(log *zap.Logger, natsConn *nats.Conn, cache *redis.C
 		entClient:      entClient,
 		rateLimiter:    rl,
 		upgradeURL:     upgradeURL,
-		billingSvc:     billingSvc,
-		whatsappSubSvc: whatsappSubSvc,
+		credits:        creditsClient,
 		platformID:     platformID,
 	}
 }
@@ -283,52 +282,11 @@ func (h *NotificationHandler) Enqueue(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Pre-send credit guard for SMS — reject if balance is insufficient.
-	if h.billingSvc != nil && req.Channel == "sms" {
-		if tid, err := uuid.Parse(tenant); err == nil {
-			balance, balErr := h.billingSvc.GetBalance(r.Context(), tid, "SMS")
-			if balErr != nil {
-				h.log.Warn("sms credit balance check failed", zap.Error(balErr), zap.String("tenant", tenant))
-			} else if balance <= 0 {
-				w.Header().Set("Content-Type", "application/json")
-				w.WriteHeader(http.StatusPaymentRequired)
-				json.NewEncoder(w).Encode(map[string]any{
-					"error":     "insufficient_credits",
-					"type":      "SMS",
-					"balance":   balance,
-					"message":   "Insufficient SMS credits. Top up your balance to continue sending.",
-					"topup_url": h.upgradeURL,
-				})
-				return
-			}
-		}
-	}
-
-	// Pre-send WhatsApp guard — tenant must have active subscription + quota remaining. The
-	// platform tenant itself is exempt (see cmd/worker's identical exemption for the real gate);
-	// this is just the early synchronous pre-check for HTTP-enqueued sends.
-	if req.Channel == "whatsapp" && tenant != h.platformID {
-		if tid, err := uuid.Parse(tenant); err == nil {
-			if h.whatsappSubSvc != nil {
-				// Read-only pre-check for the synchronous 402 response. The actual quota counter
-				// increment happens once on the delivery path (worker CheckQuota) — using the
-				// mutating CheckQuota here too would double-count this single message.
-				if quotaErr := h.whatsappSubSvc.VerifyQuota(r.Context(), tid); quotaErr != nil {
-					w.Header().Set("Content-Type", "application/json")
-					w.WriteHeader(http.StatusPaymentRequired)
-					errCode := "no_active_subscription"
-					if len(quotaErr.Error()) > 15 && quotaErr.Error()[:15] == "quota_exhausted" {
-						errCode = "quota_exhausted"
-					}
-					json.NewEncoder(w).Encode(map[string]any{
-						"error":     errCode,
-						"message":   quotaErr.Error(),
-						"topup_url": h.upgradeURL,
-					})
-					return
-				}
-			}
-		}
+	// Pre-send credit guard: SMS and WhatsApp need an active subscription with the channel
+	// activated and units, bundles or room for overage. This only answers early with a 402; the
+	// worker's charge is the real decision, so a check that cannot run never blocks a send.
+	if (req.Channel == "sms" || req.Channel == "whatsapp") && h.refuseForCredits(w, r, tenant, req.Channel, len(req.To)) {
+		return
 	}
 
 	msg := messaging.Message{
@@ -420,6 +378,47 @@ func (h *NotificationHandler) enqueueSandbox(w http.ResponseWriter, r *http.Requ
 	json.NewEncoder(w).Encode(enqueueResponse{Status: "queued", RequestID: requestID})
 }
 
+// refuseForCredits writes a 402 and returns true when subscriptions-api says the send would be
+// refused. Unknown tenants and a failing check let the send through to the worker.
+func (h *NotificationHandler) refuseForCredits(w http.ResponseWriter, r *http.Request, tenant, channel string, recipients int) bool {
+	if h.credits == nil {
+		return false
+	}
+	tid, ok := h.tenantUUID(r.Context(), tenant)
+	if !ok {
+		return false
+	}
+	dec, err := h.credits.Check(r.Context(), tid, channel, int64(max(recipients, 1)), false)
+	if err != nil {
+		h.log.Warn("credit pre-check failed, leaving the decision to the worker", zap.Error(err), zap.String("tenant", tenant))
+		return false
+	}
+	if dec.Allowed {
+		return false
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusPaymentRequired)
+	json.NewEncoder(w).Encode(map[string]any{
+		"error":     dec.Reason,
+		"channel":   channel,
+		"message":   credits.RefusalMessage(channel, dec.Reason),
+		"topup_url": h.upgradeURL,
+	})
+	return true
+}
+
+// tenantUUID resolves a tenant reference that may be a UUID or a slug.
+func (h *NotificationHandler) tenantUUID(ctx context.Context, ref string) (uuid.UUID, bool) {
+	if id, err := uuid.Parse(ref); err == nil {
+		return id, true
+	}
+	t, err := h.entClient.Tenant.Query().Where(enttenant.SlugEQ(ref)).Only(ctx)
+	if err != nil {
+		return uuid.Nil, false
+	}
+	return t.ID, true
+}
+
 // publishUsageEvent publishes a notifications.<channel>.sent event to NATS for subscriptions-api
 // usage tracking. Non-fatal — errors are logged and ignored.
 func (h *NotificationHandler) publishUsageEvent(ctx context.Context, tenant, channel string) {
@@ -430,10 +429,6 @@ func (h *NotificationHandler) publishUsageEvent(ctx context.Context, tenant, cha
 	switch channel {
 	case "email":
 		subject = "notifications.email.sent"
-	case "sms":
-		subject = "notifications.sms.sent"
-	case "push":
-		subject = "notifications.push.sent"
 	default:
 		return
 	}

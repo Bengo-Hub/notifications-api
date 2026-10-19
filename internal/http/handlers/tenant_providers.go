@@ -13,7 +13,7 @@ import (
 	"github.com/bengobox/notifications-api/internal/ent"
 	"github.com/bengobox/notifications-api/internal/ent/providersetting"
 	"github.com/bengobox/notifications-api/internal/ent/tenant"
-	"github.com/bengobox/notifications-api/internal/modules/billing"
+	"github.com/bengobox/notifications-api/internal/modules/credits"
 	"github.com/bengobox/notifications-api/internal/providers"
 )
 
@@ -24,15 +24,15 @@ type TenantProviders struct {
 	PlatformID     string
 	keyProvider    *encryption.KeyProvider
 	manager        *providers.Manager
-	whatsappSubSvc *billing.WhatsAppSubscriptionService
+	credits        *credits.Client
 }
 
 // NewTenantProviders creates a new TenantProviders handler.
 // keyProvider resolves the provider-credential encryption key (DB-first, env fallback);
 // when a key is available, secret values are encrypted at rest. manager is optional, used
 // for the test-connection endpoint (mirrors PlatformProviders.TestProvider, tenant-scoped).
-func NewTenantProviders(client *ent.Client, logger *zap.Logger, platformID string, keyProvider *encryption.KeyProvider, manager *providers.Manager, whatsappSubSvc *billing.WhatsAppSubscriptionService) *TenantProviders {
-	return &TenantProviders{client: client, logger: logger, PlatformID: platformID, keyProvider: keyProvider, manager: manager, whatsappSubSvc: whatsappSubSvc}
+func NewTenantProviders(client *ent.Client, logger *zap.Logger, platformID string, keyProvider *encryption.KeyProvider, manager *providers.Manager, creditsClient *credits.Client) *TenantProviders {
+	return &TenantProviders{client: client, logger: logger, PlatformID: platformID, keyProvider: keyProvider, manager: manager, credits: creditsClient}
 }
 
 type availableProviderResponse struct {
@@ -470,18 +470,24 @@ func (h *TenantProviders) TestProvider(w http.ResponseWriter, r *http.Request) {
 	// button can't be used to send WhatsApp messages without an active subscription. The
 	// account-info-only check (to == "") doesn't send anything, so it's exempt.
 	if req.ProviderType == "whatsapp" && req.To != "" && tenantID != h.PlatformID {
-		if h.whatsappSubSvc == nil {
+		tid, ok := tenantUUID(r)
+		if !ok || h.credits == nil {
 			jsonResponse(w, http.StatusBadRequest, map[string]any{
 				"success": false,
-				"error":   "whatsapp subscription service unavailable",
+				"error":   "whatsapp billing is unavailable",
 				"message": "test connection failed",
 			})
 			return
 		}
-		if quotaErr := h.whatsappSubSvc.VerifyQuota(ctx, parseUUID(tenantID)); quotaErr != nil {
+		dec, cerr := h.credits.Check(ctx, tid, credits.ServiceWhatsApp, 1, false)
+		if cerr != nil || !dec.Allowed {
+			reason := "whatsapp billing could not be checked"
+			if cerr == nil {
+				reason = credits.RefusalMessage(credits.ServiceWhatsApp, dec.Reason)
+			}
 			jsonResponse(w, http.StatusBadRequest, map[string]any{
 				"success": false,
-				"error":   quotaErr.Error(),
+				"error":   reason,
 				"message": "test connection failed",
 			})
 			return

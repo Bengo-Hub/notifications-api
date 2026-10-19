@@ -32,7 +32,7 @@ import (
 	devauth "github.com/bengobox/notifications-api/internal/http/middleware"
 	router "github.com/bengobox/notifications-api/internal/http/router"
 	"github.com/bengobox/notifications-api/internal/modules/announcements"
-	"github.com/bengobox/notifications-api/internal/modules/billing"
+	"github.com/bengobox/notifications-api/internal/modules/credits"
 	"github.com/bengobox/notifications-api/internal/modules/broadcasts"
 	eventsmod "github.com/bengobox/notifications-api/internal/modules/events"
 	"github.com/bengobox/notifications-api/internal/modules/identity"
@@ -63,7 +63,6 @@ type App struct {
 	events                 *nats.Conn
 	templates              *templates.Loader
 	outboxPublisher        *eventslib.Publisher
-	treasuryClient         *serviceclient.Client
 	crossServiceSubscriber *eventsmod.Subscriber
 	whatsappInboxHub       *whatsappinbox.Hub
 }
@@ -142,10 +141,6 @@ func New(ctx context.Context) (*App, error) {
 	exportSQLDB.SetMaxOpenConns(2)
 	exportSQLDB.SetMaxIdleConns(1)
 
-	// Initialize Treasury client
-	treasuryCfg := serviceclient.DefaultConfig(cfg.Services.TreasuryAPI, "treasury-api", log.Named("treasury.client"))
-	treasuryClient := serviceclient.New(treasuryCfg)
-
 	// Sync platform owner tenant
 	tenantSyncer := tenant.NewSyncer(entClient, cfg.Services.AuthAPI)
 	// Refresh so a rename in auth-api (the platform's legal name signs platform emails) is picked
@@ -160,22 +155,9 @@ func New(ctx context.Context) (*App, error) {
 	platformIDStr := platformID.String()
 
 	healthHandler := handlers.NewHealthHandler(log, dbPool, redisClient, natsConn)
-	billingService := billing.NewService(entClient, log, treasuryClient, cfg.Security.APIKey)
-	whatsappSubsService := billing.NewWhatsAppSubscriptionService(entClient, log, treasuryClient, cfg.Security.APIKey)
-
-	// Seed default WhatsApp plans on startup, then re-sync their provider-cost estimates against
-	// the current centralized Meta-rate constant (SeedDefaultPlans only creates missing plans, it
-	// never updates ones that already exist — this is the idempotent self-correction step so a
-	// rate-constant fix takes effect on already-seeded plans without a manual one-off run).
-	if seedErr := whatsappSubsService.SeedDefaultPlans(ctx); seedErr != nil {
-		log.Warn("failed to seed default whatsapp plans", zap.Error(seedErr))
-	}
-	if recomputeErr := whatsappSubsService.RecomputeProviderCosts(ctx); recomputeErr != nil {
-		log.Warn("failed to recompute whatsapp plan provider costs", zap.Error(recomputeErr))
-	}
-
-	whatsappSubsHandler := handlers.NewWhatsAppSubscriptionHandler(log, whatsappSubsService)
-	notificationHandler := handlers.NewNotificationHandler(log, natsConn, redisClient, cfg.Events, entClient, cfg.Services.SubscriptionsURL, billingService, whatsappSubsService, platformIDStr)
+	// SMS and WhatsApp balances, plans, bundles and overage are owned by subscriptions-api.
+	creditsClient := credits.New(serviceclient.New(serviceclient.DefaultConfig(cfg.Services.SubscriptionsAPI, "subscriptions-api", log.Named("credits.client"))), cfg.Security.APIKey)
+	notificationHandler := handlers.NewNotificationHandler(log, natsConn, redisClient, cfg.Events, entClient, cfg.Services.SubscriptionsURL, creditsClient, platformIDStr)
 	// Template repository backed by DB + Redis cache (2h TTL)
 	var templateCache *sharedcache.Aside
 	if redisClient != nil {
@@ -198,7 +180,7 @@ func New(ctx context.Context) (*App, error) {
 	// decryption at rest; seed it with the resolved primary key.
 	providerManager := providers.NewManager(dbPool, cfg.Postgres, cfg.Providers, keyProvider.Primary(ctx), cfg.App.Env, platformIDStr)
 	platformProviders := handlers.NewPlatformProviders(entClient, log, keyProvider, providerManager)
-	tenantProviders := handlers.NewTenantProviders(entClient, log, platformIDStr, keyProvider, providerManager, whatsappSubsService)
+	tenantProviders := handlers.NewTenantProviders(entClient, log, platformIDStr, keyProvider, providerManager, creditsClient)
 	encryptionKeyHandler := handlers.NewEncryptionKeyHandler(entClient, log, keyProvider)
 	analyticsHandler := handlers.NewAnalyticsHandler(entClient, log)
 	announcementSvc := announcements.NewService(entClient)
@@ -228,8 +210,6 @@ func New(ctx context.Context) (*App, error) {
 	deviceTokenHandler := handlers.NewDeviceTokenHandler(log, entClient)
 	deviceTokenHandler.SetPushResolver(providerManager)
 
-	billingHandler := handlers.NewBillingHandler(log, billingService)
-	platformBilling := handlers.NewPlatformBilling(entClient, log, billingService, whatsappSubsService)
 	settingsHandler := handlers.NewSettingsHandler(log, keyProvider)
 
 	// Initialize RBAC module (constructed before identity so identity.NewService can merge
@@ -373,7 +353,7 @@ func New(ctx context.Context) (*App, error) {
 	}
 	whatsappEmbeddedSignupHandler := handlers.NewWhatsAppEmbeddedSignupHandler(entClient, log, providerManager)
 	whatsappTemplatesHandler := handlers.NewWhatsAppTemplates(providerManager, log)
-	httpRouter := router.New(log, healthHandler, notificationHandler, templateHandler, platformProviders, tenantProviders, analyticsHandler, billingHandler, platformBilling, settingsHandler, rbacHandler, authMeHandler, deviceTokenHandler, cfg.Security.APIKey, authMiddleware, authenticator, cfg.HTTP.AllowedOrigins, tenantSyncer, rateLimiter, serviceConfigHandler, whatsappSubsHandler, encryptionKeyHandler, notificationPrefsHandler, developerKeyAuth, swaggerHandler, webhookHandler, whatsappEmbeddedSignupHandler, whatsappTemplatesHandler, whatsappInboxHandler, announcementHandler, broadcastHandler,
+	httpRouter := router.New(log, healthHandler, notificationHandler, templateHandler, platformProviders, tenantProviders, analyticsHandler, settingsHandler, rbacHandler, authMeHandler, deviceTokenHandler, cfg.Security.APIKey, authMiddleware, authenticator, cfg.HTTP.AllowedOrigins, tenantSyncer, rateLimiter, serviceConfigHandler, encryptionKeyHandler, notificationPrefsHandler, developerKeyAuth, swaggerHandler, webhookHandler, whatsappEmbeddedSignupHandler, whatsappTemplatesHandler, whatsappInboxHandler, announcementHandler, broadcastHandler,
 		tenantExportHandler(exportSQLDB, cfg.Security.APIKey))
 
 	httpServer := &http.Server{
@@ -402,7 +382,6 @@ func New(ctx context.Context) (*App, error) {
 		events:                 natsConn,
 		templates:              templateLoader,
 		outboxPublisher:        outboxPublisher,
-		treasuryClient:         treasuryClient,
 		crossServiceSubscriber: crossServiceSubscriber,
 		whatsappInboxHub:       whatsappInboxHub,
 	}, nil
