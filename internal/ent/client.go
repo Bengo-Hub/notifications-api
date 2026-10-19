@@ -17,8 +17,6 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/bengobox/notifications-api/internal/ent/announcement"
-	"github.com/bengobox/notifications-api/internal/ent/backup"
-	"github.com/bengobox/notifications-api/internal/ent/backupsetting"
 	"github.com/bengobox/notifications-api/internal/ent/broadcast"
 	"github.com/bengobox/notifications-api/internal/ent/broadcastrecipient"
 	"github.com/bengobox/notifications-api/internal/ent/credittransaction"
@@ -54,10 +52,6 @@ type Client struct {
 	Schema *migrate.Schema
 	// Announcement is the client for interacting with the Announcement builders.
 	Announcement *AnnouncementClient
-	// Backup is the client for interacting with the Backup builders.
-	Backup *BackupClient
-	// BackupSetting is the client for interacting with the BackupSetting builders.
-	BackupSetting *BackupSettingClient
 	// Broadcast is the client for interacting with the Broadcast builders.
 	Broadcast *BroadcastClient
 	// BroadcastRecipient is the client for interacting with the BroadcastRecipient builders.
@@ -122,8 +116,6 @@ func NewClient(opts ...Option) *Client {
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.Announcement = NewAnnouncementClient(c.config)
-	c.Backup = NewBackupClient(c.config)
-	c.BackupSetting = NewBackupSettingClient(c.config)
 	c.Broadcast = NewBroadcastClient(c.config)
 	c.BroadcastRecipient = NewBroadcastRecipientClient(c.config)
 	c.CreditTransaction = NewCreditTransactionClient(c.config)
@@ -243,8 +235,6 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		ctx:                        ctx,
 		config:                     cfg,
 		Announcement:               NewAnnouncementClient(cfg),
-		Backup:                     NewBackupClient(cfg),
-		BackupSetting:              NewBackupSettingClient(cfg),
 		Broadcast:                  NewBroadcastClient(cfg),
 		BroadcastRecipient:         NewBroadcastRecipientClient(cfg),
 		CreditTransaction:          NewCreditTransactionClient(cfg),
@@ -291,8 +281,6 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		ctx:                        ctx,
 		config:                     cfg,
 		Announcement:               NewAnnouncementClient(cfg),
-		Backup:                     NewBackupClient(cfg),
-		BackupSetting:              NewBackupSettingClient(cfg),
 		Broadcast:                  NewBroadcastClient(cfg),
 		BroadcastRecipient:         NewBroadcastRecipientClient(cfg),
 		CreditTransaction:          NewCreditTransactionClient(cfg),
@@ -348,10 +336,10 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.Announcement, c.Backup, c.BackupSetting, c.Broadcast, c.BroadcastRecipient,
-		c.CreditTransaction, c.DeliveryLog, c.DeviceToken, c.NotificationPermission,
-		c.NotificationRole, c.NotificationRolePermission, c.Occasion, c.OutboxEvent,
-		c.Permission, c.PlatformBilling, c.ProviderSetting, c.RateLimitConfig, c.Role,
+		c.Announcement, c.Broadcast, c.BroadcastRecipient, c.CreditTransaction,
+		c.DeliveryLog, c.DeviceToken, c.NotificationPermission, c.NotificationRole,
+		c.NotificationRolePermission, c.Occasion, c.OutboxEvent, c.Permission,
+		c.PlatformBilling, c.ProviderSetting, c.RateLimitConfig, c.Role,
 		c.ServiceConfig, c.Suppression, c.Template, c.Tenant, c.TenantCredit,
 		c.TenantWhatsAppSubscription, c.User, c.UserRoleAssignment,
 		c.WhatsAppConversation, c.WhatsAppMessage, c.WhatsAppPlan,
@@ -364,10 +352,10 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.Announcement, c.Backup, c.BackupSetting, c.Broadcast, c.BroadcastRecipient,
-		c.CreditTransaction, c.DeliveryLog, c.DeviceToken, c.NotificationPermission,
-		c.NotificationRole, c.NotificationRolePermission, c.Occasion, c.OutboxEvent,
-		c.Permission, c.PlatformBilling, c.ProviderSetting, c.RateLimitConfig, c.Role,
+		c.Announcement, c.Broadcast, c.BroadcastRecipient, c.CreditTransaction,
+		c.DeliveryLog, c.DeviceToken, c.NotificationPermission, c.NotificationRole,
+		c.NotificationRolePermission, c.Occasion, c.OutboxEvent, c.Permission,
+		c.PlatformBilling, c.ProviderSetting, c.RateLimitConfig, c.Role,
 		c.ServiceConfig, c.Suppression, c.Template, c.Tenant, c.TenantCredit,
 		c.TenantWhatsAppSubscription, c.User, c.UserRoleAssignment,
 		c.WhatsAppConversation, c.WhatsAppMessage, c.WhatsAppPlan,
@@ -381,10 +369,6 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
 	case *AnnouncementMutation:
 		return c.Announcement.mutate(ctx, m)
-	case *BackupMutation:
-		return c.Backup.mutate(ctx, m)
-	case *BackupSettingMutation:
-		return c.BackupSetting.mutate(ctx, m)
 	case *BroadcastMutation:
 		return c.Broadcast.mutate(ctx, m)
 	case *BroadcastRecipientMutation:
@@ -572,272 +556,6 @@ func (c *AnnouncementClient) mutate(ctx context.Context, m *AnnouncementMutation
 		return (&AnnouncementDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Announcement mutation op: %q", m.Op())
-	}
-}
-
-// BackupClient is a client for the Backup schema.
-type BackupClient struct {
-	config
-}
-
-// NewBackupClient returns a client for the Backup from the given config.
-func NewBackupClient(c config) *BackupClient {
-	return &BackupClient{config: c}
-}
-
-// Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `backup.Hooks(f(g(h())))`.
-func (c *BackupClient) Use(hooks ...Hook) {
-	c.hooks.Backup = append(c.hooks.Backup, hooks...)
-}
-
-// Intercept adds a list of query interceptors to the interceptors stack.
-// A call to `Intercept(f, g, h)` equals to `backup.Intercept(f(g(h())))`.
-func (c *BackupClient) Intercept(interceptors ...Interceptor) {
-	c.inters.Backup = append(c.inters.Backup, interceptors...)
-}
-
-// Create returns a builder for creating a Backup entity.
-func (c *BackupClient) Create() *BackupCreate {
-	mutation := newBackupMutation(c.config, OpCreate)
-	return &BackupCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// CreateBulk returns a builder for creating a bulk of Backup entities.
-func (c *BackupClient) CreateBulk(builders ...*BackupCreate) *BackupCreateBulk {
-	return &BackupCreateBulk{config: c.config, builders: builders}
-}
-
-// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
-// a builder and applies setFunc on it.
-func (c *BackupClient) MapCreateBulk(slice any, setFunc func(*BackupCreate, int)) *BackupCreateBulk {
-	rv := reflect.ValueOf(slice)
-	if rv.Kind() != reflect.Slice {
-		return &BackupCreateBulk{err: fmt.Errorf("calling to BackupClient.MapCreateBulk with wrong type %T, need slice", slice)}
-	}
-	builders := make([]*BackupCreate, rv.Len())
-	for i := 0; i < rv.Len(); i++ {
-		builders[i] = c.Create()
-		setFunc(builders[i], i)
-	}
-	return &BackupCreateBulk{config: c.config, builders: builders}
-}
-
-// Update returns an update builder for Backup.
-func (c *BackupClient) Update() *BackupUpdate {
-	mutation := newBackupMutation(c.config, OpUpdate)
-	return &BackupUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOne returns an update builder for the given entity.
-func (c *BackupClient) UpdateOne(_m *Backup) *BackupUpdateOne {
-	mutation := newBackupMutation(c.config, OpUpdateOne, withBackup(_m))
-	return &BackupUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOneID returns an update builder for the given id.
-func (c *BackupClient) UpdateOneID(id uuid.UUID) *BackupUpdateOne {
-	mutation := newBackupMutation(c.config, OpUpdateOne, withBackupID(id))
-	return &BackupUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// Delete returns a delete builder for Backup.
-func (c *BackupClient) Delete() *BackupDelete {
-	mutation := newBackupMutation(c.config, OpDelete)
-	return &BackupDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// DeleteOne returns a builder for deleting the given entity.
-func (c *BackupClient) DeleteOne(_m *Backup) *BackupDeleteOne {
-	return c.DeleteOneID(_m.ID)
-}
-
-// DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *BackupClient) DeleteOneID(id uuid.UUID) *BackupDeleteOne {
-	builder := c.Delete().Where(backup.ID(id))
-	builder.mutation.id = &id
-	builder.mutation.op = OpDeleteOne
-	return &BackupDeleteOne{builder}
-}
-
-// Query returns a query builder for Backup.
-func (c *BackupClient) Query() *BackupQuery {
-	return &BackupQuery{
-		config: c.config,
-		ctx:    &QueryContext{Type: TypeBackup},
-		inters: c.Interceptors(),
-	}
-}
-
-// Get returns a Backup entity by its id.
-func (c *BackupClient) Get(ctx context.Context, id uuid.UUID) (*Backup, error) {
-	return c.Query().Where(backup.ID(id)).Only(ctx)
-}
-
-// GetX is like Get, but panics if an error occurs.
-func (c *BackupClient) GetX(ctx context.Context, id uuid.UUID) *Backup {
-	obj, err := c.Get(ctx, id)
-	if err != nil {
-		panic(err)
-	}
-	return obj
-}
-
-// Hooks returns the client hooks.
-func (c *BackupClient) Hooks() []Hook {
-	return c.hooks.Backup
-}
-
-// Interceptors returns the client interceptors.
-func (c *BackupClient) Interceptors() []Interceptor {
-	return c.inters.Backup
-}
-
-func (c *BackupClient) mutate(ctx context.Context, m *BackupMutation) (Value, error) {
-	switch m.Op() {
-	case OpCreate:
-		return (&BackupCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdate:
-		return (&BackupUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdateOne:
-		return (&BackupUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpDelete, OpDeleteOne:
-		return (&BackupDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
-	default:
-		return nil, fmt.Errorf("ent: unknown Backup mutation op: %q", m.Op())
-	}
-}
-
-// BackupSettingClient is a client for the BackupSetting schema.
-type BackupSettingClient struct {
-	config
-}
-
-// NewBackupSettingClient returns a client for the BackupSetting from the given config.
-func NewBackupSettingClient(c config) *BackupSettingClient {
-	return &BackupSettingClient{config: c}
-}
-
-// Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `backupsetting.Hooks(f(g(h())))`.
-func (c *BackupSettingClient) Use(hooks ...Hook) {
-	c.hooks.BackupSetting = append(c.hooks.BackupSetting, hooks...)
-}
-
-// Intercept adds a list of query interceptors to the interceptors stack.
-// A call to `Intercept(f, g, h)` equals to `backupsetting.Intercept(f(g(h())))`.
-func (c *BackupSettingClient) Intercept(interceptors ...Interceptor) {
-	c.inters.BackupSetting = append(c.inters.BackupSetting, interceptors...)
-}
-
-// Create returns a builder for creating a BackupSetting entity.
-func (c *BackupSettingClient) Create() *BackupSettingCreate {
-	mutation := newBackupSettingMutation(c.config, OpCreate)
-	return &BackupSettingCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// CreateBulk returns a builder for creating a bulk of BackupSetting entities.
-func (c *BackupSettingClient) CreateBulk(builders ...*BackupSettingCreate) *BackupSettingCreateBulk {
-	return &BackupSettingCreateBulk{config: c.config, builders: builders}
-}
-
-// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
-// a builder and applies setFunc on it.
-func (c *BackupSettingClient) MapCreateBulk(slice any, setFunc func(*BackupSettingCreate, int)) *BackupSettingCreateBulk {
-	rv := reflect.ValueOf(slice)
-	if rv.Kind() != reflect.Slice {
-		return &BackupSettingCreateBulk{err: fmt.Errorf("calling to BackupSettingClient.MapCreateBulk with wrong type %T, need slice", slice)}
-	}
-	builders := make([]*BackupSettingCreate, rv.Len())
-	for i := 0; i < rv.Len(); i++ {
-		builders[i] = c.Create()
-		setFunc(builders[i], i)
-	}
-	return &BackupSettingCreateBulk{config: c.config, builders: builders}
-}
-
-// Update returns an update builder for BackupSetting.
-func (c *BackupSettingClient) Update() *BackupSettingUpdate {
-	mutation := newBackupSettingMutation(c.config, OpUpdate)
-	return &BackupSettingUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOne returns an update builder for the given entity.
-func (c *BackupSettingClient) UpdateOne(_m *BackupSetting) *BackupSettingUpdateOne {
-	mutation := newBackupSettingMutation(c.config, OpUpdateOne, withBackupSetting(_m))
-	return &BackupSettingUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOneID returns an update builder for the given id.
-func (c *BackupSettingClient) UpdateOneID(id uuid.UUID) *BackupSettingUpdateOne {
-	mutation := newBackupSettingMutation(c.config, OpUpdateOne, withBackupSettingID(id))
-	return &BackupSettingUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// Delete returns a delete builder for BackupSetting.
-func (c *BackupSettingClient) Delete() *BackupSettingDelete {
-	mutation := newBackupSettingMutation(c.config, OpDelete)
-	return &BackupSettingDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// DeleteOne returns a builder for deleting the given entity.
-func (c *BackupSettingClient) DeleteOne(_m *BackupSetting) *BackupSettingDeleteOne {
-	return c.DeleteOneID(_m.ID)
-}
-
-// DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *BackupSettingClient) DeleteOneID(id uuid.UUID) *BackupSettingDeleteOne {
-	builder := c.Delete().Where(backupsetting.ID(id))
-	builder.mutation.id = &id
-	builder.mutation.op = OpDeleteOne
-	return &BackupSettingDeleteOne{builder}
-}
-
-// Query returns a query builder for BackupSetting.
-func (c *BackupSettingClient) Query() *BackupSettingQuery {
-	return &BackupSettingQuery{
-		config: c.config,
-		ctx:    &QueryContext{Type: TypeBackupSetting},
-		inters: c.Interceptors(),
-	}
-}
-
-// Get returns a BackupSetting entity by its id.
-func (c *BackupSettingClient) Get(ctx context.Context, id uuid.UUID) (*BackupSetting, error) {
-	return c.Query().Where(backupsetting.ID(id)).Only(ctx)
-}
-
-// GetX is like Get, but panics if an error occurs.
-func (c *BackupSettingClient) GetX(ctx context.Context, id uuid.UUID) *BackupSetting {
-	obj, err := c.Get(ctx, id)
-	if err != nil {
-		panic(err)
-	}
-	return obj
-}
-
-// Hooks returns the client hooks.
-func (c *BackupSettingClient) Hooks() []Hook {
-	return c.hooks.BackupSetting
-}
-
-// Interceptors returns the client interceptors.
-func (c *BackupSettingClient) Interceptors() []Interceptor {
-	return c.inters.BackupSetting
-}
-
-func (c *BackupSettingClient) mutate(ctx context.Context, m *BackupSettingMutation) (Value, error) {
-	switch m.Op() {
-	case OpCreate:
-		return (&BackupSettingCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdate:
-		return (&BackupSettingUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdateOne:
-		return (&BackupSettingUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpDelete, OpDeleteOne:
-		return (&BackupSettingDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
-	default:
-		return nil, fmt.Errorf("ent: unknown BackupSetting mutation op: %q", m.Op())
 	}
 }
 
@@ -4606,21 +4324,19 @@ func (c *WhatsAppPlanClient) mutate(ctx context.Context, m *WhatsAppPlanMutation
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Announcement, Backup, BackupSetting, Broadcast, BroadcastRecipient,
-		CreditTransaction, DeliveryLog, DeviceToken, NotificationPermission,
-		NotificationRole, NotificationRolePermission, Occasion, OutboxEvent,
-		Permission, PlatformBilling, ProviderSetting, RateLimitConfig, Role,
-		ServiceConfig, Suppression, Template, Tenant, TenantCredit,
-		TenantWhatsAppSubscription, User, UserRoleAssignment, WhatsAppConversation,
-		WhatsAppMessage, WhatsAppPlan []ent.Hook
+		Announcement, Broadcast, BroadcastRecipient, CreditTransaction, DeliveryLog,
+		DeviceToken, NotificationPermission, NotificationRole,
+		NotificationRolePermission, Occasion, OutboxEvent, Permission, PlatformBilling,
+		ProviderSetting, RateLimitConfig, Role, ServiceConfig, Suppression, Template,
+		Tenant, TenantCredit, TenantWhatsAppSubscription, User, UserRoleAssignment,
+		WhatsAppConversation, WhatsAppMessage, WhatsAppPlan []ent.Hook
 	}
 	inters struct {
-		Announcement, Backup, BackupSetting, Broadcast, BroadcastRecipient,
-		CreditTransaction, DeliveryLog, DeviceToken, NotificationPermission,
-		NotificationRole, NotificationRolePermission, Occasion, OutboxEvent,
-		Permission, PlatformBilling, ProviderSetting, RateLimitConfig, Role,
-		ServiceConfig, Suppression, Template, Tenant, TenantCredit,
-		TenantWhatsAppSubscription, User, UserRoleAssignment, WhatsAppConversation,
-		WhatsAppMessage, WhatsAppPlan []ent.Interceptor
+		Announcement, Broadcast, BroadcastRecipient, CreditTransaction, DeliveryLog,
+		DeviceToken, NotificationPermission, NotificationRole,
+		NotificationRolePermission, Occasion, OutboxEvent, Permission, PlatformBilling,
+		ProviderSetting, RateLimitConfig, Role, ServiceConfig, Suppression, Template,
+		Tenant, TenantCredit, TenantWhatsAppSubscription, User, UserRoleAssignment,
+		WhatsAppConversation, WhatsAppMessage, WhatsAppPlan []ent.Interceptor
 	}
 )

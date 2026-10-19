@@ -14,10 +14,6 @@ type Tx struct {
 	config
 	// Announcement is the client for interacting with the Announcement builders.
 	Announcement *AnnouncementClient
-	// Backup is the client for interacting with the Backup builders.
-	Backup *BackupClient
-	// BackupSetting is the client for interacting with the BackupSetting builders.
-	BackupSetting *BackupSettingClient
 	// Broadcast is the client for interacting with the Broadcast builders.
 	Broadcast *BroadcastClient
 	// BroadcastRecipient is the client for interacting with the BroadcastRecipient builders.
@@ -202,8 +198,6 @@ func (tx *Tx) Client() *Client {
 
 func (tx *Tx) init() {
 	tx.Announcement = NewAnnouncementClient(tx.config)
-	tx.Backup = NewBackupClient(tx.config)
-	tx.BackupSetting = NewBackupSettingClient(tx.config)
 	tx.Broadcast = NewBroadcastClient(tx.config)
 	tx.BroadcastRecipient = NewBroadcastRecipientClient(tx.config)
 	tx.CreditTransaction = NewCreditTransactionClient(tx.config)

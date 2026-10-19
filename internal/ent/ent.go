@@ -13,8 +13,6 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/bengobox/notifications-api/internal/ent/announcement"
-	"github.com/bengobox/notifications-api/internal/ent/backup"
-	"github.com/bengobox/notifications-api/internal/ent/backupsetting"
 	"github.com/bengobox/notifications-api/internal/ent/broadcast"
 	"github.com/bengobox/notifications-api/internal/ent/broadcastrecipient"
 	"github.com/bengobox/notifications-api/internal/ent/credittransaction"
@@ -102,8 +100,6 @@ func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
 			announcement.Table:               announcement.ValidColumn,
-			backup.Table:                     backup.ValidColumn,
-			backupsetting.Table:              backupsetting.ValidColumn,
 			broadcast.Table:                  broadcast.ValidColumn,
 			broadcastrecipient.Table:         broadcastrecipient.ValidColumn,
 			credittransaction.Table:          credittransaction.ValidColumn,
