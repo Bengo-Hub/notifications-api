@@ -34,12 +34,9 @@ const (
 	PermBillingManage       Permission = "notifications.billing.manage"
 	PermAnalyticsRead       Permission = "notifications.analytics.view"
 	PermAnalyticsExport     Permission = "notifications.analytics.manage"
-	PermCreditsRead         Permission = "notifications.credits.view"
-	PermCreditsManage       Permission = "notifications.credits.manage"
 	PermUsersRead           Permission = "notifications.users.view"
 	PermUsersManage         Permission = "notifications.users.manage"
 	PermPlatformProviders   Permission = "notifications.platform.providers"
-	PermPlatformBilling     Permission = "notifications.platform.billing"
 	PermWhatsAppInboxRead   Permission = "notifications.whatsapp_inbox.view"
 	PermWhatsAppInboxReply  Permission = "notifications.whatsapp_inbox.reply"
 	// Broadcasts: write and send bulk notices and occasion greetings (manage), and approve them for
@@ -57,9 +54,8 @@ func AllPermissions() []Permission {
 		PermSettingsRead, PermSettingsManage,
 		PermBillingRead, PermBillingManage,
 		PermAnalyticsRead, PermAnalyticsExport,
-		PermCreditsRead, PermCreditsManage,
 		PermUsersRead, PermUsersManage,
-		PermPlatformProviders, PermPlatformBilling,
+		PermPlatformProviders,
 		PermWhatsAppInboxRead, PermWhatsAppInboxReply,
 		PermBroadcastsManage, PermBroadcastsApprove,
 	}
@@ -76,7 +72,6 @@ func DefaultPermissions(role Role) []Permission {
 			PermSettingsRead,
 			PermBillingRead,
 			PermAnalyticsRead,
-			PermCreditsRead,
 			PermWhatsAppInboxRead,
 		}
 	case RoleManager:
@@ -87,7 +82,6 @@ func DefaultPermissions(role Role) []Permission {
 			PermSettingsRead, PermSettingsManage,
 			PermBillingRead,
 			PermAnalyticsRead, PermAnalyticsExport,
-			PermCreditsRead, PermCreditsManage,
 			PermWhatsAppInboxRead, PermWhatsAppInboxReply,
 			PermBroadcastsManage,
 		}
@@ -99,7 +93,6 @@ func DefaultPermissions(role Role) []Permission {
 			PermSettingsRead, PermSettingsManage,
 			PermBillingRead, PermBillingManage,
 			PermAnalyticsRead, PermAnalyticsExport,
-			PermCreditsRead, PermCreditsManage,
 			PermUsersRead, PermUsersManage,
 			PermWhatsAppInboxRead, PermWhatsAppInboxReply,
 			PermBroadcastsManage, PermBroadcastsApprove,

@@ -412,7 +412,7 @@ func main() {
 	// Program applicant approve/reject emails, plain NATS)
 	startResellerApplicationNotificationConsumer(ctx, nc, cfg, logg)
 
-	// Start treasury event consumer (treasury-service → payment/invoice notifications + credit top-ups)
+	// Start treasury event consumer (treasury-service → payment/invoice notifications)
 	startTreasuryConsumer(ctx, nc, js, cfg, tr, pm, dbPool, prefGate, templateChannels, logg)
 
 	// Start delivery task event consumer (logistics-service → delivery status notifications)
@@ -832,7 +832,7 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 		smsProv, _ := pm.GetSMSProvider(ctx, providerTenantID, preferred)
 
 		// Platform-scope sends (OTPs, admin/ops alerts — see messaging.SenderScopePlatform) are
-		// never billed to a tenant's own credit wallet, so gating them on a TenantCredit row
+		// never billed to a tenant's own credit balance, so gating them on a tenant balance
 		// makes no sense — there's no tenant to charge. Instead, check the REAL provider account
 		// balance directly (fail-open on a balance-check error: a monitoring hiccup must not
 		// block an OTP or a security alert; the send itself would still fail cleanly if the real

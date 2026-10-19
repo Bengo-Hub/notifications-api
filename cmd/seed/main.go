@@ -231,12 +231,9 @@ func seedPermissions(ctx context.Context, client *ent.Client) {
 		{"notifications.billing.manage", "billing", "Initiate top-ups and manage billing"},
 		{"notifications.analytics.view", "analytics", "View delivery analytics"},
 		{"notifications.analytics.manage", "analytics", "Export analytics data"},
-		{"notifications.credits.view", "credits", "View credit balance"},
-		{"notifications.credits.manage", "credits", "Manage credit transactions"},
 		{"notifications.users.view", "users", "View users in tenant"},
 		{"notifications.users.manage", "users", "Manage user roles"},
 		{"notifications.platform.providers", "platform", "Manage platform-level providers"},
-		{"notifications.platform.billing", "platform", "Manage platform billing settings"},
 		// Referenced by the role defaults but never seeded: every role's permission refresh failed
 		// on the missing foreign key (role_permissions_permission_id), so no role got inbox access.
 		{"notifications.whatsapp_inbox.view", "whatsapp_inbox", "Read WhatsApp inbox conversations"},
@@ -395,10 +392,6 @@ func seedNotificationPermissions(ctx context.Context, client *ent.Client) {
 		{"notifications.providers.change", "Change Providers", "providers", "change", "providers", "Update provider configurations"},
 		{"notifications.providers.manage", "Manage Providers", "providers", "manage", "providers", "Full provider management"},
 
-		// Credits
-		{"notifications.credits.view", "View Credits", "credits", "view", "credits", "View credit balance"},
-		{"notifications.credits.manage", "Manage Credits", "credits", "manage", "credits", "Manage credit transactions"},
-
 		// Billing
 		{"notifications.billing.view", "View Billing", "billing", "view", "billing", "View balance and transaction history"},
 		{"notifications.billing.manage", "Manage Billing", "billing", "manage", "billing", "Initiate top-ups and manage billing"},
@@ -425,7 +418,6 @@ func seedNotificationPermissions(ctx context.Context, client *ent.Client) {
 
 		// Platform (superuser only)
 		{"notifications.platform.providers", "Platform Providers", "platform", "manage", "providers", "Manage platform-level providers"},
-		{"notifications.platform.billing", "Platform Billing", "platform", "manage", "billing", "Manage platform billing settings"},
 
 		// WhatsApp Inbox
 		{"notifications.whatsapp_inbox.view", "View WhatsApp Inbox", "whatsapp_inbox", "view", "whatsapp_inbox", "View WhatsApp conversations and messages"},
@@ -542,7 +534,6 @@ func seedNotificationRolePermissions(ctx context.Context, client *ent.Client) {
 			"notifications.notifications.view_own",
 			"notifications.templates.view",
 			"notifications.providers.view",
-			"notifications.credits.view",
 			"notifications.billing.view",
 			"notifications.delivery_logs.view_own",
 			"notifications.config.view",
@@ -561,7 +552,6 @@ func seedNotificationRolePermissions(ctx context.Context, client *ent.Client) {
 			"notifications.templates.manage",
 			"notifications.providers.view",
 			"notifications.providers.change",
-			"notifications.credits.view",
 			"notifications.billing.view",
 			"notifications.delivery_logs.view",
 			"notifications.delivery_logs.view_own",
@@ -589,8 +579,6 @@ func seedNotificationRolePermissions(ctx context.Context, client *ent.Client) {
 			"notifications.providers.view",
 			"notifications.providers.change",
 			"notifications.providers.manage",
-			"notifications.credits.view",
-			"notifications.credits.manage",
 			"notifications.billing.view",
 			"notifications.billing.manage",
 			"notifications.delivery_logs.view",

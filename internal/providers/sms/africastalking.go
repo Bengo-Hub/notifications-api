@@ -116,7 +116,7 @@ func (p *africasTalkingProvider) SendSMS(ctx context.Context, from string, to []
 // GetBalance queries Africa's Talking's real account wallet balance (GET /version1/user),
 // parsing the "KES 110.0000"-style string AT returns into a plain float. Used to gate
 // platform-scope sends (OTPs, admin alerts — never billed to a tenant's own credit wallet)
-// directly against the real provider balance instead of a TenantCredit row.
+// directly against the real provider balance instead of a tenant credit balance.
 func (p *africasTalkingProvider) GetBalance(ctx context.Context) (float64, error) {
 	if p.cfg.APIKey == "" || p.cfg.Username == "" {
 		return 0, fmt.Errorf("africastalking not configured")
