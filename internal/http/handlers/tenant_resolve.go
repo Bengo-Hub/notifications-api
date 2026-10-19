@@ -40,6 +40,24 @@ func resolveActingTenantID(r *http.Request) string {
 	return httpware.GetTenantID(ctx)
 }
 
+// sendingTenant decides which tenant a send is billed to and attributed to. Platform owners and
+// service callers (the internal key) may name any tenant in the request body, because producers
+// send on behalf of tenants. Every other caller always sends as their own authenticated tenant:
+// the body field is ignored, so a tenant can never bill or impersonate another tenant by naming it.
+func sendingTenant(r *http.Request, bodyTenant, platformID string) string {
+	acting := resolveActingTenantID(r)
+	if httpware.IsPlatformOwner(r.Context()) || (acting != "" && acting == platformID) {
+		if bodyTenant != "" {
+			return bodyTenant
+		}
+		return acting
+	}
+	if acting != "" {
+		return acting
+	}
+	return ""
+}
+
 // tenantUUID resolves the requesting tenant from context (TenantV2 middleware), honoring the
 // platform-admin tenant-switcher (X-Tenant-ID header, then legacy ?tenantId=) via
 // resolveActingTenantID.

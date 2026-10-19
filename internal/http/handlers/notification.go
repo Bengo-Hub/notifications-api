@@ -167,10 +167,7 @@ func (h *NotificationHandler) Enqueue(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tenant := req.Tenant
-	if tenant == "" {
-		tenant = resolveActingTenantID(r)
-	}
+	tenant := sendingTenant(r, req.Tenant, h.platformID)
 	if tenant == "" {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
