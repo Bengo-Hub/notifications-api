@@ -1,0 +1,5 @@
+Hi {{ .name }},
+
+We could not buy your {{ .service_label }} bundle of {{ .amount }} automatically: {{ .reason }}.
+
+Auto top-up has been switched off and nothing was charged. Open your billing page to check your card and switch it back on.

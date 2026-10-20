@@ -395,6 +395,17 @@
     ]
   },
   {
+    "name": "credits_auto_topup_failed_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/subscription/credits_auto_topup_failed.txt (params: name, service, amount, reason; button: billing page)",
+    "body": "Hi {{1}},\n\nWe could not buy your {{2}} bundle of {{3}} automatically: {{4}}.\n\nAuto top-up has been switched off and nothing was charged. Open your billing page to check your card and switch it back on.",
+    "example": ["Alpha China Market", "SMS", "KES 500", "the card was declined"],
+    "buttons": [
+      {"type": "URL", "text": "Open billing", "url": "https://pricing.codevertexafrica.com/{{1}}", "example": ["billing"]}
+    ]
+  },
+  {
     "name": "occasion_customer_service_week_v2",
     "category": "MARKETING",
     "language": "en_US",

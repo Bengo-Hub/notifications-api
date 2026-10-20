@@ -1,0 +1,19 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <h2 style="color: #dc2626;">Auto top-up switched off</h2>
+  <p>We could not buy your {{ .service_label }} bundle automatically, so auto top-up has been switched off.</p>
+
+  <div style="background:#f3f4f6; padding:16px; border-radius:6px; margin:16px 0;">
+    <strong>Service:</strong> {{ .service_label }}<br/>
+    <strong>Bundle price:</strong> {{ .amount }}<br/>
+    <strong>Why:</strong> {{ .reason }}
+  </div>
+
+  <p>Nothing was charged for this attempt. Messages you send beyond your bundle and plan are still sent at KES 1 each and added to your next invoice.</p>
+
+  <p>Check your card on the billing page, then switch auto top-up back on.</p>
+
+  <p>
+    <a class="button" href="{{ .action_link }}">Open billing</a>
+  </p>
+{{ end }}

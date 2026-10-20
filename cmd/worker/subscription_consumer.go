@@ -237,6 +237,31 @@ func startSubscriptionConsumer(ctx context.Context, nc *nats.Conn, js nats.JetSt
 			return
 		}
 
+		if evt.EventType == eventAutoTopupFailed {
+			tid := evt.TenantID
+			if tid == "" {
+				tid, _ = evt.Payload["tenant_id"].(string)
+			}
+			if tid == "" {
+				logg.Warn("auto top-up notice: no tenant_id, skipping")
+				_ = m.Ack()
+				return
+			}
+			ti, err := tr.resolve(ctx, tid)
+			if err != nil {
+				logg.Error("auto top-up notice: failed to resolve tenant", zap.String("tenant_id", tid), zap.Error(err))
+				_ = m.Nak()
+				return
+			}
+			if err := sendAutoTopupFailed(ctx, nc, cfg, evt, tid, ti, logg); err != nil {
+				logg.Error("auto top-up notice failed", zap.Error(err))
+				_ = m.Nak()
+				return
+			}
+			_ = m.Ack()
+			return
+		}
+
 		mapping, ok := subscriptionMappings[evt.EventType]
 		if !ok {
 			logg.Debug("subscription event: unhandled type, skipping", zap.String("type", evt.EventType))

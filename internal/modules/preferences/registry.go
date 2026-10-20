@@ -72,6 +72,7 @@ var Registry = []Type{
 
 	// ── Subscription lifecycle ───────────────────────────────────────────────
 	{Key: "subscription/grace_reminder", Label: "Grace-period reminder", Group: "Subscription", Class: ClassEssential},
+	{Key: "subscription/credits_auto_topup_failed", Label: "Auto top-up switched off", Group: "Subscription", Class: ClassEssential},
 	{Key: "platform/plan_expiry_warning", Label: "Plan expiry warning", Group: "Subscription", Class: ClassEssential},
 	// Internal platform-ops alert (goes to Codevertex staff, never to a tenant), so it is
 	// LOCKED — a tenant toggling their own preferences must not be able to switch off the
