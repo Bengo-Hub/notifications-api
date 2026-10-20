@@ -568,9 +568,15 @@ func renderMessage(ctx context.Context, cfg *config.Config, tpl *templates.Loade
 // verificationExemptTemplate lists the emails that must ALWAYS send even to an unverified
 // account, because they are how the user verifies or recovers access. Gating these would
 // lock an unverified user out permanently.
+//
+// digitika/ is exempt as a whole: a learner or guardian gets a portal account the moment they
+// enrol, and their address is the one they gave at checkout, so they cannot have verified it
+// yet. Gating digitika/portal_account dropped the very email carrying the temporary password,
+// leaving the parent portal sign-in impossible; the receipts and reminders are the same
+// transactional notices to the same address.
 func verificationExemptTemplate(templateID string) bool {
 	t := strings.ToLower(templateID)
-	for _, p := range []string{"auth/welcome", "auth/password_reset", "auth/otp", "verify"} {
+	for _, p := range []string{"auth/welcome", "auth/password_reset", "auth/otp", "verify", "digitika/"} {
 		if strings.Contains(t, p) {
 			return true
 		}
