@@ -57,6 +57,7 @@ func (r *EntRepository) UpdateUser(ctx context.Context, usr *User) error {
 	builder := r.client.User.UpdateOneID(usr.ID).
 		SetFullName(usr.FullName).
 		SetStatus(usr.Status).
+		SetEmailVerified(usr.EmailVerified).
 		SetMetadata(metadata).
 		SetNillablePhone(optionalString(usr.Phone)).
 		SetNillableLastLoginAt(usr.LastLoginAt).
@@ -278,6 +279,7 @@ func mapEntUser(u *ent.User) *User {
 		TenantID:          u.TenantID.String(),
 		AuthServiceUserID: authServiceUserID,
 		Email:             u.Email,
+		EmailVerified:     u.EmailVerified,
 		FullName:          u.FullName,
 		Phone:             u.Phone,
 		Roles:             roles,
@@ -342,6 +344,7 @@ func upsertUser(ctx context.Context, client *ent.Client, usr *User) error {
 		SetFullName(usr.FullName).
 		SetNillablePhone(optionalString(usr.Phone)).
 		SetStatus(usr.Status).
+		SetEmailVerified(usr.EmailVerified).
 		SetLocale("en").
 		SetMetadata(metadata).
 		SetCreatedAt(usr.CreatedAt).
@@ -371,6 +374,7 @@ func upsertUser(ctx context.Context, client *ent.Client, usr *User) error {
 		SetFullName(usr.FullName).
 		SetNillablePhone(optionalString(usr.Phone)).
 		SetStatus(usr.Status).
+		SetEmailVerified(usr.EmailVerified).
 		SetMetadata(metadata).
 		SetUpdatedAt(usr.UpdatedAt).
 		SetNillableLastLoginAt(usr.LastLoginAt).

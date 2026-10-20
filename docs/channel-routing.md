@@ -27,6 +27,16 @@
 - Automatic fallback to secondary provider; record incident for analytics
 - Dead letter queue for messages that exhaust all providers
 
+## Email verification gate
+
+The email worker drops a recipient only when all of these hold (`unverifiedUserRecipients` in `cmd/worker/main.go`):
+
+- the address belongs to a synced user row with `email_verified = false`;
+- that user holds at least one role outside the customer-facing set (customer, student, parent, driver, member, mirroring auth-api `selfServiceRoles`), recorded from auth events in `users.metadata.auth_roles` (`internal/modules/identity/auth_roles.go`);
+- the template is not exempt (`verificationExemptTemplate`: auth welcome, password reset, OTP, verify, and the whole `digitika/` family).
+
+So customers, learners, parents, riders, people with no user row, and any account whose roles were never recorded are never gated; their mail is sent. `users.email_verified` is persisted on every sync (it was read but never written before 2026-10-20, so every synced user looked unverified). Roles are recorded when the next auth.user.created or updated event arrives, so a long-idle staff account is ungated until then.
+
 ## Rate Limiting & Idempotency
 
 - Redis counters limit messages per tenant/channel/time window

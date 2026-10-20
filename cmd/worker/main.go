@@ -45,6 +45,7 @@ import (
 
 	"github.com/bengobox/notifications-api/internal/modules/broadcasts"
 	"github.com/bengobox/notifications-api/internal/modules/credits"
+	"github.com/bengobox/notifications-api/internal/modules/identity"
 	"github.com/bengobox/notifications-api/internal/modules/occasions"
 	"github.com/bengobox/notifications-api/internal/modules/preferences"
 	"github.com/bengobox/notifications-api/internal/modules/suppression"
@@ -620,6 +621,21 @@ func platformCCEmail(ctx context.Context, db *pgxpool.Pool) string {
 	return platformCCEmailValue
 }
 
+// unverifiedStaffSQL selects the recipients the gate drops: an unverified account that holds at
+// least one role outside the customer-facing set (identity.CustomerFacingRoles), meaning the
+// person was added to a tenant on purpose (staff, owner, admin). Customers, learners, parents and
+// riders, and any account whose roles were never recorded, are never gated: a customer's address
+// is the one they gave at checkout and their mail must arrive.
+const unverifiedStaffSQL = `
+SELECT DISTINCT lower(email) FROM users
+WHERE lower(email) = ANY($1) AND email_verified = false
+  AND EXISTS (
+    SELECT 1
+    FROM jsonb_array_elements_text(
+      CASE WHEN jsonb_typeof(metadata->'auth_roles') = 'array' THEN metadata->'auth_roles' ELSE '[]'::jsonb END
+    ) AS r(role)
+    WHERE NOT (lower(r.role) = ANY($2)))`
+
 func unverifiedUserRecipients(ctx context.Context, db *pgxpool.Pool, to []string) map[string]bool {
 	drop := map[string]bool{}
 	if db == nil || len(to) == 0 {
@@ -629,8 +645,7 @@ func unverifiedUserRecipients(ctx context.Context, db *pgxpool.Pool, to []string
 	for i, e := range to {
 		lowered[i] = strings.ToLower(strings.TrimSpace(e))
 	}
-	rows, err := db.Query(ctx,
-		`SELECT lower(email) FROM users WHERE lower(email) = ANY($1) AND email_verified = false`, lowered)
+	rows, err := db.Query(ctx, unverifiedStaffSQL, lowered, identity.CustomerFacingRoles())
 	if err != nil {
 		return drop // fail-open: never block mail on a lookup error
 	}

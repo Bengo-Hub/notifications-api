@@ -181,6 +181,7 @@ func (s *Service) updateUserFromAuthService(ctx context.Context, user *User, aut
 	user.SyncStatus = "synced"
 	user.UpdatedAt = now
 	user.LastLoginAt = &now
+	user.Metadata = withAuthRoles(user.Metadata, authUserData)
 
 	rolesFromAuth := extractRolesFromAuthServiceUser(authUserData, user.Email)
 	permissionsFromAuth := extractPermissionsFromAuthServiceUser(authUserData)
@@ -251,6 +252,7 @@ func (s *Service) createUserFromAuthService(ctx context.Context, authServiceUser
 		SyncAt:            &now,
 		CreatedAt:         now,
 		UpdatedAt:         now,
+		Metadata:          withAuthRoles(nil, authUserData),
 	}
 
 	if err := s.repo.CreateUser(ctx, user); err != nil {
