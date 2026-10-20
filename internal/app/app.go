@@ -36,6 +36,7 @@ import (
 	"github.com/bengobox/notifications-api/internal/modules/broadcasts"
 	eventsmod "github.com/bengobox/notifications-api/internal/modules/events"
 	"github.com/bengobox/notifications-api/internal/modules/identity"
+	"github.com/bengobox/notifications-api/internal/modules/maildelivery"
 	"github.com/bengobox/notifications-api/internal/modules/occasions"
 	"github.com/bengobox/notifications-api/internal/modules/preferences"
 	"github.com/bengobox/notifications-api/internal/modules/rbac"
@@ -43,6 +44,7 @@ import (
 	templatesmod "github.com/bengobox/notifications-api/internal/modules/templates"
 	"github.com/bengobox/notifications-api/internal/modules/tenant"
 	"github.com/bengobox/notifications-api/internal/modules/whatsappinbox"
+	"github.com/bengobox/notifications-api/internal/platformkey"
 	"github.com/bengobox/notifications-api/internal/platform/database"
 	"github.com/bengobox/notifications-api/internal/platform/events"
 	"github.com/bengobox/notifications-api/internal/platform/templates"
@@ -353,7 +355,13 @@ func New(ctx context.Context) (*App, error) {
 	}
 	whatsappEmbeddedSignupHandler := handlers.NewWhatsAppEmbeddedSignupHandler(entClient, log, providerManager)
 	whatsappTemplatesHandler := handlers.NewWhatsAppTemplates(providerManager, log)
-	httpRouter := router.New(log, healthHandler, notificationHandler, templateHandler, platformProviders, tenantProviders, analyticsHandler, settingsHandler, rbacHandler, authMeHandler, deviceTokenHandler, cfg.Security.APIKey, authMiddleware, authenticator, cfg.HTTP.AllowedOrigins, tenantSyncer, rateLimiter, serviceConfigHandler, encryptionKeyHandler, notificationPrefsHandler, developerKeyAuth, swaggerHandler, webhookHandler, whatsappEmbeddedSignupHandler, whatsappTemplatesHandler, whatsappInboxHandler, announcementHandler, broadcastHandler,
+	mailDeliveryHandler := handlers.NewMailDeliveryHandler(
+		maildelivery.NewService(maildelivery.NewEntStore(entClient), handlers.NewMailDeliverySuppressor(redisClient), log),
+		maildelivery.NewKeys(platformkey.NewStore(entClient)),
+		maildelivery.ProvisionerApplier(cfg.Services.EmailProvisioner, cfg.Services.MailDeliveryWebhookURL, nil),
+		redisClient, cfg.Services.MailDeliveryWebhookURL, log)
+
+	httpRouter := router.New(log, healthHandler, notificationHandler, templateHandler, platformProviders, tenantProviders, analyticsHandler, settingsHandler, rbacHandler, authMeHandler, deviceTokenHandler, cfg.Security.APIKey, authMiddleware, authenticator, cfg.HTTP.AllowedOrigins, tenantSyncer, rateLimiter, serviceConfigHandler, encryptionKeyHandler, notificationPrefsHandler, developerKeyAuth, swaggerHandler, webhookHandler, whatsappEmbeddedSignupHandler, whatsappTemplatesHandler, whatsappInboxHandler, announcementHandler, broadcastHandler, mailDeliveryHandler,
 		tenantExportHandler(exportSQLDB, cfg.Security.APIKey))
 
 	httpServer := &http.Server{

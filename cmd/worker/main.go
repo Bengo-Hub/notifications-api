@@ -814,6 +814,9 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 		if u, _ := msg.Metadata[broadcasts.MetaUnsubscribe].(string); u != "" {
 			ctx = email.WithListUnsubscribe(ctx, u)
 		}
+		// The request id becomes the Message-ID token, so a bounce event from the mail server can be
+		// matched back to this message's delivery log row (see internal/modules/maildelivery).
+		ctx = email.WithMessageID(ctx, msg.RequestID)
 		emailProv, _ := pm.GetEmailProvider(ctx, providerTenantID, preferred)
 		err := emailProv.SendEmail(ctx, fromOverride, validTo, msg.Cc, outboundBcc, replyTo, subject, rendered, plainTextBody, atts)
 		if err != nil {

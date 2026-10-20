@@ -3,14 +3,12 @@ package encryption
 import (
 	"bytes"
 	"context"
-	"crypto/sha256"
 	"encoding/base64"
-	"encoding/hex"
 	"sync"
 	"time"
 
 	"github.com/bengobox/notifications-api/internal/ent"
-	"github.com/bengobox/notifications-api/internal/ent/serviceconfig"
+	"github.com/bengobox/notifications-api/internal/platformkey"
 )
 
 // DBConfigKey is the ServiceConfig.config_key under which the platform-owner-managed
@@ -33,7 +31,7 @@ const keyCacheTTL = 30 * time.Second
 // encryption is disabled (matching the prior bare-key nil behavior). Results are cached
 // for ~30s; call Invalidate after writing a new DB key.
 type KeyProvider struct {
-	client *ent.Client
+	store  *platformkey.Store
 	envKey []byte // pre-validated 32-byte env key (or nil)
 
 	mu        sync.RWMutex
@@ -47,7 +45,7 @@ type KeyProvider struct {
 // key is retained. client may be nil, in which case only the env key is ever used.
 func NewKeyProvider(client *ent.Client, envKeyRaw string) *KeyProvider {
 	return &KeyProvider{
-		client: client,
+		store:  platformkey.NewStore(client),
 		envKey: KeyFromEnv(envKeyRaw),
 	}
 }
@@ -64,19 +62,11 @@ func (p *KeyProvider) Invalidate() {
 // dbKey reads the platform-level (tenant_id IS NULL) encryption_key from ServiceConfig.
 // Returns nil if absent, unreadable, or not exactly 32 bytes after base64 decode.
 func (p *KeyProvider) dbKey(ctx context.Context) []byte {
-	if p.client == nil {
+	value, _, found, err := p.store.Get(ctx, DBConfigKey)
+	if err != nil || !found {
 		return nil
 	}
-	row, err := p.client.ServiceConfig.Query().
-		Where(
-			serviceconfig.ConfigKeyEQ(DBConfigKey),
-			serviceconfig.TenantIDIsNil(),
-		).
-		First(ctx)
-	if err != nil || row == nil {
-		return nil
-	}
-	key, err := base64.StdEncoding.DecodeString(row.ConfigValue)
+	key, err := base64.StdEncoding.DecodeString(value)
 	if err != nil || len(key) != 32 {
 		return nil
 	}
@@ -150,12 +140,7 @@ func (p *KeyProvider) Configured(ctx context.Context) bool {
 // Fingerprint returns the first 8 hex chars of sha256(PRIMARY key), or "" if no key.
 // This is a non-reversible identifier safe to expose; it never reveals key material.
 func (p *KeyProvider) Fingerprint(ctx context.Context) string {
-	key := p.Primary(ctx)
-	if len(key) == 0 {
-		return ""
-	}
-	sum := sha256.Sum256(key)
-	return hex.EncodeToString(sum[:])[:8]
+	return platformkey.Fingerprint(p.Primary(ctx))
 }
 
 // Encrypt encrypts plaintext with the PRIMARY key. If no key is configured it returns

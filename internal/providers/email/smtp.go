@@ -146,7 +146,12 @@ func (p *SMTPProvider) SendEmail(ctx context.Context, from string, to []string, 
 	// unsubscribe URL (RFC 8058: https List-Unsubscribe plus List-Unsubscribe-Post);
 	// other mail keeps a plain mailto List-Unsubscribe for the deliverability signal.
 	b.WriteString("Date: " + time.Now().Format(time.RFC1123Z) + "\r\n")
-	b.WriteString("Message-ID: " + generateMessageID(envelopeFromDomain) + "\r\n")
+	messageID := generateMessageID(envelopeFromDomain)
+	if token := messageIDToken(ctx); token != "" && envelopeFromDomain != "" {
+		// The request id as the local part lets a bounce event be matched to its delivery log row.
+		messageID = "<" + token + "@" + envelopeFromDomain + ">"
+	}
+	b.WriteString("Message-ID: " + messageID + "\r\n")
 	unsubTarget := replyTo
 	if unsubTarget == "" {
 		unsubTarget = envelopeFrom

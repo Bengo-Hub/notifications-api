@@ -21,7 +21,7 @@ import (
 	"github.com/bengobox/notifications-api/internal/modules/tenant"
 )
 
-func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handlers.NotificationHandler, templates *handlers.TemplateHandler, platformProviders *handlers.PlatformProviders, tenantProviders *handlers.TenantProviders, analytics *handlers.AnalyticsHandler, settings *handlers.SettingsHandler, rbacHandler *handlers.RBACHandler, authMeHandler *handlers.AuthMeHandler, deviceTokens *handlers.DeviceTokenHandler, apiKey string, authMiddleware *authclient.AuthMiddleware, authenticator *identityhandler.Authenticator, allowedOrigins []string, tenantSyncer *tenant.Syncer, rateLimiter *ratelimit.Quota, serviceConfig *handlers.ServiceConfigHandler, encryptionKey *handlers.EncryptionKeyHandler, notificationPrefs *handlers.PreferencesHandler, developerKeyAuth *devauth.DeveloperKeyAuth, swaggerHandler *handlers.SwaggerHandler, webhooks *handlers.WebhookHandler, whatsappEmbeddedSignup *handlers.WhatsAppEmbeddedSignupHandler, whatsappTemplates *handlers.WhatsAppTemplates, whatsappInbox *handlers.WhatsAppInboxHandler, announcementsH *handlers.AnnouncementHandler, broadcastsH *handlers.BroadcastHandler, tenantExport http.Handler) http.Handler {
+func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handlers.NotificationHandler, templates *handlers.TemplateHandler, platformProviders *handlers.PlatformProviders, tenantProviders *handlers.TenantProviders, analytics *handlers.AnalyticsHandler, settings *handlers.SettingsHandler, rbacHandler *handlers.RBACHandler, authMeHandler *handlers.AuthMeHandler, deviceTokens *handlers.DeviceTokenHandler, apiKey string, authMiddleware *authclient.AuthMiddleware, authenticator *identityhandler.Authenticator, allowedOrigins []string, tenantSyncer *tenant.Syncer, rateLimiter *ratelimit.Quota, serviceConfig *handlers.ServiceConfigHandler, encryptionKey *handlers.EncryptionKeyHandler, notificationPrefs *handlers.PreferencesHandler, developerKeyAuth *devauth.DeveloperKeyAuth, swaggerHandler *handlers.SwaggerHandler, webhooks *handlers.WebhookHandler, whatsappEmbeddedSignup *handlers.WhatsAppEmbeddedSignupHandler, whatsappTemplates *handlers.WhatsAppTemplates, whatsappInbox *handlers.WhatsAppInboxHandler, announcementsH *handlers.AnnouncementHandler, broadcastsH *handlers.BroadcastHandler, mailDelivery *handlers.MailDeliveryHandler, tenantExport http.Handler) http.Handler {
 	r := chi.NewRouter()
 
 	// Client IP from the edge's trusted header only (chi's RealIP trusts any forwarded header).
@@ -70,6 +70,12 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 				wh.Get("/whatsapp/meta", webhooks.WhatsAppVerify)
 				wh.Post("/whatsapp/meta", webhooks.WhatsAppIncoming)
 			})
+		}
+
+		// The mail server's delivery events (bounces). Public like the provider webhooks above; the
+		// HMAC signature header is the authentication, see handlers.MailDeliveryHandler.
+		if mailDelivery != nil {
+			api.Post("/webhooks/stalwart/delivery", mailDelivery.Webhook)
 		}
 
 		// Templates — reading is public (platform-wide resource). Writing and test sends were public
@@ -204,6 +210,9 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 				}
 				if encryptionKey != nil {
 					encryptionKey.RegisterPlatformRoutes(platform)
+				}
+				if mailDelivery != nil {
+					mailDelivery.RegisterPlatformRoutes(platform)
 				}
 			})
 

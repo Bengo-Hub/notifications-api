@@ -89,6 +89,30 @@ All responses include `X-Request-ID` header for traceability. Error responses fo
 - Providers (SendGrid, Mailgun, Twilio, FCM, APNS) POST to `/webhooks/{provider}` (to be implemented)
 - Verify signatures per provider best practices; store events for compliance/audit
 
+### Mail delivery feedback (Stalwart)
+
+The worker marks an email `sent` when the mail server accepts it, which says nothing about the recipient's
+server. Stalwart therefore posts a webhook when a delivery fails for good.
+
+- `POST /api/v1/webhooks/stalwart/delivery` is public and authenticated only by the `X-Signature` header, an
+  HMAC-SHA256 of the raw body with the shared key, base64 encoded. The current key and the previous one are
+  accepted, so a rotation does not drop notices in flight. With no key configured the endpoint answers 503.
+- Only `delivery.failed` events are subscribed. A permanent failure (SMTP 5xx or enhanced status 5.x.x) marks
+  the delivery log row `bounced`. The row is found by the Message-ID the worker sets (the request id is the
+  local part, `<request-id@sending-domain>`); a notice without it marks the newest `sent` email to that
+  recipient within 7 days. A failure that says the mailbox or domain does not exist (5.1.x, "user unknown")
+  also suppresses the address for 30 days in the Redis list the worker's email guard reads.
+- `GET /api/v1/platform/mail-delivery-key` returns `{configured, source, key_fingerprint, updated_at,
+  last_event_at, webhook_url}` and never the key. `PUT /api/v1/platform/mail-delivery-key` with
+  `{"generate": true}` rotates the key: it is stored (the old one becomes the previous key), pushed to Stalwart
+  through email-provisioner (`PUT /internal/delivery-webhook`, which creates or updates the Stalwart webhook,
+  only for urls under `DELIVERY_WEBHOOK_URL_PREFIX`) and rolled back if Stalwart does not accept it.
+  Platform admins do this from Settings, Security in notifications-ui.
+- The key is stored through the same platform key store as the credential encryption key
+  (`internal/platformkey`), so both follow one pattern: platform-level service config row, generate, fingerprint,
+  no key material in any response.
+- Configuration (defaults are the in-cluster addresses): `EMAIL_PROVISIONER_URL`, `MAIL_DELIVERY_WEBHOOK_URL`.
+
 ## Events
 
 - **Inbound subjects**: `notifications.events` containing messages from other services (`invoice.due`, `payment.success`)

@@ -11,6 +11,8 @@ import (
 	ratelimit "github.com/Bengo-Hub/shared-ratelimit"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
+
+	"github.com/bengobox/notifications-api/internal/messaging"
 )
 
 // emailGuard protects the shared email provider account on two fronts:
@@ -48,8 +50,7 @@ var blockedEmailDomains = map[string]bool{
 }
 
 const (
-	suppressedKeyPrefix = "notifications:email:suppressed:"
-	cooldownKeyPrefix   = "notifications:email:provider-cooldown:"
+	cooldownKeyPrefix = "notifications:email:provider-cooldown:"
 )
 
 func newEmailGuard(rdb redis.UniversalClient, maxPerHour, burst int, validateMX bool, log *zap.Logger) *emailGuard {
@@ -195,7 +196,7 @@ func (g *emailGuard) isSuppressed(addr string) bool {
 	if g.redisOK() {
 		ctx, cancel := context.WithTimeout(context.Background(), 300*time.Millisecond)
 		defer cancel()
-		n, err := g.rdb.Exists(ctx, suppressedKeyPrefix+key).Result()
+		n, err := g.rdb.Exists(ctx, messaging.EmailSuppressedKey(key)).Result()
 		if err == nil {
 			return n > 0
 		}
@@ -213,7 +214,7 @@ func (g *emailGuard) Suppress(addr string, ttl time.Duration) {
 	stored := false
 	if g.redisOK() {
 		ctx, cancel := context.WithTimeout(context.Background(), 300*time.Millisecond)
-		stored = g.rdb.Set(ctx, suppressedKeyPrefix+key, "1", ttl).Err() == nil
+		stored = messaging.SuppressEmail(ctx, g.rdb, key, ttl)
 		cancel()
 	}
 	if !stored {

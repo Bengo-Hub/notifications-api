@@ -34,6 +34,11 @@ type ServicesConfig struct {
 	// MarketflowAPI is where a tenant's customer list lives (broadcast audiences, AI drafts).
 	// In-cluster by default, like every other caller of marketflow-api.
 	MarketflowAPI string `envconfig:"MARKETFLOW_API_URL" default:"http://marketflow-api.marketflow.svc.cluster.local:4000"`
+	// EmailProvisioner is the only service holding the mail server's admin login; the delivery
+	// webhook key is pushed to Stalwart through it. In-cluster.
+	EmailProvisioner string `envconfig:"EMAIL_PROVISIONER_URL" default:"http://email-provisioner.email.svc.cluster.local:8080"`
+	// MailDeliveryWebhookURL is where the mail server posts delivery events (in-cluster address of this API).
+	MailDeliveryWebhookURL string `envconfig:"MAIL_DELIVERY_WEBHOOK_URL" default:"http://notifications-api.notifications.svc.cluster.local:4000/api/v1/webhooks/stalwart/delivery"`
 	// MaskaniAPI owns estate owners and residents (maskani_residents broadcast audiences). In-cluster.
 	MaskaniAPI string `envconfig:"MASKANI_API_URL" default:"http://maskani-api.maskani.svc.cluster.local:4000"`
 	// BroadcastExcludedTenants are tenants platform broadcasts never go to, matched against each

@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
 	"net/http"
@@ -11,7 +10,7 @@ import (
 
 	"github.com/bengobox/notifications-api/internal/encryption"
 	"github.com/bengobox/notifications-api/internal/ent"
-	"github.com/bengobox/notifications-api/internal/ent/serviceconfig"
+	"github.com/bengobox/notifications-api/internal/platformkey"
 )
 
 const encryptionKeyDescription = "AES-256-GCM key for provider-credential encryption at rest"
@@ -20,7 +19,7 @@ const encryptionKeyDescription = "AES-256-GCM key for provider-credential encryp
 // encryption key. The raw key is NEVER returned in any response — only a fingerprint,
 // its source, and metadata.
 type EncryptionKeyHandler struct {
-	client      *ent.Client
+	store       *platformkey.Store
 	logger      *zap.Logger
 	keyProvider *encryption.KeyProvider
 }
@@ -28,7 +27,7 @@ type EncryptionKeyHandler struct {
 // NewEncryptionKeyHandler creates a new EncryptionKeyHandler.
 func NewEncryptionKeyHandler(client *ent.Client, logger *zap.Logger, keyProvider *encryption.KeyProvider) *EncryptionKeyHandler {
 	return &EncryptionKeyHandler{
-		client:      client,
+		store:       platformkey.NewStore(client),
 		logger:      logger.Named("encryption-key"),
 		keyProvider: keyProvider,
 	}
@@ -52,13 +51,8 @@ func (h *EncryptionKeyHandler) status(r *http.Request) encryptionKeyResponse {
 	}
 
 	if resp.Source == "db" {
-		if row, err := h.client.ServiceConfig.Query().
-			Where(
-				serviceconfig.ConfigKeyEQ(encryption.DBConfigKey),
-				serviceconfig.TenantIDIsNil(),
-			).
-			First(ctx); err == nil && row != nil {
-			ts := row.UpdatedAt.Format("2006-01-02T15:04:05Z")
+		if _, updated, found, err := h.store.Get(ctx, encryption.DBConfigKey); err == nil && found {
+			ts := updated.Format("2006-01-02T15:04:05Z")
 			resp.UpdatedAt = &ts
 		}
 	}
@@ -92,12 +86,13 @@ func (h *EncryptionKeyHandler) SetEncryptionKey(w http.ResponseWriter, r *http.R
 
 	var keyBytes []byte
 	if req.Generate || req.Key == "" {
-		keyBytes = make([]byte, 32)
-		if _, err := rand.Read(keyBytes); err != nil {
+		generated, err := platformkey.Random(32)
+		if err != nil {
 			h.logger.Error("failed to generate encryption key")
 			notifRespondJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to generate key"})
 			return
 		}
+		keyBytes = generated
 	} else {
 		decoded, err := base64.StdEncoding.DecodeString(req.Key)
 		if err != nil || len(decoded) != 32 {
@@ -110,36 +105,10 @@ func (h *EncryptionKeyHandler) SetEncryptionKey(w http.ResponseWriter, r *http.R
 	encoded := base64.StdEncoding.EncodeToString(keyBytes)
 
 	// Upsert the platform-level ServiceConfig row (tenant_id IS NULL).
-	existing, _ := h.client.ServiceConfig.Query().
-		Where(
-			serviceconfig.ConfigKeyEQ(encryption.DBConfigKey),
-			serviceconfig.TenantIDIsNil(),
-		).
-		First(ctx)
-
-	if existing != nil {
-		if _, err := existing.Update().
-			SetConfigValue(encoded).
-			SetConfigType("string").
-			SetIsSecret(true).
-			SetDescription(encryptionKeyDescription).
-			Save(ctx); err != nil {
-			h.logger.Error("failed to update encryption key", zap.Error(err))
-			notifRespondJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to save key"})
-			return
-		}
-	} else {
-		if _, err := h.client.ServiceConfig.Create().
-			SetConfigKey(encryption.DBConfigKey).
-			SetConfigValue(encoded).
-			SetConfigType("string").
-			SetIsSecret(true).
-			SetDescription(encryptionKeyDescription).
-			Save(ctx); err != nil { // tenant_id left nil => platform-level
-			h.logger.Error("failed to create encryption key", zap.Error(err))
-			notifRespondJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to save key"})
-			return
-		}
+	if err := h.store.Put(ctx, encryption.DBConfigKey, encoded, encryptionKeyDescription); err != nil {
+		h.logger.Error("failed to save encryption key", zap.Error(err))
+		notifRespondJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to save key"})
+		return
 	}
 
 	// Drop the cached candidates so the new key takes effect immediately.
