@@ -22,18 +22,25 @@ of that flow live here. marketflow-ai owns the conversation and marketflow-api o
 | `X-Hub-Signature-256` check on the inbound webhook | **No (security gap)** | `webhooks.go` |
 | Routing inbound messages to other services | **No** (logged and stored in the tenant inbox only) | `whatsappinbox/service.go` |
 
-## Security gap to close first
+## Webhook signature check (done 2026-10-22, needs one config step)
 
-The inbound webhook (`POST /api/v1/webhooks/whatsapp/meta`) does not verify Meta's
-`X-Hub-Signature-256` header. Anyone who knows the URL can post a fake inbound message or a fake
-delivery status. marketflow-api's leadgen webhook already verifies the same header
-(`marketflow-api/internal/modules/webhooks/meta_handler.go`), so the fix copies that pattern:
+The inbound webhook (`POST /api/v1/webhooks/whatsapp/meta`) now verifies Meta's
+`X-Hub-Signature-256` header (`internal/http/handlers/webhooks_signature.go`, wired in
+`internal/app/app.go`).
 
-- HMAC-SHA256 of the raw body with the Meta app secret (platform config, never per tenant).
-- Constant-time compare; reject with 401 before parsing.
-- Read the raw body once and pass it to the parser, so the check and the parse see the same bytes.
+How it works:
+- HMAC-SHA256 of the raw body with the Meta app secret, compared in constant time. The body is read once, capped at 1 MB, and the same bytes are checked and parsed.
+- The secret comes from the platform `whatsapp/meta_cloud` setting `app_secret` (Platform providers page, stored encrypted; the loader caches for 30 s). The environment variable `WHATSAPP_APP_SECRET` is the fallback.
+- A secret is configured: a missing or wrong signature gets 401.
+- No secret configured: requests are accepted with a warning at most every 10 minutes, so the deploy cannot cut off live traffic.
 
-This fix is independent of the ads assistant and should ship in Phase 0.
+Rollout:
+1. Deploy.
+2. Save the app secret as `app_secret` under the platform's WhatsApp, Meta Cloud provider settings.
+3. Confirm the "accepted without signature check" warning stops and genuine deliveries still return 200.
+4. Set `WHATSAPP_WEBHOOK_REQUIRE_SIGNATURE=true` so an unset secret rejects instead of accepting.
+
+Tests: `webhooks_signature_test.go` covers valid, wrong, missing and malformed signatures, lenient and strict modes, the env fallback, the stored setting taking priority, the handler's 401/200 responses, and the oversized-body cap.
 
 ## Planned sends
 

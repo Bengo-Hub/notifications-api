@@ -349,7 +349,14 @@ func New(ctx context.Context) (*App, error) {
 	}
 	whatsappInboxService := whatsappinbox.NewService(entClient, providerManager, whatsappInboxHub, natsConn, cfg.Events, log)
 	whatsappInboxHandler := handlers.NewWhatsAppInboxHandler(whatsappInboxService, whatsappInboxHub, cfg.HTTP.AllowedOrigins, log)
-	webhookHandler := handlers.NewWebhookHandler(entClient, log, cfg.HTTP.PublicBaseURL, whatsappInboxService).WithOptOut(suppressionSvc)
+	webhookHandler := handlers.NewWebhookHandler(entClient, log, cfg.HTTP.PublicBaseURL, whatsappInboxService).WithOptOut(suppressionSvc).
+		WithMetaAppSecret(func(ctx context.Context) string {
+			s, err := providerManager.LoadPlatformMetaCredentials(ctx)
+			if err != nil {
+				return ""
+			}
+			return s["app_secret"]
+		}, handlers.WhatsAppSignatureRequired())
 	if redisClient != nil {
 		webhookHandler.WithWhatsAppFallback(redisClient, natsConn, cfg.Events)
 	}

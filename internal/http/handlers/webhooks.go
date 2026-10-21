@@ -71,6 +71,7 @@ type WebhookHandler struct {
 	inbox         *whatsappinbox.Service
 	fallback      *whatsAppFallback
 	optOut        *suppression.Service
+	signature     *metaSignature
 }
 
 // NewWebhookHandler creates the webhook handler. publicBaseURL is this service's own externally
@@ -200,9 +201,13 @@ type waWebhookPayload struct {
 // built on top yet) — Meta requires a 200 within a few seconds or it will retry and eventually
 // disable the subscription, so this always acks even for an unrecognized phone_number_id.
 func (h *WebhookHandler) WhatsAppIncoming(w http.ResponseWriter, r *http.Request) {
-	body, err := io.ReadAll(r.Body)
+	body, err := io.ReadAll(io.LimitReader(r.Body, maxWhatsAppWebhookBody))
 	if err != nil {
 		w.WriteHeader(http.StatusOK) // still ack — a malformed body isn't something Meta can fix by retrying
+		return
+	}
+	if !h.signature.verified(r.Context(), r.Header.Get(metaSignatureHeader), body, h.log) {
+		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 	var payload waWebhookPayload
