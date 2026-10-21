@@ -2,13 +2,11 @@ package router
 
 import (
 	"context"
-	"crypto/subtle"
 	"net/http"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/go-chi/cors"
 	"go.uber.org/zap"
 
 	httpware "github.com/Bengo-Hub/httpware"
@@ -32,14 +30,9 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 	r.Use(httpware.BypassForStreaming(httpware.Logging(log)))
 	r.Use(httpware.Recover(log))
 	r.Use(httpware.BypassForStreaming(middleware.Timeout(30 * time.Second)))
-	r.Use(cors.Handler(cors.Options{
-		AllowOriginFunc:  originAllower(allowedOrigins),
-		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "Origin", "X-Request-ID", "X-Tenant-ID", "X-Tenant-Slug", "X-API-Key", "Idempotency-Key"},
-		ExposedHeaders:   []string{"Link", "X-Request-ID", "X-RateLimit-Limit", "X-RateLimit-Remaining", "X-RateLimit-Reset", "Retry-After"},
-		AllowCredentials: true,
-		MaxAge:           300,
-	}))
+	// The platform's own apps (apex and every subdomain) are always allowed, on top of the configured origins.
+	r.Use(httpware.CORS(httpware.StandardCORS(
+		append(append([]string(nil), allowedOrigins...), "https://codevertexafrica.com", "https://*.codevertexafrica.com"))))
 
 	// Swagger UI
 	r.Get("/v1/docs/*", swaggerHandler.SwaggerUI)
@@ -132,7 +125,7 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 			api.Group(func(s2s chi.Router) {
 				s2s.Use(func(next http.Handler) http.Handler {
 					return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-						if subtle.ConstantTimeCompare([]byte(r.Header.Get("X-API-Key")), []byte(apiKey)) != 1 {
+						if !httpware.ValidServiceKey(r, apiKey) {
 							http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
 							return
 						}
@@ -180,11 +173,10 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 						authMiddleware.RequireAuth(next).ServeHTTP(w, r)
 						return
 					}
-					if apiKey != "" {
-						if r.Header.Get("X-API-Key") != apiKey {
-							http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
-							return
-						}
+					// No JWT middleware configured: only the service key gets through (an unset key refuses all).
+					if !httpware.ValidServiceKey(r, apiKey) {
+						http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
+						return
 					}
 					next.ServeHTTP(w, r)
 				})

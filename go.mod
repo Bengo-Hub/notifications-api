@@ -9,7 +9,7 @@ require (
 	ariga.io/atlas v1.1.0
 	entgo.io/ent v0.14.5
 	github.com/Bengo-Hub/cache v0.5.2
-	github.com/Bengo-Hub/httpware v0.14.3
+	github.com/Bengo-Hub/httpware v0.16.0
 	github.com/Bengo-Hub/pagination v0.3.0
 	github.com/Bengo-Hub/shared-auth-client v0.4.1
 	github.com/Bengo-Hub/shared-events v0.7.0
@@ -18,7 +18,6 @@ require (
 	github.com/SherClockHolmes/webpush-go v1.4.0
 	github.com/gin-gonic/gin v1.11.0
 	github.com/go-chi/chi/v5 v5.3.2
-	github.com/go-chi/cors v1.2.1
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.11.0
@@ -27,7 +26,6 @@ require (
 	github.com/nats-io/nats.go v1.52.0
 	github.com/prometheus/client_golang v1.23.2
 	github.com/redis/go-redis/v9 v9.17.2
-	github.com/shopspring/decimal v1.4.0
 	github.com/swaggo/swag v1.16.6
 	go.uber.org/zap v1.27.1
 	nhooyr.io/websocket v1.8.7
