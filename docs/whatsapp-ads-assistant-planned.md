@@ -19,7 +19,7 @@ of that flow live here. marketflow-ai owns the conversation and marketflow-api o
 | Reply buttons and list messages | **No** | |
 | Inbound `text` and template quick-reply `button` | Yes | `internal/http/handlers/webhooks.go` `WhatsAppIncoming` |
 | Inbound `interactive.button_reply` and `interactive.list_reply` | **No** | |
-| `X-Hub-Signature-256` check on the inbound webhook | **No (security gap)** | `webhooks.go` |
+| `X-Hub-Signature-256` check on the inbound webhook | **Yes (2026-10-22)**, active once the app secret is saved | `webhooks_signature.go` |
 | Routing inbound messages to other services | **No** (logged and stored in the tenant inbox only) | `whatsappinbox/service.go` |
 
 ## Webhook signature check (done 2026-10-22, needs one config step)
