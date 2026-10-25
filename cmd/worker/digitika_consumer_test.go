@@ -88,7 +88,8 @@ func TestEnquiryRepliesToTheVisitorAndAlertsTheTeamByEmail(t *testing.T) {
 	if err := tpl.ExecuteTemplate(&out, "content", n.Data); err != nil {
 		t.Fatal(err)
 	}
-	for _, want := range []string{"Jane Achieng", "+254712345678", "POS and inventory", "two shops in Kisumu", "/admin/contacts"} {
+	// html/template writes "+" as "&#43;", which mail clients show as "+".
+	for _, want := range []string{"Jane Achieng", "254712345678", "POS and inventory", "two shops in Kisumu", "/admin/contacts"} {
 		if !strings.Contains(out.String(), want) {
 			t.Errorf("team alert lacks %q", want)
 		}
