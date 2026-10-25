@@ -9,7 +9,7 @@
     <tbody>
       {{ if .name }}<tr><td style="padding:6px 12px 6px 0"><strong>Name</strong></td><td style="padding:6px 0">{{ .name }}</td></tr>{{ end }}
       {{ if .email }}<tr><td style="padding:6px 12px 6px 0"><strong>Email</strong></td><td style="padding:6px 0"><a href="mailto:{{ .email }}">{{ .email }}</a></td></tr>{{ end }}
-      {{ if .phone }}<tr><td style="padding:6px 12px 6px 0"><strong>Phone</strong></td><td style="padding:6px 0"><a href="tel:+{{ .phone }}">+{{ .phone }}</a></td></tr>{{ end }}
+      {{ if .phone }}<tr><td style="padding:6px 12px 6px 0"><strong>Phone</strong></td><td style="padding:6px 0"><a href="tel:{{ .phone }}">{{ .phone }}</a></td></tr>{{ end }}
       {{ if .service }}<tr><td style="padding:6px 12px 6px 0"><strong>Interested in</strong></td><td style="padding:6px 0">{{ .service }}</td></tr>{{ end }}
       {{ if .source }}<tr><td style="padding:6px 12px 6px 0"><strong>Form</strong></td><td style="padding:6px 0">{{ .source }}</td></tr>{{ end }}
     </tbody>

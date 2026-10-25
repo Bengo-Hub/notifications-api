@@ -31,7 +31,7 @@ func minorPayload(extra map[string]any) map[string]any {
 // A website contact form enquiry, as codevertex-website publishes it.
 func enquiryPayload(extra map[string]any) map[string]any {
 	p := map[string]any{
-		"name": "Jane Achieng", "email": "jane@example.com", "phone": "254712345678",
+		"name": "Jane Achieng", "email": "jane@example.com", "phone": "+254712345678",
 		"service": "pos", "serviceLabel": "POS and inventory", "message": "We run two shops in Kisumu.", "source": "contact",
 	}
 	for k, v := range extra {
