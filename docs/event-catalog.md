@@ -16,7 +16,7 @@
 | `digitika.installment.reminder` | Installment due within 3 days or overdue (daily cron; overdue every 3 days); `digitika/installment_reminder`, overdue WhatsApp variant `digitika/installment_overdue` | codevertex-website |
 | `digitika.account.created` | Student or parent portal account created; `digitika/portal_account` (temporary password by email only) | codevertex-website |
 | `digitika.access_code.requested` | Parent portal one-time code; email `auth/otp_verification`, WhatsApp `auth_otp` from the platform number, never gated | codevertex-website |
-| `digitika.contact.received` | Contact form acknowledgement; `digitika/contact_form_reply` by email and, with a phone, WhatsApp | codevertex-website |
+| `digitika.contact.received` | Website contact form enquiry. The visitor gets `digitika/contact_form_reply` by email and the `codevertex_enquiry_received_v1_btn` WhatsApp template (phone is required on the form; payload `serviceLabel` names the service). The team gets `platform/website_enquiry` by email only at `PLATFORM_ALERT_EMAILS`, locked so no preference can mute it | codevertex-website |
 | `digitika.certificate.issued` | Course certificate issued; `digitika/certificate_issued` to the learner and any guardian | codevertex-website |
 
 Digitika events carry the learner (`studentId`, `studentName`, `studentEmail` real address only,

@@ -791,5 +791,16 @@
     "source": "whatsapp/digitika/contact_form_reply.txt (params: name)",
     "body": "Hello {{1}},\n\nThank you for contacting Codevertex Africa Limited. We received your message and will reply within 1 business day.\n\nFor anything urgent, call +254 743 793 901.",
     "example": ["Jane"]
+  },
+  {
+    "name": "codevertex_enquiry_received_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/digitika/contact_form_reply.txt (params: name, service; button: services)",
+    "body": "Hello {{1}},\n\nWe have received your enquiry about {{2}} at Codevertex Africa Limited. A member of our team will reply within 1 business day.\n\nFor anything urgent, call +254 743 793 901.",
+    "example": ["Jane", "POS and inventory"],
+    "buttons": [
+      {"type": "URL", "text": "Visit our website", "url": "https://codevertexafrica.com/{{1}}", "example": ["services"]}
+    ]
   }
 ]

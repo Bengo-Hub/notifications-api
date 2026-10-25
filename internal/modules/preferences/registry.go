@@ -80,6 +80,8 @@ var Registry = []Type{
 	{Key: "platform/new_tenant_registered", Label: "New tenant registered (platform ops)", Group: "Account & Security", Class: ClassLocked},
 	// Platform-ops alert: PayHero refuses payments until an account's service wallet is topped up.
 	{Key: "platform/payhero_service_wallet_short", Label: "PayHero service wallet needs a top up (platform ops)", Group: "Account & Security", Class: ClassLocked},
+	// Platform-ops alert: a visitor sent the codevertexafrica.com contact form.
+	{Key: "platform/website_enquiry", Label: "New website enquiry (platform ops)", Group: "Account & Security", Class: ClassLocked},
 	{Key: "subscription/subscription_created", Label: "Subscription created", Group: "Subscription", Class: ClassOptional},
 	{Key: "subscription/subscription_renewed", Label: "Subscription renewed", Group: "Subscription", Class: ClassOptional},
 	{Key: "subscription/subscription_upgraded", Label: "Subscription upgraded", Group: "Subscription", Class: ClassOptional},

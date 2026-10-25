@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/bengobox/notifications-api/internal/config"
 	"github.com/bengobox/notifications-api/internal/whatsapp/templatesync"
 )
 
@@ -25,6 +26,73 @@ func minorPayload(extra map[string]any) map[string]any {
 		p[k] = v
 	}
 	return p
+}
+
+// A website contact form enquiry, as codevertex-website publishes it.
+func enquiryPayload(extra map[string]any) map[string]any {
+	p := map[string]any{
+		"name": "Jane Achieng", "email": "jane@example.com", "phone": "254712345678",
+		"service": "pos", "serviceLabel": "POS and inventory", "message": "We run two shops in Kisumu.", "source": "contact",
+	}
+	for k, v := range extra {
+		p[k] = v
+	}
+	return p
+}
+
+func TestEnquiryRepliesToTheVisitorAndAlertsTheTeamByEmail(t *testing.T) {
+	n, ok := buildContactReceived(enquiryPayload(nil))
+	if !ok || len(n.Parties) != 1 {
+		t.Fatalf("one visitor party: ok=%v parties=%d", ok, len(n.Parties))
+	}
+	wa := n.Parties[0].WhatsApp
+	if wa == nil || wa.Name != "codevertex_enquiry_received_v1_btn" || wa.Button != "services" {
+		t.Fatalf("visitor WhatsApp = %+v", wa)
+	}
+	if wa.Params[1] != "POS and inventory" {
+		t.Errorf("the reply names the readable service, got %q", wa.Params[1])
+	}
+
+	old, _ := buildContactReceived(enquiryPayload(map[string]any{"serviceLabel": "", "service": ""}))
+	if got := old.Parties[0].WhatsApp.Params[1]; got != "our services" {
+		t.Errorf("no service falls back to a readable phrase, got %q", got)
+	}
+
+	cfg := &config.Config{}
+	cfg.Events.PlatformAlertEmails = " team@example.com , ,bad-address, ops@example.com.invalid,owner@example.com"
+	alerts := platformAlertParties(cfg, n)
+	if len(alerts) != 2 {
+		t.Fatalf("two usable alert addresses, got %d", len(alerts))
+	}
+	for _, a := range alerts {
+		if len(a.Channels) != 1 || a.Channels[0] != "email" || a.WhatsApp != nil || a.TemplateID != "platform/website_enquiry" {
+			t.Errorf("the team alert is email only on its own template: %+v", a)
+		}
+	}
+	if alerts[0].Key == alerts[1].Key {
+		t.Error("each alert address has its own idempotency key")
+	}
+	cfg.Events.PlatformAlertEmails = ""
+	if len(platformAlertParties(cfg, n)) != 0 {
+		t.Error("an empty PLATFORM_ALERT_EMAILS switches the alert off")
+	}
+	if other, _ := buildCertificateIssued(minorPayload(nil)); len(platformAlertParties(&config.Config{}, other)) != 0 {
+		t.Error("notices without an alert template never email the team")
+	}
+
+	tpl, err := template.ParseFiles("../../templates/email/platform/website_enquiry.html")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var out bytes.Buffer
+	if err := tpl.ExecuteTemplate(&out, "content", n.Data); err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{"Jane Achieng", "+254712345678", "POS and inventory", "two shops in Kisumu", "/admin/contacts"} {
+		if !strings.Contains(out.String(), want) {
+			t.Errorf("team alert lacks %q", want)
+		}
+	}
 }
 
 func partyByKey(n digitikaNotice, key string) *noticeParty {
@@ -185,10 +253,12 @@ func TestDigitikaWhatsAppTemplatesMatchTheManifest(t *testing.T) {
 		"installment.reminder": minorPayload(nil),
 		"installment.overdue":  minorPayload(map[string]any{"daysUntilDue": -2.0}),
 		"certificate.issued":   minorPayload(nil),
+		"contact.received":     enquiryPayload(nil),
 	}
 	builders := map[string]func(map[string]any) (digitikaNotice, bool){
 		"enrollment.confirmed": buildEnrollmentConfirmed, "payment.succeeded": buildInstallmentReceipt, "payment.complete": buildInstallmentReceipt,
 		"installment.reminder": buildInstallmentReminder, "installment.overdue": buildInstallmentReminder, "certificate.issued": buildCertificateIssued,
+		"contact.received": buildContactReceived,
 	}
 	for name, p := range payloads {
 		n, _ := builders[name](p)
@@ -223,7 +293,7 @@ func TestDigitikaWhatsAppTemplatesMatchTheManifest(t *testing.T) {
 			t.Errorf("%s: missing email template for %s", name, n.TemplateID)
 		}
 	}
-	for _, name := range []string{"digitika_portal_account_v2_btn", "digitika_contact_received_v1"} {
+	for _, name := range []string{"digitika_portal_account_v2_btn", "codevertex_enquiry_received_v1_btn"} {
 		if _, ok := declared[name]; !ok {
 			t.Errorf("%q is not in templates.json", name)
 		}

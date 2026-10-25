@@ -56,6 +56,34 @@ type digitikaNotice struct {
 	// Ungated skips the tenant preference gate: a one-time code is never switched off, and its
 	// WhatsApp text file (auth/otp) is not the email template the gate is keyed on.
 	Ungated bool
+	// AlertTemplateID, when set, also emails the team at PLATFORM_ALERT_EMAILS with this
+	// template and AlertSubject (email only, same data as the notice).
+	AlertTemplateID string
+	AlertSubject    string
+}
+
+// platformAlertParties turns the configured PLATFORM_ALERT_EMAILS list into email-only parties
+// for a notice's internal alert. An empty setting switches the alert off.
+func platformAlertParties(cfg *config.Config, n digitikaNotice) []noticeParty {
+	if n.AlertTemplateID == "" || cfg == nil {
+		return nil
+	}
+	var out []noticeParty
+	for i, part := range strings.Split(cfg.Events.PlatformAlertEmails, ",") {
+		addr := strings.TrimSpace(part)
+		if !sendableEmail(addr) {
+			continue
+		}
+		out = append(out, noticeParty{
+			Key:        fmt.Sprintf("alert%d", i),
+			Target:     messaging.TargetPlatformAdmin,
+			Email:      addr,
+			Channels:   []string{"email"},
+			TemplateID: n.AlertTemplateID,
+			Subject:    n.AlertSubject,
+		})
+	}
+	return out
 }
 
 // digitikaBuilders turn each website event into its notice. They are pure (payload in, notice
@@ -257,18 +285,35 @@ func buildAccessCode(p map[string]any) (digitikaNotice, bool) {
 	return n, code != "" && (email != "" || phone != "")
 }
 
+// contactReplyButton is the URL suffix of the enquiry reply's "Visit our website" button.
+const contactReplyButton = "services"
+
+// buildContactReceived acknowledges a website enquiry to the visitor (email and WhatsApp) and
+// emails the team the full enquiry at PLATFORM_ALERT_EMAILS. The website sends the readable
+// service name as serviceLabel; older events only carry the service value.
 func buildContactReceived(p map[string]any) (digitikaNotice, bool) {
 	email, phone := strings.TrimSpace(str(p, "email")), strings.TrimSpace(str(p, "phone"))
 	name := str(p, "name")
+	service := strings.TrimSpace(str(p, "serviceLabel"))
+	if service == "" {
+		service = strings.TrimSpace(str(p, "service"))
+	}
 	n := digitikaNotice{
-		TemplateID: "digitika/contact_form_reply",
-		Subject:    "We received your message: Codevertex Africa Limited",
+		TemplateID:      "digitika/contact_form_reply",
+		Subject:         "We received your message: Codevertex Africa Limited",
+		AlertTemplateID: "platform/website_enquiry",
+		AlertSubject:    "New website enquiry from " + waParam(name, "a visitor"),
 		Data: map[string]any{
-			"name": name, "email": email, "message": str(p, "message"), "service": str(p, "service"),
+			"name": name, "email": email, "phone": phone, "message": str(p, "message"), "service": service,
+			"source": str(p, "source"), "admin_link": "https://codevertexafrica.com/admin/contacts",
 		},
 	}
 	n.Parties = []noticeParty{partyOf(messaging.TargetCustomer, email, phone, nil,
-		&partyWhatsApp{Name: "digitika_contact_received_v1", Params: []string{waParam(name, "there")}})}
+		&partyWhatsApp{
+			Name:   "codevertex_enquiry_received_v1_btn",
+			Params: []string{waParam(name, "there"), waParam(service, "our services")},
+			Button: contactReplyButton,
+		})}
 	return n, email != "" || phone != ""
 }
 
@@ -367,7 +412,7 @@ func startDigitikaConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStream
 			Data:             notice.Data,
 			Country:          country,
 			IdemBase:         "digitika-" + evt.EventType + "-" + evt.ID,
-			Parties:          notice.Parties,
+			Parties:          append(notice.Parties, platformAlertParties(cfg, notice)...),
 			Gate:             gate,
 			TemplateChannels: templateChannels,
 		}

@@ -1,0 +1,27 @@
+{{ define "content" }}
+  <h2>New website enquiry: {{ if .name }}{{ .name }}{{ else }}a visitor{{ end }}</h2>
+  <p>
+    Someone sent the contact form on codevertexafrica.com. They have already received an
+    acknowledgement by email and WhatsApp. Please reply within one business day.
+  </p>
+
+  <table role="presentation" style="width:100%;border-collapse:collapse;margin:16px 0">
+    <tbody>
+      {{ if .name }}<tr><td style="padding:6px 12px 6px 0"><strong>Name</strong></td><td style="padding:6px 0">{{ .name }}</td></tr>{{ end }}
+      {{ if .email }}<tr><td style="padding:6px 12px 6px 0"><strong>Email</strong></td><td style="padding:6px 0"><a href="mailto:{{ .email }}">{{ .email }}</a></td></tr>{{ end }}
+      {{ if .phone }}<tr><td style="padding:6px 12px 6px 0"><strong>Phone</strong></td><td style="padding:6px 0"><a href="tel:+{{ .phone }}">+{{ .phone }}</a></td></tr>{{ end }}
+      {{ if .service }}<tr><td style="padding:6px 12px 6px 0"><strong>Interested in</strong></td><td style="padding:6px 0">{{ .service }}</td></tr>{{ end }}
+      {{ if .source }}<tr><td style="padding:6px 12px 6px 0"><strong>Form</strong></td><td style="padding:6px 0">{{ .source }}</td></tr>{{ end }}
+    </tbody>
+  </table>
+
+  <div style="background:#f5f4f7;padding:16px;border-radius:8px;border-left:4px solid #9B2C6B;margin:16px 0">
+    <p style="margin:0;color:#1d1a22;white-space:pre-wrap">{{ .message }}</p>
+  </div>
+
+  {{ if .admin_link }}
+  <p>
+    <a class="button" href="{{ .admin_link }}">Open enquiries</a>
+  </p>
+  {{ end }}
+{{ end }}
