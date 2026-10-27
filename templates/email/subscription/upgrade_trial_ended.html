@@ -1,0 +1,14 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <h2 style="color: #2563eb;">Your {{ .plan_name }} trial has ended</h2>
+
+  {{ if .upgrade_at }}
+  <p>You are back on <strong>{{ .base_plan_name }}</strong> for now. Your plan moves to <strong>{{ .upgrade_plan_name }}</strong> from your renewal on <strong>{{ .upgrade_at }}</strong>, and that renewal is billed at its price.</p>
+  {{ else }}
+  <p>You stay on <strong>{{ .base_plan_name }}</strong>. No change has been made to your billing.</p>
+  {{ end }}
+
+  <p>
+    <a class="button" href="{{ .action_link }}">Manage Subscription</a>
+  </p>
+{{ end }}

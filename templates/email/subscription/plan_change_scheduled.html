@@ -1,0 +1,17 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <h2 style="color: #059669;">Your plan change is scheduled</h2>
+  <p>Your plan moves from <strong>{{ .from_plan_name }}</strong> to <strong>{{ .plan_name }}</strong> on <strong>{{ .effective_at }}</strong>, your next renewal date. That renewal is billed at the {{ .plan_name }} price.</p>
+
+  <div style="background:#f3f4f6; padding:16px; border-radius:6px; margin:16px 0;">
+    <strong>Current plan:</strong> {{ .from_plan_name }}<br/>
+    <strong>New plan:</strong> {{ .plan_name }}<br/>
+    <strong>Takes effect:</strong> {{ .effective_at }}
+  </div>
+
+  <p>You can cancel the change from your billing page before that date.</p>
+
+  <p>
+    <a class="button" href="{{ .action_link }}">Manage Subscription</a>
+  </p>
+{{ end }}

@@ -56,8 +56,8 @@ var subscriptionMappings = map[string]subscriptionNotificationMapping{
 		DataBuilder: func(payload map[string]any, tenantWebsite string) map[string]any {
 			return map[string]any{
 				"name":          "Admin",
-				"new_plan_name": payload["new_plan_code"],
-				"old_plan_name": payload["old_plan_id"],
+				"new_plan_name": firstNonEmpty(payload["new_plan_name"], payload["new_plan_code"]),
+				"old_plan_name": firstNonEmpty(payload["old_plan_name"], payload["old_plan_code"], payload["old_plan_id"]),
 				"action_link":   fmt.Sprintf("%s/settings/subscription", tenantWebsite),
 			}
 		},
@@ -68,8 +68,8 @@ var subscriptionMappings = map[string]subscriptionNotificationMapping{
 		DataBuilder: func(payload map[string]any, tenantWebsite string) map[string]any {
 			return map[string]any{
 				"name":          "Admin",
-				"new_plan_name": payload["new_plan_code"],
-				"old_plan_name": payload["old_plan_id"],
+				"new_plan_name": firstNonEmpty(payload["new_plan_name"], payload["new_plan_code"]),
+				"old_plan_name": firstNonEmpty(payload["old_plan_name"], payload["old_plan_code"], payload["old_plan_id"]),
 				"action_link":   fmt.Sprintf("%s/settings/subscription", tenantWebsite),
 			}
 		},
@@ -92,8 +92,47 @@ var subscriptionMappings = map[string]subscriptionNotificationMapping{
 		DataBuilder: func(payload map[string]any, tenantWebsite string) map[string]any {
 			return map[string]any{
 				"name":        "Admin",
-				"plan_name":   payload["plan_code"],
+				"plan_name":   firstNonEmpty(payload["plan_name"], payload["plan_code"]),
 				"action_link": fmt.Sprintf("%s/settings/subscription", tenantWebsite),
+			}
+		},
+	},
+	// Upgrade trials and scheduled plan changes (subscriptions-api plan_schedule*.go). A trial
+	// gives a higher tier for some days; the upgrade then takes effect on the next renewal date
+	// and that renewal bills it. manage_url is the subscriptions billing page.
+	"upgrade_trial_started": {
+		TemplateID:   "subscription/upgrade_trial_started",
+		EmailSubject: "Your free trial has started",
+		DataBuilder:  upgradeTrialData,
+	},
+	"upgrade_trial_ending": {
+		TemplateID:   "subscription/upgrade_trial_ending",
+		EmailSubject: "Your free trial ends soon",
+		DataBuilder:  upgradeTrialData,
+	},
+	"upgrade_trial_ended": {
+		TemplateID:   "subscription/upgrade_trial_ended",
+		EmailSubject: "Your free trial has ended",
+		DataBuilder:  upgradeTrialData,
+	},
+	"plan_change_scheduled": {
+		TemplateID:   "subscription/plan_change_scheduled",
+		EmailSubject: "Your plan change is scheduled",
+		DataBuilder:  upgradeTrialData,
+	},
+	// trial_ended fires when a signup trial on a paid plan ends unpaid and enters grace.
+	"trial_ended": {
+		TemplateID:   "subscription/grace_reminder",
+		EmailSubject: "Your free trial has ended: pay to keep your services active",
+		DataBuilder: func(payload map[string]any, tenantWebsite string) map[string]any {
+			return map[string]any{
+				"name":           "Admin",
+				"plan_name":      firstNonEmpty(payload["plan_name"], payload["plan_code"]),
+				"days_remaining": payload["days_remaining"],
+				"grace_ends_at":  payload["grace_ends_at"],
+				"amount":         payload["amount"],
+				"invoice_number": payload["invoice_number"],
+				"payment_link":   firstNonEmpty(payload["pay_link"], fmt.Sprintf("%s/settings/subscription", tenantWebsite)),
 			}
 		},
 	},
@@ -180,6 +219,23 @@ var subscriptionMappings = map[string]subscriptionNotificationMapping{
 	},
 }
 
+// upgradeTrialData fills the upgrade trial and plan change templates. Every key the templates
+// use is copied through; action_link prefers the subscriptions billing page sent by
+// subscriptions-api.
+func upgradeTrialData(payload map[string]any, tenantWebsite string) map[string]any {
+	out := map[string]any{
+		"name":        "Admin",
+		"action_link": firstNonEmpty(payload["manage_url"], fmt.Sprintf("%s/settings/subscription", tenantWebsite)),
+	}
+	for _, k := range []string{"plan_name", "base_plan_name", "upgrade_plan_name", "from_plan_name", "days",
+		"days_remaining", "ends_at", "upgrade_at", "effective_at", "outcome"} {
+		if v, ok := payload[k]; ok {
+			out[k] = v
+		}
+	}
+	return out
+}
+
 // supportGraceData fills the grace-reminder template for a support charge. plan_name carries the
 // agreement name ("Hosting and support", or the special agreement's name).
 func supportGraceData(payload map[string]any, tenantWebsite string) map[string]any {
@@ -202,7 +258,9 @@ func supportGraceData(payload map[string]any, tenantWebsite string) map[string]a
 // aggregate, so they key on the event id; one-shot events keep the per-aggregate key.
 func subscriptionIdempotencyKey(evt subscriptionEvent) string {
 	switch evt.EventType {
-	case "grace_reminder", "support_fee_grace_reminder":
+	case "grace_reminder", "support_fee_grace_reminder",
+		// A tenant can run several trials and schedules over time on one subscription.
+		"upgrade_trial_started", "upgrade_trial_ending", "upgrade_trial_ended", "plan_change_scheduled":
 		if evt.ID != "" {
 			return fmt.Sprintf("subscription-%s-%s", evt.EventType, evt.ID)
 		}

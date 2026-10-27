@@ -1,0 +1,17 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <h2 style="color: #059669;">Your {{ .plan_name }} trial has started</h2>
+  <p>You can use everything in <strong>{{ .plan_name }}</strong> free for {{ .days }} days, until <strong>{{ .ends_at }}</strong>. You keep paying for <strong>{{ .base_plan_name }}</strong> during the trial.</p>
+
+  <div style="background:#f3f4f6; padding:16px; border-radius:6px; margin:16px 0;">
+    <strong>Trial plan:</strong> {{ .plan_name }}<br/>
+    <strong>Trial ends:</strong> {{ .ends_at }}<br/>
+    <strong>Upgrade takes effect:</strong> {{ .upgrade_at }}
+  </div>
+
+  <p>After the trial you are back on {{ .base_plan_name }} until your renewal on {{ .upgrade_at }}. From that renewal your plan moves to {{ .plan_name }} and is billed at its price. To stay on {{ .base_plan_name }}, end the trial from your billing page before it finishes.</p>
+
+  <p>
+    <a class="button" href="{{ .action_link }}">Manage Subscription</a>
+  </p>
+{{ end }}
