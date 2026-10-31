@@ -13,6 +13,8 @@
     the plan allowance, then bundles, then KES 1 overage billed on the next invoice, and sending pauses when unpaid overage
     reaches the platform cap. The API answers `402` with an `error` of `no_subscription`, `service_not_activated`,
     `insufficient_credits` or `overage_cap`. The platform tenant, the demo tenant and exempt tenants are never charged.
+    Event-driven SMS and WhatsApp for a tenant that may not pay are dropped before they are queued and are not logged
+    (see `docs/channel-routing.md`, Paid channel gate).
   - Each recipient counts as one unit. Returns `429` with `X-RateLimit-*` headers when exceeded.
   - Sample payloads:
 

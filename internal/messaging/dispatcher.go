@@ -67,7 +67,14 @@ func msgID(msg Message) string {
 // Publish enqueues a message to NATS JetStream for asynchronous processing. A message with an
 // IdempotencyKey carries msgID as Nats-Msg-Id, so JetStream drops a duplicate publish of the same
 // message inside the stream's duplicate window (a retried request or a re-run batch).
+//
+// A message the channel gate blocks (a paid channel the sender has no plan or credit for) is
+// dropped here and reported as handled: "" and no error, so event consumers neither retry it nor
+// log a failure, and nothing is queued, rendered or written to the delivery log.
 func Publish(ctx context.Context, nc *nats.Conn, cfg config.EventsConfig, msg Message) (string, error) {
+	if BlockedReason(ctx, msg) != "" {
+		return "", nil
+	}
 	if nc == nil {
 		return "", fmt.Errorf("event bus not configured")
 	}

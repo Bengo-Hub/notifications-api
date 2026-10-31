@@ -253,6 +253,19 @@ func main() {
 	// Tenant resolver for event consumers and template branding
 	tr := newTenantResolver(client, tenantCache, cfg.Services.AuthAPI)
 
+	// Paid channels are gated at the source: every consumer publishes through messaging.Publish,
+	// which drops an SMS or WhatsApp message for a tenant with no plan, bundle or credit before it
+	// is queued, rendered or logged.
+	messaging.SetChannelGate(credits.NewSendGate(creditsClient, func(ctx context.Context, tenant string) (uuid.UUID, bool) {
+		if id, err := uuid.Parse(tenant); err == nil {
+			return id, true
+		}
+		if t, err := tr.resolve(ctx, tenant); err == nil && t != nil {
+			return t.ID, true
+		}
+		return uuid.Nil, false
+	}, time.Minute, logg.Named("send_gate")).Blocked)
+
 	// Per-tenant notification gate: EVERY producer (domain-event consumers, HTTP/S2S
 	// enqueue, ERP relay) converges on this worker, so enforcing here covers the whole
 	// platform. Locked security templates always pass; essential types default ON;
@@ -315,7 +328,9 @@ func main() {
 			// used to fall through to the "sent"/"delivered" branch below unconditionally,
 			// so delivery_log (and anyone reading these logs) reported every one of these as
 			// successfully sent.
-			recordDeliveryLog(ctx, client, &msg, gateTenant, "skipped")
+			if !isUnpaidSkip(deliverErr) {
+				recordDeliveryLog(ctx, client, &msg, gateTenant, "skipped")
+			}
 			broadcasts.RecordOutcome(ctx, client, &msg, "skipped", deliverErr)
 			logg.Info("message skipped (not delivered)",
 				zap.String("channel", msg.Channel),
@@ -670,14 +685,29 @@ func unverifiedUserRecipients(ctx context.Context, db *pgxpool.Pool, to []string
 var errSkippedNoSend = errors.New("notifications: send intentionally skipped")
 
 // skipError is errSkippedNoSend with the specific reason, kept on the broadcast recipient row so
-// the sender sees why one message was not sent instead of a catch-all.
-type skipError struct{ reason string }
+// the sender sees why one message was not sent instead of a catch-all. unpaid marks a paid
+// channel the sender has no plan or credit for: those are not written to the delivery log (the
+// send gate stops them at the source; one reaching the worker only means a balance ran out in
+// between), so refused attempts never pile up as rows.
+type skipError struct {
+	reason string
+	unpaid bool
+}
 
 func (e skipError) Error() string        { return e.reason }
 func (e skipError) Is(target error) bool { return target == errSkippedNoSend }
 
 // skipped reports a deliberate no-send with its reason.
 func skipped(reason string) error { return skipError{reason: reason} }
+
+// skippedUnpaid reports a paid-channel send the sender is not entitled to.
+func skippedUnpaid(reason string) error { return skipError{reason: reason, unpaid: true} }
+
+// isUnpaidSkip reports a skip that is not logged as a delivery row.
+func isUnpaidSkip(err error) bool {
+	var se skipError
+	return errors.As(err, &se) && se.unpaid
+}
 
 func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg *emailGuard, cc *credits.Client, tr *tenantResolver, dbPool *pgxpool.Pool, rdb redis.UniversalClient, msg *messaging.Message, rendered, chargeKey string, logg *zap.Logger) (retErr error) {
 	channel := strings.ToLower(msg.Channel)
@@ -885,7 +915,7 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 		// the platform's. The charge happens before the send and is refunded if the provider
 		// rejects it, so a failed send is never billed and an unverifiable one is never free.
 		if !tenantResolved || tenantID == uuid.Nil {
-			return skipped("the sender could not be identified for SMS billing")
+			return skippedUnpaid("the sender could not be identified for SMS billing")
 		}
 		units := int64(credits.SMSSegments(rendered)) * int64(len(msg.To))
 		dec, cerr := cc.Consume(ctx, tenantID, credits.ServiceSMS, units, chargeKey, "SMS: "+msg.TemplateID, false)
@@ -896,7 +926,7 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 		if !dec.Allowed {
 			logg.Warn("sms send skipped by credit check", zap.String("tenant_id", tenantID.String()),
 				zap.String("template", msg.TemplateID), zap.String("reason", dec.Reason))
-			return skipped(credits.RefusalMessage(credits.ServiceSMS, dec.Reason))
+			return skippedUnpaid(credits.RefusalMessage(credits.ServiceSMS, dec.Reason))
 		}
 		defer refundOnFailure(ctx, cc, logg, &retErr, dec, tenantID, credits.ServiceSMS, chargeKey)
 
@@ -915,7 +945,7 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 		// from the plan allowance, then bundles, then KES 1 overage, and refunded if the send fails.
 		if msg.EffectiveSenderScope() != messaging.SenderScopePlatform {
 			if !tenantResolved || tenantID == uuid.Nil {
-				return skipped("the sender could not be identified for WhatsApp billing")
+				return skippedUnpaid("the sender could not be identified for WhatsApp billing")
 			}
 			units := int64(max(len(msg.To), 1))
 			dec, cerr := cc.Consume(ctx, tenantID, credits.ServiceWhatsApp, units, chargeKey, "WhatsApp: "+msg.TemplateID, false)
@@ -926,7 +956,7 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 			if !dec.Allowed {
 				logg.Warn("whatsapp send skipped by credit check", zap.String("tenant_id", tenantID.String()),
 					zap.String("template", msg.TemplateID), zap.String("reason", dec.Reason))
-				return skipped(credits.RefusalMessage(credits.ServiceWhatsApp, dec.Reason))
+				return skippedUnpaid(credits.RefusalMessage(credits.ServiceWhatsApp, dec.Reason))
 			}
 			defer refundOnFailure(ctx, cc, logg, &retErr, dec, tenantID, credits.ServiceWhatsApp, chargeKey)
 		}

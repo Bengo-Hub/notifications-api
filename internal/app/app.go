@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/nats-io/nats.go"
 	"github.com/redis/go-redis/v9"
@@ -27,8 +28,10 @@ import (
 	entdb "github.com/bengobox/notifications-api/internal/database"
 	"github.com/bengobox/notifications-api/internal/encryption"
 	"github.com/bengobox/notifications-api/internal/ent"
+	enttenant "github.com/bengobox/notifications-api/internal/ent/tenant"
 	handlers "github.com/bengobox/notifications-api/internal/http/handlers"
 	identityhandler "github.com/bengobox/notifications-api/internal/http/handlers/identity"
+	"github.com/bengobox/notifications-api/internal/messaging"
 	devauth "github.com/bengobox/notifications-api/internal/http/middleware"
 	router "github.com/bengobox/notifications-api/internal/http/router"
 	"github.com/bengobox/notifications-api/internal/modules/announcements"
@@ -159,6 +162,18 @@ func New(ctx context.Context) (*App, error) {
 	healthHandler := handlers.NewHealthHandler(log, dbPool, redisClient, natsConn)
 	// SMS and WhatsApp balances, plans, bundles and overage are owned by subscriptions-api.
 	creditsClient := credits.New(serviceclient.New(serviceclient.DefaultConfig(cfg.Services.SubscriptionsAPI, "subscriptions-api", log.Named("credits.client"))), cfg.Security.APIKey)
+	// The API publishes too (enqueue, broadcasts, inbox): the same source-side gate as the worker
+	// drops SMS and WhatsApp messages for a tenant with no plan, bundle or credit.
+	messaging.SetChannelGate(credits.NewSendGate(creditsClient, func(ctx context.Context, t string) (uuid.UUID, bool) {
+		if id, err := uuid.Parse(t); err == nil {
+			return id, true
+		}
+		row, err := entClient.Tenant.Query().Where(enttenant.SlugEQ(t)).Only(ctx)
+		if err != nil {
+			return uuid.Nil, false
+		}
+		return row.ID, true
+	}, time.Minute, log.Named("send_gate")).Blocked)
 	notificationHandler := handlers.NewNotificationHandler(log, natsConn, redisClient, cfg.Events, entClient, cfg.Services.SubscriptionsURL, creditsClient, platformIDStr)
 	// Template repository backed by DB + Redis cache (2h TTL)
 	var templateCache *sharedcache.Aside

@@ -371,6 +371,12 @@ func (e *Engine) dispatchBroadcast(ctx context.Context, b *ent.Broadcast) {
 	content := ContentOf(b)
 	sentAny := false
 	for _, ch := range deliverableChannels(b.Channels) {
+		// A paid channel the sender has no plan or credit for is closed in one statement instead
+		// of queueing each recipient for the worker to refuse.
+		if reason := messaging.BlockedReason(ctx, e.senderProbe(b, ch)); reason != "" {
+			e.skipChannel(ctx, b.ID, ch, reason)
+			continue
+		}
 		budget := e.budget(ctx, b, ch)
 		if budget == 0 {
 			continue
@@ -450,6 +456,32 @@ func (e *Engine) claim(ctx context.Context, broadcastID uuid.UUID, channel strin
 		out = append(out, r)
 	}
 	return out, rows.Err()
+}
+
+// senderProbe is the sender side of a broadcast's messages on one channel, for the send gate.
+func (e *Engine) senderProbe(b *ent.Broadcast, channel string) messaging.Message {
+	probe := messaging.Message{TenantID: e.PlatformID, Channel: channel, SenderScope: messaging.SenderScopePlatform}
+	if b.TenantID != nil {
+		probe.TenantID, probe.SenderScope = b.TenantID.String(), messaging.SenderScopeTenant
+	}
+	return probe
+}
+
+// skipChannel marks every waiting recipient of one channel as not sent, with the reason.
+func (e *Engine) skipChannel(ctx context.Context, broadcastID uuid.UUID, channel, reason string) {
+	tag, err := e.Pool.Exec(ctx, `
+		UPDATE broadcast_recipients SET status = 'skipped', error = $3, updated_at = now()
+		WHERE broadcast_id = $1 AND channel = $2 AND status = 'pending'`,
+		broadcastID, channel, truncate(reason))
+	if err != nil {
+		e.Log.Warn("dispatcher: could not close a channel the sender is not entitled to",
+			zap.String("broadcast", broadcastID.String()), zap.String("channel", channel), zap.Error(err))
+		return
+	}
+	if n := tag.RowsAffected(); n > 0 {
+		e.Log.Info("dispatcher: channel not sent, sender has no plan or credit",
+			zap.String("broadcast", broadcastID.String()), zap.String("channel", channel), zap.Int64("recipients", n))
+	}
 }
 
 // buildMessage renders one recipient's message for the worker.

@@ -27,6 +27,30 @@
 - Automatic fallback to secondary provider; record incident for analytics
 - Dead letter queue for messages that exhaust all providers
 
+## Paid channel gate (SMS and WhatsApp)
+
+A tenant-scope SMS or WhatsApp message is only queued when the sender may pay for it. Every producer
+(event consumers, the HTTP enqueue, broadcasts, the inbox) publishes through `messaging.Publish`,
+which asks the installed `messaging.ChannelGate` first. The gate is `credits.SendGate`
+(`internal/modules/credits/send_gate.go`), set once in the API (`internal/app/app.go`) and the
+worker (`cmd/worker/main.go`):
+
+- it calls subscriptions-api `GET /api/v1/s2s/credits/{sms|whatsapp}/check` (never charges) once per
+  tenant and service and keeps the answer for a minute, so a purchase takes effect within a minute;
+- a refusal (`no_subscription`, `service_not_activated`, `insufficient_credits`, `overage_cap`)
+  drops the message: `Publish` returns no error, so consumers do not retry, and nothing is queued,
+  rendered or written to `delivery_logs`;
+- platform-scope sends, email and push are never asked; an unreachable subscriptions-api or an
+  unknown tenant leaves the decision to the worker;
+- broadcasts close a blocked channel in one update (`skipChannel`): its waiting recipients become
+  "not sent" with the reason, instead of being queued one by one.
+
+The worker still charges each send (`cc.Consume`, fail closed). If a balance runs out between the
+gate and the send, that refusal is a quiet skip (`skippedUnpaid`): it is recorded on a broadcast
+recipient but never as a `delivery_logs` row. Before 2026-10-31 every refused attempt was queued,
+rendered and logged as `skipped` (boi alone logged 734 SMS refusals in a month); those rows were
+deleted.
+
 ## Email verification gate
 
 The email worker drops a recipient only when all of these hold (`unverifiedUserRecipients` in `cmd/worker/main.go`):

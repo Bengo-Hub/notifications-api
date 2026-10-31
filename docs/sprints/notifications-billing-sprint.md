@@ -1,5 +1,11 @@
 # Sprint Doc: Credit-Based Notifications (SMS/WhatsApp)
 
+> **2026-10-31:** paid channels are now gated at the source (`credits.SendGate` behind `messaging.Publish`, see
+> `docs/channel-routing.md`): no message, render or delivery-log row for a tenant without an SMS or WhatsApp plan,
+> bundle or credit. The old wallet and WhatsApp plan tables are gone from production; only the `*_bk_20261019`
+> backup copies remain. Treasury now collects every credit purchase on the platform account
+> (treasury-api `docs/general-ledger.md`).
+>
 > **Replaced on 2026-10-19.** SMS and WhatsApp billing no longer live in this service. subscriptions-api owns
 > the balances, bundles, WhatsApp monthly plans and per-message overage, and this service asks it before every send
 > (`internal/modules/credits`). The wallet and WhatsApp plan tables remain only until the balances have been moved with
