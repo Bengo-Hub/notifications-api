@@ -214,6 +214,20 @@ func receiptShareWhatsApp(name, orderNumber string, total float64, currency, lin
 	return map[string]any{"cta_button_text": "View Receipt", "cta_button_url": link}
 }
 
+// receiptChannel picks email or WhatsApp for a sale receipt (never SMS). The caller has already
+// dropped sales with neither contact.
+func receiptChannel(requested, phone, email string) string {
+	switch channel := strings.ToLower(strings.TrimSpace(requested)); {
+	case channel == "whatsapp" && phone != "":
+		return "whatsapp"
+	case channel == "email" && email != "":
+		return "email"
+	case email != "":
+		return "email"
+	}
+	return "whatsapp"
+}
+
 // nonEmpty returns v trimmed, or fallback when blank. Meta rejects a template send with an empty
 // body parameter, so every WhatsApp template param needs a readable default.
 func nonEmpty(v, fallback string) string {
@@ -432,29 +446,11 @@ func (s *Subscriber) handleSaleNotification(msg *nats.Msg) {
 		currency = "KES"
 	}
 
-	// Resolve the effective channel: an explicit request falls back to SMS when its contact is
-	// missing (e.g. "email" requested but the sale has no email on file); the legacy default
-	// (empty channel) is SMS, matching this consumer's original behaviour.
-	channel := strings.ToLower(strings.TrimSpace(p.Channel))
-	switch channel {
-	case "whatsapp", "email":
-		if channel == "whatsapp" && phone == "" {
-			channel = "email"
-		}
-		if channel == "email" && email == "" {
-			channel = "sms"
-		}
-	default:
-		channel = "sms"
-	}
-	if channel == "sms" && phone == "" {
-		// Requested/fell-back-to SMS but there's no phone at all — last resort: email.
-		if email == "" {
-			_ = msg.Ack()
-			return
-		}
-		channel = "email"
-	}
+	// Only email and WhatsApp are active channels. pos-api resolves the channel before publishing
+	// (orders.ResolveReceiptChannel) and refuses unpaid WhatsApp; this repeats the rule for older
+	// events: an empty or "sms" channel becomes email when there is an address, else WhatsApp, and a
+	// channel without its contact falls back to the other.
+	channel := receiptChannel(p.Channel, phone, email)
 
 	data := map[string]any{
 		"name":                 p.CustomerName,
@@ -473,10 +469,8 @@ func (s *Subscriber) handleSaleNotification(msg *nats.Msg) {
 		// (the short code is the button suffix). A link on any other host keeps the interactive
 		// button, which only works inside the window. Never a raw link in the text.
 		s.publishWithMetadata(p.TenantID, "whatsapp", "pos/receipt_share", messaging.TargetCustomer, []string{phone}, data, receiptShareWhatsApp(p.CustomerName, p.OrderNumber, p.TotalAmount, currency, p.DownloadLink))
-	case "email":
-		s.publish(p.TenantID, "email", "pos/receipt_share", messaging.TargetCustomer, []string{email}, data)
 	default:
-		s.publish(p.TenantID, "sms", "pos/sale_receipt", messaging.TargetCustomer, []string{phone}, data)
+		s.publish(p.TenantID, "email", "pos/receipt_share", messaging.TargetCustomer, []string{email}, data)
 	}
 	s.log.Info("sale receipt notification dispatched",
 		zap.String("tenant_id", p.TenantID), zap.String("order_number", p.OrderNumber), zap.String("channel", channel))

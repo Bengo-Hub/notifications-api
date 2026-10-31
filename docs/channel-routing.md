@@ -51,6 +51,11 @@ recipient but never as a `delivery_logs` row. Before 2026-10-31 every refused at
 rendered and logged as `skipped` (boi alone logged 734 SMS refusals in a month); those rows were
 deleted.
 
+POS sale receipts (`pos.sale.notification_requested`) go by email or WhatsApp only (`receiptChannel` in
+`internal/modules/events/subscriber.go`; pos-api resolves the same way and refuses unpaid WhatsApp with 402 before
+publishing). The other POS mappings in `cmd/worker/pos_consumer.go` are still SMS only and need email and approved
+WhatsApp templates before they reach customers.
+
 ## Email verification gate
 
 The email worker drops a recipient only when all of these hold (`unverifiedUserRecipients` in `cmd/worker/main.go`):
