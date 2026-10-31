@@ -1,0 +1,5 @@
+Hi {{ .name }},
+
+A friend you referred made a purchase at {{ .business_name }}, so you earned *{{ .bonus_points }} bonus points*.
+
+Your points balance is now {{ .balance_after }}. Use them on your next visit.

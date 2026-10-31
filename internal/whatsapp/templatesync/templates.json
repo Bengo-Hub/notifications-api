@@ -152,6 +152,70 @@
     ]
   },
   {
+    "name": "pos_payment_received_v1",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/pos/pos_payment_receipt.txt (params: name, amount, order, business, balance)",
+    "body": "Hi {{1}},\n\nWe have received your payment of *{{2}}* for order {{3}} at {{4}}.\n\nBalance: {{5}}\n\nKeep this message as your payment confirmation.",
+    "example": ["Jane", "KES 1,500", "POS-88213", "Urban Loft Cafe", "fully paid"]
+  },
+  {
+    "name": "pos_loyalty_points_v1",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/pos/loyalty_points_earned.txt (params: name, points, business, balance)",
+    "body": "Hi {{1}},\n\nYou earned *{{2}} points* on your purchase at {{3}}.\n\nYour points balance is now {{4}}. Use them on your next visit.",
+    "example": ["Jane", "25", "Urban Loft Cafe", "340"]
+  },
+  {
+    "name": "pos_loyalty_tier_v1",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/pos/loyalty_tier_upgraded.txt (params: name, business, tier)",
+    "body": "Hi {{1}},\n\nYour loyalty membership at {{2}} has moved up to *{{3}}*.\n\nYour new tier benefits apply from your next purchase.",
+    "example": ["Jane", "Urban Loft Cafe", "Gold"]
+  },
+  {
+    "name": "pos_loyalty_referral_v1",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/pos/loyalty_referral_earned.txt (params: name, business, bonus points, balance)",
+    "body": "Hi {{1}},\n\nA friend you referred made a purchase at {{2}}, so you earned *{{3}} bonus points*.\n\nYour points balance is now {{4}}. Use them on your next visit.",
+    "example": ["Jane", "Urban Loft Cafe", "50", "390"]
+  },
+  {
+    "name": "pos_refund_processed_v1",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/pos/return_completed.txt (params: name, amount, return number, business)",
+    "body": "Hi {{1}},\n\nYour refund of *{{2}}* for {{3}} has been processed by {{4}}.\n\nKeep this message for your records.",
+    "example": ["Jane", "KES 800", "RET-1042", "Urban Loft Cafe"]
+  },
+  {
+    "name": "pos_layaway_due_v1",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/pos/layaway_payment_due.txt (params: name, business, due date, balance)",
+    "body": "Hi {{1}},\n\nA payment on your layaway at {{2}} is due on *{{3}}*.\n\nRemaining balance: {{4}}\n\nVisit the shop to make your payment.",
+    "example": ["Jane", "Urban Loft Cafe", "2 Nov 2026", "KES 3,200"]
+  },
+  {
+    "name": "pos_hotel_check_in_v1",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/pos/hotel_check_in.txt (params: name, business, room, nights)",
+    "body": "Hi {{1}},\n\nYour check-in at {{2}} is confirmed.\n\nRoom: *{{3}}*\nNights: {{4}}\n\nThe front desk is available if you need anything during your stay.",
+    "example": ["Jane", "Urban Loft Hotel", "204", "3"]
+  },
+  {
+    "name": "pos_hotel_check_out_v1",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/pos/hotel_check_out.txt (params: name, business, total)",
+    "body": "Hi {{1}},\n\nYou have checked out of {{2}}.\n\nTotal for your stay: *{{3}}*\n\nYour detailed bill is available from the front desk.",
+    "example": ["Jane", "Urban Loft Hotel", "KES 18,500"]
+  },
+  {
     "name": "logistics_delivery_arriving_btn",
     "category": "UTILITY",
     "language": "en_US",

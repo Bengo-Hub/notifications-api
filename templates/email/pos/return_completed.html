@@ -1,0 +1,29 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <p>Your refund has been processed by {{ .business_name }}.</p>
+  <table style="width:100%; border-collapse:collapse; margin:16px 0;">
+    <tr>
+      <td style="padding:8px 0; color:#6b7280; width:45%;">Refund Amount</td>
+      <td style="padding:8px 0; font-weight:600;"><span style="color:#059669;">{{ .refund_amount }}</span></td>
+    </tr>
+    {{ if .return_number }}
+    <tr>
+      <td style="padding:8px 0; color:#6b7280; width:45%;">Return</td>
+      <td style="padding:8px 0; font-weight:600;">{{ .return_number }}</td>
+    </tr>
+    {{ end }}
+    {{ if .order_number }}
+    <tr>
+      <td style="padding:8px 0; color:#6b7280; width:45%;">Original Order</td>
+      <td style="padding:8px 0; font-weight:600;">{{ .order_number }}</td>
+    </tr>
+    {{ end }}
+    {{ if .refund_ref }}
+    <tr>
+      <td style="padding:8px 0; color:#6b7280; width:45%;">Refund Reference</td>
+      <td style="padding:8px 0; font-weight:600;"><span style="font-family:monospace; font-size:13px;">{{ .refund_ref }}</span></td>
+    </tr>
+    {{ end }}
+  </table>
+  <p style="color:#6b7280;">Keep this email for your records.</p>
+{{ end }}

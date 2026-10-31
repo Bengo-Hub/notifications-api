@@ -1,0 +1,25 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <p>Your check-in at {{ .business_name }} is confirmed.</p>
+  <table style="width:100%; border-collapse:collapse; margin:16px 0;">
+    <tr>
+      <td style="padding:8px 0; color:#6b7280; width:45%;">Room</td>
+      <td style="padding:8px 0; font-weight:600;">{{ .room_number }}</td>
+    </tr>
+    <tr>
+      <td style="padding:8px 0; color:#6b7280; width:45%;">Nights</td>
+      <td style="padding:8px 0; font-weight:600;">{{ .nights }}</td>
+    </tr>
+    {{ if .check_in }}
+    <tr>
+      <td style="padding:8px 0; color:#6b7280; width:45%;">Check-in</td>
+      <td style="padding:8px 0; font-weight:600;">{{ .check_in }}</td>
+    </tr>
+    {{ end }}
+    <tr>
+      <td style="padding:8px 0; color:#6b7280; width:45%;">Room Charge</td>
+      <td style="padding:8px 0; font-weight:600;">{{ .total_charge }}</td>
+    </tr>
+  </table>
+  <p style="color:#6b7280;">The front desk is available if you need anything during your stay.</p>
+{{ end }}

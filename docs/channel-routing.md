@@ -53,8 +53,8 @@ deleted.
 
 POS sale receipts (`pos.sale.notification_requested`) go by email or WhatsApp only (`receiptChannel` in
 `internal/modules/events/subscriber.go`; pos-api resolves the same way and refuses unpaid WhatsApp with 402 before
-publishing). The other POS mappings in `cmd/worker/pos_consumer.go` are still SMS only and need email and approved
-WhatsApp templates before they reach customers.
+publishing). Automatic receipts after every sale go by email; WhatsApp only when the tenant enabled
+`pos/receipt_on_sale`. Every other POS notice is email plus WhatsApp (`docs/integrations.md`, POS Service).
 
 ## Email verification gate
 

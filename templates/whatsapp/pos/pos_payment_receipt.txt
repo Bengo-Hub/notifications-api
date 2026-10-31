@@ -1,0 +1,7 @@
+Hi {{ .name }},
+
+We have received your payment of *{{ .amount }}* for order {{ .order_number }} at {{ .business_name }}.
+
+Balance: {{ .balance }}
+
+Keep this message as your payment confirmation.

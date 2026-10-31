@@ -116,18 +116,15 @@ var Registry = []Type{
 	{Key: "maskani/vendor_document_expiring", Label: "Vendor document expiring", Group: "Property", Class: ClassOptional},
 	{Key: "maskani/notice", Label: "Estate notices", Group: "Property", Class: ClassEssential},
 
-	{Key: "pos/pos_payment_receipt", Label: "POS payment receipt", Group: "POS", Class: ClassEssential},
-	{Key: "pos/pos_order_ready", Label: "POS order ready", Group: "POS", Class: ClassEssential},
-	{Key: "pos/kds_waiter_called", Label: "Waiter called (KDS)", Group: "POS", Class: ClassEssential},
-	{Key: "pos/return_completed", Label: "Return completed", Group: "POS", Class: ClassEssential},
-	{Key: "pos/layaway_payment_due", Label: "Layaway payment due", Group: "POS", Class: ClassEssential},
-	{Key: "pos/appointment_created", Label: "Appointment booked", Group: "POS", Class: ClassEssential},
-	{Key: "pos/appointment_reminder", Label: "Appointment reminder", Group: "POS", Class: ClassOptional},
+	{Key: "pos/receipt_on_sale", Label: "WhatsApp receipt after every sale", Group: "POS", Class: ClassOptional},
+	{Key: "pos/pos_payment_receipt", Label: "Payment received (sent from View Payments)", Group: "POS", Class: ClassEssential},
+	{Key: "pos/return_completed", Label: "Refund processed", Group: "POS", Class: ClassEssential},
+	{Key: "pos/layaway_payment_due", Label: "Layaway payment due tomorrow", Group: "POS", Class: ClassEssential},
 	{Key: "pos/hotel_check_in", Label: "Hotel check-in", Group: "POS", Class: ClassOptional},
 	{Key: "pos/hotel_check_out", Label: "Hotel check-out", Group: "POS", Class: ClassOptional},
 	{Key: "pos/loyalty_points_earned", Label: "Loyalty points earned", Group: "POS", Class: ClassOptional},
 	{Key: "pos/loyalty_tier_upgraded", Label: "Loyalty tier upgraded", Group: "POS", Class: ClassOptional},
-	{Key: "pos/alert_stock_low", Label: "POS stock-low alert", Group: "POS", Class: ClassOptional},
+	{Key: "pos/loyalty_referral_earned", Label: "Loyalty referral bonus", Group: "POS", Class: ClassOptional},
 
 	// ── Events / ticketing ───────────────────────────────────────────────────
 	{Key: "events/ticket_issued", Label: "Event ticket issued", Group: "Events", Class: ClassEssential},

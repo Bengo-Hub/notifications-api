@@ -167,6 +167,33 @@ The Notifications Service is a centralized communications platform for all Codev
 - `order_status_changed` → `order_status_update` template
 - `order_ready` → `order_ready_sms` template
 
+### POS Service
+
+**Integration Type**: Events (NATS, `pos.>`). Customer notices go by email and WhatsApp only, through
+`sendToParties` (`cmd/worker/pos_consumer.go`, table `posNotices`). Each has an email template and an approved
+WhatsApp UTILITY template; a customer with neither contact gets nothing.
+
+| Event | Template | WhatsApp template | Contacts (payload) |
+|---|---|---|---|
+| `pos.payment.received_notification` | `pos/pos_payment_receipt` | `pos_payment_received_v1` | `customer_email`, `customer_phone` |
+| `pos.loyalty.points.earned` | `pos/loyalty_points_earned` | `pos_loyalty_points_v1` | `customer_email`, `customer_phone` |
+| `pos.loyalty.tier_upgraded` | `pos/loyalty_tier_upgraded` | `pos_loyalty_tier_v1` | `customer_email`, `customer_phone` |
+| `pos.loyalty.referral_earned` | `pos/loyalty_referral_earned` | `pos_loyalty_referral_v1` | `referrer_email`, `referrer_phone` |
+| `pos.return.completed` | `pos/return_completed` | `pos_refund_processed_v1` | `customer_email`, `customer_phone` |
+| `pos.layaway.payment_due` | `pos/layaway_payment_due` | `pos_layaway_due_v1` | `customer_email`, `customer_phone` |
+| `pos.hotel.check_in` | `pos/hotel_check_in` | `pos_hotel_check_in_v1` | `guest_email`, `guest_phone` |
+| `pos.hotel.check_out` | `pos/hotel_check_out` | `pos_hotel_check_out_v1` | `guest_email`, `guest_phone` |
+
+Sale receipts are handled by `internal/modules/events` (`handleSaleNotification`):
+- `pos.sale.notification_requested` (the cashier's Send Notification): email or WhatsApp as pos-api resolved it.
+- `pos.sale.finalized` (automatic, every finished sale): email when the sale has an address; WhatsApp only when the
+  tenant switched on "WhatsApp receipt after every sale" (`pos/receipt_on_sale`, optional, off by default).
+
+Removed on 2026-10-31 because they could never deliver: order status changed and payment recorded (no customer
+contact, they fell back to emailing the business), waiter called (no phone; the kitchen screen handles it live),
+appointment created and reminder (nothing publishes them), POS low stock (duplicate of the inventory low stock email to
+the tenant admin). The duplicate loyalty and waiter handlers in `internal/modules/events` were removed too.
+
 ### Logistics Service
 
 **Integration Type**: Events (NATS) + REST API

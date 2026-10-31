@@ -1,0 +1,5 @@
+Hi {{ .name }},
+
+You earned *{{ .points_earned }} points* on your purchase at {{ .business_name }}.
+
+Your points balance is now {{ .balance_after }}. Use them on your next visit.

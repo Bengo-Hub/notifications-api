@@ -1,0 +1,7 @@
+Hi {{ .name }},
+
+You have checked out of {{ .business_name }}.
+
+Total for your stay: *{{ .total_folio }}*
+
+Your detailed bill is available from the front desk.

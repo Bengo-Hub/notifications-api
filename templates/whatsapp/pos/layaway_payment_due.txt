@@ -1,0 +1,7 @@
+Hi {{ .name }},
+
+A payment on your layaway at {{ .business_name }} is due on *{{ .due_date }}*.
+
+Remaining balance: {{ .balance_due }}
+
+Visit the shop to make your payment.

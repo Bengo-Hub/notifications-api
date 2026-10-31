@@ -1,0 +1,17 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <p>Your loyalty membership at {{ .business_name }} has moved up to <strong>{{ .new_tier }}</strong>.</p>
+  <table style="width:100%; border-collapse:collapse; margin:16px 0;">
+    <tr>
+      <td style="padding:8px 0; color:#6b7280; width:45%;">New Tier</td>
+      <td style="padding:8px 0; font-weight:600;">{{ .new_tier }}</td>
+    </tr>
+    {{ if .lifetime_points }}
+    <tr>
+      <td style="padding:8px 0; color:#6b7280; width:45%;">Lifetime Points</td>
+      <td style="padding:8px 0; font-weight:600;">{{ .lifetime_points }}</td>
+    </tr>
+    {{ end }}
+  </table>
+  <p style="color:#6b7280;">Your new tier benefits apply from your next purchase.</p>
+{{ end }}

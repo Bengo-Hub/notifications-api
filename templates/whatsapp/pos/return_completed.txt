@@ -1,0 +1,5 @@
+Hi {{ .name }},
+
+Your refund of *{{ .refund_amount }}* for {{ or .return_number .order_number }} has been processed by {{ .business_name }}.
+
+Keep this message for your records.

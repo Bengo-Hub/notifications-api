@@ -1,1 +1,0 @@
-{{ or .brand_name "codevertex" }}: You earned {{ .points_earned }} points! Your balance is {{ .balance_after }} pts.

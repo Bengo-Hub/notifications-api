@@ -1,15 +1,15 @@
 {{ define "content" }}
   <p>Hello {{ .name }},</p>
-  <p>You've earned {{ .points }} loyalty points!</p>
-  <p><strong>Order ID:</strong> {{ .order_id }}</p>
-  <p><strong>Points Earned:</strong> {{ .points }}</p>
-  <p><strong>Total Points:</strong> {{ .total_points }}</p>
-  {{ if .points_value }}
-  <p><strong>Points Value:</strong> {{ .points_value }}</p>
-  {{ end }}
-  <p>
-    <a class="button" href="{{ .loyalty_link }}">View Rewards</a>
-  </p>
-  <p class="muted">Thank you for your loyalty!</p>
+  <p>You earned loyalty points on your purchase at {{ .business_name }}.</p>
+  <table style="width:100%; border-collapse:collapse; margin:16px 0;">
+    <tr>
+      <td style="padding:8px 0; color:#6b7280; width:45%;">Points Earned</td>
+      <td style="padding:8px 0; font-weight:600;"><span style="color:#059669;">{{ .points_earned }}</span></td>
+    </tr>
+    <tr>
+      <td style="padding:8px 0; color:#6b7280; width:45%;">Points Balance</td>
+      <td style="padding:8px 0; font-weight:600;">{{ .balance_after }}</td>
+    </tr>
+  </table>
+  <p style="color:#6b7280;">Use your points on your next visit.</p>
 {{ end }}
-

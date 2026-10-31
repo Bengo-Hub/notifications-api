@@ -1,0 +1,15 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <p>A friend you referred made a purchase at {{ .business_name }}, so you earned bonus points.</p>
+  <table style="width:100%; border-collapse:collapse; margin:16px 0;">
+    <tr>
+      <td style="padding:8px 0; color:#6b7280; width:45%;">Bonus Points</td>
+      <td style="padding:8px 0; font-weight:600;"><span style="color:#059669;">{{ .bonus_points }}</span></td>
+    </tr>
+    <tr>
+      <td style="padding:8px 0; color:#6b7280; width:45%;">Points Balance</td>
+      <td style="padding:8px 0; font-weight:600;">{{ .balance_after }}</td>
+    </tr>
+  </table>
+  <p style="color:#6b7280;">Use your points on your next visit.</p>
+{{ end }}

@@ -1,0 +1,15 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <p>A payment on your layaway at {{ .business_name }} is due on <strong>{{ .due_date }}</strong>.</p>
+  <table style="width:100%; border-collapse:collapse; margin:16px 0;">
+    <tr>
+      <td style="padding:8px 0; color:#6b7280; width:45%;">Due Date</td>
+      <td style="padding:8px 0; font-weight:600;">{{ .due_date }}</td>
+    </tr>
+    <tr>
+      <td style="padding:8px 0; color:#6b7280; width:45%;">Remaining Balance</td>
+      <td style="padding:8px 0; font-weight:600;">{{ .balance_due }}</td>
+    </tr>
+  </table>
+  <p style="color:#6b7280;">Visit the shop to make your payment.</p>
+{{ end }}

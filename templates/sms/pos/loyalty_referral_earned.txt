@@ -1,1 +1,0 @@
-{{ or .brand_name "codevertex" }}: You earned {{ .bonus_points }} bonus points for referring a friend! Your balance is {{ .balance_after }} pts.

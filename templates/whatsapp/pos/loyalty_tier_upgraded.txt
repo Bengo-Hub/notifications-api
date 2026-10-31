@@ -1,0 +1,5 @@
+Hi {{ .name }},
+
+Your loyalty membership at {{ .business_name }} has moved up to *{{ .new_tier }}*.
+
+Your new tier benefits apply from your next purchase.

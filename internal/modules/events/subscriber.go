@@ -110,13 +110,9 @@ func (s *Subscriber) Start(ctx context.Context) error {
 		{"inventory", "inventory.ticket.issued", "notif-ticket-issued", s.handleTicketIssued},
 		// logistics.task.assigned is handled by the worker's delivery consumer (notifyRiderAssigned:
 		// push + email with the tenant's rider-app link), not here.
-		{"pos", "pos.kds.waiter.called", "notif-kds-waiter-called", s.handleKDSWaiterCalled},
 		// Customer sale receipt/invoice — auto on finalize + explicit "New Sale Notification".
 		{"pos", "pos.sale.finalized", "notif-pos-sale-finalized", s.handleSaleNotification},
 		{"pos", "pos.sale.notification_requested", "notif-pos-sale-notify", s.handleSaleNotification},
-		{"pos", "pos.loyalty.points.earned", "notif-loyalty-points-earned", s.handleLoyaltyPointsEarned},
-		{"pos", "pos.loyalty.tier_upgraded", "notif-loyalty-tier-upgraded", s.handleLoyaltyTierUpgraded},
-		{"pos", "pos.loyalty.referral_earned", "notif-loyalty-referral-earned", s.handleLoyaltyReferralEarned},
 		{"treasury", "treasury.payroll.disbursed", "notif-payroll-disbursed", s.handlePayrollDisbursed},
 		// Platform-ops alert: PayHero refuses prompts until an account's service wallet is topped up.
 		{"treasury", "treasury.payhero.service_wallet_short", "notif-payhero-service-wallet-short", s.handlePayHeroServiceWalletShort},
@@ -446,12 +442,6 @@ func (s *Subscriber) handleSaleNotification(msg *nats.Msg) {
 		currency = "KES"
 	}
 
-	// Only email and WhatsApp are active channels. pos-api resolves the channel before publishing
-	// (orders.ResolveReceiptChannel) and refuses unpaid WhatsApp; this repeats the rule for older
-	// events: an empty or "sms" channel becomes email when there is an address, else WhatsApp, and a
-	// channel without its contact falls back to the other.
-	channel := receiptChannel(p.Channel, phone, email)
-
 	data := map[string]any{
 		"name":                 p.CustomerName,
 		"customer_name":        p.CustomerName,
@@ -461,15 +451,34 @@ func (s *Subscriber) handleSaleNotification(msg *nats.Msg) {
 		"etims_invoice_number": p.EtimsInvoiceNumber,
 		"download_link":        p.DownloadLink,
 	}
-	switch channel {
-	case "whatsapp":
-		// A customer at the till has usually never messaged the business on WhatsApp, so a
-		// free-form send would only be delivered inside a 24h reply window. Receipt links live on
-		// the short-link domain, so they go out with the approved pos_receipt_share_btn template
-		// (the short code is the button suffix). A link on any other host keeps the interactive
-		// button, which only works inside the window. Never a raw link in the text.
-		s.publishWithMetadata(p.TenantID, "whatsapp", "pos/receipt_share", messaging.TargetCustomer, []string{phone}, data, receiptShareWhatsApp(p.CustomerName, p.OrderNumber, p.TotalAmount, currency, p.DownloadLink))
-	default:
+	// A customer at the till has usually never messaged the business on WhatsApp, so a free-form
+	// send would only be delivered inside a 24h reply window. Receipt links live on the short-link
+	// domain, so they go out with the approved pos_receipt_share_btn template (the short code is the
+	// button suffix). A link on any other host keeps the interactive button, which only works inside
+	// the window. Never a raw link in the text.
+	waMeta := receiptShareWhatsApp(p.CustomerName, p.OrderNumber, p.TotalAmount, currency, p.DownloadLink)
+
+	if msg.Subject == "pos.sale.finalized" {
+		// Automatic receipt after every sale: email when the sale has an address. WhatsApp only for a
+		// tenant that switched on "WhatsApp receipt after every sale" (pos/receipt_on_sale, an
+		// optional type the worker's preferences gate keeps off by default), so no WhatsApp credit
+		// is spent on every sale unless the business asked for it.
+		if email != "" {
+			s.publish(p.TenantID, "email", "pos/receipt_share", messaging.TargetCustomer, []string{email}, data)
+		}
+		if phone != "" {
+			s.publishWithMetadata(p.TenantID, "whatsapp", "pos/receipt_on_sale", messaging.TargetCustomer, []string{phone}, data, waMeta)
+		}
+		_ = msg.Ack()
+		return
+	}
+
+	// The cashier's "Send Notification": the channel pos-api resolved (email or WhatsApp; it refuses
+	// unpaid WhatsApp before publishing). receiptChannel repeats the rule for older events.
+	channel := receiptChannel(p.Channel, phone, email)
+	if channel == "whatsapp" {
+		s.publishWithMetadata(p.TenantID, "whatsapp", "pos/receipt_share", messaging.TargetCustomer, []string{phone}, data, waMeta)
+	} else {
 		s.publish(p.TenantID, "email", "pos/receipt_share", messaging.TargetCustomer, []string{email}, data)
 	}
 	s.log.Info("sale receipt notification dispatched",
@@ -599,38 +608,6 @@ func (s *Subscriber) handleTicketIssued(msg *nats.Msg) {
 	_ = msg.Ack()
 }
 
-func (s *Subscriber) handleKDSWaiterCalled(msg *nats.Msg) {
-	var envelope struct {
-		Payload struct {
-			TenantID    string `json:"tenant_id"`
-			OrderNumber string `json:"order_number"`
-			WaiterPhone string `json:"waiter_phone"`
-			WaiterEmail string `json:"waiter_email"`
-			TicketID    string `json:"ticket_id"`
-		} `json:"payload"`
-	}
-	if err := json.Unmarshal(msg.Data, &envelope); err != nil {
-		s.log.Warn("kds_waiter_called: unmarshal failed", zap.Error(err))
-		_ = msg.Nak()
-		return
-	}
-	p := envelope.Payload
-	if p.TenantID == "" {
-		_ = msg.Ack()
-		return
-	}
-	var to []string
-	if p.WaiterPhone != "" {
-		to = append(to, p.WaiterPhone)
-	}
-	s.publish(p.TenantID, "sms", "kds/waiter_called", messaging.TargetStaff, to, map[string]any{
-		"order_number": p.OrderNumber,
-		"ticket_id":    p.TicketID,
-	})
-	s.log.Info("kds_waiter_called notification dispatched", zap.String("order_number", p.OrderNumber))
-	_ = msg.Ack()
-}
-
 func (s *Subscriber) handlePayrollDisbursed(msg *nats.Msg) {
 	var envelope struct {
 		Payload struct {
@@ -666,105 +643,6 @@ func (s *Subscriber) handlePayrollDisbursed(msg *nats.Msg) {
 		zap.String("tenant_id", p.TenantID),
 		zap.String("staff_name", p.StaffName),
 	)
-	_ = msg.Ack()
-}
-
-// handleLoyaltyPointsEarned sends a "you earned X pts" SMS to the customer (pos.loyalty.points.earned).
-func (s *Subscriber) handleLoyaltyPointsEarned(msg *nats.Msg) {
-	var e struct {
-		TenantID string `json:"tenant_id"`
-		Payload  struct {
-			TenantID      string `json:"tenant_id"`
-			CustomerName  string `json:"customer_name"`
-			CustomerPhone string `json:"customer_phone"`
-			PointsEarned  int    `json:"points_earned"`
-			BalanceAfter  int    `json:"balance_after"`
-		} `json:"payload"`
-	}
-	if err := json.Unmarshal(msg.Data, &e); err != nil {
-		s.log.Warn("loyalty_points_earned: unmarshal failed", zap.Error(err))
-		_ = msg.Nak()
-		return
-	}
-	tid := e.TenantID
-	if tid == "" {
-		tid = e.Payload.TenantID
-	}
-	if tid == "" || e.Payload.CustomerPhone == "" {
-		_ = msg.Ack()
-		return
-	}
-	s.publish(tid, "sms", "pos/loyalty_points_earned", messaging.TargetCustomer, []string{e.Payload.CustomerPhone}, map[string]any{
-		"customer_name": e.Payload.CustomerName,
-		"points_earned": e.Payload.PointsEarned,
-		"balance_after": e.Payload.BalanceAfter,
-	})
-	_ = msg.Ack()
-}
-
-// handleLoyaltyTierUpgraded sends a tier-upgrade congratulations SMS (pos.loyalty.tier_upgraded).
-func (s *Subscriber) handleLoyaltyTierUpgraded(msg *nats.Msg) {
-	var e struct {
-		TenantID string `json:"tenant_id"`
-		Payload  struct {
-			TenantID       string `json:"tenant_id"`
-			CustomerName   string `json:"customer_name"`
-			CustomerPhone  string `json:"customer_phone"`
-			NewTier        string `json:"new_tier"`
-			LifetimePoints int    `json:"lifetime_points"`
-		} `json:"payload"`
-	}
-	if err := json.Unmarshal(msg.Data, &e); err != nil {
-		s.log.Warn("loyalty_tier_upgraded: unmarshal failed", zap.Error(err))
-		_ = msg.Nak()
-		return
-	}
-	tid := e.TenantID
-	if tid == "" {
-		tid = e.Payload.TenantID
-	}
-	if tid == "" || e.Payload.CustomerPhone == "" {
-		_ = msg.Ack()
-		return
-	}
-	s.publish(tid, "sms", "pos/loyalty_tier_upgraded", messaging.TargetCustomer, []string{e.Payload.CustomerPhone}, map[string]any{
-		"customer_name":   e.Payload.CustomerName,
-		"new_tier":        e.Payload.NewTier,
-		"lifetime_points": e.Payload.LifetimePoints,
-	})
-	_ = msg.Ack()
-}
-
-// handleLoyaltyReferralEarned sends a "you earned referral bonus" SMS to the referrer (pos.loyalty.referral_earned).
-func (s *Subscriber) handleLoyaltyReferralEarned(msg *nats.Msg) {
-	var e struct {
-		TenantID string `json:"tenant_id"`
-		Payload  struct {
-			TenantID      string `json:"tenant_id"`
-			ReferrerName  string `json:"referrer_name"`
-			ReferrerPhone string `json:"referrer_phone"`
-			BonusPoints   int    `json:"bonus_points"`
-			BalanceAfter  int    `json:"balance_after"`
-		} `json:"payload"`
-	}
-	if err := json.Unmarshal(msg.Data, &e); err != nil {
-		s.log.Warn("loyalty_referral_earned: unmarshal failed", zap.Error(err))
-		_ = msg.Nak()
-		return
-	}
-	tid := e.TenantID
-	if tid == "" {
-		tid = e.Payload.TenantID
-	}
-	if tid == "" || e.Payload.ReferrerPhone == "" {
-		_ = msg.Ack()
-		return
-	}
-	s.publish(tid, "sms", "pos/loyalty_referral_earned", messaging.TargetCustomer, []string{e.Payload.ReferrerPhone}, map[string]any{
-		"customer_name": e.Payload.ReferrerName,
-		"bonus_points":  e.Payload.BonusPoints,
-		"balance_after": e.Payload.BalanceAfter,
-	})
 	_ = msg.Ack()
 }
 

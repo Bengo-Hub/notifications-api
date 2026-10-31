@@ -1,0 +1,8 @@
+Hi {{ .name }},
+
+Your check-in at {{ .business_name }} is confirmed.
+
+Room: *{{ .room_number }}*
+Nights: {{ .nights }}
+
+The front desk is available if you need anything during your stay.

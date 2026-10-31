@@ -1,0 +1,17 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <p>You have checked out of {{ .business_name }}. Here is a summary of your stay.</p>
+  <table style="width:100%; border-collapse:collapse; margin:16px 0;">
+    <tr>
+      <td style="padding:8px 0; color:#6b7280; width:45%;">Total for Your Stay</td>
+      <td style="padding:8px 0; font-weight:600;">{{ .total_folio }}</td>
+    </tr>
+    {{ if .checked_out }}
+    <tr>
+      <td style="padding:8px 0; color:#6b7280; width:45%;">Checked Out</td>
+      <td style="padding:8px 0; font-weight:600;">{{ .checked_out }}</td>
+    </tr>
+    {{ end }}
+  </table>
+  <p style="color:#6b7280;">Your detailed bill is available from the front desk.</p>
+{{ end }}
