@@ -219,7 +219,21 @@ func reviewEmailDataBuilder(data map[string]interface{}, orderAppURL string) map
 		"order_id":     data["order_id"],
 		"order_link":   orderLink(data, orderAppURL),
 		"review_link":  orderLink(data, orderAppURL) + "?rate=1",
+		// The business's "Review us on Google" link, set on ordering's staff integrations
+		// page. Email only: WhatsApp keeps its one approved button to the order page, which
+		// shows the Google button too.
+		"google_review_url": googleReviewURL(data),
 	}
+}
+
+// googleReviewURL returns the event's google_review_url when it is an https link, else "".
+func googleReviewURL(data map[string]interface{}) string {
+	u, _ := data["google_review_url"].(string)
+	u = strings.TrimSpace(u)
+	if !strings.HasPrefix(u, "https://") {
+		return ""
+	}
+	return u
 }
 
 var orderMappings = map[string]orderNotificationMapping{

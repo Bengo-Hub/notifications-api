@@ -14,6 +14,12 @@
   <p>
     <a class="button" href="{{ .review_link }}">Leave Review</a>
   </p>
+  {{ if .google_review_url }}
+  <p>Enjoyed it? A short Google review helps us a lot.</p>
+  <p>
+    <a class="button" href="{{ .google_review_url }}">Review us on Google</a>
+  </p>
+  {{ end }}
   <p class="muted">Thank you for choosing {{ or .brand_name "codevertex" }}!</p>
 {{ end }}
 
