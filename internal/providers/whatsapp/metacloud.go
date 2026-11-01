@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -93,9 +94,16 @@ func (p *MetaCloudProvider) SendWhatsApp(ctx context.Context, from string, to []
 				language = "en_US"
 			}
 			params := stringSliceParam(metadata["template_params"])
-			buttonParam, _ := metadata["template_button_param"].(string)
+			// One value per URL button, in button order (template_button_params), or the single
+			// template_button_param most templates use.
+			buttonParams := stringSliceParam(metadata["template_button_params"])
+			if len(buttonParams) == 0 {
+				if one, _ := metadata["template_button_param"].(string); one != "" {
+					buttonParams = []string{one}
+				}
+			}
 			var id string
-			id, err = p.sendTemplate(ctx, recipient, templateName, language, params, buttonParam)
+			id, err = p.sendTemplate(ctx, recipient, templateName, language, params, buttonParams)
 			// Retry with the fallback template on ANY primary-send failure, not just a button
 			// send — the primary is often a newly-drafted template (polished wording, possibly
 			// with a button) that hasn't cleared Meta review yet either, regardless of whether
@@ -105,7 +113,11 @@ func (p *MetaCloudProvider) SendWhatsApp(ctx context.Context, from string, to []
 			if err != nil {
 				if fallbackName, ok := metadata["template_fallback_name"].(string); ok && fallbackName != "" {
 					fallbackParams := stringSliceParam(metadata["template_fallback_params"])
-					id, err = p.sendTemplate(ctx, recipient, fallbackName, language, fallbackParams, "")
+					var fallbackButtons []string
+					if b, _ := metadata["template_fallback_button_param"].(string); b != "" {
+						fallbackButtons = []string{b}
+					}
+					id, err = p.sendTemplate(ctx, recipient, fallbackName, language, fallbackParams, fallbackButtons)
 				}
 			}
 			// The caller can match Meta's later delivery status to this send (see
@@ -197,10 +209,10 @@ func (p *MetaCloudProvider) sendText(ctx context.Context, to, body string, previ
 // outside an active 24h reply window). params are substituted positionally into the template
 // body's {{1}}, {{2}}, ... placeholders — Meta does its own server-side rendering from the
 // template it already has on file, so no local template body is sent here, only the name +
-// language + ordered parameter values. buttonParam, when non-empty, fills the dynamic suffix of
-// the template's (single, index-0) URL button — Meta requires a SEPARATE "button" component for
-// this, scoped independently from the body's own {{1}}, {{2}}, ... numbering.
-func (p *MetaCloudProvider) sendTemplate(ctx context.Context, to, templateName, language string, params []string, buttonParam string) (string, error) {
+// language + ordered parameter values. buttonParams fill the dynamic suffixes of the template's
+// URL buttons in order (index 0, 1, ...); Meta requires a SEPARATE "button" component per button,
+// numbered independently from the body's own {{1}}, {{2}}, ... placeholders.
+func (p *MetaCloudProvider) sendTemplate(ctx context.Context, to, templateName, language string, params []string, buttonParams []string) (string, error) {
 	components := []map[string]interface{}{}
 	if len(params) > 0 {
 		bodyParams := make([]map[string]interface{}, 0, len(params))
@@ -209,13 +221,16 @@ func (p *MetaCloudProvider) sendTemplate(ctx context.Context, to, templateName, 
 		}
 		components = append(components, map[string]interface{}{"type": "body", "parameters": bodyParams})
 	}
-	if buttonParam != "" {
+	for i, bp := range buttonParams {
+		if bp == "" {
+			continue
+		}
 		components = append(components, map[string]interface{}{
 			"type":     "button",
 			"sub_type": "url",
-			"index":    "0",
+			"index":    strconv.Itoa(i),
 			"parameters": []map[string]interface{}{
-				{"type": "text", "text": buttonParam},
+				{"type": "text", "text": bp},
 			},
 		})
 	}

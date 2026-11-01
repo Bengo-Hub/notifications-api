@@ -98,11 +98,33 @@ type orderNotificationMapping struct {
 	// WhatsAppLinkKey names the msgData key (e.g. "order_link", "review_link") holding the full
 	// URL whose path becomes the button's dynamic suffix.
 	WhatsAppLinkKey string
+	// WhatsAppReviewTemplate is the two-button variant of WhatsAppButtonTemplate (order link and
+	// "Review us on Google"), sent when the business set a Google review link. Until Meta approves
+	// it the one-button template is sent instead (template fallback).
+	WhatsAppReviewTemplate string
 }
 
 // sharedOrderingButtonPrefix is the fixed domain Meta bakes into every ordering "_btn" template's
 // URL button at approval (templates.json); only the part after it varies per send.
 const sharedOrderingButtonPrefix = "https://ordering.codevertexafrica.com/"
+
+// googleReviewButtonSuffix is the "Review us on Google" button's path for a mapping that has a
+// review template, when the business set a Google review link: "{business}/review/google", which
+// the storefront forwards to that link (a template button can only open the store's domain).
+// orderSuffix is the order button's path, which starts with the business slug.
+func googleReviewButtonSuffix(mapping orderNotificationMapping, msgData map[string]interface{}, orderSuffix string) string {
+	if mapping.WhatsAppReviewTemplate == "" {
+		return ""
+	}
+	if u, _ := msgData["google_review_url"].(string); u == "" {
+		return ""
+	}
+	slug, _, _ := strings.Cut(orderSuffix, "/")
+	if slug == "" {
+		return ""
+	}
+	return slug + "/review/google"
+}
 
 // whatsAppTemplateMetadata picks how a mapping's WhatsApp message is sent, per the link policy:
 //   - a message with a link: its "_btn" template, the link path as the button suffix, never a raw
@@ -124,6 +146,13 @@ func whatsAppTemplateMetadata(mapping orderNotificationMapping, msgData map[stri
 			out["template_language"] = "en_US"
 			out["template_params"] = params[:len(params)-1] // the link is the button
 			out["template_button_param"] = suffix
+			if review := googleReviewButtonSuffix(mapping, msgData, suffix); review != "" {
+				out["template_name"] = mapping.WhatsAppReviewTemplate
+				out["template_button_params"] = []string{suffix, review}
+				out["template_fallback_name"] = mapping.WhatsAppButtonTemplate
+				out["template_fallback_params"] = params[:len(params)-1]
+				out["template_fallback_button_param"] = suffix
+			}
 			return out
 		}
 		if strings.HasPrefix(link, "https://") {
@@ -359,6 +388,7 @@ var orderMappings = map[string]orderNotificationMapping{
 		DataBuilder:            reviewEmailDataBuilder,
 		IdempotencyScope:       "review",
 		WhatsAppButtonTemplate: "ordering_order_completed_v1_btn",
+		WhatsAppReviewTemplate: "ordering_order_completed_v2_btn",
 		WhatsAppLinkKey:        "review_link",
 		WhatsAppParams: func(d map[string]interface{}) []string {
 			return []string{
@@ -379,6 +409,7 @@ var orderMappings = map[string]orderNotificationMapping{
 		DataBuilder:            reviewEmailDataBuilder,
 		IdempotencyScope:       "review",
 		WhatsAppButtonTemplate: "ordering_order_delivered_v3_btn",
+		WhatsAppReviewTemplate: "ordering_order_delivered_v4_btn",
 		WhatsAppLinkKey:        "review_link",
 		WhatsAppParams: func(d map[string]interface{}) []string {
 			return []string{

@@ -54,6 +54,9 @@ func TestOrderWhatsAppParamsMatchManifest(t *testing.T) {
 		if m.WhatsAppButtonTemplate != "" {
 			check(event, m.WhatsAppButtonTemplate, len(params)-1) // the link becomes the button
 		}
+		if m.WhatsAppReviewTemplate != "" {
+			check(event, m.WhatsAppReviewTemplate, len(params)-1) // same body, a second button
+		}
 	}
 	// The business alert: four body parameters, the queue link is the Open Orders button.
 	check("business alert", "ordering_new_order_business_v1_btn", 4)
