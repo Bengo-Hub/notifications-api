@@ -326,6 +326,12 @@ func New(ctx context.Context) (*App, error) {
 				pubCfg := eventslib.DefaultPublisherConfig(js, outboxRepo, log)
 				outboxPublisher = eventslib.NewPublisher(pubCfg)
 				log.Info("outbox publisher initialized")
+				// tenant.purge (dormancy, a deleted tenant, a declined registration): delete every row this
+				// service holds for the tenant, by the shared schema-driven purger.
+				purger := &eventslib.TenantPurger{DB: sqlDB, Log: log.Named("tenant-purge"), Service: "notifications"}
+				if err := purger.Subscribe(js); err != nil {
+					log.Warn("tenant purge consumer not started", zap.Error(err))
+				}
 			} else {
 				log.Warn("failed to create sql.DB for outbox, publisher disabled", zap.Error(err))
 			}
