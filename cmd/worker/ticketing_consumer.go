@@ -48,6 +48,9 @@ var ticketingMappings = map[string]ticketingNotificationMapping{
 			}
 		},
 	},
+	// SLA breaches from ticketing-api's SLA worker (ticketing.sla.*), sent to the assigned agent.
+	"sla.first_response_breached": ticketSLABreachMapping("First response"),
+	"sla.resolution_breached":     ticketSLABreachMapping("Resolution"),
 	"ticket.resolved": {
 		TemplateID:   "ticketing/ticket_resolved",
 		EmailSubject: "Your ticket has been resolved",
@@ -62,6 +65,28 @@ var ticketingMappings = map[string]ticketingNotificationMapping{
 			}
 		},
 	},
+}
+
+// ticketSLABreachMapping is the agent alert for one kind of SLA breach.
+func ticketSLABreachMapping(label string) ticketingNotificationMapping {
+	return ticketingNotificationMapping{
+		TemplateID:   "ticketing/ticket_sla_breached",
+		EmailSubject: label + " SLA breached on a support ticket",
+		DataBuilder: func(payload map[string]any, tenantWebsite string) map[string]any {
+			name := "Agent"
+			if n, ok := payload["agent_name"].(string); ok && n != "" {
+				name = n
+			}
+			return map[string]any{
+				"name":         name,
+				"breach_label": label,
+				"ticket_id":    payload["ticket_number"],
+				"subject":      payload["subject"],
+				"priority":     payload["priority"],
+				"action_link":  fmt.Sprintf("%s/tickets/%s", tenantWebsite, payload["ticket_id"]),
+			}
+		},
+	}
 }
 
 // startTicketingConsumer subscribes to ticketing.> events and dispatches
@@ -111,7 +136,9 @@ func startTicketingConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStrea
 		recipientEmail := ti.ContactEmail
 		target := messaging.TargetStaff
 		switch evt.EventType {
-		case "ticket.assigned":
+		case "ticket.assigned", "sla.first_response_breached", "sla.resolution_breached":
+			// Staff alerts go to the assigned agent; the tenant contact is the fallback for an
+			// unassigned ticket.
 			if agentEmail, ok := evt.Payload["agent_email"].(string); ok && agentEmail != "" {
 				recipientEmail = agentEmail
 			}

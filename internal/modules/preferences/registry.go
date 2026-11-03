@@ -163,6 +163,7 @@ var Registry = []Type{
 	// ── Support / projects / education ───────────────────────────────────────
 	{Key: "ticketing/ticket_assigned", Label: "Support ticket assigned", Group: "Support & Projects", Class: ClassOptional},
 	{Key: "ticketing/ticket_resolved", Label: "Support ticket resolved", Group: "Support & Projects", Class: ClassOptional},
+	{Key: "ticketing/ticket_sla_breached", Label: "Support ticket past its SLA", Group: "Support & Projects", Class: ClassOptional},
 	{Key: "projects/project_milestone_reached", Label: "Project milestone reached", Group: "Support & Projects", Class: ClassOptional},
 	{Key: "digitika/enrollment_confirmed", Label: "Enrollment confirmed", Group: "Education", Class: ClassEssential},
 	{Key: "digitika/installment_receipt", Label: "Installment receipt", Group: "Education", Class: ClassEssential},
