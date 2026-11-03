@@ -161,19 +161,7 @@ type waWebhookPayload struct {
 						Name string `json:"name"`
 					} `json:"profile"`
 				} `json:"contacts"`
-				Messages []struct {
-					From string `json:"from"`
-					ID   string `json:"id"`
-					Type string `json:"type"`
-					Text struct {
-						Body string `json:"body"`
-					} `json:"text"`
-					// A template quick-reply tap ("Stop promotions") arrives as type "button".
-					Button struct {
-						Payload string `json:"payload"`
-						Text    string `json:"text"`
-					} `json:"button"`
-				} `json:"messages"`
+				Messages []waInboundMessage `json:"messages"`
 				Statuses []struct {
 					ID          string `json:"id"`
 					Status      string `json:"status"` // sent | delivered | read | failed
@@ -190,6 +178,52 @@ type waWebhookPayload struct {
 			} `json:"value"`
 		} `json:"changes"`
 	} `json:"entry"`
+}
+
+// waInboundMessage is one message in a WhatsApp webhook: typed text, a template quick-reply
+// (type button) or a tapped interactive reply button or list row (type interactive).
+type waInboundMessage struct {
+	From string `json:"from"`
+	ID   string `json:"id"`
+	Type string `json:"type"`
+	Text struct {
+		Body string `json:"body"`
+	} `json:"text"`
+	// A template quick-reply tap ("Stop promotions") arrives as type "button".
+	Button struct {
+		Payload string `json:"payload"`
+		Text    string `json:"text"`
+	} `json:"button"`
+	// A reply button or list row tapped in an interactive message arrives as type
+	// "interactive" with button_reply or list_reply (id is our payload, title the text).
+	Interactive struct {
+		Type        string `json:"type"` // button_reply | list_reply
+		ButtonReply struct {
+			ID    string `json:"id"`
+			Title string `json:"title"`
+		} `json:"button_reply"`
+		ListReply struct {
+			ID          string `json:"id"`
+			Title       string `json:"title"`
+			Description string `json:"description"`
+		} `json:"list_reply"`
+	} `json:"interactive"`
+}
+
+// inboundText is the visible text of a message: typed text, a template quick-reply's text, or the
+// title of a tapped interactive reply button or list row. Before, the last two were empty, so a
+// "Stop" reply button was never honoured and the inbox showed a blank message.
+func inboundText(m waInboundMessage) string {
+	switch m.Type {
+	case "button":
+		return m.Button.Text
+	case "interactive":
+		if m.Interactive.Type == "list_reply" {
+			return m.Interactive.ListReply.Title
+		}
+		return m.Interactive.ButtonReply.Title
+	}
+	return m.Text.Body
 }
 
 // WhatsAppIncoming receives Meta's WhatsApp webhook notifications (incoming customer messages and
@@ -236,15 +270,12 @@ func (h *WebhookHandler) WhatsAppIncoming(w http.ResponseWriter, r *http.Request
 					zap.String("message_id", msg.ID),
 					zap.String("type", msg.Type),
 				)
+				text := inboundText(msg)
 				// "Stop promotions" button or a STOP text: opt this number out of marketing.
-				stopText := msg.Text.Body
-				if msg.Type == "button" {
-					stopText = msg.Button.Text
-				}
-				h.handleStopReply(ctx, "whatsapp", msg.From, stopText, tenantID, "whatsapp_reply")
+				h.handleStopReply(ctx, "whatsapp", msg.From, text, tenantID, "whatsapp_reply")
 				if h.inbox != nil && tenantID != "" {
 					if tid, err := uuid.Parse(tenantID); err == nil {
-						if err := h.inbox.RecordInbound(ctx, tid, phoneNumberID, msg.ID, msg.From, msg.Type, msg.Text.Body, contactNames[msg.From]); err != nil {
+						if err := h.inbox.RecordInbound(ctx, tid, phoneNumberID, msg.ID, msg.From, msg.Type, text, contactNames[msg.From]); err != nil {
 							h.log.Warn("failed to persist inbound whatsapp message", zap.Error(err), zap.String("message_id", msg.ID))
 						}
 					}
