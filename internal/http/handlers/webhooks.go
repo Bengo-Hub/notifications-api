@@ -72,6 +72,7 @@ type WebhookHandler struct {
 	fallback      *whatsAppFallback
 	optOut        *suppression.Service
 	signature     *metaSignature
+	assistantNC   *nats.Conn // platform-number messages to MarketFlow (webhooks_assistant.go)
 }
 
 // NewWebhookHandler creates the webhook handler. publicBaseURL is this service's own externally
@@ -273,6 +274,7 @@ func (h *WebhookHandler) WhatsAppIncoming(w http.ResponseWriter, r *http.Request
 				text := inboundText(msg)
 				// "Stop promotions" button or a STOP text: opt this number out of marketing.
 				h.handleStopReply(ctx, "whatsapp", msg.From, text, tenantID, "whatsapp_reply")
+				h.publishAssistantInbound(ctx, tenantID, phoneNumberID, msg, text, contactNames[msg.From])
 				if h.inbox != nil && tenantID != "" {
 					if tid, err := uuid.Parse(tenantID); err == nil {
 						if err := h.inbox.RecordInbound(ctx, tid, phoneNumberID, msg.ID, msg.From, msg.Type, text, contactNames[msg.From]); err != nil {

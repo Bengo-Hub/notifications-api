@@ -381,6 +381,8 @@ func New(ctx context.Context) (*App, error) {
 	if redisClient != nil {
 		webhookHandler.WithWhatsAppFallback(redisClient, natsConn, cfg.Events)
 	}
+	// Messages to the platform WhatsApp number go to MarketFlow's assistant (Sprint 17).
+	webhookHandler.WithAssistantInbound(natsConn)
 	whatsappEmbeddedSignupHandler := handlers.NewWhatsAppEmbeddedSignupHandler(entClient, log, providerManager)
 	whatsappTemplatesHandler := handlers.NewWhatsAppTemplates(providerManager, log)
 	mailDeliveryHandler := handlers.NewMailDeliveryHandler(
