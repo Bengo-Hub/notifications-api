@@ -1,0 +1,23 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <h2 style="color: #b45309;">{{ .headline }}</h2>
+  {{ if eq .level "empty" }}
+  <p>The {{ .resource_label }} balance has run out. MarketFlow now sends jobs to the fallback providers, and jobs that only this provider can make will fail until it is topped up.</p>
+  {{ else }}
+  <p>The {{ .resource_label }} balance is down to {{ .remaining }}. MarketFlow skips this provider for any output that costs more than what is left.</p>
+  {{ end }}
+
+  <div style="background:#f3f4f6; padding:16px; border-radius:6px; margin:16px 0;">
+    <strong>Provider:</strong> {{ .resource_label }}<br/>
+    <strong>Left:</strong> {{ .remaining }}{{ if .estimate }} (estimated from the funded amount and usage){{ end }}<br/>
+    <strong>Low-water mark:</strong> {{ .threshold }}
+  </div>
+
+  <p>The low-water mark and the funded amount are set on the providers page.</p>
+
+  <p>
+    <a class="button" href="{{ .action_link }}">Top up</a>
+    &nbsp;
+    <a href="{{ .providers_link }}">Open providers</a>
+  </p>
+{{ end }}

@@ -508,6 +508,28 @@
     ]
   },
   {
+    "name": "credits_balance_low_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/billing/balance_low.txt (params: name, service, level words, remaining; button: billing page)",
+    "body": "Hi {{1}},\n\nYour {{2}} balance {{3}}: {{4}} left.\n\nBuy more on your billing page so nothing pauses.",
+    "example": ["Alpha China Market", "AI credits", "is low", "19 credits"],
+    "buttons": [
+      {"type": "URL", "text": "Buy credits", "url": "https://pricing.codevertexafrica.com/{{1}}", "example": ["billing"]}
+    ]
+  },
+  {
+    "name": "provider_balance_low_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/billing/provider_balance_low.txt (params: provider, level words, remaining; button: MarketFlow providers page)",
+    "body": "The {{1}} balance {{2}}: {{3}} left.\n\nMarketFlow skips this provider for outputs that cost more than what is left. Top it up from the providers page.",
+    "example": ["Higgsfield", "is low", "about USD 4.20"],
+    "buttons": [
+      {"type": "URL", "text": "Top up", "url": "https://marketflow.codevertexafrica.com/{{1}}", "example": ["platform/providers"]}
+    ]
+  },
+  {
     "name": "occasion_customer_service_week_v2",
     "category": "MARKETING",
     "language": "en_US",

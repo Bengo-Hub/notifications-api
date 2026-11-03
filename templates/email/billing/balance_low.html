@@ -1,0 +1,21 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <h2 style="color: #b45309;">{{ .headline }}</h2>
+  {{ if eq .level "empty" }}
+  <p>Your {{ .resource_label }} balance has reached zero. Services that use it pause until you buy more.</p>
+  {{ else }}
+  <p>Your {{ .resource_label }} balance is down to {{ .remaining }}. Buy more now so nothing pauses.</p>
+  {{ end }}
+
+  <div style="background:#f3f4f6; padding:16px; border-radius:6px; margin:16px 0;">
+    <strong>Service:</strong> {{ .resource_label }}<br/>
+    <strong>Left:</strong> {{ .remaining }}<br/>
+    <strong>Alert level:</strong> {{ .threshold }}
+  </div>
+
+  <p>Bundles never expire, and you can switch on auto top-up on the billing page.</p>
+
+  <p>
+    <a class="button" href="{{ .action_link }}">Buy credits</a>
+  </p>
+{{ end }}

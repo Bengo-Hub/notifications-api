@@ -1,0 +1,5 @@
+Hi {{ .name }},
+
+Your {{ .resource_label }} balance {{ if eq .level "empty" }}has run out{{ else }}is low{{ end }}: {{ .remaining }} left.
+
+Buy more on your billing page so nothing pauses.

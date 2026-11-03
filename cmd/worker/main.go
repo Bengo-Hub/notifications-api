@@ -420,6 +420,8 @@ func main() {
 	// Start subscription lifecycle event consumer (subscriptions-service → tenant admin
 	// notifications, and custom-addon fulfillment for SMS credits / WhatsApp plans)
 	startSubscriptionConsumer(ctx, nc, js, cfg, tr, logg)
+	// Low-balance alerts for every credit and provider (billing.balance.low).
+	startBalanceLowConsumer(ctx, nc, js, cfg, tr, logg)
 
 	// Start auth notification consumer (auth-service → welcome emails, plain NATS)
 	startAuthNotificationConsumer(ctx, nc, cfg, tr, logg)
