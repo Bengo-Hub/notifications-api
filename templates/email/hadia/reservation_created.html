@@ -1,0 +1,11 @@
+{{ define "content" }}
+  <p>Hello {{ or .name "there" }},</p>
+  <h2>Your gift is reserved</h2>
+  <p>You reserved <strong>{{ .item }}</strong> on {{ .registry }}. We hold it for you until {{ .expires_at }}, so nobody else buys the same gift.</p>
+  <p>You can cancel the reservation, extend it once, or mark the gift as bought from the link below.</p>
+  {{ if .action_link }}
+  <p>
+    <a class="button" href="{{ .action_link }}">Manage your reservation</a>
+  </p>
+  {{ end }}
+{{ end }}

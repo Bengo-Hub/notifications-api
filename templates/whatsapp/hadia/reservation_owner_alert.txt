@@ -1,0 +1,3 @@
+Hello {{ or .name "there" }},
+
+{{ .guest }} reserved *{{ .item }}* from your Hadia registry.

@@ -1,0 +1,3 @@
+Hello {{ or .name "there" }},
+
+Your reservation of *{{ .item }}* ends on {{ .expires_at }}. Mark it as bought, or extend it once if you need more time.

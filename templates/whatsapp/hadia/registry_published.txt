@@ -1,0 +1,3 @@
+Hello {{ or .name "there" }},
+
+Your registry *{{ .registry }}* is live on Hadia. Share it with family and friends so they can reserve gifts or send a contribution.

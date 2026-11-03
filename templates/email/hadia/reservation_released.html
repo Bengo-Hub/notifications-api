@@ -1,0 +1,5 @@
+{{ define "content" }}
+  <p>Hello {{ or .name "there" }},</p>
+  <h2>Your reservation has ended</h2>
+  <p>Your reservation of <strong>{{ .item }}</strong> has ended, so the gift is open to other guests again. You can still reserve another gift or send a contribution from the registry.</p>
+{{ end }}

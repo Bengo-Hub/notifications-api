@@ -116,6 +116,13 @@ var Registry = []Type{
 	{Key: "maskani/vendor_document_expiring", Label: "Vendor document expiring", Group: "Property", Class: ClassOptional},
 	{Key: "maskani/notice", Label: "Estate notices", Group: "Property", Class: ClassEssential},
 
+	// ── Hadia (gift registry; owners and guests) ────────────────────────────
+	{Key: "hadia/registry_published", Label: "Registry is live", Group: "Gift registry", Class: ClassEssential},
+	{Key: "hadia/reservation_created", Label: "Gift reservation and manage link", Group: "Gift registry", Class: ClassEssential},
+	{Key: "hadia/reservation_owner_alert", Label: "A guest reserved a gift", Group: "Gift registry", Class: ClassOptional},
+	{Key: "hadia/reservation_reminder", Label: "Gift reservation ending soon", Group: "Gift registry", Class: ClassEssential},
+	{Key: "hadia/reservation_released", Label: "Gift reservation ended", Group: "Gift registry", Class: ClassEssential},
+
 	{Key: "pos/receipt_on_sale", Label: "WhatsApp receipt after every sale", Group: "POS", Class: ClassOptional},
 	{Key: "pos/pos_payment_receipt", Label: "Payment received (sent from View Payments)", Group: "POS", Class: ClassEssential},
 	{Key: "pos/return_completed", Label: "Refund processed", Group: "POS", Class: ClassEssential},

@@ -1,0 +1,5 @@
+Hello {{ or .name "there" }},
+
+You reserved *{{ .item }}* on {{ .registry }}. We hold it for you until {{ .expires_at }}.
+
+Use the button to cancel, extend once, or mark it as bought.

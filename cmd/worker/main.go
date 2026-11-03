@@ -456,6 +456,9 @@ func main() {
 	// Start maskani event consumer (property platform: bills, receipts, visitor passes, gate alerts)
 	startMaskaniConsumer(ctx, nc, js, cfg, tr, client, logg)
 
+	// Start hadia event consumer (gift registry: share message, reservations, one-time codes)
+	startHadiaConsumer(ctx, nc, js, cfg, tr, logg)
+
 	// Ensure digitika JetStream stream exists (published by codevertex-website)
 	if _, streamErr := js.StreamInfo("digitika"); streamErr != nil {
 		if _, streamErr = js.AddStream(&nats.StreamConfig{

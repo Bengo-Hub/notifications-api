@@ -926,5 +926,57 @@
     "buttons": [
       {"type": "URL", "text": "Visit our website", "url": "https://codevertexafrica.com/{{1}}", "example": ["services"]}
     ]
+  },
+  {
+    "name": "hadia_registry_published_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/hadia/registry_published.txt (params: name, registry; button: r/<code>)",
+    "body": "Hello {{1}},\n\nYour registry *{{2}}* is live on Hadia. Share it with family and friends so they can reserve gifts or send a contribution.",
+    "example": ["Amina", "Amina and Brian's wedding"],
+    "buttons": [
+      {"type": "URL", "text": "Open registry", "url": "https://hadiafrica.com/{{1}}", "example": ["r/AB12CD34"]}
+    ]
+  },
+  {
+    "name": "hadia_reservation_created_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/hadia/reservation_created.txt (params: name, item, registry, expires_at; button: r/<code>/reserved/<token>)",
+    "body": "Hello {{1}},\n\nYou reserved *{{2}}* on {{3}}. We hold it for you until {{4}}.\n\nUse the button to cancel, extend once, or mark it as bought.",
+    "example": ["Jane", "Dinner set", "Amina and Brian's wedding", "18 Nov 2026"],
+    "buttons": [
+      {"type": "URL", "text": "Manage reservation", "url": "https://hadiafrica.com/{{1}}", "example": ["r/AB12CD34/reserved/tok123"]}
+    ]
+  },
+  {
+    "name": "hadia_reservation_owner_alert_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/hadia/reservation_owner_alert.txt (params: name, guest, item; button: app/registries/<id>)",
+    "body": "Hello {{1}},\n\n{{2}} reserved *{{3}}* from your Hadia registry.",
+    "example": ["Amina", "A guest", "Dinner set"],
+    "buttons": [
+      {"type": "URL", "text": "View registry", "url": "https://hadiafrica.com/{{1}}", "example": ["app/registries/0b6c2b8e"]}
+    ]
+  },
+  {
+    "name": "hadia_reservation_reminder_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/hadia/reservation_reminder.txt (params: name, item, expires_at; button: r/<code>/reserved/<token>)",
+    "body": "Hello {{1}},\n\nYour reservation of *{{2}}* ends on {{3}}. Mark it as bought, or extend it once if you need more time.",
+    "example": ["Jane", "Dinner set", "18 Nov 2026"],
+    "buttons": [
+      {"type": "URL", "text": "Manage reservation", "url": "https://hadiafrica.com/{{1}}", "example": ["r/AB12CD34/reserved/tok123"]}
+    ]
+  },
+  {
+    "name": "hadia_reservation_released_v1",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/hadia/reservation_released.txt (params: name, item)",
+    "body": "Hello {{1}},\n\nYour reservation of *{{2}}* on Hadia has ended, so the gift is open to other guests again.",
+    "example": ["Jane", "Dinner set"]
   }
 ]

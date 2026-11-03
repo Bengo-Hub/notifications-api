@@ -1,0 +1,10 @@
+{{ define "content" }}
+  <p>Hello {{ or .name "there" }},</p>
+  <h2>Your reservation ends soon</h2>
+  <p>Your reservation of <strong>{{ .item }}</strong> ends on {{ .expires_at }}. If you have bought it, mark it as bought; if you need more time, you can extend it once.</p>
+  {{ if .action_link }}
+  <p>
+    <a class="button" href="{{ .action_link }}">Manage your reservation</a>
+  </p>
+  {{ end }}
+{{ end }}
