@@ -71,3 +71,25 @@ func (h *WebhookHandler) publishAssistantInbound(ctx context.Context, tenantID, 
 	broadcasts.PublishEvent(h.assistantNC, h.log, SubjectWhatsAppInbound, "whatsapp.inbound", nil, id,
 		assistantInbound(phoneNumberID, m, text, contactName))
 }
+
+// SubjectWhatsAppReferral carries the click id of a message that came from a click-to-WhatsApp
+// ad (Sprint 18), so MarketFlow can attribute the lead to the ad and report the sale back to Meta.
+const SubjectWhatsAppReferral = "notifications.whatsapp.referral"
+
+// publishAdReferral hands over a tenant-number message that carries an ad referral. Only a
+// referral with a click id from an ad counts; organic messages publish nothing.
+func (h *WebhookHandler) publishAdReferral(ctx context.Context, tenantID, phoneNumberID string, m waInboundMessage, contactName string) {
+	if h.assistantNC == nil || tenantID == "" || m.Referral == nil || m.Referral.CtwaClid == "" || m.Referral.SourceType != "ad" {
+		return
+	}
+	tid, err := uuid.Parse(tenantID)
+	if err != nil {
+		return
+	}
+	broadcasts.PublishEvent(h.assistantNC, h.log, SubjectWhatsAppReferral, "whatsapp.referral", &tid, uuid.New(), map[string]any{
+		"tenant_id": tenantID, "phone_number_id": phoneNumberID, "wa_message_id": m.ID, "from": m.From,
+		"contact_name": contactName, "ctwa_clid": m.Referral.CtwaClid, "ad_id": m.Referral.SourceID,
+		"headline": m.Referral.Headline, "source_url": m.Referral.SourceURL,
+		"received_at": time.Now().UTC().Format(time.RFC3339),
+	})
+}

@@ -209,6 +209,15 @@ type waInboundMessage struct {
 			Description string `json:"description"`
 		} `json:"list_reply"`
 	} `json:"interactive"`
+	// Referral is set on the first message a person sends from a click-to-WhatsApp ad: the ad
+	// id (source_id) and ctwa_clid, the click id Meta's Conversions API matches sales against.
+	Referral *struct {
+		SourceURL  string `json:"source_url"`
+		SourceID   string `json:"source_id"`
+		SourceType string `json:"source_type"`
+		Headline   string `json:"headline"`
+		CtwaClid   string `json:"ctwa_clid"`
+	} `json:"referral"`
 }
 
 // inboundText is the visible text of a message: typed text, a template quick-reply's text, or the
@@ -275,6 +284,7 @@ func (h *WebhookHandler) WhatsAppIncoming(w http.ResponseWriter, r *http.Request
 				// "Stop promotions" button or a STOP text: opt this number out of marketing.
 				h.handleStopReply(ctx, "whatsapp", msg.From, text, tenantID, "whatsapp_reply")
 				h.publishAssistantInbound(ctx, tenantID, phoneNumberID, msg, text, contactNames[msg.From])
+				h.publishAdReferral(ctx, tenantID, phoneNumberID, msg, contactNames[msg.From])
 				if h.inbox != nil && tenantID != "" {
 					if tid, err := uuid.Parse(tenantID); err == nil {
 						if err := h.inbox.RecordInbound(ctx, tid, phoneNumberID, msg.ID, msg.From, msg.Type, text, contactNames[msg.From]); err != nil {

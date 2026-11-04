@@ -2,8 +2,10 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
@@ -30,5 +32,22 @@ func TestPublishAssistantInboundGuards(t *testing.T) {
 	h.publishAssistantInbound(context.Background(), "", "pn1", m, "STOP", "")
 	if h.isPlatformNumber(context.Background(), "pn1") {
 		t.Fatal("no client means no platform number")
+	}
+}
+
+// Only an ad referral with a click id on a tenant number is handed over; the guards return before
+// any publish, so a nil connection is safe.
+func TestPublishAdReferralGuards(t *testing.T) {
+	h := &WebhookHandler{log: zap.NewNop()}
+	m := waInboundMessage{From: "254712345678", ID: "wamid.2", Type: "text"}
+	h.publishAdReferral(context.Background(), "", "pn1", m, "")
+	h.publishAdReferral(context.Background(), uuid.NewString(), "pn1", m, "")
+	if m.Referral != nil {
+		t.Fatal("an organic message has no referral")
+	}
+	var payload waInboundMessage
+	_ = json.Unmarshal([]byte(`{"from":"254712345678","id":"w","type":"text","referral":{"source_type":"ad","source_id":"120","ctwa_clid":"ARAkL"}}`), &payload)
+	if payload.Referral == nil || payload.Referral.CtwaClid != "ARAkL" || payload.Referral.SourceID != "120" {
+		t.Fatalf("referral parse: %+v", payload.Referral)
 	}
 }
