@@ -1,0 +1,16 @@
+{{ define "content" }}
+  <p>Hello {{ or .name "there" }},</p>
+  <h2>Thank you for your gift</h2>
+  <p>Your gift to {{ .registry }} has arrived.</p>
+  <table>
+    <tr><td>Gift</td><td><strong>{{ .gift }}</strong></td></tr>
+    <tr><td>Fee</td><td>{{ .fee }}</td></tr>
+    <tr><td>Total paid</td><td>{{ .total }}</td></tr>
+    <tr><td>Reference</td><td>{{ .receipt }}</td></tr>
+  </table>
+  {{ if .action_link }}
+  <p>
+    <a class="button" href="{{ .action_link }}">View the registry</a>
+  </p>
+  {{ end }}
+{{ end }}

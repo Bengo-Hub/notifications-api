@@ -1,0 +1,10 @@
+{{ define "content" }}
+  <p>Hello {{ or .name "there" }},</p>
+  <h2>Your payout is delayed</h2>
+  <p>The payout of <strong>{{ .net }}</strong> from {{ .registry }} did not go through. The money is safe in your registry. Hadia will try again and will contact you if anything is needed from you.</p>
+  {{ if .action_link }}
+  <p>
+    <a class="button" href="{{ .action_link }}">View your registry</a>
+  </p>
+  {{ end }}
+{{ end }}

@@ -1,0 +1,3 @@
+Hello {{ or .name "there" }},
+
+Hadia paid *{{ .net }}* from {{ .registry }} to your payout number (reference {{ .reference }}). Thank you for using Hadia.

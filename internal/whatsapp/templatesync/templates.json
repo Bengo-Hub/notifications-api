@@ -986,5 +986,49 @@
     "source": "whatsapp/hadia/reservation_released.txt (params: name, item)",
     "body": "Hello {{1}},\n\nYour reservation of *{{2}}* on Hadia has ended, so the gift is open to other guests again.",
     "example": ["Jane", "Dinner set"]
+  },
+  {
+    "name": "hadia_gift_receipt_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/hadia/gift_receipt.txt (params: name, registry, gift, fee, total, receipt; button: r/<code>)",
+    "body": "Hello {{1}},\n\nThank you for your gift to {{2}}. Gift *{{3}}*, fee {{4}}, total paid {{5}}. Reference {{6}}, keep this message as your receipt.",
+    "example": ["Jane", "Amina and Tom's wedding", "KES 5,000", "KES 52", "KES 5,052", "TK41AB2CDE"],
+    "buttons": [
+      {"type": "URL", "text": "View registry", "url": "https://hadiafrica.com/{{1}}", "example": ["r/AB12CD34"]}
+    ]
+  },
+  {
+    "name": "hadia_gift_owner_alert_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/hadia/gift_owner_alert.txt (params: name, guest, gift, registry; button: app/registries/<id>)",
+    "body": "Hello {{1}},\n\n{{2}} sent a gift of *{{3}}* to {{4}}. You can thank them from your gift log.",
+    "example": ["Amina", "Jane", "KES 5,000", "Amina and Tom's wedding"],
+    "buttons": [
+      {"type": "URL", "text": "See gift log", "url": "https://hadiafrica.com/{{1}}", "example": ["app/registries/0b6c2b8e"]}
+    ]
+  },
+  {
+    "name": "hadia_payout_completed_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/hadia/payout_completed.txt (params: name, net, registry, reference; button: app/registries/<id>)",
+    "body": "Hello {{1}},\n\nHadia paid *{{2}}* from {{3}} to your payout number (reference {{4}}). Thank you for using Hadia.",
+    "example": ["Amina", "KES 47,500", "Amina and Tom's wedding", "ESC-AB12CD34-1"],
+    "buttons": [
+      {"type": "URL", "text": "View registry", "url": "https://hadiafrica.com/{{1}}", "example": ["app/registries/0b6c2b8e"]}
+    ]
+  },
+  {
+    "name": "hadia_payout_delayed_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/hadia/payout_delayed.txt (params: name, net, registry; button: app/registries/<id>)",
+    "body": "Hello {{1}},\n\nThe payout of *{{2}}* from {{3}} did not go through. The money is safe in your registry. Hadia will try again and will contact you if anything is needed from you.",
+    "example": ["Amina", "KES 47,500", "Amina and Tom's wedding"],
+    "buttons": [
+      {"type": "URL", "text": "View registry", "url": "https://hadiafrica.com/{{1}}", "example": ["app/registries/0b6c2b8e"]}
+    ]
   }
 ]

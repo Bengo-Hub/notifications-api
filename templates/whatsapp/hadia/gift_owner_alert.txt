@@ -1,0 +1,3 @@
+Hello {{ or .name "there" }},
+
+{{ .guest }} sent a gift of *{{ .gift }}* to {{ .registry }}. You can thank them from your gift log.

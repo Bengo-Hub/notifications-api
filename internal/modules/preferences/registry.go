@@ -123,6 +123,10 @@ var Registry = []Type{
 	{Key: "hadia/reservation_reminder", Label: "Gift reservation ending soon", Group: "Gift registry", Class: ClassEssential},
 	{Key: "hadia/reservation_released", Label: "Gift reservation ended", Group: "Gift registry", Class: ClassEssential},
 	{Key: "hadia/payout_destination_changed", Label: "Payout number changed (security alert)", Group: "Gift registry", Class: ClassEssential},
+	{Key: "hadia/gift_receipt", Label: "Gift receipt", Group: "Gift registry", Class: ClassEssential},
+	{Key: "hadia/gift_owner_alert", Label: "You received a gift", Group: "Gift registry", Class: ClassOptional},
+	{Key: "hadia/payout_completed", Label: "Payout sent", Group: "Gift registry", Class: ClassEssential},
+	{Key: "hadia/payout_delayed", Label: "Payout delayed", Group: "Gift registry", Class: ClassEssential},
 
 	{Key: "pos/receipt_on_sale", Label: "WhatsApp receipt after every sale", Group: "POS", Class: ClassOptional},
 	{Key: "pos/pos_payment_receipt", Label: "Payment received (sent from View Payments)", Group: "POS", Class: ClassEssential},

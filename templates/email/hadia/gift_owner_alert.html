@@ -1,0 +1,10 @@
+{{ define "content" }}
+  <p>Hello {{ or .name "there" }},</p>
+  <h2>You received a gift</h2>
+  <p>{{ .guest }} sent a gift of <strong>{{ .gift }}</strong> to {{ .registry }}.</p>
+  {{ if .action_link }}
+  <p>
+    <a class="button" href="{{ .action_link }}">See your gift log</a>
+  </p>
+  {{ end }}
+{{ end }}

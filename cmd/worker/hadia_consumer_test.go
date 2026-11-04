@@ -88,3 +88,20 @@ func TestHadiaOwnerAlertHidesGuestName(t *testing.T) {
 		t.Errorf("shown names: guest = %v", shown["guest"])
 	}
 }
+
+// The guest receipt goes only to a known guest phone and shows gift, fee and total (T5).
+func TestHadiaGiftReceipt(t *testing.T) {
+	receipt := hadiaMappings["gift.received"][0]
+	if !receipt.Skip(map[string]any{"guest_name": "Jane"}) {
+		t.Error("a gift with no guest phone must send no receipt")
+	}
+	d := receipt.Data(map[string]any{"guest_name": "Jane", "registry_title": "Wedding", "amount": "5000.00", "fee": "52.00", "total": "5052.00", "receipt_ref": "TK41AB2CDE"}, &tenantInfo{})
+	if d["fee"] != "KES 52" || d["total"] != "KES 5,052" || d["receipt"] != "TK41AB2CDE" {
+		t.Errorf("receipt data %v", d)
+	}
+	// Before treasury prices the fee the payload may carry none: the total is the gift.
+	d = receipt.Data(map[string]any{"amount": "5000.00"}, &tenantInfo{})
+	if d["fee"] != "KES 0" || d["total"] != "KES 5,000" {
+		t.Errorf("no-fee receipt data %v", d)
+	}
+}

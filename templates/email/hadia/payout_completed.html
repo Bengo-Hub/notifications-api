@@ -1,0 +1,16 @@
+{{ define "content" }}
+  <p>Hello {{ or .name "there" }},</p>
+  <h2>Your payout was sent</h2>
+  <p>Hadia paid <strong>{{ .net }}</strong> from {{ .registry }} to your payout number.</p>
+  <table>
+    <tr><td>Gifts released</td><td>{{ .gross }}</td></tr>
+    <tr><td>Hadia commission</td><td>{{ .commission }}</td></tr>
+    <tr><td>Paid to you</td><td><strong>{{ .net }}</strong></td></tr>
+    <tr><td>Reference</td><td>{{ .reference }}</td></tr>
+  </table>
+  {{ if .action_link }}
+  <p>
+    <a class="button" href="{{ .action_link }}">View your registry</a>
+  </p>
+  {{ end }}
+{{ end }}

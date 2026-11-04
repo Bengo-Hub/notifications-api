@@ -1,0 +1,3 @@
+Hello {{ or .name "there" }},
+
+The payout of *{{ .net }}* from {{ .registry }} did not go through. The money is safe in your registry. Hadia will try again and will contact you if anything is needed from you.

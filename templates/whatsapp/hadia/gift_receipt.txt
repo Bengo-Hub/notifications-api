@@ -1,0 +1,3 @@
+Hello {{ or .name "there" }},
+
+Thank you for your gift to {{ .registry }}. Gift *{{ .gift }}*, fee {{ .fee }}, total paid {{ .total }}. Reference {{ .receipt }}, keep this message as your receipt.

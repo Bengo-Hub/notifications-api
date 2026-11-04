@@ -126,6 +126,58 @@ var hadiaMappings = map[string][]hadiaMessage{
 		WATemplate: "hadia_payout_destination_changed_v1",
 		WAParams:   func(d map[string]any) []string { return mParams(d, "name", "old_number", "new_number", "hold_until") },
 	}}},
+	// A gift arrived (hadia-api, from treasury.escrow.pot_credited): the guest's receipt when their
+	// phone is known (guests give no email), and an alert to the owner.
+	"gift.received": {
+		{PathKey: "registry_url", maskaniMapping: maskaniMapping{
+			TemplateID: "hadia/gift_receipt", PhoneKey: "guest_phone",
+			Subject: func(map[string]any) string { return "Your Hadia gift receipt" },
+			Data: func(p map[string]any, _ *tenantInfo) map[string]any {
+				return map[string]any{"name": waParam(p["guest_name"], "there"), "registry": mStr(p, "registry_title"),
+					"gift": mMoney(p, "amount"), "fee": mMoneyOr(p, "fee", "KES 0"), "total": mMoneyOr(p, "total", mMoney(p, "amount")),
+					"receipt": waParam(p["receipt_ref"], "see your payment message")}
+			},
+			WATemplate: "hadia_gift_receipt_v1_btn",
+			WAParams: func(d map[string]any) []string {
+				return mParams(d, "name", "registry", "gift", "fee", "total", "receipt")
+			},
+			Skip: func(p map[string]any) bool { return mStr(p, "guest_phone") == "" },
+		}},
+		{PathKey: "owner_url", maskaniMapping: maskaniMapping{
+			TemplateID: "hadia/gift_owner_alert", PhoneKey: "owner_phone", EmailKey: "owner_email",
+			Subject: func(map[string]any) string { return "You received a gift on Hadia" },
+			Data: func(p map[string]any, _ *tenantInfo) map[string]any {
+				return map[string]any{"name": waParam(p["owner_name"], "there"), "guest": waParam(p["guest_name"], "A guest"),
+					"gift": mMoney(p, "amount"), "registry": mStr(p, "registry_title")}
+			},
+			WATemplate: "hadia_gift_owner_alert_v1_btn",
+			WAParams:   func(d map[string]any) []string { return mParams(d, "name", "guest", "gift", "registry") },
+			Skip:       func(p map[string]any) bool { return mStr(p, "owner_phone") == "" && mStr(p, "owner_email") == "" },
+		}},
+	},
+	// A payout reached the owner's number (from treasury.escrow.dispatched).
+	"payout.completed": {{PathKey: "owner_url", maskaniMapping: maskaniMapping{
+		TemplateID: "hadia/payout_completed", PhoneKey: "owner_phone", EmailKey: "owner_email",
+		Subject: func(map[string]any) string { return "Your Hadia payout was sent" },
+		Data: func(p map[string]any, _ *tenantInfo) map[string]any {
+			return map[string]any{"name": waParam(p["owner_name"], "there"), "registry": mStr(p, "registry_title"),
+				"gross": mMoney(p, "gross"), "commission": mMoneyOr(p, "commission", "KES 0"), "net": mMoney(p, "net"),
+				"reference": waParam(p["reference"], "-")}
+		},
+		WATemplate: "hadia_payout_completed_v1_btn",
+		WAParams:   func(d map[string]any) []string { return mParams(d, "name", "net", "registry", "reference") },
+	}}},
+	// A payout failed and the money went back to the registry (from treasury.escrow.dispatch_failed).
+	// The provider's reason stays out of the message: it is technical and Hadia staff act on it.
+	"payout.delayed": {{PathKey: "owner_url", maskaniMapping: maskaniMapping{
+		TemplateID: "hadia/payout_delayed", PhoneKey: "owner_phone", EmailKey: "owner_email",
+		Subject: func(map[string]any) string { return "Your Hadia payout is delayed" },
+		Data: func(p map[string]any, _ *tenantInfo) map[string]any {
+			return map[string]any{"name": waParam(p["owner_name"], "there"), "registry": mStr(p, "registry_title"), "net": mMoney(p, "net")}
+		},
+		WATemplate: "hadia_payout_delayed_v1_btn",
+		WAParams:   func(d map[string]any) []string { return mParams(d, "name", "net", "registry") },
+	}}},
 	// The owner released the reservation or the hold ended. No link: there is nothing to manage.
 	"reservation.released": {{maskaniMapping: maskaniMapping{
 		TemplateID: "hadia/reservation_released", PhoneKey: "guest_phone", EmailKey: "guest_email",
