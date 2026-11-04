@@ -1,0 +1,6 @@
+{{ define "content" }}
+  <p>Hello {{ or .name "there" }},</p>
+  <h2>Your payout number was changed</h2>
+  <p>The number Hadia pays your gifts to changed from {{ .old_number }} to <strong>{{ .new_number }}</strong>.{{ if .hold_until }} Payouts to the new number start after {{ .hold_until }}.{{ end }}</p>
+  <p>If you did not make this change, reply to this email or contact Hadia support straight away, before the hold ends, so we can stop any payout.</p>
+{{ end }}

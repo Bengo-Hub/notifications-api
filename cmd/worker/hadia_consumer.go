@@ -113,6 +113,19 @@ var hadiaMappings = map[string][]hadiaMessage{
 		WATemplate: "hadia_reservation_reminder_v1_btn",
 		WAParams:   func(d map[string]any) []string { return mParams(d, "name", "item", "expires_at") },
 	}}},
+	// The owner's payout number changed: alert the OLD number and the owner's email, so a hijacked
+	// session that swaps the number is noticed (Sprint 02 security review). No link. A first number
+	// has no old number to alert, so only the email goes.
+	"payout_destination.changed": {{maskaniMapping: maskaniMapping{
+		TemplateID: "hadia/payout_destination_changed", PhoneKey: "old_phone", EmailKey: "owner_email",
+		Subject: func(map[string]any) string { return "Your Hadia payout number was changed" },
+		Data: func(p map[string]any, _ *tenantInfo) map[string]any {
+			return map[string]any{"name": waParam(p["owner_name"], "there"), "old_number": waParam(p["old_phone_masked"], "your previous number"),
+				"new_number": mStr(p, "new_phone_masked"), "hold_until": mTime(p, "hold_until")}
+		},
+		WATemplate: "hadia_payout_destination_changed_v1",
+		WAParams:   func(d map[string]any) []string { return mParams(d, "name", "old_number", "new_number", "hold_until") },
+	}}},
 	// The owner released the reservation or the hold ended. No link: there is nothing to manage.
 	"reservation.released": {{maskaniMapping: maskaniMapping{
 		TemplateID: "hadia/reservation_released", PhoneKey: "guest_phone", EmailKey: "guest_email",
@@ -166,6 +179,15 @@ func startHadiaConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 	eventslib.SubscribeQueueWithRebind(logg, js, "hadia", "hadia.>", "notifications-hadia", handler,
 		nats.BindStream("hadia"),
 		nats.Durable("notifications-hadia"),
+		nats.ManualAck(),
+		nats.AckWait(30*time.Second),
+		nats.MaxDeliver(3),
+	)
+	// One-time codes go out on hadia-api's short-lived stream hadia_secret (15 minute retention), so
+	// a code never sits in the 7-day hadia stream. Same handler: the event type is otp.requested.
+	eventslib.SubscribeQueueWithRebind(logg, js, "hadia_secret", "hadia_secret.otp.requested", "notifications-hadia-secret", handler,
+		nats.BindStream("hadia_secret"),
+		nats.Durable("notifications-hadia-secret"),
 		nats.ManualAck(),
 		nats.AckWait(30*time.Second),
 		nats.MaxDeliver(3),

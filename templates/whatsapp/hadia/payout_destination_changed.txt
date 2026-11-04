@@ -1,0 +1,5 @@
+Hello {{ or .name "there" }},
+
+The number Hadia pays your gifts to changed from {{ .old_number }} to *{{ .new_number }}*. Payouts to the new number start after {{ .hold_until }}.
+
+If you did not make this change, contact Hadia support straight away.

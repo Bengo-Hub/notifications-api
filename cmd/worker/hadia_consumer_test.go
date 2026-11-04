@@ -64,6 +64,18 @@ func TestHadiaMappingsHaveTemplates(t *testing.T) {
 	}
 }
 
+// A payout number change alerts the OLD number (and the email), never the new one.
+func TestHadiaPayoutChangeAlertsOldNumber(t *testing.T) {
+	m := hadiaMappings["payout_destination.changed"][0]
+	if m.PhoneKey != "old_phone" || m.EmailKey != "owner_email" {
+		t.Fatalf("alert goes to %s and %s, want old_phone and owner_email", m.PhoneKey, m.EmailKey)
+	}
+	d := m.Data(map[string]any{"owner_name": "Amina", "old_phone_masked": "+254 7** *** 901", "new_phone_masked": "+254 7** *** 345"}, &tenantInfo{})
+	if d["old_number"] != "+254 7** *** 901" || d["new_number"] != "+254 7** *** 345" {
+		t.Errorf("data %v", d)
+	}
+}
+
 // The owner sees the guest's name only when the registry shows reserver names (FR-15).
 func TestHadiaOwnerAlertHidesGuestName(t *testing.T) {
 	alert := hadiaMappings["reservation.created"][1]

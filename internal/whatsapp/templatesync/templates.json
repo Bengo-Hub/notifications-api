@@ -972,6 +972,14 @@
     ]
   },
   {
+    "name": "hadia_payout_destination_changed_v1",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/hadia/payout_destination_changed.txt (params: name, old_number, new_number, hold_until; sent to the OLD number)",
+    "body": "Hello {{1}},\n\nThe number Hadia pays your gifts to changed from {{2}} to *{{3}}*. Payouts to the new number start after {{4}}.\n\nIf you did not make this change, contact Hadia support straight away.",
+    "example": ["Amina", "+254 7** *** 901", "+254 7** *** 345", "20 Nov 2026 14:00"]
+  },
+  {
     "name": "hadia_reservation_released_v1",
     "category": "UTILITY",
     "language": "en_US",
