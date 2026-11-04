@@ -673,12 +673,12 @@
     ]
   },
   {
-    "name": "maskani_visitor_pass_v2",
+    "name": "maskani_visitor_pass_v3",
     "category": "UTILITY",
     "language": "en_US",
-    "source": "whatsapp/maskani/visitor_pass.txt (params: visitor_name, estate, code, valid_from, valid_to)",
-    "body": "Hello {{1}},\n\nYour visit to *{{2}}* is registered. Your visitor pass number is *{{3}}*.\n\nThe pass is valid from {{4}} to {{5}}. Please give the pass number to the guard on arrival.",
-    "example": ["Peter", "Shaba Village", "482915", "11 Oct 09:00", "11 Oct 21:00"]
+    "source": "whatsapp/maskani/visitor_pass.txt (params: visitor_name, estate, valid_from, valid_to, code)",
+    "body": "Hello {{1}},\n\nYour visit to *{{2}}* is confirmed for {{3}} to {{4}}. Your visit reference is *{{5}}*.\n\nPlease show this reference to the guard when you arrive.",
+    "example": ["Peter", "Shaba Village", "11 Oct 09:00", "11 Oct 21:00", "VIS-482915"]
   },
   {
     "name": "maskani_portal_invite_v2_btn",
@@ -950,11 +950,11 @@
     ]
   },
   {
-    "name": "hadia_reservation_owner_alert_v1_btn",
+    "name": "hadia_reservation_owner_alert_v2_btn",
     "category": "UTILITY",
     "language": "en_US",
     "source": "whatsapp/hadia/reservation_owner_alert.txt (params: name, guest, item; button: app/registries/<id>)",
-    "body": "Hello {{1}},\n\n{{2}} reserved *{{3}}* from your Hadia registry.",
+    "body": "Hello {{1}},\n\n{{2}} reserved *{{3}}* from your Hadia registry. The gift is held for this guest while the reservation lasts, so other guests cannot choose it. Open your registry to see the details.",
     "example": ["Amina", "A guest", "Dinner set"],
     "buttons": [
       {"type": "URL", "text": "View registry", "url": "https://hadiafrica.com/{{1}}", "example": ["app/registries/0b6c2b8e"]}
@@ -1177,11 +1177,11 @@
     ]
   },
   {
-    "name": "hadia_refund_completed_v1",
+    "name": "hadia_refund_completed_v2",
     "category": "UTILITY",
     "language": "en_US",
     "source": "whatsapp/hadia/refund_completed.txt (params: name, amount, registry, reference)",
-    "body": "Hello {{1}},\n\nYour gift of *{{2}}* to {{3}} has been refunded to the number that paid (reference {{4}}). Thank you.",
+    "body": "Hello {{1}},\n\n*{{2}}* of your gift to {{3}} has been refunded to the number that paid (reference {{4}}). Thank you.",
     "example": [
       "Jane",
       "KES 5,000",

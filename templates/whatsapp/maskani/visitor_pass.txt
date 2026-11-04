@@ -1,5 +1,5 @@
 Hello {{ or .visitor_name "there" }},
 
-Your visit to *{{ .estate }}* is registered. Your visitor pass number is *{{ .code }}*.
+Your visit to *{{ .estate }}* is confirmed for {{ .valid_from }} to {{ .valid_to }}. Your visit reference is *{{ .code }}*.
 
-The pass is valid from {{ .valid_from }} to {{ .valid_to }}. Please give the pass number to the guard on arrival.
+Please show this reference to the guard when you arrive.

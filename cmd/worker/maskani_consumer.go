@@ -263,9 +263,9 @@ var maskaniMappings = map[string]maskaniMapping{
 			return map[string]any{"visitor_name": waParam(p["visitor_name"], "there"), "estate": ti.Name,
 				"code": mStr(p, "code"), "valid_from": mTime(p, "valid_from"), "valid_to": mTime(p, "valid_to")}
 		},
-		WATemplate: "maskani_visitor_pass_v2",
+		WATemplate: "maskani_visitor_pass_v3",
 		WAParams: func(d map[string]any) []string {
-			return mParams(d, "visitor_name", "estate", "code", "valid_from", "valid_to")
+			return mParams(d, "visitor_name", "estate", "valid_from", "valid_to", "code")
 		},
 		// A pass without a code (QR only) has nothing to send.
 		Skip: func(p map[string]any) bool { return mStr(p, "code") == "" },

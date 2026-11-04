@@ -1,3 +1,3 @@
 Hello {{ or .name "there" }},
 
-{{ .guest }} reserved *{{ .item }}* from your Hadia registry.
+{{ .guest }} reserved *{{ .item }}* from your Hadia registry. The gift is held for this guest while the reservation lasts, so other guests cannot choose it. Open your registry to see the details.

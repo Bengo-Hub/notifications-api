@@ -63,6 +63,8 @@ working button: the suffix is the path of its link (`buttonURLSuffix`, `posButto
 
 - Body variables numbered `{{1}}`..`{{n}}` without gaps, one `example` value each.
 - A body never starts or ends with a variable; close with a short sentence.
+- Enough words around the variables: Meta rejects a body with too few as error 2388293 ("parameters words
+  ratio"). Three variables and six other words was refused. Aim for at least four words per variable.
 - Emphasis with `*bold*` on the key value (order number); blank lines between sections.
 - `https` button URLs, at most one `{{1}}`, at the end, with one example; button text up to 25
   characters.
@@ -72,7 +74,8 @@ working button: the suffix is the path of its link (`buttonURLSuffix`, `posButto
   a promotion. Keep these words out of bodies: password, login, username, sign in, one-time code, gate
   code, welcome, enjoy, thank you for choosing. Say "account details were sent to you separately" and
   "pass number" instead, and send the real credential by email. A one-time code uses the
-  `AUTHENTICATION` template, never UTILITY.
+  `AUTHENTICATION` template, never UTILITY. An example value counts too: a bare six digit number beside
+  "pass number" was refused, so give a reference an example like `VIS-482915` and word it as a confirmation.
 - Category `UTILITY` for transactional messages; `AUTHENTICATION` uses Meta's fixed format.
 
 ## 4. Publishing

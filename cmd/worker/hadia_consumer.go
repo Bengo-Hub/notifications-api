@@ -119,7 +119,7 @@ var hadiaMappings = map[string][]hadiaMessage{
 				}
 				return map[string]any{"name": waParam(p["owner_name"], "there"), "guest": guest, "item": mStr(p, "item_title")}
 			},
-			WATemplate: "hadia_reservation_owner_alert_v1_btn",
+			WATemplate: "hadia_reservation_owner_alert_v2_btn",
 			WAParams:   func(d map[string]any) []string { return mParams(d, "name", "guest", "item") },
 			Skip:       func(p map[string]any) bool { return mStr(p, "owner_phone") == "" && mStr(p, "owner_email") == "" },
 		}},
@@ -244,7 +244,7 @@ var hadiaMappings = map[string][]hadiaMessage{
 			return map[string]any{"name": waParam(p["guest_name"], "there"), "registry": mStr(p, "registry_title"),
 				"amount": mMoney(p, "amount"), "reference": waParam(p["reference"], "-")}
 		},
-		WATemplate: "hadia_refund_completed_v1",
+		WATemplate: "hadia_refund_completed_v2",
 		WAParams:   func(d map[string]any) []string { return mParams(d, "name", "amount", "registry", "reference") },
 		Skip:       func(p map[string]any) bool { return mStr(p, "guest_phone") == "" },
 	}}},
