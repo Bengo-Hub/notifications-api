@@ -1,0 +1,10 @@
+{{ define "content" }}
+  <p>Hello {{ or .name "there" }},</p>
+  <h2>Part of your payout was paid</h2>
+  <p>Part {{ .part }} of {{ .parts }} of your payout from {{ .registry }} has been paid: <strong>{{ .net }}</strong>. The reference is {{ .reference }}. We will tell you as each part is paid.</p>
+  {{ if .action_link }}
+  <p>
+    <a class="button" href="{{ .action_link }}">View your registry</a>
+  </p>
+  {{ end }}
+{{ end }}

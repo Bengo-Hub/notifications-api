@@ -1,0 +1,3 @@
+Hello {{ or .name "there" }},
+
+{{ .registry }} is closed to new gifts and reservations. You can reopen it within 90 days from your registry page.

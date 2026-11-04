@@ -105,3 +105,39 @@ func TestHadiaGiftReceipt(t *testing.T) {
 		t.Errorf("no-fee receipt data %v", d)
 	}
 }
+
+// Exactly one message per reason, and an unconfirmed payout never claims the money is safe.
+func TestHadiaPayoutFailureMessages(t *testing.T) {
+	msgs := hadiaMappings["payout.delayed"]
+	for reason, want := range map[string]string{
+		"insufficient wallet balance": "hadia/payout_delayed",
+		"":                            "hadia/payout_delayed",
+		"approval_rejected":           "hadia/payout_declined",
+		"payout_refused":              "hadia/payout_declined",
+		"not_confirmed":               "hadia/payout_unconfirmed",
+	} {
+		var sent []string
+		for _, m := range msgs {
+			if !m.Skip(map[string]any{"reason": reason}) {
+				sent = append(sent, m.TemplateID)
+			}
+		}
+		if len(sent) != 1 || sent[0] != want {
+			t.Errorf("reason %q sent %v, want only %s", reason, sent, want)
+		}
+	}
+	for _, name := range []string{"email/hadia/payout_unconfirmed.html", "whatsapp/hadia/payout_unconfirmed.txt"} {
+		raw, err := os.ReadFile(filepath.Join("..", "..", "templates", filepath.FromSlash(name)))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if lower := strings.ToLower(string(raw)); strings.Contains(lower, "safe") || strings.Contains(lower, "back in your registry") {
+			t.Errorf("%s must not say the money is safe", name)
+		}
+	}
+	// A failure before treasury answered has no net: the gross is shown, not KES 0.
+	d := msgs[1].Data(map[string]any{"net": "0.00", "gross": "5000.00", "registry_title": "Wedding"}, &tenantInfo{})
+	if d["amount"] != "KES 5,000" {
+		t.Errorf("amount %v", d["amount"])
+	}
+}

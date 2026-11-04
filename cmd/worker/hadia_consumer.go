@@ -55,6 +55,25 @@ func hadiaGuestData(p map[string]any, _ *tenantInfo) map[string]any {
 		"registry": mStr(p, "registry_title"), "expires_at": mTime(p, "expires_at"), "owner": waParam(p["owner_name"], "the couple")}
 }
 
+// hadiaPayoutFailure is one of the owner's messages about a payout that did not go through, sent for
+// the reasons it is true of. A failure before treasury answered has no net yet, so the gross is shown.
+func hadiaPayoutFailure(template, subject, waTemplate string, sentFor func(reason string) bool) hadiaMessage {
+	return hadiaMessage{PathKey: "owner_url", maskaniMapping: maskaniMapping{
+		TemplateID: template, PhoneKey: "owner_phone", EmailKey: "owner_email",
+		Subject: func(map[string]any) string { return subject },
+		Data: func(p map[string]any, _ *tenantInfo) map[string]any {
+			amount := "net"
+			if !mPositive(p, "net") {
+				amount = "gross"
+			}
+			return map[string]any{"name": waParam(p["owner_name"], "there"), "registry": mStr(p, "registry_title"), "amount": mMoney(p, amount)}
+		},
+		WATemplate: waTemplate,
+		WAParams:   func(d map[string]any) []string { return mParams(d, "name", "amount", "registry") },
+		Skip:       func(p map[string]any) bool { return !sentFor(mStr(p, "reason")) },
+	}}
+}
+
 var hadiaMappings = map[string][]hadiaMessage{
 	// A one-time code for a guest (reserving with a phone) or an owner (payout number). The shared
 	// auth OTP templates from the platform number, as sign-in codes, so the tenant's own plan never
@@ -167,16 +186,76 @@ var hadiaMappings = map[string][]hadiaMessage{
 		WATemplate: "hadia_payout_completed_v1_btn",
 		WAParams:   func(d map[string]any) []string { return mParams(d, "name", "net", "registry", "reference") },
 	}}},
-	// A payout failed and the money went back to the registry (from treasury.escrow.dispatch_failed).
-	// The provider's reason stays out of the message: it is technical and Hadia staff act on it.
-	"payout.delayed": {{PathKey: "owner_url", maskaniMapping: maskaniMapping{
-		TemplateID: "hadia/payout_delayed", PhoneKey: "owner_phone", EmailKey: "owner_email",
-		Subject: func(map[string]any) string { return "Your Hadia payout is delayed" },
+	// A payout that did not go through. Each reason gets its own truthful message; the provider's own
+	// words stay out because they are technical and Hadia staff act on them. An unconfirmed payout must
+	// never say the money is safe: it may have gone.
+	"payout.delayed": {
+		hadiaPayoutFailure("hadia/payout_delayed", "Your Hadia payout did not go through", "hadia_payout_delayed_v2_btn", func(r string) bool { return r != "approval_rejected" && r != "payout_refused" && r != "not_confirmed" }),
+		hadiaPayoutFailure("hadia/payout_declined", "Your Hadia payout was not made", "hadia_payout_declined_v1_btn", func(r string) bool { return r == "approval_rejected" || r == "payout_refused" }),
+		hadiaPayoutFailure("hadia/payout_unconfirmed", "We are checking your Hadia payout", "hadia_payout_unconfirmed_v1_btn", func(r string) bool { return r == "not_confirmed" }),
+	},
+	// One part of a payout split across provider limits.
+	"payout.part_paid": {{PathKey: "owner_url", maskaniMapping: maskaniMapping{
+		TemplateID: "hadia/payout_part_paid", PhoneKey: "owner_phone", EmailKey: "owner_email",
+		Subject: func(map[string]any) string { return "Part of your Hadia payout was paid" },
 		Data: func(p map[string]any, _ *tenantInfo) map[string]any {
-			return map[string]any{"name": waParam(p["owner_name"], "there"), "registry": mStr(p, "registry_title"), "net": mMoney(p, "net")}
+			return map[string]any{"name": waParam(p["owner_name"], "there"), "registry": mStr(p, "registry_title"),
+				"part": mStr(p, "part"), "parts": mStr(p, "parts"), "net": mMoney(p, "net"), "reference": waParam(p["reference"], "-")}
 		},
-		WATemplate: "hadia_payout_delayed_v1_btn",
-		WAParams:   func(d map[string]any) []string { return mParams(d, "name", "net", "registry") },
+		WATemplate: "hadia_payout_part_paid_v1_btn",
+		WAParams:   func(d map[string]any) []string { return mParams(d, "name", "part", "parts", "registry", "net") },
+	}}},
+	// The registry was cancelled. Its free text reason goes in the email only.
+	"registry.cancelled": {{PathKey: "owner_url", maskaniMapping: maskaniMapping{
+		TemplateID: "hadia/registry_cancelled", PhoneKey: "owner_phone", EmailKey: "owner_email",
+		Subject: func(map[string]any) string { return "Your Hadia registry was cancelled" },
+		Data: func(p map[string]any, _ *tenantInfo) map[string]any {
+			return map[string]any{"name": waParam(p["owner_name"], "there"), "registry": mStr(p, "registry_title"),
+				"gift_count": mStr(p, "gift_count"), "reason": mStr(p, "reason")}
+		},
+		WATemplate: "hadia_registry_cancelled_v1_btn",
+		WAParams:   func(d map[string]any) []string { return mParams(d, "name", "registry") },
+	}}},
+	"registry.closed": {{PathKey: "owner_url", maskaniMapping: maskaniMapping{
+		TemplateID: "hadia/registry_closed", PhoneKey: "owner_phone", EmailKey: "owner_email",
+		Subject: func(map[string]any) string { return "Your Hadia registry is closed" },
+		Data: func(p map[string]any, _ *tenantInfo) map[string]any {
+			return map[string]any{"name": waParam(p["owner_name"], "there"), "registry": mStr(p, "registry_title"), "expired": mStr(p, "reason") == "expired"}
+		},
+		WATemplate: "hadia_registry_closed_v1_btn",
+		WAParams:   func(d map[string]any) []string { return mParams(d, "name", "registry") },
+	}}},
+	// Guests give no email, so a refund notice needs their phone. No link: the guest has nothing to do.
+	"refund.pending": {{maskaniMapping: maskaniMapping{
+		TemplateID: "hadia/refund_pending", PhoneKey: "guest_phone",
+		Subject: func(map[string]any) string { return "Your Hadia gift is being refunded" },
+		Data: func(p map[string]any, _ *tenantInfo) map[string]any {
+			return map[string]any{"name": waParam(p["guest_name"], "there"), "registry": mStr(p, "registry_title"),
+				"amount": mMoney(p, "amount"), "fee_kept": mMoneyOr(p, "fee_kept", "KES 0")}
+		},
+		WATemplate: "hadia_refund_pending_v1",
+		WAParams:   func(d map[string]any) []string { return mParams(d, "name", "registry", "amount", "fee_kept") },
+		Skip:       func(p map[string]any) bool { return mStr(p, "guest_phone") == "" },
+	}}},
+	"refund.completed": {{maskaniMapping: maskaniMapping{
+		TemplateID: "hadia/refund_completed", PhoneKey: "guest_phone",
+		Subject: func(map[string]any) string { return "Your Hadia gift was refunded" },
+		Data: func(p map[string]any, _ *tenantInfo) map[string]any {
+			return map[string]any{"name": waParam(p["guest_name"], "there"), "registry": mStr(p, "registry_title"),
+				"amount": mMoney(p, "amount"), "reference": waParam(p["reference"], "-")}
+		},
+		WATemplate: "hadia_refund_completed_v1",
+		WAParams:   func(d map[string]any) []string { return mParams(d, "name", "amount", "registry", "reference") },
+		Skip:       func(p map[string]any) bool { return mStr(p, "guest_phone") == "" },
+	}}},
+	"premium.activated": {{PathKey: "owner_url", maskaniMapping: maskaniMapping{
+		TemplateID: "hadia/premium_activated", PhoneKey: "owner_phone", EmailKey: "owner_email",
+		Subject: func(map[string]any) string { return "Premium is on for your Hadia registry" },
+		Data: func(p map[string]any, _ *tenantInfo) map[string]any {
+			return map[string]any{"name": waParam(p["owner_name"], "there"), "registry": mStr(p, "registry_title"), "amount": mMoney(p, "amount")}
+		},
+		WATemplate: "hadia_premium_activated_v1_btn",
+		WAParams:   func(d map[string]any) []string { return mParams(d, "name", "registry", "amount") },
 	}}},
 	// The owner released the reservation or the hold ended. No link: there is nothing to manage.
 	"reservation.released": {{maskaniMapping: maskaniMapping{

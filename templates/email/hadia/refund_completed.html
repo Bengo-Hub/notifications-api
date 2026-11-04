@@ -1,0 +1,5 @@
+{{ define "content" }}
+  <p>Hello {{ or .name "there" }},</p>
+  <h2>Your gift was refunded</h2>
+  <p>Your gift of <strong>{{ .amount }}</strong> to {{ .registry }} has been refunded to the number that paid. The reference is {{ .reference }}.</p>
+{{ end }}

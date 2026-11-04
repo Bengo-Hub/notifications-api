@@ -1,0 +1,3 @@
+Hello {{ or .name "there" }},
+
+We could not confirm the payout of *{{ .amount }}* from {{ .registry }}. Hadia is checking it with the payment provider and will contact you. Please check your M-Pesa messages before asking for it again.

@@ -1030,5 +1030,185 @@
     "buttons": [
       {"type": "URL", "text": "View registry", "url": "https://hadiafrica.com/{{1}}", "example": ["app/registries/0b6c2b8e"]}
     ]
+  },
+  {
+    "name": "hadia_payout_delayed_v2_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/hadia/payout_delayed.txt (params: name, amount, registry; button: app/registries/<id>)",
+    "body": "Hello {{1}},\n\nThe payout of *{{2}}* from {{3}} did not go through, and the money is back in your registry. You can ask for it again from your registry page.",
+    "example": [
+      "Amina",
+      "KES 47,500",
+      "Amina and Tom's wedding"
+    ],
+    "buttons": [
+      {
+        "type": "URL",
+        "text": "View registry",
+        "url": "https://hadiafrica.com/{{1}}",
+        "example": [
+          "app/registries/0b6c2b8e"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "hadia_payout_declined_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/hadia/payout_declined.txt (params: name, amount, registry; button: app/registries/<id>)",
+    "body": "Hello {{1}},\n\nThe payout of *{{2}}* from {{3}} was not made, and no money left your registry. Please contact Hadia support, or choose another amount.",
+    "example": [
+      "Amina",
+      "KES 47,500",
+      "Amina and Tom's wedding"
+    ],
+    "buttons": [
+      {
+        "type": "URL",
+        "text": "View registry",
+        "url": "https://hadiafrica.com/{{1}}",
+        "example": [
+          "app/registries/0b6c2b8e"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "hadia_payout_unconfirmed_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/hadia/payout_unconfirmed.txt (params: name, amount, registry; button: app/registries/<id>)",
+    "body": "Hello {{1}},\n\nWe could not confirm the payout of *{{2}}* from {{3}}. Hadia is checking it with the payment provider and will contact you. Please check your M-Pesa messages before asking for it again.",
+    "example": [
+      "Amina",
+      "KES 47,500",
+      "Amina and Tom's wedding"
+    ],
+    "buttons": [
+      {
+        "type": "URL",
+        "text": "View registry",
+        "url": "https://hadiafrica.com/{{1}}",
+        "example": [
+          "app/registries/0b6c2b8e"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "hadia_payout_part_paid_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/hadia/payout_part_paid.txt (params: name, part, parts, registry, net; button: app/registries/<id>)",
+    "body": "Hello {{1}},\n\nPart {{2}} of {{3}} of your payout from {{4}} has been paid: *{{5}}*. We will tell you as each part is paid.",
+    "example": [
+      "Amina",
+      "1",
+      "2",
+      "Amina and Tom's wedding",
+      "KES 25,000"
+    ],
+    "buttons": [
+      {
+        "type": "URL",
+        "text": "View registry",
+        "url": "https://hadiafrica.com/{{1}}",
+        "example": [
+          "app/registries/0b6c2b8e"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "hadia_registry_cancelled_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/hadia/registry_cancelled.txt (params: name, registry; button: app/registries/<id>)",
+    "body": "Hello {{1}},\n\n{{2}} was cancelled. Gifts are being refunded to the numbers that paid, as far as the money is still in the registry. Your registry page shows each refund.",
+    "example": [
+      "Amina",
+      "Amina and Tom's wedding"
+    ],
+    "buttons": [
+      {
+        "type": "URL",
+        "text": "View registry",
+        "url": "https://hadiafrica.com/{{1}}",
+        "example": [
+          "app/registries/0b6c2b8e"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "hadia_registry_closed_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/hadia/registry_closed.txt (params: name, registry; button: app/registries/<id>)",
+    "body": "Hello {{1}},\n\n{{2}} is closed to new gifts and reservations. You can reopen it within 90 days from your registry page.",
+    "example": [
+      "Amina",
+      "Amina and Tom's wedding"
+    ],
+    "buttons": [
+      {
+        "type": "URL",
+        "text": "View registry",
+        "url": "https://hadiafrica.com/{{1}}",
+        "example": [
+          "app/registries/0b6c2b8e"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "hadia_refund_pending_v1",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/hadia/refund_pending.txt (params: name, registry, amount, fee_kept)",
+    "body": "Hello {{1}},\n\n{{2}} was cancelled, so your gift of *{{3}}* is being refunded to the number that paid. The processing fee of {{4}} is not refunded.",
+    "example": [
+      "Jane",
+      "Amina and Tom's wedding",
+      "KES 5,000",
+      "KES 52"
+    ]
+  },
+  {
+    "name": "hadia_refund_completed_v1",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/hadia/refund_completed.txt (params: name, amount, registry, reference)",
+    "body": "Hello {{1}},\n\nYour gift of *{{2}}* to {{3}} has been refunded to the number that paid (reference {{4}}). Thank you.",
+    "example": [
+      "Jane",
+      "KES 5,000",
+      "Amina and Tom's wedding",
+      "TK41AB2CDE"
+    ]
+  },
+  {
+    "name": "hadia_premium_activated_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/hadia/premium_activated.txt (params: name, registry, amount; button: app/registries/<id>)",
+    "body": "Hello {{1}},\n\nPremium is now on for {{2}}. You paid *{{3}}*. Thank you for using Hadia.",
+    "example": [
+      "Amina",
+      "Amina and Tom's wedding",
+      "KES 300"
+    ],
+    "buttons": [
+      {
+        "type": "URL",
+        "text": "View registry",
+        "url": "https://hadiafrica.com/{{1}}",
+        "example": [
+          "app/registries/0b6c2b8e"
+        ]
+      }
+    ]
   }
 ]

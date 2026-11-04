@@ -1,0 +1,10 @@
+{{ define "content" }}
+  <p>Hello {{ or .name "there" }},</p>
+  <h2>Premium is on</h2>
+  <p>Premium is now on for {{ .registry }}. You paid <strong>{{ .amount }}</strong>.</p>
+  {{ if .action_link }}
+  <p>
+    <a class="button" href="{{ .action_link }}">View your registry</a>
+  </p>
+  {{ end }}
+{{ end }}

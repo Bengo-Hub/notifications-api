@@ -1,0 +1,10 @@
+{{ define "content" }}
+  <p>Hello {{ or .name "there" }},</p>
+  <h2>We are checking your payout</h2>
+  <p>We could not confirm the payout of <strong>{{ .amount }}</strong> from {{ .registry }}. Hadia is checking it with the payment provider and will contact you. Please check your M-Pesa messages before asking for it again.</p>
+  {{ if .action_link }}
+  <p>
+    <a class="button" href="{{ .action_link }}">View your registry</a>
+  </p>
+  {{ end }}
+{{ end }}

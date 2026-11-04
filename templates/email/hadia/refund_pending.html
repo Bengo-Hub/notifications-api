@@ -1,0 +1,5 @@
+{{ define "content" }}
+  <p>Hello {{ or .name "there" }},</p>
+  <h2>Your gift is being refunded</h2>
+  <p>{{ .registry }} was cancelled, so your gift of <strong>{{ .amount }}</strong> is being refunded to the number that paid. The processing fee of {{ .fee_kept }} is not refunded.</p>
+{{ end }}

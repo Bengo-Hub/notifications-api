@@ -1,0 +1,3 @@
+Hello {{ or .name "there" }},
+
+The payout of *{{ .amount }}* from {{ .registry }} was not made, and no money left your registry. Please contact Hadia support, or choose another amount.

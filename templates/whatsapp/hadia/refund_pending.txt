@@ -1,0 +1,3 @@
+Hello {{ or .name "there" }},
+
+{{ .registry }} was cancelled, so your gift of *{{ .amount }}* is being refunded to the number that paid. The processing fee of {{ .fee_kept }} is not refunded.

@@ -1,0 +1,3 @@
+Hello {{ or .name "there" }},
+
+{{ .registry }} was cancelled. Gifts are being refunded to the numbers that paid, as far as the money is still in the registry. Your registry page shows each refund.

@@ -1,0 +1,3 @@
+Hello {{ or .name "there" }},
+
+Premium is now on for {{ .registry }}. You paid *{{ .amount }}*. Thank you for using Hadia.

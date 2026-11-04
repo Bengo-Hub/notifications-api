@@ -1,0 +1,3 @@
+Hello {{ or .name "there" }},
+
+Part {{ .part }} of {{ .parts }} of your payout from {{ .registry }} has been paid: *{{ .net }}*. We will tell you as each part is paid.
