@@ -1,0 +1,11 @@
+{{ define "content" }}
+  <p>Hello {{ or .name "there" }},</p>
+  <h2>A new case needs attention</h2>
+  <p>A <strong>{{ .priority }}</strong> priority {{ .kind }} case was opened in the Hadia exception queue.</p>
+  {{ if .summary }}<p>{{ .summary }}</p>{{ end }}
+  {{ if .action_link }}
+  <p>
+    <a class="button" href="{{ .action_link }}">Open the exception queue</a>
+  </p>
+  {{ end }}
+{{ end }}

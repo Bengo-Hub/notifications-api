@@ -1,0 +1,3 @@
+Hello {{ or .name "there" }},
+
+A new *{{ .priority }}* priority {{ .kind }} case was opened in the Hadia exception queue. Please open the console to review it and record what was done.

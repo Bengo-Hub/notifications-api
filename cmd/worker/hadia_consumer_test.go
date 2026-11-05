@@ -57,10 +57,35 @@ func TestHadiaMappingsHaveTemplates(t *testing.T) {
 			if !meta[m.WATemplate] {
 				t.Errorf("%s: %s is not declared in templates.json", event, m.WATemplate)
 			}
-			if strings.HasSuffix(m.WATemplate, "_btn") && m.PathKey == "" {
-				t.Errorf("%s: %s needs a PathKey for its button", event, m.WATemplate)
+			if strings.HasSuffix(m.WATemplate, "_btn") && m.PathKey == "" && m.FixedPath == "" {
+				t.Errorf("%s: %s needs a PathKey or a FixedPath for its button", event, m.WATemplate)
 			}
 		}
+	}
+}
+
+// A new case goes to the tenant's contact, on WhatsApp only when it is high or urgent, and the
+// summary stays out of WhatsApp.
+func TestHadiaCaseOpened(t *testing.T) {
+	m := hadiaMappings["case.opened"][0]
+	if !m.Staff || m.FixedPath != "admin/exceptions" {
+		t.Fatalf("staff %v, path %q", m.Staff, m.FixedPath)
+	}
+	for priority, want := range map[string]bool{"urgent": true, "high": true, "normal": false, "low": false, "": false} {
+		if got := m.WhatsAppIf(map[string]any{"priority": priority}); got != want {
+			t.Errorf("priority %q: WhatsApp %v", priority, got)
+		}
+	}
+	d := m.Data(map[string]any{"priority": "urgent", "kind": "manual_refund", "summary": "A card gift was charged back", "case_id": "c1"}, &tenantInfo{})
+	if d["kind"] != "manual refund" || d["summary"] != "A card gift was charged back" {
+		t.Fatalf("data %v", d)
+	}
+	params := m.WAParams(d)
+	if strings.Contains(strings.Join(params, " "), "charged back") {
+		t.Errorf("the summary reached WhatsApp: %v", params)
+	}
+	if subject := m.Subject(map[string]any{"priority": "urgent", "kind": "manual_refund"}); !strings.Contains(subject, "manual refund") {
+		t.Errorf("subject %q", subject)
 	}
 }
 

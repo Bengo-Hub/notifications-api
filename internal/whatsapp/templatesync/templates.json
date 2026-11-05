@@ -999,6 +999,28 @@
     ]
   },
   {
+    "name": "hadia_case_opened_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/hadia/case_opened.txt (params: name, priority, kind; button: admin/exceptions)",
+    "body": "Hello {{1}},\n\nA new *{{2}}* priority {{3}} case was opened in the Hadia exception queue. Please open the console to review it and record what was done.",
+    "example": [
+      "Hadia team",
+      "urgent",
+      "manual refund"
+    ],
+    "buttons": [
+      {
+        "type": "URL",
+        "text": "Open the queue",
+        "url": "https://hadiafrica.com/{{1}}",
+        "example": [
+          "admin/exceptions"
+        ]
+      }
+    ]
+  },
+  {
     "name": "hadia_gift_owner_alert_v1_btn",
     "category": "UTILITY",
     "language": "en_US",

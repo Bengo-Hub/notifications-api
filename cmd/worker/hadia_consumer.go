@@ -33,6 +33,18 @@ const hadiaButtonBase = "https://hadiafrica.com"
 type hadiaMessage struct {
 	maskaniMapping
 	PathKey string
+	// FixedPath is the button suffix of a message whose payload carries no link.
+	FixedPath string
+	// WhatsAppIf limits a message to email unless it holds; nil always allows WhatsApp.
+	WhatsAppIf func(p map[string]any) bool
+}
+
+// hadiaCaseLabel turns a case kind into words for staff ("manual_refund" reads "manual refund").
+func hadiaCaseLabel(kind string) string {
+	if kind == "" {
+		return "exception"
+	}
+	return strings.ReplaceAll(kind, "_", " ")
 }
 
 // hadiaPath turns a full hadiafrica.com link into the button suffix ("r/AB12CD34/reserved/tok").
@@ -257,6 +269,28 @@ var hadiaMappings = map[string][]hadiaMessage{
 		WATemplate: "hadia_premium_activated_v1_btn",
 		WAParams:   func(d map[string]any) []string { return mParams(d, "name", "registry", "amount") },
 	}}},
+	// A new case in the exception queue, for Hadia's staff. hadia-api names who should act
+	// (responders) but owns the staff list, so it goes to the tenant's contact details. The summary
+	// stays in the email; high and urgent cases also go by WhatsApp, without it.
+	"case.opened": {{
+		FixedPath: "admin/exceptions",
+		WhatsAppIf: func(p map[string]any) bool {
+			priority := mStr(p, "priority")
+			return priority == "urgent" || priority == "high"
+		},
+		maskaniMapping: maskaniMapping{
+			TemplateID: "hadia/case_opened", Staff: true,
+			Subject: func(p map[string]any) string {
+				return "New " + mStr(p, "priority") + " case in the Hadia queue: " + hadiaCaseLabel(mStr(p, "kind"))
+			},
+			Data: func(p map[string]any, _ *tenantInfo) map[string]any {
+				return map[string]any{"name": "Hadia team", "priority": mStr(p, "priority"), "kind": hadiaCaseLabel(mStr(p, "kind")),
+					"summary": mStr(p, "summary"), "case_id": mStr(p, "case_id")}
+			},
+			WATemplate: "hadia_case_opened_v1_btn",
+			WAParams:   func(d map[string]any) []string { return mParams(d, "name", "priority", "kind") },
+		},
+	}},
 	// The owner released the reservation or the hold ended. No link: there is nothing to manage.
 	"reservation.released": {{maskaniMapping: maskaniMapping{
 		TemplateID: "hadia/reservation_released", PhoneKey: "guest_phone", EmailKey: "guest_email",
@@ -329,20 +363,30 @@ func startHadiaConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 func dispatchHadia(ctx context.Context, nc *nats.Conn, cfg *config.Config, ti *tenantInfo, tenantID string, evt eventslib.Event, msg hadiaMessage, index int) error {
 	p := evt.Payload
 	data := msg.Data(p, ti)
-	suffix := ""
+	suffix := msg.FixedPath
 	if msg.PathKey != "" {
-		if path := hadiaPath(mStr(p, msg.PathKey)); path != "" {
-			suffix = path
-			data["action_link"] = hadiaButtonBase + "/" + path
-		}
+		suffix = hadiaPath(mStr(p, msg.PathKey))
+	}
+	if suffix != "" {
+		data["action_link"] = hadiaButtonBase + "/" + suffix
 	}
 	scope := messaging.SenderScopeTenant
 	if msg.Platform {
 		scope = messaging.SenderScopePlatform
 	}
-	party := maskaniParty(msg.maskaniMapping, messaging.TargetCustomer, "", mStr(p, msg.EmailKey), mStr(p, msg.PhoneKey), nil, data, suffix)
+	target, email, phone := messaging.TargetCustomer, mStr(p, msg.EmailKey), mStr(p, msg.PhoneKey)
+	if msg.Staff {
+		target, email, phone = messaging.TargetStaff, ti.ContactEmail, ti.ContactPhone
+	}
+	if email == "" && phone == "" {
+		return nil // nobody to tell; redelivering would not change that
+	}
+	party := maskaniParty(msg.maskaniMapping, target, "", email, phone, nil, data, suffix)
 	// A _btn template needs its button; without a hadiafrica.com link the message goes by email only.
 	if party.WhatsApp != nil && strings.HasSuffix(party.WhatsApp.Name, "_btn") && suffix == "" {
+		party.WhatsApp = nil
+	}
+	if msg.WhatsAppIf != nil && !msg.WhatsAppIf(p) {
 		party.WhatsApp = nil
 	}
 	return sendToParties(ctx, nc, cfg, partyNotice{
