@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/google/uuid"
@@ -38,6 +39,9 @@ type tenantInfo struct {
 	// Country is the tenant's ISO country (e.g. "KE", "UG"), used to turn a customer's local phone
 	// number into the international form WhatsApp needs.
 	Country string
+	// DigestHour is the local hour (1 to 23) daily summaries go out, from auth-api tenant metadata
+	// "digest_hour"; 0 means unset, and the digest job then uses 18:00 (hadia_digest.go).
+	DigestHour int
 }
 
 // dialCodeForCountry returns the calling code for the tenant's country ("" when unknown, which the
@@ -176,6 +180,7 @@ func (r *tenantResolver) enrichFromCache(ctx context.Context, info *tenantInfo) 
 		if v, ok := details.Metadata["app_url"].(string); ok && v != "" {
 			info.AppURL = normalizeWebsite(v)
 		}
+		info.DigestHour = metadataHour(details.Metadata["digest_hour"])
 		// service_urls: {"truload": "https://...", "logistics": "https://...", ...}
 		if raw, ok := details.Metadata["service_urls"]; ok {
 			if m, ok := raw.(map[string]interface{}); ok {
@@ -194,6 +199,33 @@ func (r *tenantResolver) enrichFromCache(ctx context.Context, info *tenantInfo) 
 	info.LogoURL = branding.LogoURL
 	info.PrimaryColor = branding.PrimaryColor
 	info.SecondaryColor = branding.SecondaryColor
+}
+
+// metadataHour reads an hour of the day (1 to 23) from tenant metadata, a JSON number or a string;
+// anything else is 0 (unset).
+func metadataHour(v any) int {
+	var h int
+	switch n := v.(type) {
+	case float64:
+		h = int(n)
+		if float64(h) != n {
+			return 0
+		}
+	case int:
+		h = n
+	case string:
+		parsed, err := strconv.Atoi(strings.TrimSpace(n))
+		if err != nil {
+			return 0
+		}
+		h = parsed
+	default:
+		return 0
+	}
+	if h < 1 || h > 23 {
+		return 0
+	}
+	return h
 }
 
 // normalizeWebsite ensures the website has a scheme and no trailing slash.

@@ -22,6 +22,10 @@ type Tx struct {
 	DeliveryLog *DeliveryLogClient
 	// DeviceToken is the client for interacting with the DeviceToken builders.
 	DeviceToken *DeviceTokenClient
+	// DigestItem is the client for interacting with the DigestItem builders.
+	DigestItem *DigestItemClient
+	// DigestSend is the client for interacting with the DigestSend builders.
+	DigestSend *DigestSendClient
 	// NotificationPermission is the client for interacting with the NotificationPermission builders.
 	NotificationPermission *NotificationPermissionClient
 	// NotificationRole is the client for interacting with the NotificationRole builders.
@@ -192,6 +196,8 @@ func (tx *Tx) init() {
 	tx.BroadcastRecipient = NewBroadcastRecipientClient(tx.config)
 	tx.DeliveryLog = NewDeliveryLogClient(tx.config)
 	tx.DeviceToken = NewDeviceTokenClient(tx.config)
+	tx.DigestItem = NewDigestItemClient(tx.config)
+	tx.DigestSend = NewDigestSendClient(tx.config)
 	tx.NotificationPermission = NewNotificationPermissionClient(tx.config)
 	tx.NotificationRole = NewNotificationRoleClient(tx.config)
 	tx.NotificationRolePermission = NewNotificationRolePermissionClient(tx.config)

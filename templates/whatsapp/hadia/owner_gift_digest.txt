@@ -1,0 +1,3 @@
+Hello {{ or .name "there" }},
+
+Here is your daily Hadia summary. On {{ .day }} you received *{{ .gifts }}* worth *{{ .total }}* in total for {{ .where }}. Open your gift log to see each gift and thank your guests.

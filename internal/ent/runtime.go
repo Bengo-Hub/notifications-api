@@ -10,6 +10,8 @@ import (
 	"github.com/bengobox/notifications-api/internal/ent/broadcastrecipient"
 	"github.com/bengobox/notifications-api/internal/ent/deliverylog"
 	"github.com/bengobox/notifications-api/internal/ent/devicetoken"
+	"github.com/bengobox/notifications-api/internal/ent/digestitem"
+	"github.com/bengobox/notifications-api/internal/ent/digestsend"
 	"github.com/bengobox/notifications-api/internal/ent/notificationpermission"
 	"github.com/bengobox/notifications-api/internal/ent/notificationrole"
 	"github.com/bengobox/notifications-api/internal/ent/occasion"
@@ -236,6 +238,74 @@ func init() {
 	devicetokenDescID := devicetokenFields[0].Descriptor()
 	// devicetoken.DefaultID holds the default value on creation for the id field.
 	devicetoken.DefaultID = devicetokenDescID.Default.(func() uuid.UUID)
+	digestitemFields := schema.DigestItem{}.Fields()
+	_ = digestitemFields
+	// digestitemDescKind is the schema descriptor for kind field.
+	digestitemDescKind := digestitemFields[2].Descriptor()
+	// digestitem.KindValidator is a validator for the "kind" field. It is called by the builders before save.
+	digestitem.KindValidator = digestitemDescKind.Validators[0].(func(string) error)
+	// digestitemDescRecipientKey is the schema descriptor for recipient_key field.
+	digestitemDescRecipientKey := digestitemFields[3].Descriptor()
+	// digestitem.RecipientKeyValidator is a validator for the "recipient_key" field. It is called by the builders before save.
+	digestitem.RecipientKeyValidator = digestitemDescRecipientKey.Validators[0].(func(string) error)
+	// digestitemDescLocalDate is the schema descriptor for local_date field.
+	digestitemDescLocalDate := digestitemFields[4].Descriptor()
+	// digestitem.LocalDateValidator is a validator for the "local_date" field. It is called by the builders before save.
+	digestitem.LocalDateValidator = digestitemDescLocalDate.Validators[0].(func(string) error)
+	// digestitemDescGroupKey is the schema descriptor for group_key field.
+	digestitemDescGroupKey := digestitemFields[5].Descriptor()
+	// digestitem.DefaultGroupKey holds the default value on creation for the group_key field.
+	digestitem.DefaultGroupKey = digestitemDescGroupKey.Default.(string)
+	// digestitemDescEventID is the schema descriptor for event_id field.
+	digestitemDescEventID := digestitemFields[6].Descriptor()
+	// digestitem.EventIDValidator is a validator for the "event_id" field. It is called by the builders before save.
+	digestitem.EventIDValidator = digestitemDescEventID.Validators[0].(func(string) error)
+	// digestitemDescAmountMinor is the schema descriptor for amount_minor field.
+	digestitemDescAmountMinor := digestitemFields[7].Descriptor()
+	// digestitem.DefaultAmountMinor holds the default value on creation for the amount_minor field.
+	digestitem.DefaultAmountMinor = digestitemDescAmountMinor.Default.(int64)
+	// digestitemDescCreatedAt is the schema descriptor for created_at field.
+	digestitemDescCreatedAt := digestitemFields[10].Descriptor()
+	// digestitem.DefaultCreatedAt holds the default value on creation for the created_at field.
+	digestitem.DefaultCreatedAt = digestitemDescCreatedAt.Default.(func() time.Time)
+	// digestitemDescID is the schema descriptor for id field.
+	digestitemDescID := digestitemFields[0].Descriptor()
+	// digestitem.DefaultID holds the default value on creation for the id field.
+	digestitem.DefaultID = digestitemDescID.Default.(func() uuid.UUID)
+	digestsendFields := schema.DigestSend{}.Fields()
+	_ = digestsendFields
+	// digestsendDescKind is the schema descriptor for kind field.
+	digestsendDescKind := digestsendFields[2].Descriptor()
+	// digestsend.KindValidator is a validator for the "kind" field. It is called by the builders before save.
+	digestsend.KindValidator = digestsendDescKind.Validators[0].(func(string) error)
+	// digestsendDescRecipientKey is the schema descriptor for recipient_key field.
+	digestsendDescRecipientKey := digestsendFields[3].Descriptor()
+	// digestsend.RecipientKeyValidator is a validator for the "recipient_key" field. It is called by the builders before save.
+	digestsend.RecipientKeyValidator = digestsendDescRecipientKey.Validators[0].(func(string) error)
+	// digestsendDescLocalDate is the schema descriptor for local_date field.
+	digestsendDescLocalDate := digestsendFields[4].Descriptor()
+	// digestsend.LocalDateValidator is a validator for the "local_date" field. It is called by the builders before save.
+	digestsend.LocalDateValidator = digestsendDescLocalDate.Validators[0].(func(string) error)
+	// digestsendDescStatus is the schema descriptor for status field.
+	digestsendDescStatus := digestsendFields[5].Descriptor()
+	// digestsend.DefaultStatus holds the default value on creation for the status field.
+	digestsend.DefaultStatus = digestsendDescStatus.Default.(string)
+	// digestsendDescItemCount is the schema descriptor for item_count field.
+	digestsendDescItemCount := digestsendFields[7].Descriptor()
+	// digestsend.DefaultItemCount holds the default value on creation for the item_count field.
+	digestsend.DefaultItemCount = digestsendDescItemCount.Default.(int64)
+	// digestsendDescClaimedAt is the schema descriptor for claimed_at field.
+	digestsendDescClaimedAt := digestsendFields[8].Descriptor()
+	// digestsend.DefaultClaimedAt holds the default value on creation for the claimed_at field.
+	digestsend.DefaultClaimedAt = digestsendDescClaimedAt.Default.(func() time.Time)
+	// digestsendDescCreatedAt is the schema descriptor for created_at field.
+	digestsendDescCreatedAt := digestsendFields[10].Descriptor()
+	// digestsend.DefaultCreatedAt holds the default value on creation for the created_at field.
+	digestsend.DefaultCreatedAt = digestsendDescCreatedAt.Default.(func() time.Time)
+	// digestsendDescID is the schema descriptor for id field.
+	digestsendDescID := digestsendFields[0].Descriptor()
+	// digestsend.DefaultID holds the default value on creation for the id field.
+	digestsend.DefaultID = digestsendDescID.Default.(func() uuid.UUID)
 	notificationpermissionFields := schema.NotificationPermission{}.Fields()
 	_ = notificationpermissionFields
 	// notificationpermissionDescPermissionCode is the schema descriptor for permission_code field.

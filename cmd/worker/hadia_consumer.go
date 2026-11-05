@@ -37,6 +37,9 @@ type hadiaMessage struct {
 	FixedPath string
 	// WhatsAppIf limits a message to email unless it holds; nil always allows WhatsApp.
 	WhatsAppIf func(p map[string]any) bool
+	// Digest marks the owner alert an owner may take as one daily summary instead (N3): with
+	// owner_digest "daily" on the payload it is held for hadia_digest.go rather than sent.
+	Digest bool
 }
 
 // hadiaCaseLabel turns a case kind into words for staff ("manual_refund" reads "manual refund").
@@ -158,7 +161,9 @@ var hadiaMappings = map[string][]hadiaMessage{
 		WAParams:   func(d map[string]any) []string { return mParams(d, "name", "old_number", "new_number", "hold_until") },
 	}}},
 	// A gift arrived (hadia-api, from treasury.escrow.pot_credited): the guest's receipt when their
-	// phone is known (guests give no email), and an alert to the owner.
+	// phone is known (guests give no email), and an alert to the owner, or for an owner who chose a
+	// daily summary (owner_digest "daily") the gift is held for the 18:00 summary. The receipt is
+	// never held.
 	"gift.received": {
 		{PathKey: "registry_url", maskaniMapping: maskaniMapping{
 			TemplateID: "hadia/gift_receipt", PhoneKey: "guest_phone",
@@ -174,7 +179,7 @@ var hadiaMappings = map[string][]hadiaMessage{
 			},
 			Skip: func(p map[string]any) bool { return mStr(p, "guest_phone") == "" },
 		}},
-		{PathKey: "owner_url", maskaniMapping: maskaniMapping{
+		{PathKey: "owner_url", Digest: true, maskaniMapping: maskaniMapping{
 			TemplateID: "hadia/gift_owner_alert", PhoneKey: "owner_phone", EmailKey: "owner_email",
 			Subject: func(map[string]any) string { return "You received a gift on Hadia" },
 			Data: func(p map[string]any, _ *tenantInfo) map[string]any {
@@ -378,8 +383,9 @@ var hadiaMappings = map[string][]hadiaMessage{
 	}}},
 }
 
-// startHadiaConsumer subscribes to hadia.> on hadia-api's stream "hadia".
-func startHadiaConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamContext, cfg *config.Config, tr *tenantResolver, logg *zap.Logger) {
+// startHadiaConsumer subscribes to hadia.> on hadia-api's stream "hadia". digest holds the alerts of
+// owners who chose a daily summary; nil (no database) sends every alert at once.
+func startHadiaConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamContext, cfg *config.Config, tr *tenantResolver, digest *hadiaDigest, logg *zap.Logger) {
 	if nc == nil || js == nil {
 		logg.Warn("skipping hadia consumer: NATS not available")
 		return
@@ -406,6 +412,15 @@ func startHadiaConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 		}
 		for i, msg := range msgs {
 			if msg.Skip != nil && msg.Skip(evt.Payload) {
+				continue
+			}
+			if heldForDigest(msg, evt.Payload, digest) {
+				// Held once per event id, so a redelivery holds nothing new.
+				if err := digest.hold(ctx, ti, evt); err != nil {
+					log.Error("hadia event: gift not held for the daily summary", zap.String("type", evt.EventType), zap.Error(err))
+					_ = m.Nak()
+					return
+				}
 				continue
 			}
 			// Idempotency keys carry the message index, so a redelivered event never sends twice

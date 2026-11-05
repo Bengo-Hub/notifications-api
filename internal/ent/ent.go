@@ -17,6 +17,8 @@ import (
 	"github.com/bengobox/notifications-api/internal/ent/broadcastrecipient"
 	"github.com/bengobox/notifications-api/internal/ent/deliverylog"
 	"github.com/bengobox/notifications-api/internal/ent/devicetoken"
+	"github.com/bengobox/notifications-api/internal/ent/digestitem"
+	"github.com/bengobox/notifications-api/internal/ent/digestsend"
 	"github.com/bengobox/notifications-api/internal/ent/notificationpermission"
 	"github.com/bengobox/notifications-api/internal/ent/notificationrole"
 	"github.com/bengobox/notifications-api/internal/ent/notificationrolepermission"
@@ -99,6 +101,8 @@ func checkColumn(t, c string) error {
 			broadcastrecipient.Table:         broadcastrecipient.ValidColumn,
 			deliverylog.Table:                deliverylog.ValidColumn,
 			devicetoken.Table:                devicetoken.ValidColumn,
+			digestitem.Table:                 digestitem.ValidColumn,
+			digestsend.Table:                 digestsend.ValidColumn,
 			notificationpermission.Table:     notificationpermission.ValidColumn,
 			notificationrole.Table:           notificationrole.ValidColumn,
 			notificationrolepermission.Table: notificationrolepermission.ValidColumn,

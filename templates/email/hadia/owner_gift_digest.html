@@ -1,0 +1,22 @@
+{{ define "content" }}
+  <p>Hello {{ or .name "there" }},</p>
+  <h2>Your gifts for {{ .day }}</h2>
+  <p>You received <strong>{{ .gifts }}</strong> worth <strong>{{ .total }}</strong> in total.</p>
+  <table>
+    {{ range .registries }}
+    <tr>
+      <td>{{ .title }}</td>
+      <td>{{ .gifts }}</td>
+      <td><strong>{{ .total }}</strong></td>
+      <td>{{ if .link }}<a href="{{ .link }}">Gift log</a>{{ end }}</td>
+    </tr>
+    {{ end }}
+  </table>
+  <p>Each gift, with the guest's name and message, is in your gift log, where you can thank them.</p>
+  {{ if .action_link }}
+  <p>
+    <a class="button" href="{{ .action_link }}">See your gift log</a>
+  </p>
+  {{ end }}
+  <p>You chose one summary a day. You can switch back to a message for every gift in your account settings.</p>
+{{ end }}

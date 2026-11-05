@@ -131,6 +131,9 @@ var Registry = []Type{
 	{Key: "hadia/privacy_completed", Label: "Data request updated", Group: "Gift registry", Class: ClassEssential},
 	{Key: "hadia/gift_receipt", Label: "Gift receipt", Group: "Gift registry", Class: ClassEssential},
 	{Key: "hadia/gift_owner_alert", Label: "You received a gift", Group: "Gift registry", Class: ClassOptional},
+	// The daily summary an owner chose instead of one message per gift (N3); same class as the alert
+	// it replaces, so a tenant that switched owner alerts off gets neither.
+	{Key: "hadia/owner_gift_digest", Label: "Daily gift summary", Group: "Gift registry", Class: ClassOptional},
 	{Key: "hadia/payout_completed", Label: "Payout sent", Group: "Gift registry", Class: ClassEssential},
 	{Key: "hadia/payout_delayed", Label: "Payout delayed", Group: "Gift registry", Class: ClassEssential},
 	{Key: "hadia/payout_declined", Label: "Payout not made", Group: "Gift registry", Class: ClassEssential},

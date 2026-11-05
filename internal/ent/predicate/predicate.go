@@ -21,6 +21,12 @@ type DeliveryLog func(*sql.Selector)
 // DeviceToken is the predicate function for devicetoken builders.
 type DeviceToken func(*sql.Selector)
 
+// DigestItem is the predicate function for digestitem builders.
+type DigestItem func(*sql.Selector)
+
+// DigestSend is the predicate function for digestsend builders.
+type DigestSend func(*sql.Selector)
+
 // NotificationPermission is the predicate function for notificationpermission builders.
 type NotificationPermission func(*sql.Selector)
 

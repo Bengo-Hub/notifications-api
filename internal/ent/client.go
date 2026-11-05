@@ -21,6 +21,8 @@ import (
 	"github.com/bengobox/notifications-api/internal/ent/broadcastrecipient"
 	"github.com/bengobox/notifications-api/internal/ent/deliverylog"
 	"github.com/bengobox/notifications-api/internal/ent/devicetoken"
+	"github.com/bengobox/notifications-api/internal/ent/digestitem"
+	"github.com/bengobox/notifications-api/internal/ent/digestsend"
 	"github.com/bengobox/notifications-api/internal/ent/notificationpermission"
 	"github.com/bengobox/notifications-api/internal/ent/notificationrole"
 	"github.com/bengobox/notifications-api/internal/ent/notificationrolepermission"
@@ -55,6 +57,10 @@ type Client struct {
 	DeliveryLog *DeliveryLogClient
 	// DeviceToken is the client for interacting with the DeviceToken builders.
 	DeviceToken *DeviceTokenClient
+	// DigestItem is the client for interacting with the DigestItem builders.
+	DigestItem *DigestItemClient
+	// DigestSend is the client for interacting with the DigestSend builders.
+	DigestSend *DigestSendClient
 	// NotificationPermission is the client for interacting with the NotificationPermission builders.
 	NotificationPermission *NotificationPermissionClient
 	// NotificationRole is the client for interacting with the NotificationRole builders.
@@ -105,6 +111,8 @@ func (c *Client) init() {
 	c.BroadcastRecipient = NewBroadcastRecipientClient(c.config)
 	c.DeliveryLog = NewDeliveryLogClient(c.config)
 	c.DeviceToken = NewDeviceTokenClient(c.config)
+	c.DigestItem = NewDigestItemClient(c.config)
+	c.DigestSend = NewDigestSendClient(c.config)
 	c.NotificationPermission = NewNotificationPermissionClient(c.config)
 	c.NotificationRole = NewNotificationRoleClient(c.config)
 	c.NotificationRolePermission = NewNotificationRolePermissionClient(c.config)
@@ -219,6 +227,8 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		BroadcastRecipient:         NewBroadcastRecipientClient(cfg),
 		DeliveryLog:                NewDeliveryLogClient(cfg),
 		DeviceToken:                NewDeviceTokenClient(cfg),
+		DigestItem:                 NewDigestItemClient(cfg),
+		DigestSend:                 NewDigestSendClient(cfg),
 		NotificationPermission:     NewNotificationPermissionClient(cfg),
 		NotificationRole:           NewNotificationRoleClient(cfg),
 		NotificationRolePermission: NewNotificationRolePermissionClient(cfg),
@@ -260,6 +270,8 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		BroadcastRecipient:         NewBroadcastRecipientClient(cfg),
 		DeliveryLog:                NewDeliveryLogClient(cfg),
 		DeviceToken:                NewDeviceTokenClient(cfg),
+		DigestItem:                 NewDigestItemClient(cfg),
+		DigestSend:                 NewDigestSendClient(cfg),
 		NotificationPermission:     NewNotificationPermissionClient(cfg),
 		NotificationRole:           NewNotificationRoleClient(cfg),
 		NotificationRolePermission: NewNotificationRolePermissionClient(cfg),
@@ -307,10 +319,11 @@ func (c *Client) Close() error {
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.Announcement, c.Broadcast, c.BroadcastRecipient, c.DeliveryLog, c.DeviceToken,
-		c.NotificationPermission, c.NotificationRole, c.NotificationRolePermission,
-		c.Occasion, c.OutboxEvent, c.Permission, c.ProviderSetting, c.RateLimitConfig,
-		c.Role, c.ServiceConfig, c.Suppression, c.Template, c.Tenant, c.User,
-		c.UserRoleAssignment, c.WhatsAppConversation, c.WhatsAppMessage,
+		c.DigestItem, c.DigestSend, c.NotificationPermission, c.NotificationRole,
+		c.NotificationRolePermission, c.Occasion, c.OutboxEvent, c.Permission,
+		c.ProviderSetting, c.RateLimitConfig, c.Role, c.ServiceConfig, c.Suppression,
+		c.Template, c.Tenant, c.User, c.UserRoleAssignment, c.WhatsAppConversation,
+		c.WhatsAppMessage,
 	} {
 		n.Use(hooks...)
 	}
@@ -321,10 +334,11 @@ func (c *Client) Use(hooks ...Hook) {
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.Announcement, c.Broadcast, c.BroadcastRecipient, c.DeliveryLog, c.DeviceToken,
-		c.NotificationPermission, c.NotificationRole, c.NotificationRolePermission,
-		c.Occasion, c.OutboxEvent, c.Permission, c.ProviderSetting, c.RateLimitConfig,
-		c.Role, c.ServiceConfig, c.Suppression, c.Template, c.Tenant, c.User,
-		c.UserRoleAssignment, c.WhatsAppConversation, c.WhatsAppMessage,
+		c.DigestItem, c.DigestSend, c.NotificationPermission, c.NotificationRole,
+		c.NotificationRolePermission, c.Occasion, c.OutboxEvent, c.Permission,
+		c.ProviderSetting, c.RateLimitConfig, c.Role, c.ServiceConfig, c.Suppression,
+		c.Template, c.Tenant, c.User, c.UserRoleAssignment, c.WhatsAppConversation,
+		c.WhatsAppMessage,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -343,6 +357,10 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.DeliveryLog.mutate(ctx, m)
 	case *DeviceTokenMutation:
 		return c.DeviceToken.mutate(ctx, m)
+	case *DigestItemMutation:
+		return c.DigestItem.mutate(ctx, m)
+	case *DigestSendMutation:
+		return c.DigestSend.mutate(ctx, m)
 	case *NotificationPermissionMutation:
 		return c.NotificationPermission.mutate(ctx, m)
 	case *NotificationRoleMutation:
@@ -1044,6 +1062,272 @@ func (c *DeviceTokenClient) mutate(ctx context.Context, m *DeviceTokenMutation) 
 		return (&DeviceTokenDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown DeviceToken mutation op: %q", m.Op())
+	}
+}
+
+// DigestItemClient is a client for the DigestItem schema.
+type DigestItemClient struct {
+	config
+}
+
+// NewDigestItemClient returns a client for the DigestItem from the given config.
+func NewDigestItemClient(c config) *DigestItemClient {
+	return &DigestItemClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `digestitem.Hooks(f(g(h())))`.
+func (c *DigestItemClient) Use(hooks ...Hook) {
+	c.hooks.DigestItem = append(c.hooks.DigestItem, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `digestitem.Intercept(f(g(h())))`.
+func (c *DigestItemClient) Intercept(interceptors ...Interceptor) {
+	c.inters.DigestItem = append(c.inters.DigestItem, interceptors...)
+}
+
+// Create returns a builder for creating a DigestItem entity.
+func (c *DigestItemClient) Create() *DigestItemCreate {
+	mutation := newDigestItemMutation(c.config, OpCreate)
+	return &DigestItemCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of DigestItem entities.
+func (c *DigestItemClient) CreateBulk(builders ...*DigestItemCreate) *DigestItemCreateBulk {
+	return &DigestItemCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *DigestItemClient) MapCreateBulk(slice any, setFunc func(*DigestItemCreate, int)) *DigestItemCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &DigestItemCreateBulk{err: fmt.Errorf("calling to DigestItemClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*DigestItemCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &DigestItemCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for DigestItem.
+func (c *DigestItemClient) Update() *DigestItemUpdate {
+	mutation := newDigestItemMutation(c.config, OpUpdate)
+	return &DigestItemUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *DigestItemClient) UpdateOne(_m *DigestItem) *DigestItemUpdateOne {
+	mutation := newDigestItemMutation(c.config, OpUpdateOne, withDigestItem(_m))
+	return &DigestItemUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *DigestItemClient) UpdateOneID(id uuid.UUID) *DigestItemUpdateOne {
+	mutation := newDigestItemMutation(c.config, OpUpdateOne, withDigestItemID(id))
+	return &DigestItemUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for DigestItem.
+func (c *DigestItemClient) Delete() *DigestItemDelete {
+	mutation := newDigestItemMutation(c.config, OpDelete)
+	return &DigestItemDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *DigestItemClient) DeleteOne(_m *DigestItem) *DigestItemDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *DigestItemClient) DeleteOneID(id uuid.UUID) *DigestItemDeleteOne {
+	builder := c.Delete().Where(digestitem.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &DigestItemDeleteOne{builder}
+}
+
+// Query returns a query builder for DigestItem.
+func (c *DigestItemClient) Query() *DigestItemQuery {
+	return &DigestItemQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeDigestItem},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a DigestItem entity by its id.
+func (c *DigestItemClient) Get(ctx context.Context, id uuid.UUID) (*DigestItem, error) {
+	return c.Query().Where(digestitem.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *DigestItemClient) GetX(ctx context.Context, id uuid.UUID) *DigestItem {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *DigestItemClient) Hooks() []Hook {
+	return c.hooks.DigestItem
+}
+
+// Interceptors returns the client interceptors.
+func (c *DigestItemClient) Interceptors() []Interceptor {
+	return c.inters.DigestItem
+}
+
+func (c *DigestItemClient) mutate(ctx context.Context, m *DigestItemMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&DigestItemCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&DigestItemUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&DigestItemUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&DigestItemDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown DigestItem mutation op: %q", m.Op())
+	}
+}
+
+// DigestSendClient is a client for the DigestSend schema.
+type DigestSendClient struct {
+	config
+}
+
+// NewDigestSendClient returns a client for the DigestSend from the given config.
+func NewDigestSendClient(c config) *DigestSendClient {
+	return &DigestSendClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `digestsend.Hooks(f(g(h())))`.
+func (c *DigestSendClient) Use(hooks ...Hook) {
+	c.hooks.DigestSend = append(c.hooks.DigestSend, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `digestsend.Intercept(f(g(h())))`.
+func (c *DigestSendClient) Intercept(interceptors ...Interceptor) {
+	c.inters.DigestSend = append(c.inters.DigestSend, interceptors...)
+}
+
+// Create returns a builder for creating a DigestSend entity.
+func (c *DigestSendClient) Create() *DigestSendCreate {
+	mutation := newDigestSendMutation(c.config, OpCreate)
+	return &DigestSendCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of DigestSend entities.
+func (c *DigestSendClient) CreateBulk(builders ...*DigestSendCreate) *DigestSendCreateBulk {
+	return &DigestSendCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *DigestSendClient) MapCreateBulk(slice any, setFunc func(*DigestSendCreate, int)) *DigestSendCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &DigestSendCreateBulk{err: fmt.Errorf("calling to DigestSendClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*DigestSendCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &DigestSendCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for DigestSend.
+func (c *DigestSendClient) Update() *DigestSendUpdate {
+	mutation := newDigestSendMutation(c.config, OpUpdate)
+	return &DigestSendUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *DigestSendClient) UpdateOne(_m *DigestSend) *DigestSendUpdateOne {
+	mutation := newDigestSendMutation(c.config, OpUpdateOne, withDigestSend(_m))
+	return &DigestSendUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *DigestSendClient) UpdateOneID(id uuid.UUID) *DigestSendUpdateOne {
+	mutation := newDigestSendMutation(c.config, OpUpdateOne, withDigestSendID(id))
+	return &DigestSendUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for DigestSend.
+func (c *DigestSendClient) Delete() *DigestSendDelete {
+	mutation := newDigestSendMutation(c.config, OpDelete)
+	return &DigestSendDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *DigestSendClient) DeleteOne(_m *DigestSend) *DigestSendDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *DigestSendClient) DeleteOneID(id uuid.UUID) *DigestSendDeleteOne {
+	builder := c.Delete().Where(digestsend.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &DigestSendDeleteOne{builder}
+}
+
+// Query returns a query builder for DigestSend.
+func (c *DigestSendClient) Query() *DigestSendQuery {
+	return &DigestSendQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeDigestSend},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a DigestSend entity by its id.
+func (c *DigestSendClient) Get(ctx context.Context, id uuid.UUID) (*DigestSend, error) {
+	return c.Query().Where(digestsend.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *DigestSendClient) GetX(ctx context.Context, id uuid.UUID) *DigestSend {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *DigestSendClient) Hooks() []Hook {
+	return c.hooks.DigestSend
+}
+
+// Interceptors returns the client interceptors.
+func (c *DigestSendClient) Interceptors() []Interceptor {
+	return c.inters.DigestSend
+}
+
+func (c *DigestSendClient) mutate(ctx context.Context, m *DigestSendMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&DigestSendCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&DigestSendUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&DigestSendUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&DigestSendDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown DigestSend mutation op: %q", m.Op())
 	}
 }
 
@@ -3584,16 +3868,16 @@ func (c *WhatsAppMessageClient) mutate(ctx context.Context, m *WhatsAppMessageMu
 type (
 	hooks struct {
 		Announcement, Broadcast, BroadcastRecipient, DeliveryLog, DeviceToken,
-		NotificationPermission, NotificationRole, NotificationRolePermission, Occasion,
-		OutboxEvent, Permission, ProviderSetting, RateLimitConfig, Role, ServiceConfig,
-		Suppression, Template, Tenant, User, UserRoleAssignment, WhatsAppConversation,
-		WhatsAppMessage []ent.Hook
+		DigestItem, DigestSend, NotificationPermission, NotificationRole,
+		NotificationRolePermission, Occasion, OutboxEvent, Permission, ProviderSetting,
+		RateLimitConfig, Role, ServiceConfig, Suppression, Template, Tenant, User,
+		UserRoleAssignment, WhatsAppConversation, WhatsAppMessage []ent.Hook
 	}
 	inters struct {
 		Announcement, Broadcast, BroadcastRecipient, DeliveryLog, DeviceToken,
-		NotificationPermission, NotificationRole, NotificationRolePermission, Occasion,
-		OutboxEvent, Permission, ProviderSetting, RateLimitConfig, Role, ServiceConfig,
-		Suppression, Template, Tenant, User, UserRoleAssignment, WhatsAppConversation,
-		WhatsAppMessage []ent.Interceptor
+		DigestItem, DigestSend, NotificationPermission, NotificationRole,
+		NotificationRolePermission, Occasion, OutboxEvent, Permission, ProviderSetting,
+		RateLimitConfig, Role, ServiceConfig, Suppression, Template, Tenant, User,
+		UserRoleAssignment, WhatsAppConversation, WhatsAppMessage []ent.Interceptor
 	}
 )

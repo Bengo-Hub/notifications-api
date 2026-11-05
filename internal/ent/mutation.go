@@ -16,6 +16,8 @@ import (
 	"github.com/bengobox/notifications-api/internal/ent/broadcastrecipient"
 	"github.com/bengobox/notifications-api/internal/ent/deliverylog"
 	"github.com/bengobox/notifications-api/internal/ent/devicetoken"
+	"github.com/bengobox/notifications-api/internal/ent/digestitem"
+	"github.com/bengobox/notifications-api/internal/ent/digestsend"
 	"github.com/bengobox/notifications-api/internal/ent/notificationpermission"
 	"github.com/bengobox/notifications-api/internal/ent/notificationrole"
 	"github.com/bengobox/notifications-api/internal/ent/notificationrolepermission"
@@ -51,6 +53,8 @@ const (
 	TypeBroadcastRecipient         = "BroadcastRecipient"
 	TypeDeliveryLog                = "DeliveryLog"
 	TypeDeviceToken                = "DeviceToken"
+	TypeDigestItem                 = "DigestItem"
+	TypeDigestSend                 = "DigestSend"
 	TypeNotificationPermission     = "NotificationPermission"
 	TypeNotificationRole           = "NotificationRole"
 	TypeNotificationRolePermission = "NotificationRolePermission"
@@ -6325,6 +6329,1813 @@ func (m *DeviceTokenMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *DeviceTokenMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown DeviceToken edge %s", name)
+}
+
+// DigestItemMutation represents an operation that mutates the DigestItem nodes in the graph.
+type DigestItemMutation struct {
+	config
+	op              Op
+	typ             string
+	id              *uuid.UUID
+	tenant_id       *uuid.UUID
+	kind            *string
+	recipient_key   *string
+	local_date      *string
+	group_key       *string
+	event_id        *string
+	amount_minor    *int64
+	addamount_minor *int64
+	data            *map[string]interface{}
+	send_id         *uuid.UUID
+	created_at      *time.Time
+	clearedFields   map[string]struct{}
+	done            bool
+	oldValue        func(context.Context) (*DigestItem, error)
+	predicates      []predicate.DigestItem
+}
+
+var _ ent.Mutation = (*DigestItemMutation)(nil)
+
+// digestitemOption allows management of the mutation configuration using functional options.
+type digestitemOption func(*DigestItemMutation)
+
+// newDigestItemMutation creates new mutation for the DigestItem entity.
+func newDigestItemMutation(c config, op Op, opts ...digestitemOption) *DigestItemMutation {
+	m := &DigestItemMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeDigestItem,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withDigestItemID sets the ID field of the mutation.
+func withDigestItemID(id uuid.UUID) digestitemOption {
+	return func(m *DigestItemMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *DigestItem
+		)
+		m.oldValue = func(ctx context.Context) (*DigestItem, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().DigestItem.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withDigestItem sets the old DigestItem of the mutation.
+func withDigestItem(node *DigestItem) digestitemOption {
+	return func(m *DigestItemMutation) {
+		m.oldValue = func(context.Context) (*DigestItem, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m DigestItemMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m DigestItemMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of DigestItem entities.
+func (m *DigestItemMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *DigestItemMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *DigestItemMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().DigestItem.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetTenantID sets the "tenant_id" field.
+func (m *DigestItemMutation) SetTenantID(u uuid.UUID) {
+	m.tenant_id = &u
+}
+
+// TenantID returns the value of the "tenant_id" field in the mutation.
+func (m *DigestItemMutation) TenantID() (r uuid.UUID, exists bool) {
+	v := m.tenant_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTenantID returns the old "tenant_id" field's value of the DigestItem entity.
+// If the DigestItem object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DigestItemMutation) OldTenantID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTenantID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTenantID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTenantID: %w", err)
+	}
+	return oldValue.TenantID, nil
+}
+
+// ResetTenantID resets all changes to the "tenant_id" field.
+func (m *DigestItemMutation) ResetTenantID() {
+	m.tenant_id = nil
+}
+
+// SetKind sets the "kind" field.
+func (m *DigestItemMutation) SetKind(s string) {
+	m.kind = &s
+}
+
+// Kind returns the value of the "kind" field in the mutation.
+func (m *DigestItemMutation) Kind() (r string, exists bool) {
+	v := m.kind
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldKind returns the old "kind" field's value of the DigestItem entity.
+// If the DigestItem object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DigestItemMutation) OldKind(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldKind is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldKind requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldKind: %w", err)
+	}
+	return oldValue.Kind, nil
+}
+
+// ResetKind resets all changes to the "kind" field.
+func (m *DigestItemMutation) ResetKind() {
+	m.kind = nil
+}
+
+// SetRecipientKey sets the "recipient_key" field.
+func (m *DigestItemMutation) SetRecipientKey(s string) {
+	m.recipient_key = &s
+}
+
+// RecipientKey returns the value of the "recipient_key" field in the mutation.
+func (m *DigestItemMutation) RecipientKey() (r string, exists bool) {
+	v := m.recipient_key
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRecipientKey returns the old "recipient_key" field's value of the DigestItem entity.
+// If the DigestItem object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DigestItemMutation) OldRecipientKey(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRecipientKey is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRecipientKey requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRecipientKey: %w", err)
+	}
+	return oldValue.RecipientKey, nil
+}
+
+// ResetRecipientKey resets all changes to the "recipient_key" field.
+func (m *DigestItemMutation) ResetRecipientKey() {
+	m.recipient_key = nil
+}
+
+// SetLocalDate sets the "local_date" field.
+func (m *DigestItemMutation) SetLocalDate(s string) {
+	m.local_date = &s
+}
+
+// LocalDate returns the value of the "local_date" field in the mutation.
+func (m *DigestItemMutation) LocalDate() (r string, exists bool) {
+	v := m.local_date
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLocalDate returns the old "local_date" field's value of the DigestItem entity.
+// If the DigestItem object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DigestItemMutation) OldLocalDate(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLocalDate is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLocalDate requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLocalDate: %w", err)
+	}
+	return oldValue.LocalDate, nil
+}
+
+// ResetLocalDate resets all changes to the "local_date" field.
+func (m *DigestItemMutation) ResetLocalDate() {
+	m.local_date = nil
+}
+
+// SetGroupKey sets the "group_key" field.
+func (m *DigestItemMutation) SetGroupKey(s string) {
+	m.group_key = &s
+}
+
+// GroupKey returns the value of the "group_key" field in the mutation.
+func (m *DigestItemMutation) GroupKey() (r string, exists bool) {
+	v := m.group_key
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGroupKey returns the old "group_key" field's value of the DigestItem entity.
+// If the DigestItem object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DigestItemMutation) OldGroupKey(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGroupKey is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGroupKey requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGroupKey: %w", err)
+	}
+	return oldValue.GroupKey, nil
+}
+
+// ResetGroupKey resets all changes to the "group_key" field.
+func (m *DigestItemMutation) ResetGroupKey() {
+	m.group_key = nil
+}
+
+// SetEventID sets the "event_id" field.
+func (m *DigestItemMutation) SetEventID(s string) {
+	m.event_id = &s
+}
+
+// EventID returns the value of the "event_id" field in the mutation.
+func (m *DigestItemMutation) EventID() (r string, exists bool) {
+	v := m.event_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEventID returns the old "event_id" field's value of the DigestItem entity.
+// If the DigestItem object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DigestItemMutation) OldEventID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEventID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEventID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEventID: %w", err)
+	}
+	return oldValue.EventID, nil
+}
+
+// ResetEventID resets all changes to the "event_id" field.
+func (m *DigestItemMutation) ResetEventID() {
+	m.event_id = nil
+}
+
+// SetAmountMinor sets the "amount_minor" field.
+func (m *DigestItemMutation) SetAmountMinor(i int64) {
+	m.amount_minor = &i
+	m.addamount_minor = nil
+}
+
+// AmountMinor returns the value of the "amount_minor" field in the mutation.
+func (m *DigestItemMutation) AmountMinor() (r int64, exists bool) {
+	v := m.amount_minor
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAmountMinor returns the old "amount_minor" field's value of the DigestItem entity.
+// If the DigestItem object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DigestItemMutation) OldAmountMinor(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAmountMinor is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAmountMinor requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAmountMinor: %w", err)
+	}
+	return oldValue.AmountMinor, nil
+}
+
+// AddAmountMinor adds i to the "amount_minor" field.
+func (m *DigestItemMutation) AddAmountMinor(i int64) {
+	if m.addamount_minor != nil {
+		*m.addamount_minor += i
+	} else {
+		m.addamount_minor = &i
+	}
+}
+
+// AddedAmountMinor returns the value that was added to the "amount_minor" field in this mutation.
+func (m *DigestItemMutation) AddedAmountMinor() (r int64, exists bool) {
+	v := m.addamount_minor
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetAmountMinor resets all changes to the "amount_minor" field.
+func (m *DigestItemMutation) ResetAmountMinor() {
+	m.amount_minor = nil
+	m.addamount_minor = nil
+}
+
+// SetData sets the "data" field.
+func (m *DigestItemMutation) SetData(value map[string]interface{}) {
+	m.data = &value
+}
+
+// Data returns the value of the "data" field in the mutation.
+func (m *DigestItemMutation) Data() (r map[string]interface{}, exists bool) {
+	v := m.data
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldData returns the old "data" field's value of the DigestItem entity.
+// If the DigestItem object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DigestItemMutation) OldData(ctx context.Context) (v map[string]interface{}, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldData is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldData requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldData: %w", err)
+	}
+	return oldValue.Data, nil
+}
+
+// ClearData clears the value of the "data" field.
+func (m *DigestItemMutation) ClearData() {
+	m.data = nil
+	m.clearedFields[digestitem.FieldData] = struct{}{}
+}
+
+// DataCleared returns if the "data" field was cleared in this mutation.
+func (m *DigestItemMutation) DataCleared() bool {
+	_, ok := m.clearedFields[digestitem.FieldData]
+	return ok
+}
+
+// ResetData resets all changes to the "data" field.
+func (m *DigestItemMutation) ResetData() {
+	m.data = nil
+	delete(m.clearedFields, digestitem.FieldData)
+}
+
+// SetSendID sets the "send_id" field.
+func (m *DigestItemMutation) SetSendID(u uuid.UUID) {
+	m.send_id = &u
+}
+
+// SendID returns the value of the "send_id" field in the mutation.
+func (m *DigestItemMutation) SendID() (r uuid.UUID, exists bool) {
+	v := m.send_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSendID returns the old "send_id" field's value of the DigestItem entity.
+// If the DigestItem object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DigestItemMutation) OldSendID(ctx context.Context) (v *uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSendID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSendID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSendID: %w", err)
+	}
+	return oldValue.SendID, nil
+}
+
+// ClearSendID clears the value of the "send_id" field.
+func (m *DigestItemMutation) ClearSendID() {
+	m.send_id = nil
+	m.clearedFields[digestitem.FieldSendID] = struct{}{}
+}
+
+// SendIDCleared returns if the "send_id" field was cleared in this mutation.
+func (m *DigestItemMutation) SendIDCleared() bool {
+	_, ok := m.clearedFields[digestitem.FieldSendID]
+	return ok
+}
+
+// ResetSendID resets all changes to the "send_id" field.
+func (m *DigestItemMutation) ResetSendID() {
+	m.send_id = nil
+	delete(m.clearedFields, digestitem.FieldSendID)
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *DigestItemMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *DigestItemMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the DigestItem entity.
+// If the DigestItem object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DigestItemMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *DigestItemMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// Where appends a list predicates to the DigestItemMutation builder.
+func (m *DigestItemMutation) Where(ps ...predicate.DigestItem) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the DigestItemMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *DigestItemMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.DigestItem, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *DigestItemMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *DigestItemMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (DigestItem).
+func (m *DigestItemMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *DigestItemMutation) Fields() []string {
+	fields := make([]string, 0, 10)
+	if m.tenant_id != nil {
+		fields = append(fields, digestitem.FieldTenantID)
+	}
+	if m.kind != nil {
+		fields = append(fields, digestitem.FieldKind)
+	}
+	if m.recipient_key != nil {
+		fields = append(fields, digestitem.FieldRecipientKey)
+	}
+	if m.local_date != nil {
+		fields = append(fields, digestitem.FieldLocalDate)
+	}
+	if m.group_key != nil {
+		fields = append(fields, digestitem.FieldGroupKey)
+	}
+	if m.event_id != nil {
+		fields = append(fields, digestitem.FieldEventID)
+	}
+	if m.amount_minor != nil {
+		fields = append(fields, digestitem.FieldAmountMinor)
+	}
+	if m.data != nil {
+		fields = append(fields, digestitem.FieldData)
+	}
+	if m.send_id != nil {
+		fields = append(fields, digestitem.FieldSendID)
+	}
+	if m.created_at != nil {
+		fields = append(fields, digestitem.FieldCreatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *DigestItemMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case digestitem.FieldTenantID:
+		return m.TenantID()
+	case digestitem.FieldKind:
+		return m.Kind()
+	case digestitem.FieldRecipientKey:
+		return m.RecipientKey()
+	case digestitem.FieldLocalDate:
+		return m.LocalDate()
+	case digestitem.FieldGroupKey:
+		return m.GroupKey()
+	case digestitem.FieldEventID:
+		return m.EventID()
+	case digestitem.FieldAmountMinor:
+		return m.AmountMinor()
+	case digestitem.FieldData:
+		return m.Data()
+	case digestitem.FieldSendID:
+		return m.SendID()
+	case digestitem.FieldCreatedAt:
+		return m.CreatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *DigestItemMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case digestitem.FieldTenantID:
+		return m.OldTenantID(ctx)
+	case digestitem.FieldKind:
+		return m.OldKind(ctx)
+	case digestitem.FieldRecipientKey:
+		return m.OldRecipientKey(ctx)
+	case digestitem.FieldLocalDate:
+		return m.OldLocalDate(ctx)
+	case digestitem.FieldGroupKey:
+		return m.OldGroupKey(ctx)
+	case digestitem.FieldEventID:
+		return m.OldEventID(ctx)
+	case digestitem.FieldAmountMinor:
+		return m.OldAmountMinor(ctx)
+	case digestitem.FieldData:
+		return m.OldData(ctx)
+	case digestitem.FieldSendID:
+		return m.OldSendID(ctx)
+	case digestitem.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown DigestItem field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *DigestItemMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case digestitem.FieldTenantID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTenantID(v)
+		return nil
+	case digestitem.FieldKind:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetKind(v)
+		return nil
+	case digestitem.FieldRecipientKey:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRecipientKey(v)
+		return nil
+	case digestitem.FieldLocalDate:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLocalDate(v)
+		return nil
+	case digestitem.FieldGroupKey:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGroupKey(v)
+		return nil
+	case digestitem.FieldEventID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEventID(v)
+		return nil
+	case digestitem.FieldAmountMinor:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAmountMinor(v)
+		return nil
+	case digestitem.FieldData:
+		v, ok := value.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetData(v)
+		return nil
+	case digestitem.FieldSendID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSendID(v)
+		return nil
+	case digestitem.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown DigestItem field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *DigestItemMutation) AddedFields() []string {
+	var fields []string
+	if m.addamount_minor != nil {
+		fields = append(fields, digestitem.FieldAmountMinor)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *DigestItemMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case digestitem.FieldAmountMinor:
+		return m.AddedAmountMinor()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *DigestItemMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case digestitem.FieldAmountMinor:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddAmountMinor(v)
+		return nil
+	}
+	return fmt.Errorf("unknown DigestItem numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *DigestItemMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(digestitem.FieldData) {
+		fields = append(fields, digestitem.FieldData)
+	}
+	if m.FieldCleared(digestitem.FieldSendID) {
+		fields = append(fields, digestitem.FieldSendID)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *DigestItemMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *DigestItemMutation) ClearField(name string) error {
+	switch name {
+	case digestitem.FieldData:
+		m.ClearData()
+		return nil
+	case digestitem.FieldSendID:
+		m.ClearSendID()
+		return nil
+	}
+	return fmt.Errorf("unknown DigestItem nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *DigestItemMutation) ResetField(name string) error {
+	switch name {
+	case digestitem.FieldTenantID:
+		m.ResetTenantID()
+		return nil
+	case digestitem.FieldKind:
+		m.ResetKind()
+		return nil
+	case digestitem.FieldRecipientKey:
+		m.ResetRecipientKey()
+		return nil
+	case digestitem.FieldLocalDate:
+		m.ResetLocalDate()
+		return nil
+	case digestitem.FieldGroupKey:
+		m.ResetGroupKey()
+		return nil
+	case digestitem.FieldEventID:
+		m.ResetEventID()
+		return nil
+	case digestitem.FieldAmountMinor:
+		m.ResetAmountMinor()
+		return nil
+	case digestitem.FieldData:
+		m.ResetData()
+		return nil
+	case digestitem.FieldSendID:
+		m.ResetSendID()
+		return nil
+	case digestitem.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown DigestItem field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *DigestItemMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *DigestItemMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *DigestItemMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *DigestItemMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *DigestItemMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *DigestItemMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *DigestItemMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown DigestItem unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *DigestItemMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown DigestItem edge %s", name)
+}
+
+// DigestSendMutation represents an operation that mutates the DigestSend nodes in the graph.
+type DigestSendMutation struct {
+	config
+	op             Op
+	typ            string
+	id             *uuid.UUID
+	tenant_id      *uuid.UUID
+	kind           *string
+	recipient_key  *string
+	local_date     *string
+	status         *string
+	channels       *[]string
+	appendchannels []string
+	item_count     *int64
+	additem_count  *int64
+	claimed_at     *time.Time
+	sent_at        *time.Time
+	created_at     *time.Time
+	clearedFields  map[string]struct{}
+	done           bool
+	oldValue       func(context.Context) (*DigestSend, error)
+	predicates     []predicate.DigestSend
+}
+
+var _ ent.Mutation = (*DigestSendMutation)(nil)
+
+// digestsendOption allows management of the mutation configuration using functional options.
+type digestsendOption func(*DigestSendMutation)
+
+// newDigestSendMutation creates new mutation for the DigestSend entity.
+func newDigestSendMutation(c config, op Op, opts ...digestsendOption) *DigestSendMutation {
+	m := &DigestSendMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeDigestSend,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withDigestSendID sets the ID field of the mutation.
+func withDigestSendID(id uuid.UUID) digestsendOption {
+	return func(m *DigestSendMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *DigestSend
+		)
+		m.oldValue = func(ctx context.Context) (*DigestSend, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().DigestSend.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withDigestSend sets the old DigestSend of the mutation.
+func withDigestSend(node *DigestSend) digestsendOption {
+	return func(m *DigestSendMutation) {
+		m.oldValue = func(context.Context) (*DigestSend, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m DigestSendMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m DigestSendMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of DigestSend entities.
+func (m *DigestSendMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *DigestSendMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *DigestSendMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().DigestSend.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetTenantID sets the "tenant_id" field.
+func (m *DigestSendMutation) SetTenantID(u uuid.UUID) {
+	m.tenant_id = &u
+}
+
+// TenantID returns the value of the "tenant_id" field in the mutation.
+func (m *DigestSendMutation) TenantID() (r uuid.UUID, exists bool) {
+	v := m.tenant_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTenantID returns the old "tenant_id" field's value of the DigestSend entity.
+// If the DigestSend object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DigestSendMutation) OldTenantID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTenantID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTenantID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTenantID: %w", err)
+	}
+	return oldValue.TenantID, nil
+}
+
+// ResetTenantID resets all changes to the "tenant_id" field.
+func (m *DigestSendMutation) ResetTenantID() {
+	m.tenant_id = nil
+}
+
+// SetKind sets the "kind" field.
+func (m *DigestSendMutation) SetKind(s string) {
+	m.kind = &s
+}
+
+// Kind returns the value of the "kind" field in the mutation.
+func (m *DigestSendMutation) Kind() (r string, exists bool) {
+	v := m.kind
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldKind returns the old "kind" field's value of the DigestSend entity.
+// If the DigestSend object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DigestSendMutation) OldKind(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldKind is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldKind requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldKind: %w", err)
+	}
+	return oldValue.Kind, nil
+}
+
+// ResetKind resets all changes to the "kind" field.
+func (m *DigestSendMutation) ResetKind() {
+	m.kind = nil
+}
+
+// SetRecipientKey sets the "recipient_key" field.
+func (m *DigestSendMutation) SetRecipientKey(s string) {
+	m.recipient_key = &s
+}
+
+// RecipientKey returns the value of the "recipient_key" field in the mutation.
+func (m *DigestSendMutation) RecipientKey() (r string, exists bool) {
+	v := m.recipient_key
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRecipientKey returns the old "recipient_key" field's value of the DigestSend entity.
+// If the DigestSend object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DigestSendMutation) OldRecipientKey(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRecipientKey is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRecipientKey requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRecipientKey: %w", err)
+	}
+	return oldValue.RecipientKey, nil
+}
+
+// ResetRecipientKey resets all changes to the "recipient_key" field.
+func (m *DigestSendMutation) ResetRecipientKey() {
+	m.recipient_key = nil
+}
+
+// SetLocalDate sets the "local_date" field.
+func (m *DigestSendMutation) SetLocalDate(s string) {
+	m.local_date = &s
+}
+
+// LocalDate returns the value of the "local_date" field in the mutation.
+func (m *DigestSendMutation) LocalDate() (r string, exists bool) {
+	v := m.local_date
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLocalDate returns the old "local_date" field's value of the DigestSend entity.
+// If the DigestSend object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DigestSendMutation) OldLocalDate(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLocalDate is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLocalDate requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLocalDate: %w", err)
+	}
+	return oldValue.LocalDate, nil
+}
+
+// ResetLocalDate resets all changes to the "local_date" field.
+func (m *DigestSendMutation) ResetLocalDate() {
+	m.local_date = nil
+}
+
+// SetStatus sets the "status" field.
+func (m *DigestSendMutation) SetStatus(s string) {
+	m.status = &s
+}
+
+// Status returns the value of the "status" field in the mutation.
+func (m *DigestSendMutation) Status() (r string, exists bool) {
+	v := m.status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStatus returns the old "status" field's value of the DigestSend entity.
+// If the DigestSend object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DigestSendMutation) OldStatus(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStatus: %w", err)
+	}
+	return oldValue.Status, nil
+}
+
+// ResetStatus resets all changes to the "status" field.
+func (m *DigestSendMutation) ResetStatus() {
+	m.status = nil
+}
+
+// SetChannels sets the "channels" field.
+func (m *DigestSendMutation) SetChannels(s []string) {
+	m.channels = &s
+	m.appendchannels = nil
+}
+
+// Channels returns the value of the "channels" field in the mutation.
+func (m *DigestSendMutation) Channels() (r []string, exists bool) {
+	v := m.channels
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldChannels returns the old "channels" field's value of the DigestSend entity.
+// If the DigestSend object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DigestSendMutation) OldChannels(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldChannels is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldChannels requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldChannels: %w", err)
+	}
+	return oldValue.Channels, nil
+}
+
+// AppendChannels adds s to the "channels" field.
+func (m *DigestSendMutation) AppendChannels(s []string) {
+	m.appendchannels = append(m.appendchannels, s...)
+}
+
+// AppendedChannels returns the list of values that were appended to the "channels" field in this mutation.
+func (m *DigestSendMutation) AppendedChannels() ([]string, bool) {
+	if len(m.appendchannels) == 0 {
+		return nil, false
+	}
+	return m.appendchannels, true
+}
+
+// ClearChannels clears the value of the "channels" field.
+func (m *DigestSendMutation) ClearChannels() {
+	m.channels = nil
+	m.appendchannels = nil
+	m.clearedFields[digestsend.FieldChannels] = struct{}{}
+}
+
+// ChannelsCleared returns if the "channels" field was cleared in this mutation.
+func (m *DigestSendMutation) ChannelsCleared() bool {
+	_, ok := m.clearedFields[digestsend.FieldChannels]
+	return ok
+}
+
+// ResetChannels resets all changes to the "channels" field.
+func (m *DigestSendMutation) ResetChannels() {
+	m.channels = nil
+	m.appendchannels = nil
+	delete(m.clearedFields, digestsend.FieldChannels)
+}
+
+// SetItemCount sets the "item_count" field.
+func (m *DigestSendMutation) SetItemCount(i int64) {
+	m.item_count = &i
+	m.additem_count = nil
+}
+
+// ItemCount returns the value of the "item_count" field in the mutation.
+func (m *DigestSendMutation) ItemCount() (r int64, exists bool) {
+	v := m.item_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldItemCount returns the old "item_count" field's value of the DigestSend entity.
+// If the DigestSend object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DigestSendMutation) OldItemCount(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldItemCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldItemCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldItemCount: %w", err)
+	}
+	return oldValue.ItemCount, nil
+}
+
+// AddItemCount adds i to the "item_count" field.
+func (m *DigestSendMutation) AddItemCount(i int64) {
+	if m.additem_count != nil {
+		*m.additem_count += i
+	} else {
+		m.additem_count = &i
+	}
+}
+
+// AddedItemCount returns the value that was added to the "item_count" field in this mutation.
+func (m *DigestSendMutation) AddedItemCount() (r int64, exists bool) {
+	v := m.additem_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetItemCount resets all changes to the "item_count" field.
+func (m *DigestSendMutation) ResetItemCount() {
+	m.item_count = nil
+	m.additem_count = nil
+}
+
+// SetClaimedAt sets the "claimed_at" field.
+func (m *DigestSendMutation) SetClaimedAt(t time.Time) {
+	m.claimed_at = &t
+}
+
+// ClaimedAt returns the value of the "claimed_at" field in the mutation.
+func (m *DigestSendMutation) ClaimedAt() (r time.Time, exists bool) {
+	v := m.claimed_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldClaimedAt returns the old "claimed_at" field's value of the DigestSend entity.
+// If the DigestSend object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DigestSendMutation) OldClaimedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldClaimedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldClaimedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldClaimedAt: %w", err)
+	}
+	return oldValue.ClaimedAt, nil
+}
+
+// ResetClaimedAt resets all changes to the "claimed_at" field.
+func (m *DigestSendMutation) ResetClaimedAt() {
+	m.claimed_at = nil
+}
+
+// SetSentAt sets the "sent_at" field.
+func (m *DigestSendMutation) SetSentAt(t time.Time) {
+	m.sent_at = &t
+}
+
+// SentAt returns the value of the "sent_at" field in the mutation.
+func (m *DigestSendMutation) SentAt() (r time.Time, exists bool) {
+	v := m.sent_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSentAt returns the old "sent_at" field's value of the DigestSend entity.
+// If the DigestSend object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DigestSendMutation) OldSentAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSentAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSentAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSentAt: %w", err)
+	}
+	return oldValue.SentAt, nil
+}
+
+// ClearSentAt clears the value of the "sent_at" field.
+func (m *DigestSendMutation) ClearSentAt() {
+	m.sent_at = nil
+	m.clearedFields[digestsend.FieldSentAt] = struct{}{}
+}
+
+// SentAtCleared returns if the "sent_at" field was cleared in this mutation.
+func (m *DigestSendMutation) SentAtCleared() bool {
+	_, ok := m.clearedFields[digestsend.FieldSentAt]
+	return ok
+}
+
+// ResetSentAt resets all changes to the "sent_at" field.
+func (m *DigestSendMutation) ResetSentAt() {
+	m.sent_at = nil
+	delete(m.clearedFields, digestsend.FieldSentAt)
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *DigestSendMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *DigestSendMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the DigestSend entity.
+// If the DigestSend object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DigestSendMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *DigestSendMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// Where appends a list predicates to the DigestSendMutation builder.
+func (m *DigestSendMutation) Where(ps ...predicate.DigestSend) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the DigestSendMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *DigestSendMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.DigestSend, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *DigestSendMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *DigestSendMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (DigestSend).
+func (m *DigestSendMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *DigestSendMutation) Fields() []string {
+	fields := make([]string, 0, 10)
+	if m.tenant_id != nil {
+		fields = append(fields, digestsend.FieldTenantID)
+	}
+	if m.kind != nil {
+		fields = append(fields, digestsend.FieldKind)
+	}
+	if m.recipient_key != nil {
+		fields = append(fields, digestsend.FieldRecipientKey)
+	}
+	if m.local_date != nil {
+		fields = append(fields, digestsend.FieldLocalDate)
+	}
+	if m.status != nil {
+		fields = append(fields, digestsend.FieldStatus)
+	}
+	if m.channels != nil {
+		fields = append(fields, digestsend.FieldChannels)
+	}
+	if m.item_count != nil {
+		fields = append(fields, digestsend.FieldItemCount)
+	}
+	if m.claimed_at != nil {
+		fields = append(fields, digestsend.FieldClaimedAt)
+	}
+	if m.sent_at != nil {
+		fields = append(fields, digestsend.FieldSentAt)
+	}
+	if m.created_at != nil {
+		fields = append(fields, digestsend.FieldCreatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *DigestSendMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case digestsend.FieldTenantID:
+		return m.TenantID()
+	case digestsend.FieldKind:
+		return m.Kind()
+	case digestsend.FieldRecipientKey:
+		return m.RecipientKey()
+	case digestsend.FieldLocalDate:
+		return m.LocalDate()
+	case digestsend.FieldStatus:
+		return m.Status()
+	case digestsend.FieldChannels:
+		return m.Channels()
+	case digestsend.FieldItemCount:
+		return m.ItemCount()
+	case digestsend.FieldClaimedAt:
+		return m.ClaimedAt()
+	case digestsend.FieldSentAt:
+		return m.SentAt()
+	case digestsend.FieldCreatedAt:
+		return m.CreatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *DigestSendMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case digestsend.FieldTenantID:
+		return m.OldTenantID(ctx)
+	case digestsend.FieldKind:
+		return m.OldKind(ctx)
+	case digestsend.FieldRecipientKey:
+		return m.OldRecipientKey(ctx)
+	case digestsend.FieldLocalDate:
+		return m.OldLocalDate(ctx)
+	case digestsend.FieldStatus:
+		return m.OldStatus(ctx)
+	case digestsend.FieldChannels:
+		return m.OldChannels(ctx)
+	case digestsend.FieldItemCount:
+		return m.OldItemCount(ctx)
+	case digestsend.FieldClaimedAt:
+		return m.OldClaimedAt(ctx)
+	case digestsend.FieldSentAt:
+		return m.OldSentAt(ctx)
+	case digestsend.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown DigestSend field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *DigestSendMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case digestsend.FieldTenantID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTenantID(v)
+		return nil
+	case digestsend.FieldKind:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetKind(v)
+		return nil
+	case digestsend.FieldRecipientKey:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRecipientKey(v)
+		return nil
+	case digestsend.FieldLocalDate:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLocalDate(v)
+		return nil
+	case digestsend.FieldStatus:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStatus(v)
+		return nil
+	case digestsend.FieldChannels:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetChannels(v)
+		return nil
+	case digestsend.FieldItemCount:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetItemCount(v)
+		return nil
+	case digestsend.FieldClaimedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetClaimedAt(v)
+		return nil
+	case digestsend.FieldSentAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSentAt(v)
+		return nil
+	case digestsend.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown DigestSend field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *DigestSendMutation) AddedFields() []string {
+	var fields []string
+	if m.additem_count != nil {
+		fields = append(fields, digestsend.FieldItemCount)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *DigestSendMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case digestsend.FieldItemCount:
+		return m.AddedItemCount()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *DigestSendMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case digestsend.FieldItemCount:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddItemCount(v)
+		return nil
+	}
+	return fmt.Errorf("unknown DigestSend numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *DigestSendMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(digestsend.FieldChannels) {
+		fields = append(fields, digestsend.FieldChannels)
+	}
+	if m.FieldCleared(digestsend.FieldSentAt) {
+		fields = append(fields, digestsend.FieldSentAt)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *DigestSendMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *DigestSendMutation) ClearField(name string) error {
+	switch name {
+	case digestsend.FieldChannels:
+		m.ClearChannels()
+		return nil
+	case digestsend.FieldSentAt:
+		m.ClearSentAt()
+		return nil
+	}
+	return fmt.Errorf("unknown DigestSend nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *DigestSendMutation) ResetField(name string) error {
+	switch name {
+	case digestsend.FieldTenantID:
+		m.ResetTenantID()
+		return nil
+	case digestsend.FieldKind:
+		m.ResetKind()
+		return nil
+	case digestsend.FieldRecipientKey:
+		m.ResetRecipientKey()
+		return nil
+	case digestsend.FieldLocalDate:
+		m.ResetLocalDate()
+		return nil
+	case digestsend.FieldStatus:
+		m.ResetStatus()
+		return nil
+	case digestsend.FieldChannels:
+		m.ResetChannels()
+		return nil
+	case digestsend.FieldItemCount:
+		m.ResetItemCount()
+		return nil
+	case digestsend.FieldClaimedAt:
+		m.ResetClaimedAt()
+		return nil
+	case digestsend.FieldSentAt:
+		m.ResetSentAt()
+		return nil
+	case digestsend.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown DigestSend field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *DigestSendMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *DigestSendMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *DigestSendMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *DigestSendMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *DigestSendMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *DigestSendMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *DigestSendMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown DigestSend unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *DigestSendMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown DigestSend edge %s", name)
 }
 
 // NotificationPermissionMutation represents an operation that mutates the NotificationPermission nodes in the graph.

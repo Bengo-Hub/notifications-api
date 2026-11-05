@@ -19,6 +19,30 @@
 | `digitika.access_code.requested` | Parent portal one-time code; email `auth/otp_verification`, WhatsApp `auth_otp` from the platform number, never gated | codevertex-website |
 | `digitika.contact.received` | Website contact form enquiry. The visitor gets `digitika/contact_form_reply` by email and the `codevertex_enquiry_received_v1_btn` WhatsApp template (phone is required on the form; payload `serviceLabel` names the service). The team gets `platform/website_enquiry` by email only at `PLATFORM_ALERT_EMAILS`, locked so no preference can mute it | codevertex-website |
 | `digitika.certificate.issued` | Course certificate issued; `digitika/certificate_issued` to the learner and any guardian | codevertex-website |
+| `hadia.gift.received` | A gift reached a Hadia registry. The guest gets `hadia/gift_receipt` when their phone is known. The owner gets `hadia/gift_owner_alert` at once when `owner_digest` is `instant` (or absent); when it is `daily` the alert is held in `digest_items` (one row per event id) and the owner gets one `hadia/owner_gift_digest` email and one `hadia_owner_gift_digest_v1_btn` WhatsApp a day (see below). Consumer `cmd/worker/hadia_consumer.go` | hadia-api |
+
+### Daily summaries (`cmd/worker/hadia_digest.go`, N3, 2026-11-06)
+
+The scheduled notifier (`cmd/worker/scheduled_notifications.go`) runs the digest job every five
+minutes on every pod. From 18:00 Africa/Nairobi (tenant metadata `digest_hour` in auth-api changes
+the hour) it sends each owner with held gifts one email and one WhatsApp: the count, the total,
+one line per registry and a button to the gift log (`app/registries/<id>/gifts`, or `app` when the
+day covers several registries). Guest names and messages are never in it. A day with no gifts
+sends nothing.
+
+- A gift received at or after the hour belongs to the next day's summary; one that reaches the
+  worker after that day's summary went out waits for the next day.
+- Once a day per owner: a `digest_sends` row unique on (tenant, kind, owner key, date) is claimed
+  before anything is sent. Idempotency key `digest:{tenant}:{owner key}:{date}`; the owner key is a
+  hash of hadia-api's `owner_id`, never the address.
+- Crash safe: each queued channel is written on the row, so after the claim's ten minute lease the
+  next run finishes only the missing channel, with the items it started with.
+- Opt-out: an address on the tenant's suppression list with scope `all` gets nothing on that
+  channel. A marketing opt-out does not stop it (the summary is transactional).
+- Preferences: `hadia/owner_gift_digest` is in the same class as `hadia/gift_owner_alert`
+  (optional), so a tenant that turned owner alerts off gets neither.
+- Sent summaries and their items are removed after seven days (the items hold the owner's email
+  and phone).
 
 Digitika events carry the learner (`studentId`, `studentName`, `studentEmail` real address only,
 `studentPhone`) and the guardian (`guardianName`, `guardianEmail`, `guardianPhone`).

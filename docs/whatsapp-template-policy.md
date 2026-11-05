@@ -31,7 +31,7 @@ Meta fixes a button's domain when the template is approved; only the suffix vari
 | POS receipt | `https://r.codevertexafrica.com/{{1}}` | receipt short code |
 | Platform invoice (subscription, support) | `https://books.codevertexafrica.com/{{1}}` | `i/<public token>` (the invoice page), else the pay page path |
 | Maskani portal and console | `https://maskaniapp.codevertexafrica.com/{{1}}` | `<tenant-slug>/portal`, `<slug>/portal/purchase`, `<slug>/portal/walk-ins/<id>`, `<slug>/security/incidents/<id>`, `<slug>/works/<id>` |
-| Hadia gift registry (one client tenant on its own domain, so no slug) | `https://hadiafrica.com/{{1}}` | `r/<code>` (guest page), `r/<code>/reserved/<token>` (reservation manage page), `app/registries/<id>` (owner). `cmd/worker/hadia_consumer.go` sends no button for a link on any other host |
+| Hadia gift registry (one client tenant on its own domain, so no slug) | `https://hadiafrica.com/{{1}}` | `r/<code>` (guest page), `r/<code>/reserved/<token>` (reservation manage page), `app/registries/<id>` (owner), `app/registries/<id>/gifts` (gift log), `app` (owner dashboard, the daily gift summary when it covers several registries). `cmd/worker/hadia_consumer.go` sends no button for a link on any other host |
 | Rider app (a rider's own screens) | `https://riderapp.codevertexafrica.com/{{1}}` | `<tenant-slug>/profile` |
 | Logistics app (the business's dispatch console) | `https://logistics.codevertexafrica.com/{{1}}` | `<tenant-slug>/vehicles` |
 | Digitika and the company website (enrollment page, student and parent portal, certificate check, enquiry reply) | `https://codevertexafrica.com/{{1}}` | `digitika/success?reference=<ref>`, `student`, `digitika/parent`, `certificates/<token>`, `services` (website enquiry reply) |

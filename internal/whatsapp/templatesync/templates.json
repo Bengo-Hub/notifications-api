@@ -1086,6 +1086,17 @@
     ]
   },
   {
+    "name": "hadia_owner_gift_digest_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/hadia/owner_gift_digest.txt (params: name, day, gifts, total, where; button: app/registries/<id>/gifts or app)",
+    "body": "Hello {{1}},\n\nHere is your daily Hadia summary. On {{2}} you received *{{3}}* worth *{{4}}* in total for {{5}}. Open your gift log to see each gift and thank your guests.",
+    "example": ["Amina", "5 Nov 2026", "3 gifts", "KES 12,500", "Amina and Tom's wedding"],
+    "buttons": [
+      {"type": "URL", "text": "See gift log", "url": "https://hadiafrica.com/{{1}}", "example": ["app/registries/0b6c2b8e/gifts"]}
+    ]
+  },
+  {
     "name": "hadia_payout_completed_v1_btn",
     "category": "UTILITY",
     "language": "en_US",

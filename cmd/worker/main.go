@@ -439,11 +439,22 @@ func main() {
 	// Start POS event consumer (pos-service → order/payment notifications)
 	startPosConsumer(ctx, nc, js, cfg, tr, logg)
 
-	// Start scheduled plan expiry warning notifier
+	// Hadia's daily owner gift summary (N3): held alerts live in Postgres. Without the pool every
+	// owner alert goes out at once, as before.
+	var hadiaDigestJob *hadiaDigest
+	if dbPool != nil {
+		hadiaDigestJob = newHadiaDigest(dbPool, tr, nc, cfg, broadcastEngine.Suppress, logg)
+	}
+
+	// Start the scheduled jobs: plan expiry warnings (when subscriptions-api is configured) and the
+	// daily summaries.
+	var subsClient *serviceclient.Client
 	if cfg.Services.SubscriptionsAPI != "" {
 		subsCfg := serviceclient.DefaultConfig(cfg.Services.SubscriptionsAPI, "subscriptions-api", logg)
-		subsClient := serviceclient.New(subsCfg)
-		scheduledNotifier := NewScheduledNotifier(logg, subsClient, nc, cfg, tr, nilIfTyped(redisClient))
+		subsClient = serviceclient.New(subsCfg)
+	}
+	if subsClient != nil || hadiaDigestJob != nil {
+		scheduledNotifier := NewScheduledNotifier(logg, subsClient, nc, cfg, tr, nilIfTyped(redisClient)).WithDigest(hadiaDigestJob)
 		scheduledNotifier.Start(ctx)
 	}
 
@@ -457,7 +468,7 @@ func main() {
 	startMaskaniConsumer(ctx, nc, js, cfg, tr, client, logg)
 
 	// Start hadia event consumer (gift registry: share message, reservations, one-time codes)
-	startHadiaConsumer(ctx, nc, js, cfg, tr, logg)
+	startHadiaConsumer(ctx, nc, js, cfg, tr, hadiaDigestJob, logg)
 
 	// Ensure digitika JetStream stream exists (published by codevertex-website)
 	if _, streamErr := js.StreamInfo("digitika"); streamErr != nil {

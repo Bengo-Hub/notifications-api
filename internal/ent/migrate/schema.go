@@ -229,6 +229,83 @@ var (
 			},
 		},
 	}
+	// DigestItemsColumns holds the columns for the "digest_items" table.
+	DigestItemsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "tenant_id", Type: field.TypeUUID},
+		{Name: "kind", Type: field.TypeString},
+		{Name: "recipient_key", Type: field.TypeString},
+		{Name: "local_date", Type: field.TypeString},
+		{Name: "group_key", Type: field.TypeString, Default: ""},
+		{Name: "event_id", Type: field.TypeString},
+		{Name: "amount_minor", Type: field.TypeInt64, Default: 0},
+		{Name: "data", Type: field.TypeJSON, Nullable: true},
+		{Name: "send_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+	}
+	// DigestItemsTable holds the schema information for the "digest_items" table.
+	DigestItemsTable = &schema.Table{
+		Name:       "digest_items",
+		Columns:    DigestItemsColumns,
+		PrimaryKey: []*schema.Column{DigestItemsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "digestitem_tenant_kind_event",
+				Unique:  true,
+				Columns: []*schema.Column{DigestItemsColumns[1], DigestItemsColumns[2], DigestItemsColumns[6]},
+			},
+			{
+				Name:    "digestitem_pending",
+				Unique:  false,
+				Columns: []*schema.Column{DigestItemsColumns[2], DigestItemsColumns[1], DigestItemsColumns[3], DigestItemsColumns[4]},
+				Annotation: &entsql.IndexAnnotation{
+					Where: "send_id IS NULL",
+				},
+			},
+			{
+				Name:    "digestitem_send_id",
+				Unique:  false,
+				Columns: []*schema.Column{DigestItemsColumns[9]},
+			},
+			{
+				Name:    "digestitem_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{DigestItemsColumns[10]},
+			},
+		},
+	}
+	// DigestSendsColumns holds the columns for the "digest_sends" table.
+	DigestSendsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "tenant_id", Type: field.TypeUUID},
+		{Name: "kind", Type: field.TypeString},
+		{Name: "recipient_key", Type: field.TypeString},
+		{Name: "local_date", Type: field.TypeString},
+		{Name: "status", Type: field.TypeString, Default: "sending"},
+		{Name: "channels", Type: field.TypeJSON, Nullable: true},
+		{Name: "item_count", Type: field.TypeInt64, Default: 0},
+		{Name: "claimed_at", Type: field.TypeTime},
+		{Name: "sent_at", Type: field.TypeTime, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+	}
+	// DigestSendsTable holds the schema information for the "digest_sends" table.
+	DigestSendsTable = &schema.Table{
+		Name:       "digest_sends",
+		Columns:    DigestSendsColumns,
+		PrimaryKey: []*schema.Column{DigestSendsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "digestsend_once_per_day",
+				Unique:  true,
+				Columns: []*schema.Column{DigestSendsColumns[1], DigestSendsColumns[2], DigestSendsColumns[3], DigestSendsColumns[4]},
+			},
+			{
+				Name:    "digestsend_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{DigestSendsColumns[10]},
+			},
+		},
+	}
 	// NotificationPermissionsColumns holds the columns for the "notification_permissions" table.
 	NotificationPermissionsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -947,6 +1024,8 @@ var (
 		BroadcastRecipientsTable,
 		DeliveryLogsTable,
 		DeviceTokensTable,
+		DigestItemsTable,
+		DigestSendsTable,
 		NotificationPermissionsTable,
 		NotificationRolesTable,
 		NotificationRolePermissionsTable,

@@ -17,8 +17,9 @@ import (
 	"github.com/bengobox/notifications-api/internal/messaging"
 )
 
-// ScheduledNotifier periodically checks for expiring subscriptions and
-// dispatches plan expiry warning emails to tenant admins.
+// ScheduledNotifier is the worker's timed jobs: it periodically checks for expiring subscriptions
+// and dispatches plan expiry warning emails to tenant admins, and runs the daily summary job
+// (hadia_digest.go) every few minutes.
 type ScheduledNotifier struct {
 	logger              *zap.Logger
 	subscriptionsClient *serviceclient.Client
@@ -27,6 +28,15 @@ type ScheduledNotifier struct {
 	tr                  *tenantResolver
 	rdb                 redis.UniversalClient
 	interval            time.Duration
+	digest              *hadiaDigest
+	digestEvery         time.Duration
+}
+
+// WithDigest adds the daily summary job; nil leaves it off.
+func (s *ScheduledNotifier) WithDigest(d *hadiaDigest) *ScheduledNotifier {
+	s.digest = d
+	s.digestEvery = digestEvery
+	return s
 }
 
 // NewScheduledNotifier creates a new scheduled notifier.
@@ -62,6 +72,17 @@ func (s *ScheduledNotifier) run(ctx context.Context) {
 	ticker := time.NewTicker(s.interval)
 	defer ticker.Stop()
 
+	// The digest job checks often and sends only what is due, so a restart near 18:00 still sends
+	// that day's summaries, a little late at worst. Each run claims its summaries in the database,
+	// so every pod may run it.
+	var digestTick <-chan time.Time
+	if s.digest != nil {
+		dt := time.NewTicker(s.digestEvery)
+		defer dt.Stop()
+		digestTick = dt.C
+		s.runDigest(ctx)
+	}
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -69,8 +90,20 @@ func (s *ScheduledNotifier) run(ctx context.Context) {
 			return
 		case <-ticker.C:
 			s.checkExpiringSubscriptions(ctx)
+		case <-digestTick:
+			s.runDigest(ctx)
 		}
 	}
+}
+
+// runDigest runs one pass of the daily summary job; a panic is logged, never fatal to the loop.
+func (s *ScheduledNotifier) runDigest(ctx context.Context) {
+	defer func() {
+		if r := recover(); r != nil {
+			s.logger.Error("digest job panicked", zap.Any("panic", r))
+		}
+	}()
+	s.digest.Run(ctx)
 }
 
 // expiringSubscription matches the subscriptions-api ListExpiring response.
