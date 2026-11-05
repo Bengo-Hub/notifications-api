@@ -1,0 +1,3 @@
+Hello {{ or .name "there" }},
+
+The destination of the Hadia commission sweep was changed. The new channel is not paid for 48 hours, so please confirm that this change was expected and open a case if it was not.

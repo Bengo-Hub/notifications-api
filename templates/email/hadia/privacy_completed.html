@@ -1,0 +1,10 @@
+{{ define "content" }}
+  <p>Hello {{ or .name "there" }},</p>
+  <h2>Your data request</h2>
+  <p>Your <strong>{{ .kind }}</strong> data request to Hadia has been updated and is now <strong>{{ .status }}</strong>.</p>
+  {{ if .action_link }}
+  <p>
+    <a class="button" href="{{ .action_link }}">View the status</a>
+  </p>
+  {{ end }}
+{{ end }}

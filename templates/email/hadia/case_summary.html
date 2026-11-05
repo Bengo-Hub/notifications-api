@@ -1,0 +1,15 @@
+{{ define "content" }}
+  <p>Hello {{ or .name "there" }},</p>
+  <h2>Exception queue for {{ .day }}</h2>
+  <table>
+    <tr><td>Open</td><td><strong>{{ .open }}</strong></td></tr>
+    <tr><td>In progress</td><td>{{ .in_progress }}</td></tr>
+    <tr><td>Past their due date</td><td>{{ .overdue }}</td></tr>
+    <tr><td>Urgent</td><td>{{ .urgent }}</td></tr>
+  </table>
+  {{ if .action_link }}
+  <p>
+    <a class="button" href="{{ .action_link }}">Open the exception queue</a>
+  </p>
+  {{ end }}
+{{ end }}

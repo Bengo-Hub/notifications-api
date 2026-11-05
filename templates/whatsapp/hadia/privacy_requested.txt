@@ -1,0 +1,3 @@
+Hello {{ or .name "there" }},
+
+A new *{{ .kind }}* data request reached Hadia and is due by {{ .due_at }}. Please open the console to review it and record what was done before that date.

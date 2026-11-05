@@ -1,0 +1,3 @@
+Hello {{ or .name "there" }},
+
+Hadia staff updated your registry {{ .registry }}. The action taken was: *{{ .action }}*. We sent the reason to your email, and you can contact Hadia support if you have any questions.

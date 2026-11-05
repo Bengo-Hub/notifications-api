@@ -1,0 +1,10 @@
+{{ define "content" }}
+  <p>Hello {{ or .name "there" }},</p>
+  <h2>A new data request</h2>
+  <p>A new <strong>{{ .kind }}</strong> data request reached Hadia and is due by {{ .due_at }}. Please review it and record what was done before that date.</p>
+  {{ if .action_link }}
+  <p>
+    <a class="button" href="{{ .action_link }}">Open data requests</a>
+  </p>
+  {{ end }}
+{{ end }}

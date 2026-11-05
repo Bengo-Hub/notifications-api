@@ -1,0 +1,3 @@
+Hello {{ or .name "there" }},
+
+Your *{{ .kind }}* data request to Hadia has been updated and is now *{{ .status }}*. You can open the status page below to see the details of your request.

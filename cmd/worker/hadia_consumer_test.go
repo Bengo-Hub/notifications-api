@@ -54,6 +54,9 @@ func TestHadiaMappingsHaveTemplates(t *testing.T) {
 			if _, err := os.Stat(filepath.Join("..", "..", "templates", "whatsapp", wa+".txt")); err != nil {
 				t.Errorf("%s: whatsapp template %s missing", event, wa)
 			}
+			if m.WAVariant != nil {
+				continue // TestHadiaPayoutCompletedShort checks the variants
+			}
 			if !meta[m.WATemplate] {
 				t.Errorf("%s: %s is not declared in templates.json", event, m.WATemplate)
 			}
@@ -61,6 +64,27 @@ func TestHadiaMappingsHaveTemplates(t *testing.T) {
 				t.Errorf("%s: %s needs a PathKey or a FixedPath for its button", event, m.WATemplate)
 			}
 		}
+	}
+}
+
+// A split payout that stopped early says what went back, in a template of its own.
+func TestHadiaPayoutCompletedShort(t *testing.T) {
+	m := hadiaMappings["payout.completed"][0]
+	base := map[string]any{"owner_name": "Amina", "registry_title": "Wedding", "gross": "150000.00", "net": "150000.00", "currency": "KES", "reference": "ESC-A-1"}
+	if name, params := m.WAVariant(m.Data(base, &tenantInfo{})); name != "hadia_payout_completed_v1_btn" || len(params) != 4 {
+		t.Fatalf("%s %v", name, params)
+	}
+	base["returned"] = "300000.00"
+	name, params := m.WAVariant(m.Data(base, &tenantInfo{}))
+	if name != "hadia_payout_completed_part_v1_btn" || len(params) != 5 {
+		t.Fatalf("%s %v", name, params)
+	}
+	raw, err := os.ReadFile(filepath.Join("..", "..", "internal", "whatsapp", "templatesync", "templates.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(raw), `"hadia_payout_completed_part_v1_btn"`) || !strings.Contains(string(raw), `"hadia_payout_completed_v1_btn"`) {
+		t.Error("a payout variant is not declared in templates.json")
 	}
 }
 

@@ -191,12 +191,21 @@ var hadiaMappings = map[string][]hadiaMessage{
 		TemplateID: "hadia/payout_completed", PhoneKey: "owner_phone", EmailKey: "owner_email",
 		Subject: func(map[string]any) string { return "Your Hadia payout was sent" },
 		Data: func(p map[string]any, _ *tenantInfo) map[string]any {
-			return map[string]any{"name": waParam(p["owner_name"], "there"), "registry": mStr(p, "registry_title"),
+			d := map[string]any{"name": waParam(p["owner_name"], "there"), "registry": mStr(p, "registry_title"),
 				"gross": mMoney(p, "gross"), "commission": mMoneyOr(p, "commission", "KES 0"), "net": mMoney(p, "net"),
 				"reference": waParam(p["reference"], "-")}
+			// A refused part stopped a split payout: the rest went back to the registry.
+			if mPositive(p, "returned") {
+				d["returned"] = mMoney(p, "returned")
+			}
+			return d
 		},
-		WATemplate: "hadia_payout_completed_v1_btn",
-		WAParams:   func(d map[string]any) []string { return mParams(d, "name", "net", "registry", "reference") },
+		WAVariant: func(d map[string]any) (string, []string) {
+			if _, short := d["returned"]; short {
+				return "hadia_payout_completed_part_v1_btn", mParams(d, "name", "net", "registry", "reference", "returned")
+			}
+			return "hadia_payout_completed_v1_btn", mParams(d, "name", "net", "registry", "reference")
+		},
 	}}},
 	// A payout that did not go through. Each reason gets its own truthful message; the provider's own
 	// words stay out because they are technical and Hadia staff act on them. An unconfirmed payout must
@@ -291,6 +300,74 @@ var hadiaMappings = map[string][]hadiaMessage{
 			WAParams:   func(d map[string]any) []string { return mParams(d, "name", "priority", "kind") },
 		},
 	}},
+	// The commission sweep, for Hadia's finance contact. A changed destination could be a stolen login,
+	// so it alone also goes by WhatsApp.
+	"finance.alert": {{
+		FixedPath:  "admin/exceptions",
+		WhatsAppIf: func(p map[string]any) bool { return mStr(p, "kind") == "sweep_destination_changed" },
+		maskaniMapping: maskaniMapping{
+			TemplateID: "hadia/finance_alert", Staff: true,
+			Subject: func(p map[string]any) string {
+				if mStr(p, "kind") == "sweep_destination_changed" {
+					return "The Hadia commission sweep has a new destination"
+				}
+				return "The Hadia commission sweep started"
+			},
+			Data: func(p map[string]any, _ *tenantInfo) map[string]any {
+				return map[string]any{"name": "Hadia finance", "summary": mStr(p, "summary"), "reference": mStr(p, "reference")}
+			},
+			WATemplate: "hadia_finance_alert_v1_btn",
+			WAParams:   func(d map[string]any) []string { return mParams(d, "name") },
+		},
+	}},
+	// The daily count of open cases. WhatsApp only when something urgent is waiting.
+	"case.summary": {{
+		FixedPath:  "admin/exceptions",
+		WhatsAppIf: func(p map[string]any) bool { return mPositive(p, "urgent") },
+		maskaniMapping: maskaniMapping{
+			TemplateID: "hadia/case_summary", Staff: true,
+			Subject: func(p map[string]any) string { return "Hadia exception queue for " + mStr(p, "day") },
+			Data: func(p map[string]any, _ *tenantInfo) map[string]any {
+				return map[string]any{"name": "Hadia team", "day": mStr(p, "day"), "open": fmt.Sprint(p["open"]), "in_progress": fmt.Sprint(p["in_progress"]),
+					"overdue": fmt.Sprint(p["overdue"]), "urgent": fmt.Sprint(p["urgent"])}
+			},
+			WATemplate: "hadia_case_summary_v1_btn",
+			WAParams:   func(d map[string]any) []string { return mParams(d, "name", "urgent", "open", "overdue") },
+		},
+	}},
+	// Staff changed a registry. The reason is free text, so it stays in the email.
+	"registry.moderated": {{PathKey: "owner_url", maskaniMapping: maskaniMapping{
+		TemplateID: "hadia/registry_moderated", PhoneKey: "owner_phone", EmailKey: "owner_email",
+		Subject: func(map[string]any) string { return "Hadia changed your registry" },
+		Data: func(p map[string]any, _ *tenantInfo) map[string]any {
+			return map[string]any{"name": waParam(p["owner_name"], "there"), "registry": mStr(p, "registry_title"),
+				"action": mStr(p, "action"), "reason": mStr(p, "reason")}
+		},
+		WATemplate: "hadia_registry_moderated_v1_btn",
+		WAParams:   func(d map[string]any) []string { return mParams(d, "name", "registry", "action") },
+	}}},
+	// A data request has a legal deadline, so staff hear at once. The payload carries no contact details.
+	"privacy.requested": {{
+		FixedPath: "admin/privacy",
+		maskaniMapping: maskaniMapping{
+			TemplateID: "hadia/privacy_requested", Staff: true,
+			Subject: func(map[string]any) string { return "A new Hadia data request" },
+			Data: func(p map[string]any, _ *tenantInfo) map[string]any {
+				return map[string]any{"name": "Hadia team", "kind": mStr(p, "kind"), "due_at": mTime(p, "due_at")}
+			},
+			WATemplate: "hadia_privacy_requested_v1_btn",
+			WAParams:   func(d map[string]any) []string { return mParams(d, "name", "kind", "due_at") },
+		},
+	}},
+	"privacy.completed": {{PathKey: "status_url", maskaniMapping: maskaniMapping{
+		TemplateID: "hadia/privacy_completed", PhoneKey: "phone", EmailKey: "email",
+		Subject: func(map[string]any) string { return "Your Hadia data request" },
+		Data: func(p map[string]any, _ *tenantInfo) map[string]any {
+			return map[string]any{"name": "there", "kind": mStr(p, "kind"), "status": mStr(p, "status")}
+		},
+		WATemplate: "hadia_privacy_completed_v1_btn",
+		WAParams:   func(d map[string]any) []string { return mParams(d, "name", "kind", "status") },
+	}}},
 	// The owner released the reservation or the hold ended. No link: there is nothing to manage.
 	"reservation.released": {{maskaniMapping: maskaniMapping{
 		TemplateID: "hadia/reservation_released", PhoneKey: "guest_phone", EmailKey: "guest_email",

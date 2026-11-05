@@ -1,0 +1,12 @@
+{{ define "content" }}
+  <p>Hello {{ or .name "there" }},</p>
+  <h2>Hadia updated your registry</h2>
+  <p>Hadia staff updated {{ .registry }}. The action taken was: <strong>{{ .action }}</strong>.</p>
+  {{ if .reason }}<p>The reason: {{ .reason }}</p>{{ end }}
+  <p>If you have any questions, please contact Hadia support.</p>
+  {{ if .action_link }}
+  <p>
+    <a class="button" href="{{ .action_link }}">View your registry</a>
+  </p>
+  {{ end }}
+{{ end }}

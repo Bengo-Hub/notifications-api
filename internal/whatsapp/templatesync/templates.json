@@ -999,6 +999,60 @@
     ]
   },
   {
+    "name": "hadia_payout_completed_part_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/hadia/payout_completed.txt, short variant (params: name, net, registry, reference, returned; button: app/registries/<id>/payouts)",
+    "body": "Hello {{1}},\n\nHadia paid *{{2}}* from {{3}} to your payout number (reference {{4}}). The other *{{5}}* could not be sent and went back to the registry, so you can ask for it again from your payouts page.",
+    "example": ["Amina", "KES 150,000", "Amina and Tom's wedding", "ESC-HAD123-1", "KES 300,000"],
+    "buttons": [{"type": "URL", "text": "View payouts", "url": "https://hadiafrica.com/{{1}}", "example": ["app/registries/0b6c2b8e/payouts"]}]
+  },
+  {
+    "name": "hadia_finance_alert_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/hadia/finance_alert.txt (params: name; button: admin/exceptions)",
+    "body": "Hello {{1}},\n\nThe destination of the Hadia commission sweep was changed. The new channel is not paid for 48 hours, so please confirm that this change was expected and open a case if it was not.",
+    "example": ["Hadia finance"],
+    "buttons": [{"type": "URL", "text": "Open the console", "url": "https://hadiafrica.com/{{1}}", "example": ["admin/exceptions"]}]
+  },
+  {
+    "name": "hadia_case_summary_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/hadia/case_summary.txt (params: name, urgent, open, overdue; button: admin/exceptions)",
+    "body": "Hello {{1}},\n\nThe Hadia exception queue has *{{2}}* urgent cases waiting today, out of {{3}} open cases, and {{4}} of them are past their due date. Please open the console to work through them.",
+    "example": ["Hadia team", "2", "9", "1"],
+    "buttons": [{"type": "URL", "text": "Open the queue", "url": "https://hadiafrica.com/{{1}}", "example": ["admin/exceptions"]}]
+  },
+  {
+    "name": "hadia_registry_moderated_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/hadia/registry_moderated.txt (params: name, registry, action; button: app/registries/<id>)",
+    "body": "Hello {{1}},\n\nHadia staff updated your registry {{2}}. The action taken was: *{{3}}*. We sent the reason to your email, and you can contact Hadia support if you have any questions.",
+    "example": ["Amina", "Amina and Tom's wedding", "hidden"],
+    "buttons": [{"type": "URL", "text": "View registry", "url": "https://hadiafrica.com/{{1}}", "example": ["app/registries/0b6c2b8e"]}]
+  },
+  {
+    "name": "hadia_privacy_requested_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/hadia/privacy_requested.txt (params: name, kind, due_at; button: admin/privacy)",
+    "body": "Hello {{1}},\n\nA new *{{2}}* data request reached Hadia and is due by {{3}}. Please open the console to review it and record what was done before that date.",
+    "example": ["Hadia team", "access", "5 Dec 2026"],
+    "buttons": [{"type": "URL", "text": "Open data requests", "url": "https://hadiafrica.com/{{1}}", "example": ["admin/privacy"]}]
+  },
+  {
+    "name": "hadia_privacy_completed_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/hadia/privacy_completed.txt (params: name, kind, status; button: status link)",
+    "body": "Hello {{1}},\n\nYour *{{2}}* data request to Hadia has been updated and is now *{{3}}*. You can open the status page below to see the details of your request.",
+    "example": ["there", "access", "completed"],
+    "buttons": [{"type": "URL", "text": "View status", "url": "https://hadiafrica.com/{{1}}", "example": ["help/privacy/status/0b6c2b8e"]}]
+  },
+  {
     "name": "hadia_case_opened_v1_btn",
     "category": "UTILITY",
     "language": "en_US",

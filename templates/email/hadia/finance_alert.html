@@ -1,0 +1,11 @@
+{{ define "content" }}
+  <p>Hello {{ or .name "there" }},</p>
+  <h2>Commission sweep</h2>
+  {{ if .summary }}<p>{{ .summary }}</p>{{ end }}
+  {{ if .reference }}<p>The reference is {{ .reference }}.</p>{{ end }}
+  {{ if .action_link }}
+  <p>
+    <a class="button" href="{{ .action_link }}">Open the console</a>
+  </p>
+  {{ end }}
+{{ end }}

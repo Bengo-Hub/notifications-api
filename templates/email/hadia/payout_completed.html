@@ -2,6 +2,7 @@
   <p>Hello {{ or .name "there" }},</p>
   <h2>Your payout was sent</h2>
   <p>Hadia paid <strong>{{ .net }}</strong> from {{ .registry }} to your payout number.</p>
+  {{ if .returned }}<p>The other <strong>{{ .returned }}</strong> could not be sent and went back to the registry, so you can ask for it again from your payouts page.</p>{{ end }}
   <table>
     <tr><td>Gifts released</td><td>{{ .gross }}</td></tr>
     <tr><td>Hadia commission</td><td>{{ .commission }}</td></tr>

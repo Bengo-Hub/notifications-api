@@ -1,0 +1,3 @@
+Hello {{ or .name "there" }},
+
+The Hadia exception queue has *{{ .urgent }}* urgent cases waiting today, out of {{ .open }} open cases, and {{ .overdue }} of them are past their due date. Please open the console to work through them.

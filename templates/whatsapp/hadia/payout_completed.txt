@@ -1,3 +1,3 @@
 Hello {{ or .name "there" }},
 
-Hadia paid *{{ .net }}* from {{ .registry }} to your payout number (reference {{ .reference }}). Thank you for using Hadia.
+{{ if .returned }}Hadia paid *{{ .net }}* from {{ .registry }} to your payout number (reference {{ .reference }}). The other *{{ .returned }}* could not be sent and went back to the registry, so you can ask for it again from your payouts page.{{ else }}Hadia paid *{{ .net }}* from {{ .registry }} to your payout number (reference {{ .reference }}). Thank you for using Hadia.{{ end }}
