@@ -673,12 +673,12 @@
     ]
   },
   {
-    "name": "maskani_visitor_pass_v3",
+    "name": "maskani_visitor_pass_v4",
     "category": "UTILITY",
     "language": "en_US",
-    "source": "whatsapp/maskani/visitor_pass.txt (params: visitor_name, estate, valid_from, valid_to, code)",
-    "body": "Hello {{1}},\n\nYour visit to *{{2}}* is confirmed for {{3}} to {{4}}. Your visit reference is *{{5}}*.\n\nPlease show this reference to the guard when you arrive.",
-    "example": ["Peter", "Shaba Village", "11 Oct 09:00", "11 Oct 21:00", "VIS-482915"]
+    "source": "whatsapp/maskani/visitor_pass.txt (params: visitor_name, host, place, valid_from, valid_to, booking)",
+    "body": "Hello {{1}},\n\n{{2}} has booked your visit to {{3}} from {{4}} to {{5}}.\n\nYour booking number is *{{6}}*. Please have it ready when you arrive.\n\nThank you.",
+    "example": ["Peter", "Jane Wanjiru", "unit B07 at Shaba Village", "11 Oct 09:00", "11 Oct 21:00", "482 915"]
   },
   {
     "name": "maskani_portal_invite_v2_btn",

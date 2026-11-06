@@ -1,5 +1,7 @@
 Hello {{ or .visitor_name "there" }},
 
-Your visit to *{{ .estate }}* is confirmed for {{ .valid_from }} to {{ .valid_to }}. Your visit reference is *{{ .code }}*.
+{{ .host }} has booked your visit to {{ .place }} from {{ .valid_from }} to {{ .valid_to }}.
 
-Please show this reference to the guard when you arrive.
+Your booking number is *{{ .booking }}*. Please have it ready when you arrive.
+
+Thank you.

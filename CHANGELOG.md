@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 ## [Unreleased]
 
 ### Changed
+- `maskani_visitor_pass_v4` replaces v3, which Meta refused as INCORRECT_CATEGORY (2026-11-06): the visitor's message now names who booked the visit and the unit (`host_name` and `unit_code` on maskani `pass.created`) and shows the booking number in two groups. Submit it from Templates, Sync.
 - SMS and WhatsApp billing moved to subscriptions-api (2026-10-19). The worker consumes units per send under a key of stream sequence and attempt, refunds when the provider rejects the message, and skips with a plain reason when the sender has no subscription, has not activated the channel, or has reached the unpaid overage limit. The HTTP API answers 402 early through the check call. Exempt tenants and platform scope sends are answered as exempt. The local wallet, WhatsApp plan and subscription services, `/billing/*` endpoints, platform billing and margin endpoints, the top-up and add-on consumers and the SMS and push usage events were removed. `notifications-export-wallets` (dry run by default) moves old SMS balances and active WhatsApp plans to subscriptions-api; the old tables stay until that is verified.
 
 ### Added

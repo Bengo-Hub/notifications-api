@@ -196,6 +196,38 @@ func mParams(d map[string]any, keys ...string) []string {
 	return out
 }
 
+// passHost names who booked a visit: the host from the event, else the estate's own office.
+func passHost(host, estate string) string {
+	if h := strings.TrimSpace(host); h != "" {
+		return h
+	}
+	if strings.TrimSpace(estate) == "" {
+		return "The estate office"
+	}
+	return "The " + estate + " office"
+}
+
+// passPlace is where the visit is: "unit B07 at Shaba Village", or the estate alone without a unit.
+func passPlace(unitCode, estate string) string {
+	if estate == "" {
+		estate = "the estate"
+	}
+	if u := strings.TrimSpace(unitCode); u != "" {
+		return "unit " + u + " at " + estate
+	}
+	return estate
+}
+
+// groupedCode shows a six-digit booking number as two groups ("482 915"): read aloud and typed the
+// same, and it never looks like a sign-in code. Other lengths pass through unchanged.
+func groupedCode(code string) string {
+	code = strings.TrimSpace(code)
+	if len(code) == 6 {
+		return code[:3] + " " + code[3:]
+	}
+	return code
+}
+
 func fixed(path string) func(map[string]any) string {
 	return func(map[string]any) string { return path }
 }
@@ -261,11 +293,15 @@ var maskaniMappings = map[string]maskaniMapping{
 		Subject: func(p map[string]any) string { return "Your gate code" },
 		Data: func(p map[string]any, ti *tenantInfo) map[string]any {
 			return map[string]any{"visitor_name": waParam(p["visitor_name"], "there"), "estate": ti.Name,
-				"code": mStr(p, "code"), "valid_from": mTime(p, "valid_from"), "valid_to": mTime(p, "valid_to")}
+				"code": mStr(p, "code"), "valid_from": mTime(p, "valid_from"), "valid_to": mTime(p, "valid_to"),
+				"host": passHost(mStr(p, "host_name"), ti.Name), "place": passPlace(mStr(p, "unit_code"), ti.Name),
+				"booking": groupedCode(mStr(p, "code"))}
 		},
-		WATemplate: "maskani_visitor_pass_v3",
+		// v3 was refused by Meta as INCORRECT_CATEGORY: a bare code shown to a guard reads as an access
+		// credential. v4 is a booking confirmation naming who booked the visit (2026-11-06).
+		WATemplate: "maskani_visitor_pass_v4",
 		WAParams: func(d map[string]any) []string {
-			return mParams(d, "visitor_name", "estate", "valid_from", "valid_to", "code")
+			return mParams(d, "visitor_name", "host", "place", "valid_from", "valid_to", "booking")
 		},
 		// A pass without a code (QR only) has nothing to send.
 		Skip: func(p map[string]any) bool { return mStr(p, "code") == "" },

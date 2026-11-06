@@ -70,6 +70,11 @@ working button: the suffix is the path of its link (`buttonURLSuffix`, `posButto
   characters.
 - A new wording is a new template name (`_v2`, `_v3`, ...); approved names are never edited in
   place. Deleted names cannot be reused for about four weeks.
+- A message to someone who is not the tenant's own customer (a visitor, a guest) must say who arranged
+  it for them and read as a confirmation of that arrangement: `maskani_visitor_pass_v3` ("your visit
+  reference is X, show it to the guard") was refused as `INCORRECT_CATEGORY` twice; v4 names the host
+  and the unit ("Jane has booked your visit to unit B07 at Shaba Village... your booking number is
+  482 915") and shows a six-digit number in two groups so it never reads as a sign-in code.
 - Meta rejects a UTILITY template as `INCORRECT_CATEGORY` when the wording reads as a login credential or
   a promotion. Keep these words out of bodies: password, login, username, sign in, one-time code, gate
   code, welcome, enjoy, thank you for choosing. Say "account details were sent to you separately" and
