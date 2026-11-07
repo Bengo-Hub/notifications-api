@@ -119,7 +119,7 @@ var Registry = []Type{
 	// ── Hadia (gift registry; owners and guests) ────────────────────────────
 	{Key: "hadia/registry_published", Label: "Registry is live", Group: "Gift registry", Class: ClassEssential},
 	{Key: "hadia/reservation_created", Label: "Gift reservation and manage link", Group: "Gift registry", Class: ClassEssential},
-	{Key: "hadia/reservation_owner_alert", Label: "A guest reserved a gift", Group: "Gift registry", Class: ClassOptional},
+	{Key: "hadia/reservation_owner_alert", Label: "A guest reserved a gift", Group: "Gift registry", Class: ClassEssential},
 	{Key: "hadia/reservation_purchased_owner", Label: "A guest bought a gift (confirm it arrived)", Group: "Gift registry", Class: ClassEssential},
 	{Key: "hadia/reservation_reminder", Label: "Gift reservation ending soon", Group: "Gift registry", Class: ClassEssential},
 	{Key: "hadia/reservation_released", Label: "Gift reservation ended", Group: "Gift registry", Class: ClassEssential},
@@ -131,10 +131,13 @@ var Registry = []Type{
 	{Key: "hadia/privacy_requested", Label: "New data request (staff)", Group: "Gift registry", Class: ClassEssential},
 	{Key: "hadia/privacy_completed", Label: "Data request updated", Group: "Gift registry", Class: ClassEssential},
 	{Key: "hadia/gift_receipt", Label: "Gift receipt", Group: "Gift registry", Class: ClassEssential},
-	{Key: "hadia/gift_owner_alert", Label: "You received a gift", Group: "Gift registry", Class: ClassOptional},
+	// Owner gift alerts are on by default (8 November 2026): each owner already chooses one message per
+	// gift or a daily summary in Hadia, and hadia-api sends only the one chosen. As optional (off unless
+	// the tenant switched them on) every gift alert was dropped, whatever the owner chose.
+	{Key: "hadia/gift_owner_alert", Label: "You received a gift", Group: "Gift registry", Class: ClassEssential},
 	// The daily summary an owner chose instead of one message per gift (N3); same class as the alert
 	// it replaces, so a tenant that switched owner alerts off gets neither.
-	{Key: "hadia/owner_gift_digest", Label: "Daily gift summary", Group: "Gift registry", Class: ClassOptional},
+	{Key: "hadia/owner_gift_digest", Label: "Daily gift summary", Group: "Gift registry", Class: ClassEssential},
 	{Key: "hadia/payout_completed", Label: "Payout sent", Group: "Gift registry", Class: ClassEssential},
 	{Key: "hadia/payout_delayed", Label: "Payout delayed", Group: "Gift registry", Class: ClassEssential},
 	{Key: "hadia/payout_declined", Label: "Payout not made", Group: "Gift registry", Class: ClassEssential},
