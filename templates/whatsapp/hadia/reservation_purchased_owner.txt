@@ -1,0 +1,3 @@
+Hello {{ .name }},
+
+{{ .guest }} says they bought *{{ .item }}* from your Hadia registry. When it reaches you, confirm it on your gift log.

@@ -152,6 +152,18 @@ var hadiaMappings = map[string][]hadiaMessage{
 			Skip:       func(p map[string]any) bool { return mStr(p, "owner_phone") == "" && mStr(p, "owner_email") == "" },
 		}},
 	},
+	// A guest marked a gift bought: the owner is asked to confirm it arrived on the gift log.
+	"reservation.purchased": {{PathKey: "owner_url", maskaniMapping: maskaniMapping{
+		TemplateID: "hadia/reservation_purchased_owner", PhoneKey: "owner_phone", EmailKey: "owner_email",
+		Subject: func(map[string]any) string { return "A gift is on its way" },
+		Data: func(p map[string]any, _ *tenantInfo) map[string]any {
+			return map[string]any{"name": waParam(p["owner_name"], "there"), "guest": waParam(p["guest_name"], "A guest"),
+				"item": mStr(p, "item_title"), "registry": mStr(p, "registry_title")}
+		},
+		WATemplate: "hadia_reservation_purchased_owner_v1_btn",
+		WAParams:   func(d map[string]any) []string { return mParams(d, "name", "guest", "item") },
+		Skip:       func(p map[string]any) bool { return mStr(p, "owner_phone") == "" && mStr(p, "owner_email") == "" },
+	}}},
 	// Two days before a hold ends.
 	"reservation.reminder": {{PathKey: "manage_url", maskaniMapping: maskaniMapping{
 		TemplateID: "hadia/reservation_reminder", PhoneKey: "guest_phone", EmailKey: "guest_email",

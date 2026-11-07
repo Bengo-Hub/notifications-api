@@ -950,6 +950,17 @@
     ]
   },
   {
+    "name": "hadia_reservation_purchased_owner_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/hadia/reservation_purchased_owner.txt (params: name, guest, item; button: app/registries/<id>/gifts)",
+    "body": "Hello {{1}},\n\n{{2}} says they bought *{{3}}* from your Hadia registry. When it reaches you, confirm it on your gift log.",
+    "example": ["Amina", "Baraka", "Dinner set"],
+    "buttons": [
+      {"type": "URL", "text": "Confirm it arrived", "url": "https://hadiafrica.com/{{1}}", "example": ["app/registries/0b6c2b8e/gifts"]}
+    ]
+  },
+  {
     "name": "hadia_reservation_owner_alert_v2_btn",
     "category": "UTILITY",
     "language": "en_US",
