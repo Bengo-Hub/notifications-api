@@ -355,6 +355,11 @@ func startAuthNotificationConsumer(ctx context.Context, nc *nats.Conn, cfg *conf
 			return
 		}
 
+		// Say which platform the code is for: a person can hold codes from several Codevertex apps.
+		brand, _ := payload["brand_name"].(string)
+		if brand == "" {
+			brand = "Codevertex"
+		}
 		msg := messaging.Message{
 			TenantID:    tenantID,
 			Channel:     "email",
@@ -363,11 +368,12 @@ func startAuthNotificationConsumer(ctx context.Context, nc *nats.Conn, cfg *conf
 			Target:      messaging.TargetCustomer,
 			To:          []string{email},
 			Data: map[string]any{
-				"name": email,
-				"otp":  otp,
+				"name":       email,
+				"otp":        otp,
+				"brand_name": brand,
 			},
 			Metadata: map[string]any{
-				"subject": "Your verification code",
+				"subject": "Your " + brand + " verification code",
 			},
 			RequestID:      uuid.New().String(),
 			IdempotencyKey: fmt.Sprintf("auth-otp-%s-%d", userID, time.Now().Unix()/300),
