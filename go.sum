@@ -14,6 +14,8 @@ github.com/Bengo-Hub/shared-events v0.10.1 h1:Rv2UEWbex6tJTrR9T7YIvA/z/Xc9u9ET07
 github.com/Bengo-Hub/shared-events v0.10.1/go.mod h1:yL2IdQYZP9ITesXzKL0Bx9yQsLMAUxk8lPnfM5cJ90g=
 github.com/Bengo-Hub/shared-events v0.11.0 h1:4ARROvi7hRDIM1iIFRxWVv2cryeOKj68LlbdPrwkN3Q=
 github.com/Bengo-Hub/shared-events v0.11.0/go.mod h1:yL2IdQYZP9ITesXzKL0Bx9yQsLMAUxk8lPnfM5cJ90g=
+github.com/Bengo-Hub/shared-events v0.11.1 h1:Xiiw+lHJ4FukkPnZPn4D+jiP4Efc8t6L0DI0LNfjH4s=
+github.com/Bengo-Hub/shared-events v0.11.1/go.mod h1:yL2IdQYZP9ITesXzKL0Bx9yQsLMAUxk8lPnfM5cJ90g=
 github.com/Bengo-Hub/shared-ratelimit v0.2.1 h1:kuWRW9H7uukEWhpYUrgxS+4F9KtHAGMEuUr+FrQ9m28=
 github.com/Bengo-Hub/shared-ratelimit v0.2.1/go.mod h1:mgs0NgS1jIpo83IrDHgd5k50660jH3TB8HKs29F+nm0=
 github.com/Bengo-Hub/shared-service-client v0.3.1 h1:Z8I2m4NPSLhIRUOS7T2/uS5Tq5MW8qBIFOZ2Wnev6Nk=
