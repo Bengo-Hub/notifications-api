@@ -58,11 +58,24 @@ func hadiaPath(link string) string {
 		return ""
 	}
 	base, _ := url.Parse(hadiaButtonBase)
-	host := strings.TrimPrefix(strings.ToLower(u.Host), "www.")
-	if host != base.Host {
+	host := strings.ToLower(u.Host)
+	// Hadia's own subdomains count too (staging.hadiafrica.com): only the path is kept, so the
+	// button still lands on the fixed template domain and can never point elsewhere.
+	if host != base.Host && !strings.HasSuffix(host, "."+base.Host) {
 		return ""
 	}
 	return strings.Trim(u.Path, "/")
+}
+
+// hadiaEmailBase is where email links open: the tenant's Hadia app URL from auth-api (service_urls
+// "hadia", then app_url), so staging mail opens staging. WhatsApp buttons keep hadiaButtonBase, the
+// domain Meta approved in each template.
+func hadiaEmailBase(ti *tenantInfo) string {
+	fallback := hadiaButtonBase
+	if ti != nil && ti.AppURL != "" {
+		fallback = ti.AppURL
+	}
+	return ti.ServiceURL("hadia", "", fallback)
 }
 
 func hadiaGuestData(p map[string]any, _ *tenantInfo) map[string]any {
@@ -460,7 +473,7 @@ func dispatchHadia(ctx context.Context, nc *nats.Conn, cfg *config.Config, ti *t
 		suffix = hadiaPath(mStr(p, msg.PathKey))
 	}
 	if suffix != "" {
-		data["action_link"] = hadiaButtonBase + "/" + suffix
+		data["action_link"] = hadiaEmailBase(ti) + "/" + suffix
 	}
 	scope := messaging.SenderScopeTenant
 	if msg.Platform {
