@@ -47,6 +47,9 @@ func TestHadiaMappingsHaveTemplates(t *testing.T) {
 			if _, err := os.Stat(filepath.Join("..", "..", "templates", "email", m.TemplateID+".html")); err != nil {
 				t.Errorf("%s: email template %s missing", event, m.TemplateID)
 			}
+			if m.PhoneKey == "" {
+				continue // an email-only message (staff.invited) has no WhatsApp template
+			}
 			wa := m.TemplateID
 			if m.WATemplateID != "" {
 				wa = m.WATemplateID

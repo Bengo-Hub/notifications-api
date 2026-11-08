@@ -1,0 +1,11 @@
+{{ define "content" }}
+  <p>Hello {{ or .name "there" }},</p>
+  <h2>You have been added to the Hadia team</h2>
+  <p>To get started, open the staff sign-in below and enter this email address. If this is your first time, choose Forgot password to set your own password. You will then set up an authenticator app, which every Hadia team member uses to sign in.</p>
+  {{ if .action_link }}
+  <p>
+    <a class="button" href="{{ .action_link }}">Open the staff sign-in</a>
+  </p>
+  {{ end }}
+  <p>If you were not expecting this, reply to this email or write to info@hadiafrica.com.</p>
+{{ end }}

@@ -155,6 +155,15 @@ var hadiaMappings = map[string][]hadiaMessage{
 	// A legal document changed materially (hadia-api legal notices, 8 November 2026): one event per
 	// owner. hadia-api sends no phone yet, so it goes by email; the WhatsApp template is declared for
 	// when Meta approves it.
+	// A new staff member's way in: an email only, with no password in it (they set their own).
+	"staff.invited": {{PathKey: "url", maskaniMapping: maskaniMapping{
+		TemplateID: "hadia/staff_invited", EmailKey: "email",
+		Subject: func(map[string]any) string { return "You have been added to the Hadia team" },
+		Data: func(p map[string]any, _ *tenantInfo) map[string]any {
+			return map[string]any{"name": waParam(p["name"], "there")}
+		},
+		Skip: func(p map[string]any) bool { return mStr(p, "email") == "" },
+	}}},
 	"legal.updated": {{PathKey: "url", maskaniMapping: maskaniMapping{
 		TemplateID: "hadia/legal_updated", PhoneKey: "owner_phone", EmailKey: "owner_email",
 		Subject: func(p map[string]any) string { return "We have updated our " + strings.ToLower(waParam(p["title"], "terms")) },
