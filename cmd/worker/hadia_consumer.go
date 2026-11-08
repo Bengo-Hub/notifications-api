@@ -27,6 +27,10 @@ import (
 // hadiaButtonBase is the domain fixed in every hadia_*_btn template.
 const hadiaButtonBase = "https://hadiafrica.com"
 
+// hadiaTrustNote closes every Hadia email (shared/base.html, brand_note). Complaints about
+// look-alike fundraising sites made naming the one real address a standing rule (Hadia Sprint 08).
+const hadiaTrustNote = "Hadia's messages and links only ever use hadiafrica.com. If anyone asks you to pay on another site, please do not."
+
 // hadiaMessage is one message an event sends. It reuses maskaniMapping's fields (template,
 // recipient keys, data, WhatsApp template and parameters); PathKey names the payload field holding
 // the full hadiafrica.com link the button and email open.
@@ -503,6 +507,7 @@ func startHadiaConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamCon
 func dispatchHadia(ctx context.Context, nc *nats.Conn, cfg *config.Config, ti *tenantInfo, tenantID string, evt eventslib.Event, msg hadiaMessage, index int) error {
 	p := evt.Payload
 	data := msg.Data(p, ti)
+	data["brand_note"] = hadiaTrustNote
 	suffix := msg.FixedPath
 	if msg.PathKey != "" {
 		suffix = hadiaPath(mStr(p, msg.PathKey))

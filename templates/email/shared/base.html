@@ -33,6 +33,7 @@
                 <div style="color:#6b7280;">
                   {{ if .brand_email }}Email: {{ .brand_email }}{{ end }}{{ if and .brand_email .brand_phone }} | {{ end }}{{ if .brand_phone }}Phone: {{ .brand_phone }}{{ end }}
                 </div>
+                {{ if .brand_note }}<div style="color:#6b7280;margin-top:6px;">{{ .brand_note }}</div>{{ end }}
               </td>
             </tr>
           </table>

@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"html/template"
 	"os"
 	"path/filepath"
 	"strings"
@@ -9,6 +10,33 @@ import (
 )
 
 // Buttons open hadiafrica.com only; a link on any other host gives no button.
+// Every Hadia email names the real address, through the shared footer (Sprint 08, look-alike sites).
+func TestHadiaTrustNoteInFooter(t *testing.T) {
+	if !strings.Contains(hadiaTrustNote, "hadiafrica.com") {
+		t.Fatalf("note does not name the domain: %q", hadiaTrustNote)
+	}
+	if got := (giftDigest{}).data()["brand_note"]; got != hadiaTrustNote {
+		t.Fatalf("digest brand_note = %v", got)
+	}
+	tpl, err := template.ParseFiles("../../templates/email/shared/base.html", "../../templates/email/hadia/gift_receipt.html")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var withNote, without strings.Builder
+	if err := tpl.ExecuteTemplate(&withNote, "base.html", map[string]any{"brand_note": hadiaTrustNote}); err != nil {
+		t.Fatal(err)
+	}
+	if err := tpl.ExecuteTemplate(&without, "base.html", map[string]any{}); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(withNote.String(), "only ever use hadiafrica.com") {
+		t.Fatal("the footer does not show the note")
+	}
+	if strings.Contains(without.String(), "hadiafrica.com") {
+		t.Fatal("other tenants' emails must not carry Hadia's note")
+	}
+}
+
 func TestHadiaPath(t *testing.T) {
 	for in, want := range map[string]string{
 		"https://hadiafrica.com/r/AB12CD34":                 "r/AB12CD34",

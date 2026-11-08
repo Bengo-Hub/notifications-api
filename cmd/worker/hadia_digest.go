@@ -467,7 +467,7 @@ func (s giftDigest) data() map[string]any {
 	}
 	return map[string]any{"name": waParam(s.Name, "there"), "day": s.Day, "gifts": giftsLabel(s.Gifts),
 		"total": s.money(s.TotalMinor), "where": waParam(where, "your registry"), "registries": regs,
-		"action_link": hadiaButtonBase + "/" + s.button()}
+		"action_link": hadiaButtonBase + "/" + s.button(), "brand_note": hadiaTrustNote}
 }
 
 // pgDigestStore keeps the digest in Postgres (digest_items and digest_sends, Ent schemas DigestItem
