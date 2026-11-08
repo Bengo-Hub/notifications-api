@@ -1,0 +1,12 @@
+{{ define "content" }}
+  <p>Hello {{ or .name "there" }},</p>
+  <h2>We have updated our {{ .title }}</h2>
+  {{ if .summary }}<p><strong>What changed:</strong> {{ .summary }}</p>{{ end }}
+  <p>Please take a moment to read the new version. The next time you sign in to Hadia, we will ask you to confirm it before you continue.</p>
+  {{ if .action_link }}
+  <p>
+    <a class="button" href="{{ .action_link }}">Read the update</a>
+  </p>
+  {{ end }}
+  <p>If you have a question, reply to this email or write to info@hadiafrica.com.</p>
+{{ end }}

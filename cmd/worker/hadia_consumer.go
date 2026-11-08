@@ -152,6 +152,20 @@ var hadiaMappings = map[string][]hadiaMessage{
 			Skip:       func(p map[string]any) bool { return mStr(p, "owner_phone") == "" && mStr(p, "owner_email") == "" },
 		}},
 	},
+	// A legal document changed materially (hadia-api legal notices, 8 November 2026): one event per
+	// owner. hadia-api sends no phone yet, so it goes by email; the WhatsApp template is declared for
+	// when Meta approves it.
+	"legal.updated": {{PathKey: "url", maskaniMapping: maskaniMapping{
+		TemplateID: "hadia/legal_updated", PhoneKey: "owner_phone", EmailKey: "owner_email",
+		Subject: func(p map[string]any) string { return "We have updated our " + strings.ToLower(waParam(p["title"], "terms")) },
+		Data: func(p map[string]any, _ *tenantInfo) map[string]any {
+			return map[string]any{"name": waParam(p["owner_name"], "there"), "title": waParam(p["title"], "terms"),
+				"summary": mStr(p, "summary"), "effective": mStr(p, "effective_at")}
+		},
+		WATemplate: "hadia_legal_updated_v1_btn",
+		WAParams:   func(d map[string]any) []string { return mParams(d, "name", "title") },
+		Skip:       func(p map[string]any) bool { return mStr(p, "owner_phone") == "" && mStr(p, "owner_email") == "" },
+	}}},
 	// A guest marked a gift bought: the owner is asked to confirm it arrived on the gift log.
 	"reservation.purchased": {{PathKey: "owner_url", maskaniMapping: maskaniMapping{
 		TemplateID: "hadia/reservation_purchased_owner", PhoneKey: "owner_phone", EmailKey: "owner_email",

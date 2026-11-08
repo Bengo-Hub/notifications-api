@@ -950,6 +950,27 @@
     ]
   },
   {
+    "name": "hadia_legal_updated_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/hadia/legal_updated.txt (params: name, title; button: legal/<slug>)",
+    "body": "Hello {{1}},\n\nWe have updated Hadia's {{2}}. Please take a moment to read what changed.",
+    "example": [
+      "Amina",
+      "Terms of service"
+    ],
+    "buttons": [
+      {
+        "type": "URL",
+        "text": "Read the update",
+        "url": "https://hadiafrica.com/{{1}}",
+        "example": [
+          "legal/terms-of-service"
+        ]
+      }
+    ]
+  },
+  {
     "name": "hadia_reservation_purchased_owner_v1_btn",
     "category": "UTILITY",
     "language": "en_US",

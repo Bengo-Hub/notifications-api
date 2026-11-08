@@ -1,0 +1,3 @@
+Hello {{ .name }},
+
+We have updated Hadia's {{ .title }}. Please take a moment to read what changed.

@@ -120,6 +120,7 @@ var Registry = []Type{
 	{Key: "hadia/registry_published", Label: "Registry is live", Group: "Gift registry", Class: ClassEssential},
 	{Key: "hadia/reservation_created", Label: "Gift reservation and manage link", Group: "Gift registry", Class: ClassEssential},
 	{Key: "hadia/reservation_owner_alert", Label: "A guest reserved a gift", Group: "Gift registry", Class: ClassEssential},
+	{Key: "hadia/legal_updated", Label: "Changes to Hadia's terms and privacy notice", Group: "Gift registry", Class: ClassEssential},
 	{Key: "hadia/reservation_purchased_owner", Label: "A guest bought a gift (confirm it arrived)", Group: "Gift registry", Class: ClassEssential},
 	{Key: "hadia/reservation_reminder", Label: "Gift reservation ending soon", Group: "Gift registry", Class: ClassEssential},
 	{Key: "hadia/reservation_released", Label: "Gift reservation ended", Group: "Gift registry", Class: ClassEssential},
