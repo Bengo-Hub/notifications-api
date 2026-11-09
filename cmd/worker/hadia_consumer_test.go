@@ -10,6 +10,47 @@ import (
 )
 
 // Buttons open hadiafrica.com only; a link on any other host gives no button.
+// FR-41: a link check notice goes to the owner's email only and says which way the link changed.
+func TestHadiaItemLinkChanged(t *testing.T) {
+	msgs := hadiaMappings["item.link_changed"]
+	if len(msgs) != 1 || msgs[0].PhoneKey != "" || msgs[0].EmailKey != "owner_email" {
+		t.Fatalf("mapping: %+v", msgs)
+	}
+	m := msgs[0]
+	changed := map[string]any{"owner_name": "Amina", "item_title": "Kettle", "registry_title": "Wedding", "store_name": "Jumia",
+		"link_status": "changed", "price_seen": "2500.00", "price_now": "2899.00", "owner_email": "a@example.com"}
+	d := m.Data(changed, &tenantInfo{})
+	if d["gone"] != false || d["price_now"] == "" || d["store"] != "Jumia" {
+		t.Fatalf("changed data: %+v", d)
+	}
+	if !strings.Contains(m.Subject(changed), "price") {
+		t.Fatalf("subject: %s", m.Subject(changed))
+	}
+	gone := m.Data(map[string]any{"link_status": "unavailable", "owner_email": "a@example.com"}, &tenantInfo{})
+	if gone["gone"] != true || gone["store"] != "the shop" {
+		t.Fatalf("gone data: %+v", gone)
+	}
+	if !m.Skip(map[string]any{"owner_phone": "+254700000000"}) {
+		t.Fatal("a notice with no email must be skipped")
+	}
+	tpl, err := template.ParseFiles("../../templates/email/shared/base.html", "../../templates/email/hadia/item_link_changed.html")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, c := range []struct {
+		data map[string]any
+		want string
+	}{{d, "now shows"}, {gone, "not there any more"}} {
+		var out strings.Builder
+		if err := tpl.ExecuteTemplate(&out, "base.html", c.data); err != nil {
+			t.Fatal(err)
+		}
+		if !strings.Contains(out.String(), c.want) {
+			t.Fatalf("%q did not render", c.want)
+		}
+	}
+}
+
 // Every Hadia email names the real address, through the shared footer (Sprint 08, look-alike sites).
 func TestHadiaTrustNoteInFooter(t *testing.T) {
 	if !strings.Contains(hadiaTrustNote, "hadiafrica.com") {

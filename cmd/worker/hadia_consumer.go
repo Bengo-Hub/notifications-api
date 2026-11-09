@@ -160,6 +160,24 @@ var hadiaMappings = map[string][]hadiaMessage{
 	// owner. hadia-api sends no phone yet, so it goes by email; the WhatsApp template is declared for
 	// when Meta approves it.
 	// A new staff member's way in: an email only, with no password in it (they set their own).
+	// FR-41: the weekly link check found the shop's price changed or the page gone. Email only, so no
+	// WhatsApp template waits on Meta; the owner decides, nothing on the registry changed by itself.
+	"item.link_changed": {{PathKey: "owner_url", maskaniMapping: maskaniMapping{
+		TemplateID: "hadia/item_link_changed", EmailKey: "owner_email",
+		Subject: func(p map[string]any) string {
+			if mStr(p, "link_status") == "unavailable" {
+				return "A shop link on your registry no longer works"
+			}
+			return "A shop changed the price of a gift on your registry"
+		},
+		Data: func(p map[string]any, _ *tenantInfo) map[string]any {
+			return map[string]any{"name": waParam(p["owner_name"], "there"), "item": mStr(p, "item_title"),
+				"registry": mStr(p, "registry_title"), "store": waParam(p["store_name"], "the shop"),
+				"gone": mStr(p, "link_status") == "unavailable", "price_seen": mMoney(p, "price_seen"),
+				"price_now": mMoney(p, "price_now"), "source_url": mStr(p, "source_url")}
+		},
+		Skip: func(p map[string]any) bool { return mStr(p, "owner_email") == "" },
+	}}},
 	"staff.invited": {{PathKey: "url", maskaniMapping: maskaniMapping{
 		TemplateID: "hadia/staff_invited", EmailKey: "email",
 		Subject: func(map[string]any) string { return "You have been added to the Hadia team" },
@@ -170,7 +188,9 @@ var hadiaMappings = map[string][]hadiaMessage{
 	}}},
 	"legal.updated": {{PathKey: "url", maskaniMapping: maskaniMapping{
 		TemplateID: "hadia/legal_updated", PhoneKey: "owner_phone", EmailKey: "owner_email",
-		Subject: func(p map[string]any) string { return "We have updated our " + strings.ToLower(waParam(p["title"], "terms")) },
+		Subject: func(p map[string]any) string {
+			return "We have updated our " + strings.ToLower(waParam(p["title"], "terms"))
+		},
 		Data: func(p map[string]any, _ *tenantInfo) map[string]any {
 			return map[string]any{"name": waParam(p["owner_name"], "there"), "title": waParam(p["title"], "terms"),
 				"summary": mStr(p, "summary"), "effective": mStr(p, "effective_at")}

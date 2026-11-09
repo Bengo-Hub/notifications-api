@@ -1,0 +1,17 @@
+{{ define "content" }}
+  <p>Hello {{ or .name "there" }},</p>
+  {{ if .gone }}
+  <h2>A shop link no longer works</h2>
+  <p>We checked the link for <strong>{{ .item }}</strong> on {{ .registry }}, and {{ .store }} says the page is not there any more.</p>
+  <p>Guests still see the gift with the price you set. You may want to add a new link, or change or remove the gift.</p>
+  {{ else }}
+  <h2>A shop changed its price</h2>
+  <p>We checked the link for <strong>{{ .item }}</strong> on {{ .registry }}. {{ .store }} now shows <strong>{{ .price_now }}</strong>; your registry shows {{ .price_seen }}.</p>
+  <p>Nothing on your registry has changed. Guests still see your price. You can update it, or keep it as it is.</p>
+  {{ end }}
+  {{ if .action_link }}
+  <p>
+    <a class="button" href="{{ .action_link }}">Review the gift</a>
+  </p>
+  {{ end }}
+{{ end }}
