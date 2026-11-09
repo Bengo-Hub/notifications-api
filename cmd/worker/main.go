@@ -959,6 +959,17 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 		// send (invoices and reminders the platform sends a tenant) goes out on the platform's own
 		// account and is never charged to the tenant. Each message is one unit per recipient, spent
 		// from the plan allowance, then bundles, then KES 1 overage, and refunded if the send fails.
+		//
+		// The number is resolved first: a tenant with no WhatsApp number of its own never sends on
+		// the platform's (owner, 9 November 2026), and must not be charged for a message that
+		// cannot go out.
+		waProv, err := pm.GetWhatsAppProvider(ctx, providerTenantID, preferred)
+		if errors.Is(err, providers.ErrNoWhatsAppNumber) {
+			return skipped(err.Error())
+		}
+		if err != nil {
+			return err
+		}
 		if msg.EffectiveSenderScope() != messaging.SenderScopePlatform {
 			if !tenantResolved || tenantID == uuid.Nil {
 				return skippedUnpaid("the sender could not be identified for WhatsApp billing")
@@ -975,11 +986,6 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 				return skippedUnpaid(credits.RefusalMessage(credits.ServiceWhatsApp, dec.Reason))
 			}
 			defer refundOnFailure(ctx, cc, logg, &retErr, dec, tenantID, credits.ServiceWhatsApp, chargeKey)
-		}
-
-		waProv, err := pm.GetWhatsAppProvider(ctx, providerTenantID, preferred)
-		if err != nil {
-			return err
 		}
 
 		waMetadata := make(map[string]interface{})

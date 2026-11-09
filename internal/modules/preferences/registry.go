@@ -80,6 +80,12 @@ var Registry = []Type{
 	{Key: "platform/new_tenant_registered", Label: "New tenant registered (platform ops)", Group: "Account & Security", Class: ClassLocked},
 	// Platform-ops alert: PayHero refuses payments until an account's service wallet is topped up.
 	{Key: "platform/payhero_service_wallet_short", Label: "PayHero service wallet needs a top up (platform ops)", Group: "Account & Security", Class: ClassLocked},
+	// Payment provider outage and recovery: ops alerts are locked; the tenant notes are essential
+	// (they explain late confirmations, so customers are not told to pay twice).
+	{Key: "platform/gateway_degraded", Label: "Payment provider delayed (platform ops)", Group: "Account & Security", Class: ClassLocked},
+	{Key: "platform/gateway_recovered", Label: "Payment provider recovered (platform ops)", Group: "Account & Security", Class: ClassLocked},
+	{Key: "finance/payments_delayed", Label: "Payments are delayed by the provider", Group: "Billing & Payments", Class: ClassEssential},
+	{Key: "finance/payments_restored", Label: "Payments back to normal", Group: "Billing & Payments", Class: ClassEssential},
 	// Platform-ops alert: a visitor sent the codevertexafrica.com contact form.
 	{Key: "platform/website_enquiry", Label: "New website enquiry (platform ops)", Group: "Account & Security", Class: ClassLocked},
 	{Key: "subscription/subscription_created", Label: "Subscription created", Group: "Subscription", Class: ClassOptional},

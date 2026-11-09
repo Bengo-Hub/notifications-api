@@ -1,0 +1,6 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <p>{{ .provider_label }} payments are back to normal since {{ .recovered_at }}.</p>
+  <p>Payments made while it was slow are being confirmed as their answers arrive, and your records
+    update by themselves. You do not need to do anything.</p>
+{{ end }}

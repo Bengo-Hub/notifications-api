@@ -127,6 +127,10 @@ type ProviderConfig struct {
 	APNSKey                 string `envconfig:"PROVIDERS_APNS_KEY"`
 	DefaultEmailSender      string `envconfig:"PROVIDERS_DEFAULT_EMAIL_SENDER" default:"Urban Cafe <hello@bengobox.com>"`
 	DefaultSMSSender        string `envconfig:"PROVIDERS_DEFAULT_SMS_SENDER" default:"codevertex"`
+	// WhatsAppSharedNumberTenants are the tenant IDs allowed to send their own (tenant-scoped)
+	// WhatsApp from the platform's number. Every other tenant needs its own registered number
+	// (owner, 9 November 2026). Default: the codevertex-demo tenant, for sales demos.
+	WhatsAppSharedNumberTenants []string `envconfig:"PROVIDERS_WHATSAPP_SHARED_NUMBER_TENANTS" default:"982ffb25-0e07-4bbb-8e04-c4c2af2550b6"`
 	DefaultPushTopic        string `envconfig:"PROVIDERS_DEFAULT_PUSH_TOPIC" default:"general"`
 	// Email send protection — avoid provider rate-limit blocks (e.g. Zoho "mail rate
 	// exceeded") by pacing sends, and protect sender reputation / reduce failure logs by

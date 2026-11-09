@@ -2,6 +2,7 @@ package providers
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -70,6 +71,20 @@ func (m *Manager) LoadWhatsAppTemplateCredentials(ctx context.Context) (wabaID, 
 	return wabaID, accessToken, nil
 }
 
+// ErrNoWhatsAppNumber: the tenant has no registered WhatsApp number of its own and may not use the
+// platform's. Retrying cannot help, so the worker records the send as skipped.
+var ErrNoWhatsAppNumber = errors.New("no WhatsApp number registered for this tenant")
+
+// sharesPlatformNumber reports whether a tenant may send its own WhatsApp from the platform's number.
+func (m *Manager) sharesPlatformNumber(tenantID string) bool {
+	for _, id := range m.cfg.WhatsAppSharedNumberTenants {
+		if strings.EqualFold(strings.TrimSpace(id), tenantID) {
+			return true
+		}
+	}
+	return false
+}
+
 func (m *Manager) GetWhatsAppProvider(ctx context.Context, tenantID string, preferred string) (WhatsAppProvider, error) {
 	// meta_cloud (official Meta WhatsApp Cloud API) is the ONLY supported provider — no BSP
 	// per-message markup, Meta-hosted reliability. apiwap was removed (never used in production,
@@ -86,16 +101,12 @@ func (m *Manager) GetWhatsAppProvider(ctx context.Context, tenantID string, pref
 			phoneNumberID := s["phone_number_id"]
 			apiVersion := s["api_version"]
 
-			// Fall back to the platform tenant's own WhatsApp number when this tenant hasn't
-			// configured one of their own -- mirroring GetEmailProvider's tenant-then-platform
-			// pattern (and the notifications-ui Settings page's own stated behavior: "without
-			// one, sends use the platform's shared number"). This used to be a deliberate
-			// tenant-only, no-fallback lookup; DB-confirmed against the live platform that the
-			// real "codevertex" tenant (m.PlatformID) already carries a complete, active
-			// meta_cloud credential set (access_token/phone_number_id/waba_id/api_version) that
-			// every other tenant with no credentials of their own was simply never allowed to
-			// reach, hard-failing "no WhatsApp number configured for this tenant" instead.
-			if (accessToken == "" || phoneNumberID == "") && tenantID != m.PlatformID {
+			// A tenant's own messages go out only from its own registered number (owner,
+			// 9 November 2026): a client's customers must never get the client's messages from
+			// Codevertex's number. Platform-scope sends already resolve to the platform tenant
+			// (worker providerTenantID). Only the allowlisted tenants (the demo tenant) may borrow
+			// the platform number.
+			if (accessToken == "" || phoneNumberID == "") && tenantID != m.PlatformID && m.sharesPlatformNumber(tenantID) {
 				if fb, fbErr := pcfg.LoadTenantOnlyProviderSettings(ctx, m.dbCfg, m.PlatformID, m.env, "whatsapp", "meta_cloud", m.decryptionKey); fbErr == nil {
 					if accessToken == "" {
 						accessToken = fb["access_token"]
@@ -120,7 +131,7 @@ func (m *Manager) GetWhatsAppProvider(ctx context.Context, tenantID string, pref
 			}), nil
 		}
 	}
-	return nil, fmt.Errorf("no WhatsApp number configured for this tenant, and no platform fallback available")
+	return nil, ErrNoWhatsAppNumber
 }
 
 func (m *Manager) GetEmailProvider(ctx context.Context, tenantID string, preferred string) (EmailProvider, error) {

@@ -407,6 +407,7 @@ func New(ctx context.Context) (*App, error) {
 	if natsConn != nil {
 		crossServiceSubscriber = eventsmod.New(natsConn, cfg.Events, log).
 			WithAuthAPI(cfg.Services.AuthAPI).
+			WithInternalKey(cfg.Security.APIKey).
 			WithEntClient(entClient)
 	}
 

@@ -1,0 +1,14 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <p>
+    {{ .provider_label }} is running slowly right now{{ if eq .reason "maintenance" }} because of maintenance on its side{{ end }}.
+    Payments still go through, but confirmation can take longer than usual, sometimes up to an hour.
+  </p>
+  <p><strong>Nothing is lost.</strong> Every payment made now is confirmed automatically as soon as
+    {{ .provider_label }} catches up, and your records update by themselves.</p>
+  <p>What your customers see: the checkout offers the paybill straight away and tells them that
+    confirmation may take a little longer. If a customer asks, you can tell them:</p>
+  <p style="padding:12px;border-left:3px solid #999">"Your payment is safe. M-Pesa is slow at the moment, so the
+    confirmation may take a while. Please do not pay again; you will get your receipt once it clears."</p>
+  <p>We are watching it and will email you again when payments are back to normal.</p>
+{{ end }}

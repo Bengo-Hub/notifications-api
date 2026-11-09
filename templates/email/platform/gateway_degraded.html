@@ -1,0 +1,26 @@
+{{ define "content" }}
+  <h2>{{ .provider_label }} payments are delayed</h2>
+  <p>
+    Treasury saw {{ .provider_label }}{{ if .upstream }} (through {{ .upstream }}){{ end }}
+    {{ if eq .reason "maintenance" }}refuse a payment because it is in maintenance{{ else }}fail several payments in a row{{ end }}
+    at {{ .since }}.
+  </p>
+  <p>
+    What payers see: the checkout skips the phone prompt and offers the paybill at once, with a note
+    that confirmation may take longer than usual. Paybill payments made now are confirmed when the
+    provider catches up; nothing is lost. Treasury settles each one by itself when the provider's
+    answer arrives, and the reconciler checks every 5 minutes.
+  </p>
+  <p>
+    What to do: check the provider's status page or support line, and watch for the recovery notice.
+    Affected tenants have been sent a plain note. You will get another message when payments work again.
+  </p>
+  <table role="presentation" style="width:100%;border-collapse:collapse;margin:16px 0">
+    <tbody>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Provider</strong></td><td style="padding:6px 0">{{ .provider_label }}{{ if .upstream }} / {{ .upstream }}{{ end }}</td></tr>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Reason</strong></td><td style="padding:6px 0">{{ .reason }}{{ if .message }}: {{ .message }}{{ end }}</td></tr>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Since</strong></td><td style="padding:6px 0">{{ .since }}</td></tr>
+      <tr><td style="padding:6px 12px 6px 0"><strong>First tenant affected</strong></td><td style="padding:6px 0">{{ .tenant_name }}</td></tr>
+    </tbody>
+  </table>
+{{ end }}

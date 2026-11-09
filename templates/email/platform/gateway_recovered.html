@@ -1,0 +1,18 @@
+{{ define "content" }}
+  <h2>{{ .provider_label }} payments are working again</h2>
+  <p>
+    {{ .provider_label }}{{ if .upstream }} (through {{ .upstream }}){{ end }} started a payment again at
+    {{ .recovered_at }}, after about {{ .minutes }} minutes. The checkout is back to the phone prompt.
+  </p>
+  <p>
+    Payments made during the outage settle by themselves as the provider's answers arrive. If any
+    stay pending more than an hour from now, check them in Treasury, Transactions.
+  </p>
+  <table role="presentation" style="width:100%;border-collapse:collapse;margin:16px 0">
+    <tbody>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Outage started</strong></td><td style="padding:6px 0">{{ .since }}</td></tr>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Recovered</strong></td><td style="padding:6px 0">{{ .recovered_at }}</td></tr>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Tenants affected</strong></td><td style="padding:6px 0">{{ .affected_count }}</td></tr>
+    </tbody>
+  </table>
+{{ end }}

@@ -32,6 +32,15 @@ type Subscriber struct {
 	log       *zap.Logger
 	authAPI   string
 	entClient *ent.Client
+	// internalKey is the shared INTERNAL_SERVICE_KEY for auth-api's S2S routes (alert channels,
+	// tenant admins).
+	internalKey string
+}
+
+// WithInternalKey sets the key used for auth-api's S2S routes.
+func (s *Subscriber) WithInternalKey(key string) *Subscriber {
+	s.internalKey = key
+	return s
 }
 
 // New creates a new cross-service event subscriber.
@@ -116,6 +125,9 @@ func (s *Subscriber) Start(ctx context.Context) error {
 		{"treasury", "treasury.payroll.disbursed", "notif-payroll-disbursed", s.handlePayrollDisbursed},
 		// Platform-ops alert: PayHero refuses prompts until an account's service wallet is topped up.
 		{"treasury", "treasury.payhero.service_wallet_short", "notif-payhero-service-wallet-short", s.handlePayHeroServiceWalletShort},
+		// Payment provider outage and recovery: ops on email, Slack and WhatsApp; affected tenants by email.
+		{"treasury", "treasury.gateway.degraded", "notif-gateway-degraded", s.handleGatewayDegraded},
+		{"treasury", "treasury.gateway.recovered", "notif-gateway-recovered", s.handleGatewayRecovered},
 		{"erp", "erp.email.requested", "notif-erp-email-req", s.handleERPEmailRequested},
 		{"erp", "erp.notification.requested", "notif-erp-notif-req", s.handleERPNotificationRequested},
 		{"isp", "isp.subscriber.created", "notif-isp-subscriber-created", s.handleISPSubscriberCreated},
