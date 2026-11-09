@@ -2,9 +2,16 @@
   <h2>{{ .provider_label }} payments are delayed</h2>
   <p>
     Treasury saw {{ .provider_label }}{{ if .upstream }} (through {{ .upstream }}){{ end }}
-    {{ if eq .reason "maintenance" }}refuse a payment because it is in maintenance{{ else }}fail several payments in a row{{ end }}
+    {{ if eq .reason "maintenance" }}refuse a payment because it is in maintenance{{ else if eq .reason "refused" }}refuse the account's payment prompts as unauthorised{{ else }}fail several payments in a row{{ end }}
     at {{ .since }}.
   </p>
+  {{ if eq .reason "refused" }}
+  <p>
+    This is a refusal of the account, not an outage that clears by itself: every prompt fails the
+    same way until the provider re-enables collection on the account (check its dashboard and KYC
+    status, then contact its support). Paybill payments still work.
+  </p>
+  {{ end }}
   <p>
     What payers see: the checkout skips the phone prompt and offers the paybill at once, with a note
     that confirmation may take longer than usual. Paybill payments made now are confirmed when the
