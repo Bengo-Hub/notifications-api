@@ -43,6 +43,9 @@ type authUserEvent struct {
 	Welcome            bool   `json:"welcome,omitempty"`
 	LoginURL           string `json:"login_url,omitempty"`
 	MustChangePassword bool   `json:"must_change_password,omitempty"`
+	// SetPasswordURL is the one-time set-password link of a new account (72 hours), shown instead
+	// of "use the temporary password your administrator shared" (10 November 2026).
+	SetPasswordURL string `json:"set_password_url,omitempty"`
 }
 
 // startAuthNotificationConsumer subscribes to auth.user.created events (plain NATS,
@@ -83,6 +86,7 @@ func startAuthNotificationConsumer(ctx context.Context, nc *nats.Conn, cfg *conf
 		evt.ServiceID, _ = p["service_id"].(string)
 		evt.LoginURL, _ = p["login_url"].(string)
 		evt.MustChangePassword, _ = p["must_change_password"].(bool)
+		evt.SetPasswordURL, _ = p["set_password_url"].(string)
 		if evt.TenantID, _ = p["tenant_id"].(string); evt.TenantID == "" {
 			evt.TenantID = envelope.TenantID
 		}
@@ -139,6 +143,9 @@ func startAuthNotificationConsumer(ctx context.Context, nc *nats.Conn, cfg *conf
 		}
 		if evt.MustChangePassword {
 			msgData["must_change_password"] = true
+		}
+		if strings.HasPrefix(evt.SetPasswordURL, "https://") {
+			msgData["set_password_url"] = evt.SetPasswordURL
 		}
 
 		subject := "Welcome to the platform!"
