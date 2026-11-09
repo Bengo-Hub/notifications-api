@@ -29,7 +29,7 @@ const hadiaButtonBase = "https://hadiafrica.com"
 
 // hadiaTrustNote closes every Hadia email (shared/base.html, brand_note). Complaints about
 // look-alike fundraising sites made naming the one real address a standing rule (Hadia Sprint 08).
-const hadiaTrustNote = "Hadia's messages and links only ever use hadiafrica.com. If anyone asks you to pay on another site, please do not."
+const hadiaTrustNote = "Hadia's messages and links only ever use hadiafrica.com, and gifts are paid only to M-Pesa paybill 756756 with the account number shown on hadiafrica.com. Hadia will never ask for your M-Pesa PIN or a one-time code, never asks you to pay a different number, and never asks for money to release a gift, a payout or a refund. If anyone does, it is a scam: do not pay, and report it at hadiafrica.com/help."
 
 // hadiaMessage is one message an event sends. It reuses maskaniMapping's fields (template,
 // recipient keys, data, WhatsApp template and parameters); PathKey names the payload field holding
@@ -85,6 +85,27 @@ func hadiaEmailBase(ti *tenantInfo) string {
 func hadiaGuestData(p map[string]any, _ *tenantInfo) map[string]any {
 	return map[string]any{"name": waParam(p["guest_name"], "there"), "item": mStr(p, "item_title"),
 		"registry": mStr(p, "registry_title"), "expires_at": mTime(p, "expires_at"), "owner": waParam(p["owner_name"], "the couple")}
+}
+
+// hadiaFundData is the owner's view of a fund or gift crossing a step or its target.
+func hadiaFundData(p map[string]any, _ *tenantInfo) map[string]any {
+	early, _ := p["early"].(bool)
+	return map[string]any{"name": waParam(p["owner_name"], "there"), "item": mStr(p, "item_title"),
+		"registry": mStr(p, "registry_title"), "raised": mMoney(p, "raised"), "target": mMoney(p, "target"),
+		"percent": mPercent(p), "over_by": mMoneyOr(p, "over_by", ""), "early": early, "cash_fund": mStr(p, "kind") == "cash_fund"}
+}
+
+// mPercent words a whole per cent from the payload ("75%"); "" when absent.
+func mPercent(p map[string]any) string {
+	switch v := p["percent"].(type) {
+	case float64:
+		return fmt.Sprintf("%d%%", int(v))
+	case int:
+		return fmt.Sprintf("%d%%", v)
+	case int64:
+		return fmt.Sprintf("%d%%", v)
+	}
+	return ""
 }
 
 // hadiaPayoutFailure is one of the owner's messages about a payout that did not go through, sent for
@@ -162,6 +183,47 @@ var hadiaMappings = map[string][]hadiaMessage{
 	// A new staff member's way in: an email only, with no password in it (they set their own).
 	// FR-41: the weekly link check found the shop's price changed or the page gone. Email only, so no
 	// WhatsApp template waits on Meta; the owner decides, nothing on the registry changed by itself.
+	// Owner progress alerts (owner, 9 November 2026). Email only for now: Hadia has no WhatsApp
+	// number of its own yet, and no approved template carries these figures.
+	"fund.milestone": {{PathKey: "owner_url", maskaniMapping: maskaniMapping{
+		TemplateID: "hadia/fund_milestone", EmailKey: "owner_email",
+		Subject: func(p map[string]any) string {
+			return fmt.Sprintf("%s is %s funded", mStr(p, "item_title"), mPercent(p))
+		},
+		Data: hadiaFundData,
+		Skip: func(p map[string]any) bool { return mStr(p, "owner_email") == "" },
+	}}},
+	"fund.over_target": {{PathKey: "owner_url", maskaniMapping: maskaniMapping{
+		TemplateID: "hadia/fund_over_target", EmailKey: "owner_email",
+		Subject: func(p map[string]any) string {
+			return fmt.Sprintf("%s has passed its target", mStr(p, "item_title"))
+		},
+		Data: hadiaFundData,
+		Skip: func(p map[string]any) bool { return mStr(p, "owner_email") == "" },
+	}}},
+	"registry.funds_behind": {{PathKey: "owner_url", maskaniMapping: maskaniMapping{
+		TemplateID: "hadia/funds_behind", EmailKey: "owner_email",
+		Subject: func(p map[string]any) string {
+			if mStr(p, "kind") == "passed" {
+				return "Your event has passed: how your gifts ended"
+			}
+			return "Your event is coming up: some gifts still need support"
+		},
+		Data: func(p map[string]any, _ *tenantInfo) map[string]any {
+			var funds []map[string]any
+			if list, ok := p["funds"].([]any); ok {
+				for _, f := range list {
+					if m, ok := f.(map[string]any); ok {
+						funds = append(funds, map[string]any{"title": mStr(m, "title"), "raised": mMoney(m, "raised"),
+							"target": mMoney(m, "target"), "percent": mPercent(m)})
+					}
+				}
+			}
+			return map[string]any{"name": waParam(p["owner_name"], "there"), "registry": mStr(p, "registry_title"),
+				"kind": mStr(p, "kind"), "event_date": mStr(p, "event_date"), "payout_from": mTime(p, "payout_from"), "funds": funds}
+		},
+		Skip: func(p map[string]any) bool { return mStr(p, "owner_email") == "" },
+	}}},
 	"item.link_changed": {{PathKey: "owner_url", maskaniMapping: maskaniMapping{
 		TemplateID: "hadia/item_link_changed", EmailKey: "owner_email",
 		Subject: func(p map[string]any) string {

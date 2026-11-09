@@ -1,0 +1,15 @@
+{{ define "content" }}
+  <p>Hello {{ or .name "there" }},</p>
+  <h2>{{ .item }} has passed its target</h2>
+  <p>Your guests have given {{ .raised }} toward <strong>{{ .item }}</strong> on {{ .registry }}, {{ .over_by }} more than the {{ .target }} you set.</p>
+  {{ if .cash_fund }}
+  <p>The fund keeps taking gifts, and guests no longer see the target. Everything raised reaches you at payout, less the fees shown in your payout summary.</p>
+  {{ else }}
+  <p>The gift now shows as fully funded to guests. Everything raised reaches you at payout, less the fees shown in your payout summary.</p>
+  {{ end }}
+  {{ if .action_link }}
+  <p>
+    <a class="button" href="{{ .action_link }}">See your registry</a>
+  </p>
+  {{ end }}
+{{ end }}

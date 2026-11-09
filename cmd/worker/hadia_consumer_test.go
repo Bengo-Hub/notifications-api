@@ -299,3 +299,39 @@ func TestHadiaReservationReleasedOwner(t *testing.T) {
 		t.Fatal("reminder subject")
 	}
 }
+
+// Owner progress alerts render the figures and say when a fund keeps taking gifts (9 November 2026).
+func TestHadiaFundAlerts(t *testing.T) {
+	render := func(id string, data map[string]any) string {
+		tpl, err := template.ParseFiles(filepath.Join("..", "..", "templates", "email", "hadia", id+".html"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		var b strings.Builder
+		if err := tpl.ExecuteTemplate(&b, "content", data); err != nil {
+			t.Fatal(err)
+		}
+		return b.String()
+	}
+	m := hadiaMappings["fund.milestone"][0]
+	p := map[string]any{"owner_email": "o@example.com", "owner_name": "Faith", "item_title": "Graduation party fund", "registry_title": "Graduation",
+		"raised": "75.00", "target": "100.00", "percent": float64(75), "early": true, "kind": "cash_fund"}
+	if got := m.Subject(p); got != "Graduation party fund is 75% funded" {
+		t.Fatalf("subject %q", got)
+	}
+	if html := render("fund_milestone", m.Data(p, &tenantInfo{})); !strings.Contains(html, "75%") || !strings.Contains(html, "not yet halfway") {
+		t.Fatalf("milestone: %s", html)
+	}
+	over := hadiaMappings["fund.over_target"][0]
+	p["over_by"], p["raised"] = "420.00", "520.00"
+	if html := render("fund_over_target", over.Data(p, &tenantInfo{})); !strings.Contains(html, "keeps taking gifts") {
+		t.Fatalf("over: %s", html)
+	}
+	behind := hadiaMappings["registry.funds_behind"][0]
+	bp := map[string]any{"owner_email": "o@example.com", "registry_title": "Wedding", "kind": "near_7", "event_date": "2026-12-12",
+		"funds": []any{map[string]any{"title": "Honeymoon", "raised": "100000.00", "target": "800000.00", "percent": float64(12)}}}
+	html := render("funds_behind", behind.Data(bp, &tenantInfo{}))
+	if !strings.Contains(html, "Honeymoon") || !strings.Contains(html, "12%") || !strings.Contains(behind.Subject(bp), "coming up") {
+		t.Fatalf("behind: %s", html)
+	}
+}
