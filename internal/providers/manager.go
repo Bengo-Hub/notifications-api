@@ -134,6 +134,24 @@ func (m *Manager) GetWhatsAppProvider(ctx context.Context, tenantID string, pref
 	return nil, ErrNoWhatsAppNumber
 }
 
+// EmailReplyTo is the tenant's own Reply-To address for its emails (the `reply_to` setting of its
+// SMTP or Brevo account), "" when none is set. Hadia's is info@hadiafrica.com while it sends from
+// no-reply@ (owner, 10 November 2026). Only the tenant's own settings count, never the platform's.
+func (m *Manager) EmailReplyTo(ctx context.Context, tenantID string) string {
+	if tenantID == "" || tenantID == m.PlatformID {
+		return ""
+	}
+	for _, name := range []string{"smtp", "brevo"} {
+		s, err := pcfg.LoadTenantOnlyProviderSettings(ctx, m.dbCfg, tenantID, m.env, "email", name, m.decryptionKey)
+		if err == nil {
+			if v := strings.TrimSpace(s["reply_to"]); strings.Contains(v, "@") {
+				return v
+			}
+		}
+	}
+	return ""
+}
+
 func (m *Manager) GetEmailProvider(ctx context.Context, tenantID string, preferred string) (EmailProvider, error) {
 	// Default to SMTP per user preference. SendGrid was removed (platform decision — never used
 	// in production, standardizing on SMTP/Brevo).

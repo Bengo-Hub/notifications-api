@@ -777,6 +777,11 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 		if replyTo == "" && msg.EffectiveSenderScope() == messaging.SenderScopePlatform {
 			replyTo = "info@codevertexafrica.com"
 		}
+		// A tenant that sends from a no-reply address can name where replies go (its own email
+		// settings, reply_to), e.g. Hadia: no-reply@hadiafrica.com, replies to info@hadiafrica.com.
+		if replyTo == "" && msg.EffectiveSenderScope() != messaging.SenderScopePlatform {
+			replyTo = pm.EmailReplyTo(ctx, providerTenantID)
+		}
 		// Optional attachments (e.g. payslip PDFs the ERP sends on erp.email.requested).
 		var atts []email.Attachment
 		for _, a := range msg.Attachments {
