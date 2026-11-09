@@ -262,3 +262,40 @@ func TestHadiaPayoutFailureMessages(t *testing.T) {
 		t.Errorf("amount %v", d["amount"])
 	}
 }
+
+// A guest release tells the owner, with the guest's note, by email; an expiry or an owner's own
+// release does not (owner, 9 November 2026). The reminder's subject says when it is the last day.
+func TestHadiaReservationReleasedOwner(t *testing.T) {
+	msgs := hadiaMappings["reservation.released"]
+	if len(msgs) != 2 || msgs[1].TemplateID != "hadia/reservation_released_owner" || msgs[1].PhoneKey != "" {
+		t.Fatalf("mapping: %+v", msgs)
+	}
+	owner := msgs[1]
+	p := map[string]any{"reason": "cancelled", "owner_email": "o@example.com", "owner_name": "Trae", "guest_name": "Juma",
+		"show_reserver_names": false, "item_title": "Dinner set", "registry_title": "House warming", "note": "Sorry, budget changed"}
+	if owner.Skip(p) {
+		t.Fatal("a guest release was skipped")
+	}
+	d := owner.Data(p, &tenantInfo{})
+	if d["guest"] != "A guest" || d["note"] != "Sorry, budget changed" {
+		t.Fatalf("data: %+v", d)
+	}
+	for _, reason := range []string{"expired", "owner"} {
+		p["reason"] = reason
+		if !owner.Skip(p) {
+			t.Fatalf("%s release reached the owner", reason)
+		}
+	}
+	tpl, err := template.ParseFiles(filepath.Join("..", "..", "templates", "email", "hadia", "reservation_released_owner.html"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var b strings.Builder
+	if err := tpl.ExecuteTemplate(&b, "content", d); err != nil || !strings.Contains(b.String(), "Sorry, budget changed") {
+		t.Fatalf("render: %v %s", err, b.String())
+	}
+	rem := hadiaMappings["reservation.reminder"][0]
+	if !strings.Contains(rem.Subject(map[string]any{"last_day": true}), "Last day") || strings.Contains(rem.Subject(map[string]any{}), "Last day") {
+		t.Fatal("reminder subject")
+	}
+}

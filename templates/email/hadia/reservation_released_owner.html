@@ -1,0 +1,14 @@
+{{ define "content" }}
+  <p>Hello {{ or .name "there" }},</p>
+  <h2>A reserved gift is available again</h2>
+  <p>{{ .guest }} let go of their reservation of <strong>{{ .item }}</strong> on {{ .registry }}. Other guests can now reserve it or give toward it.</p>
+  {{ if .note }}
+  <p>Their note to you:</p>
+  <p style="padding:12px;border-left:3px solid #999">{{ .note }}</p>
+  {{ end }}
+  {{ if .action_link }}
+  <p>
+    <a class="button" href="{{ .action_link }}">Open your registry</a>
+  </p>
+  {{ end }}
+{{ end }}

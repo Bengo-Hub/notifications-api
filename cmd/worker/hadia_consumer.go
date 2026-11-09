@@ -214,7 +214,12 @@ var hadiaMappings = map[string][]hadiaMessage{
 	// Two days before a hold ends.
 	"reservation.reminder": {{PathKey: "manage_url", maskaniMapping: maskaniMapping{
 		TemplateID: "hadia/reservation_reminder", PhoneKey: "guest_phone", EmailKey: "guest_email",
-		Subject:    func(map[string]any) string { return "Your gift reservation ends soon" },
+		Subject: func(p map[string]any) string {
+			if b, _ := p["last_day"].(bool); b {
+				return "Last day: your gift reservation ends today"
+			}
+			return "Your gift reservation ends soon"
+		},
 		Data:       hadiaGuestData,
 		WATemplate: "hadia_reservation_reminder_v1_btn",
 		WAParams:   func(d map[string]any) []string { return mParams(d, "name", "item", "expires_at") },
@@ -446,13 +451,30 @@ var hadiaMappings = map[string][]hadiaMessage{
 		WAParams:   func(d map[string]any) []string { return mParams(d, "name", "kind", "status") },
 	}}},
 	// The owner released the reservation or the hold ended. No link: there is nothing to manage.
-	"reservation.released": {{maskaniMapping: maskaniMapping{
-		TemplateID: "hadia/reservation_released", PhoneKey: "guest_phone", EmailKey: "guest_email",
-		Subject:    func(map[string]any) string { return "Your gift reservation has ended" },
-		Data:       hadiaGuestData,
-		WATemplate: "hadia_reservation_released_v1",
-		WAParams:   func(d map[string]any) []string { return mParams(d, "name", "item") },
-	}}},
+	"reservation.released": {
+		{maskaniMapping: maskaniMapping{
+			TemplateID: "hadia/reservation_released", PhoneKey: "guest_phone", EmailKey: "guest_email",
+			Subject:    func(map[string]any) string { return "Your gift reservation has ended" },
+			Data:       hadiaGuestData,
+			WATemplate: "hadia_reservation_released_v1",
+			WAParams:   func(d map[string]any) []string { return mParams(d, "name", "item") },
+		}},
+		// A guest let the gift go (owner, 9 November 2026): the owner hears it, with the guest's
+		// optional note. Email only: no approved WhatsApp template carries a free note.
+		{PathKey: "owner_url", maskaniMapping: maskaniMapping{
+			TemplateID: "hadia/reservation_released_owner", EmailKey: "owner_email",
+			Subject: func(map[string]any) string { return "A reserved gift is available again" },
+			Data: func(p map[string]any, _ *tenantInfo) map[string]any {
+				guest := "A guest"
+				if b, _ := p["show_reserver_names"].(bool); b {
+					guest = waParam(p["guest_name"], "A guest")
+				}
+				return map[string]any{"name": waParam(p["owner_name"], "there"), "guest": guest,
+					"item": mStr(p, "item_title"), "registry": mStr(p, "registry_title"), "note": mStr(p, "note")}
+			},
+			Skip: func(p map[string]any) bool { return mStr(p, "reason") != "cancelled" || mStr(p, "owner_email") == "" },
+		}},
+	},
 }
 
 // startHadiaConsumer subscribes to hadia.> on hadia-api's stream "hadia". digest holds the alerts of

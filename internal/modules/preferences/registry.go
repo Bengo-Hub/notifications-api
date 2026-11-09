@@ -132,6 +132,7 @@ var Registry = []Type{
 	{Key: "hadia/item_link_changed", Label: "A shop changed a gift's price or removed its page", Group: "Gift registry", Class: ClassEssential},
 	{Key: "hadia/reservation_reminder", Label: "Gift reservation ending soon", Group: "Gift registry", Class: ClassEssential},
 	{Key: "hadia/reservation_released", Label: "Gift reservation ended", Group: "Gift registry", Class: ClassEssential},
+	{Key: "hadia/reservation_released_owner", Label: "A guest let a reserved gift go", Group: "Gift registry", Class: ClassEssential},
 	{Key: "hadia/payout_destination_changed", Label: "Payout number changed (security alert)", Group: "Gift registry", Class: ClassEssential},
 	{Key: "hadia/case_opened", Label: "New case in the exception queue (staff)", Group: "Gift registry", Class: ClassEssential},
 	{Key: "hadia/case_summary", Label: "Daily exception queue summary (staff)", Group: "Gift registry", Class: ClassEssential},
