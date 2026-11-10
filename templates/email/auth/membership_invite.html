@@ -1,0 +1,10 @@
+{{ define "content" }}
+  <p>Hi {{ .name }},</p>
+  <p><strong>{{ .org_name }}</strong> has invited you to join their organisation on Codevertex.</p>
+  <p>You will only become a member if you accept. Sign in with your existing account to accept or decline the invitation.</p>
+  <p>
+    <a href="{{ .login_url }}" style="background:{{ or .brand_primary_color "#0F766E" }};color:#ffffff !important;text-decoration:none;padding:10px 16px;border-radius:6px;display:inline-block;">Review the invitation</a>
+  </p>
+  <p style="color:#6b7280;">If you do not know this organisation, decline it or simply ignore this email; nothing changes on your account.</p>
+  <p style="color:#6b7280;">Cheers,<br/>{{ or .brand_name .brand }}</p>
+{{ end }}

@@ -446,7 +446,7 @@ func startAuthNotificationConsumer(ctx context.Context, nc *nats.Conn, cfg *conf
 				Data:        data,
 				Metadata:    map[string]any{"subject": defaultSubject},
 				RequestID:      uuid.New().String(),
-				IdempotencyKey: fmt.Sprintf("auth-tenant-%s-%s", templateID, tenantID),
+				IdempotencyKey: fmt.Sprintf("auth-tenant-%s-%s-%s", templateID, tenantID, email),
 				QueuedAt:       time.Now(),
 			}
 
@@ -467,5 +467,12 @@ func startAuthNotificationConsumer(ctx context.Context, nc *nats.Conn, cfg *conf
 	subscribeWithRetry(ctx, nil, logg, "auth tenant rejected consumer", true, func() (*nats.Subscription, error) {
 		return eventslib.QueueSubscribe(logg, nc, "auth.tenant.rejected.notify", "notif-tenant-rejected",
 			tenantDecisionHandler("auth/tenant_rejected", "Update on your organization registration"))
+	})
+
+	// An existing account invited to another organisation (auth-api AddTenantMember, security audit
+	// H4): they join only after accepting in the accounts site.
+	subscribeWithRetry(ctx, nil, logg, "auth membership invite consumer", true, func() (*nats.Subscription, error) {
+		return eventslib.QueueSubscribe(logg, nc, "auth.membership.invited.notify", "notif-membership-invite",
+			tenantDecisionHandler("auth/membership_invite", "You have been invited to join an organisation"))
 	})
 }
