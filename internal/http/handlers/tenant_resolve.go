@@ -46,7 +46,10 @@ func resolveActingTenantID(r *http.Request) string {
 // the body field is ignored, so a tenant can never bill or impersonate another tenant by naming it.
 func sendingTenant(r *http.Request, bodyTenant, platformID string) string {
 	acting := resolveActingTenantID(r)
-	if httpware.IsPlatformOwner(r.Context()) || (acting != "" && acting == platformID) {
+	// Privileged callers only (the signed platform-owner claim or a service key; see the router's
+	// tenantContext). Being in the platform tenant is not enough: that let any plain member of
+	// codevertex send, and be billed, as any tenant (security audit 2026-11-10).
+	if httpware.IsPlatformOwner(r.Context()) {
 		if bodyTenant != "" {
 			return bodyTenant
 		}

@@ -381,10 +381,11 @@ func tenantContext() func(http.Handler) http.Handler {
 			if !found {
 				return "", "", false, false
 			}
-			// A platform owner is either signed in under the platform tenant or carries the signed
-			// is_platform_owner claim (a superuser whose token was issued while another tenant was
-			// active). Slug alone made such a token act as that tenant and ignore X-Tenant-ID.
-			isPO := claims.IsPlatformOwner || claims.GetTenantSlug() == "codevertex"
+			// Privileged: the signed is_platform_owner claim (auth-api sets it for admin-tier roles in
+			// the platform tenant, whichever tenant is active), or a service key, since producers send
+			// on behalf of tenants. Never the platform tenant's slug alone: that made every plain
+			// member of codevertex act for any tenant (security audit 2026-11-10).
+			isPO := claims.IsPlatformOwner || claims.IsService
 			return claims.TenantID, claims.GetTenantSlug(), isPO, true
 		},
 		URLParamFunc: chi.URLParam,

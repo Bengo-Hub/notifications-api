@@ -42,10 +42,11 @@ func TestSendingTenantLetsPlatformNameATenant(t *testing.T) {
 	if got := sendingTenant(r, "tenant-b", "platform"); got != "tenant-b" {
 		t.Fatalf("platform owner may send for a named tenant, got %q", got)
 	}
-	// A caller whose own tenant is the platform tenant (service key) may name a tenant too.
-	svc := reqWith(t, "platform", false)
-	if got := sendingTenant(svc, "tenant-b", "platform"); got != "tenant-b" {
-		t.Fatalf("platform-tenant caller may name a tenant, got %q", got)
+	// A plain member of the platform tenant is not privileged: they send as themselves (security
+	// audit 2026-11-10). Service keys are privileged through the router's tenantContext.
+	member := reqWith(t, "platform", false)
+	if got := sendingTenant(member, "tenant-b", "platform"); got != "platform" {
+		t.Fatalf("a plain platform-tenant member must not name another tenant, got %q", got)
 	}
 	if got := sendingTenant(r, "", "platform"); got != "platform" {
 		t.Fatalf("got %q", got)
