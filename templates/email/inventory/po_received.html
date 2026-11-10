@@ -1,0 +1,8 @@
+{{ define "content" }}
+  <p>Hello,</p>
+  <p>Goods on a purchase order have been received into stock.</p>
+  <p><strong>PO number:</strong> {{ .po_number }}</p>
+  {{ if .supplier_name }}<p><strong>Supplier:</strong> {{ .supplier_name }}</p>{{ end }}
+  {{ if .total_amount }}<p><strong>Order total:</strong> {{ .currency }} {{ printf "%.2f" .total_amount }}</p>{{ end }}
+  <p class="muted">Stock levels now include these items.</p>
+{{ end }}

@@ -1,0 +1,6 @@
+{{ define "content" }}
+  <p>Hello{{ if .supplier_name }} {{ .supplier_name }}{{ end }},</p>
+  <p>We have received the goods on purchase order <strong>{{ .po_number }}</strong>. Thank you.</p>
+  {{ if .total_amount }}<p><strong>Order total:</strong> {{ .currency }} {{ printf "%.2f" .total_amount }}</p>{{ end }}
+  <p class="muted">Please send your invoice for this order if you have not already.</p>
+{{ end }}
