@@ -1,0 +1,3 @@
+Hello {{ or .name "there" }},
+
+{{ .co_owner }} would like to {{ .change }} on *{{ .registry }}*. Nothing changes until you approve it. Open your registry to approve or decline.

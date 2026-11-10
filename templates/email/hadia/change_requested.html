@@ -1,0 +1,10 @@
+{{ define "content" }}
+  <p>Hello {{ or .name "there" }},</p>
+  <p>{{ .co_owner }}, a co-owner of {{ .registry }}, would like to {{ .change }}.</p>
+  <p>Nothing changes until you approve it. Open your registry to approve or decline.</p>
+  {{ if .action_link }}
+  <p>
+    <a class="button" href="{{ .action_link }}">Review the request</a>
+  </p>
+  {{ end }}
+{{ end }}

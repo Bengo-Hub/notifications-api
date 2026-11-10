@@ -95,6 +95,21 @@ func hadiaFundData(p map[string]any, _ *tenantInfo) map[string]any {
 		"percent": mPercent(p), "over_by": mMoneyOr(p, "over_by", ""), "early": early, "cash_fund": mStr(p, "kind") == "cash_fund"}
 }
 
+// hadiaChangeWords words a co-owner's requested change for the owner.
+func hadiaChangeWords(kind string) string {
+	switch kind {
+	case "publish":
+		return "publish the registry"
+	case "unpublish":
+		return "unpublish the registry"
+	case "visibility":
+		return "change who can see the registry"
+	case "rotate_link":
+		return "make a new share link"
+	}
+	return "change the registry"
+}
+
 // mInt reads a whole count from the payload (JSON numbers arrive as float64); 0 when absent.
 func mInt(p map[string]any, key string) int {
 	switch v := p[key].(type) {
@@ -268,6 +283,20 @@ var hadiaMappings = map[string][]hadiaMessage{
 		WATemplate: "hadia_member_invited_v1_btn",
 		WAParams:   func(d map[string]any) []string { return mParams(d, "inviter", "registry") },
 		Skip:       func(p map[string]any) bool { return mStr(p, "invitee_phone") == "" },
+	}}},
+	// A co-owner asks the owner to publish, unpublish, change visibility or make a new share link (owner
+	// decision, 10 November 2026: those need the original owner's approval). Email now, WhatsApp once
+	// Meta approves the template and Hadia's number is live.
+	"registry.change_requested": {{PathKey: "owner_url", maskaniMapping: maskaniMapping{
+		TemplateID: "hadia/change_requested", PhoneKey: "owner_phone", EmailKey: "owner_email",
+		Subject:    func(p map[string]any) string { return "A co-owner is waiting for your approval" },
+		Data: func(p map[string]any, _ *tenantInfo) map[string]any {
+			return map[string]any{"name": waParam(p["owner_name"], "there"), "co_owner": waParam(p["co_owner_name"], "A co-owner"),
+				"registry": mStr(p, "registry_title"), "change": hadiaChangeWords(mStr(p, "kind"))}
+		},
+		WATemplate: "hadia_change_requested_v1_btn",
+		WAParams:   func(d map[string]any) []string { return mParams(d, "name", "co_owner", "change", "registry") },
+		Skip:       func(p map[string]any) bool { return mStr(p, "owner_phone") == "" && mStr(p, "owner_email") == "" },
 	}}},
 	"item.link_changed": {{PathKey: "owner_url", maskaniMapping: maskaniMapping{
 		TemplateID: "hadia/item_link_changed", EmailKey: "owner_email",
