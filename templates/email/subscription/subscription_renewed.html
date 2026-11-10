@@ -1,17 +1,24 @@
 {{ define "content" }}
   <p>Hello {{ .name }},</p>
-  <h2 style="color: #059669;">Subscription Renewed</h2>
-  <p>Your subscription for <strong>{{ .plan_name }}</strong> has been successfully renewed.</p>
-  
+  {{ if .amount_paid }}
+  <h2 style="color: #059669;">Payment received, subscription renewed</h2>
+  <p>We have received your payment and your <strong>{{ .plan_name }}</strong> subscription is renewed.</p>
+  {{ else }}
+  <h2 style="color: #059669;">Subscription renewed</h2>
+  <p>Your <strong>{{ .plan_name }}</strong> subscription is renewed.</p>
+  {{ end }}
+
   <div style="background:#f3f4f6; padding:16px; border-radius:6px; margin:16px 0;">
     <strong>Plan:</strong> {{ .plan_name }}<br/>
-    <strong>New Expiry Date:</strong> {{ .new_expiry_date }}<br/>
-    <strong>Amount Paid:</strong> {{ .amount_paid }} {{ .currency }}
+    {{ if .new_expiry_date }}<strong>Active until:</strong> {{ .new_expiry_date }}<br/>{{ end }}
+    {{ if .amount_paid }}<strong>Amount paid:</strong> {{ .currency }} {{ .amount_paid }}<br/>{{ end }}
+    {{ if .payment_method }}<strong>Paid by:</strong> {{ .payment_method }}<br/>{{ end }}
+    {{ if .payment_reference }}<strong>Payment reference:</strong> {{ .payment_reference }}{{ end }}
   </div>
 
-  <p>Thank you for continuing with us!</p>
+  <p>Thank you for continuing with us.</p>
 
   <p>
-    <a class="button" href="{{ .action_link }}">Manage Subscription</a>
+    <a class="button" href="{{ .action_link }}">Manage subscription</a>
   </p>
 {{ end }}

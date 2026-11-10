@@ -86,16 +86,13 @@ var subscriptionMappings = map[string]subscriptionNotificationMapping{
 			}
 		},
 	},
+	// A renewal paid by the tenant is also its payment confirmation: subscriptions-api puts what was
+	// paid on the event (amount_paid, currency, payment_method, payment_reference) when a payment
+	// renewed it.
 	"renewed": {
 		TemplateID:   "subscription/subscription_renewed",
-		EmailSubject: "Your subscription has been renewed",
-		DataBuilder: func(payload map[string]any, tenantWebsite string) map[string]any {
-			return map[string]any{
-				"name":        "Admin",
-				"plan_name":   firstNonEmpty(payload["plan_name"], payload["plan_code"]),
-				"action_link": fmt.Sprintf("%s/settings/subscription", tenantWebsite),
-			}
-		},
+		EmailSubject: "Payment received: your subscription is renewed",
+		DataBuilder:  renewedData,
 	},
 	// Upgrade trials and scheduled plan changes (subscriptions-api plan_schedule*.go). A trial
 	// gives a higher tier for some days; the upgrade then takes effect on the next renewal date
@@ -410,4 +407,23 @@ func startSubscriptionConsumer(ctx context.Context, nc *nats.Conn, js nats.JetSt
 		nats.AckWait(30*time.Second),
 		nats.MaxDeliver(3),
 	)
+}
+
+// renewedData is the renewal confirmation's data. The payment lines are left empty for a renewal
+// no payment made (a manual or free one), and the template then shows none of them.
+func renewedData(payload map[string]any, tenantWebsite string) map[string]any {
+	str := func(k string) string {
+		s, _ := payload[k].(string)
+		return s
+	}
+	return map[string]any{
+		"name":              "Admin",
+		"plan_name":         firstNonEmpty(payload["plan_name"], payload["plan_code"]),
+		"new_expiry_date":   formatEventDate(payload["period_end"]),
+		"amount_paid":       str("amount_paid"),
+		"currency":          firstNonEmpty(payload["currency"], "KES"),
+		"payment_method":    str("payment_method"),
+		"payment_reference": str("payment_reference"),
+		"action_link":       fmt.Sprintf("%s/settings/subscription", tenantWebsite),
+	}
 }

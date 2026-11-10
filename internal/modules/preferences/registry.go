@@ -88,11 +88,14 @@ var Registry = []Type{
 	{Key: "finance/payments_restored", Label: "Payments back to normal", Group: "Billing & Payments", Class: ClassEssential},
 	// Platform-ops alert: a visitor sent the codevertexafrica.com contact form.
 	{Key: "platform/website_enquiry", Label: "New website enquiry (platform ops)", Group: "Account & Security", Class: ClassLocked},
-	{Key: "subscription/subscription_created", Label: "Subscription created", Group: "Subscription", Class: ClassOptional},
-	{Key: "subscription/subscription_renewed", Label: "Subscription renewed", Group: "Subscription", Class: ClassOptional},
-	{Key: "subscription/subscription_upgraded", Label: "Subscription upgraded", Group: "Subscription", Class: ClassOptional},
-	{Key: "subscription/subscription_downgraded", Label: "Subscription downgraded", Group: "Subscription", Class: ClassOptional},
-	{Key: "subscription/subscription_cancelled", Label: "Subscription cancelled", Group: "Subscription", Class: ClassOptional},
+	// Billing notices about the tenant's own Codevertex subscription are transactional: a renewal is
+	// also the confirmation of the payment that renewed it. Optional (off by default) meant no tenant
+	// ever got one (10 November 2026), so they default on like the other billing notices.
+	{Key: "subscription/subscription_created", Label: "Subscription created", Group: "Subscription", Class: ClassEssential},
+	{Key: "subscription/subscription_renewed", Label: "Subscription renewed", Group: "Subscription", Class: ClassEssential},
+	{Key: "subscription/subscription_upgraded", Label: "Subscription upgraded", Group: "Subscription", Class: ClassEssential},
+	{Key: "subscription/subscription_downgraded", Label: "Subscription downgraded", Group: "Subscription", Class: ClassEssential},
+	{Key: "subscription/subscription_cancelled", Label: "Subscription cancelled", Group: "Subscription", Class: ClassEssential},
 
 	// ── Orders (customer-facing lifecycle) ───────────────────────────────────
 	{Key: "ordering/order_placed", Label: "Order placed confirmation", Group: "Orders", Class: ClassEssential},
