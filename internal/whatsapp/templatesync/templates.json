@@ -993,6 +993,17 @@
     ]
   },
   {
+    "name": "hadia_thankyou_reminder_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/hadia/thankyou_reminder.txt (params: name, count, registry; button: app/registries/<id>/gifts)",
+    "body": "Hello {{1}},\n\nIt has been a week since your event on *{{3}}*. {{2}} of your guests have not been thanked yet. Open your gift log to send each one a thank-you.",
+    "example": ["Amina", "4", "Amina and Tom's wedding"],
+    "buttons": [
+      {"type": "URL", "text": "Open gift log", "url": "https://hadiafrica.com/{{1}}", "example": ["app/registries/0b6c2b8e/gifts"]}
+    ]
+  },
+  {
     "name": "hadia_reservation_reminder_v1_btn",
     "category": "UTILITY",
     "language": "en_US",

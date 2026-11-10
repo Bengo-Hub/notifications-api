@@ -95,6 +95,19 @@ func hadiaFundData(p map[string]any, _ *tenantInfo) map[string]any {
 		"percent": mPercent(p), "over_by": mMoneyOr(p, "over_by", ""), "early": early, "cash_fund": mStr(p, "kind") == "cash_fund"}
 }
 
+// mInt reads a whole count from the payload (JSON numbers arrive as float64); 0 when absent.
+func mInt(p map[string]any, key string) int {
+	switch v := p[key].(type) {
+	case float64:
+		return int(v)
+	case int:
+		return v
+	case int64:
+		return int(v)
+	}
+	return 0
+}
+
 // mPercent words a whole per cent from the payload ("75%"); "" when absent.
 func mPercent(p map[string]any) string {
 	switch v := p["percent"].(type) {
@@ -223,6 +236,25 @@ var hadiaMappings = map[string][]hadiaMessage{
 				"kind": mStr(p, "kind"), "event_date": mStr(p, "event_date"), "payout_from": mTime(p, "payout_from"), "funds": funds}
 		},
 		Skip: func(p map[string]any) bool { return mStr(p, "owner_email") == "" },
+	}}},
+	// A week after the event, guests still to thank (owner decision, 10 November 2026: email and
+	// WhatsApp, on by default; hadia-api only sends it while the owner's switch is on). WhatsApp
+	// goes once Meta approves the template and Hadia's number is live; email until then.
+	"thankyou.reminder": {{PathKey: "owner_url", maskaniMapping: maskaniMapping{
+		TemplateID: "hadia/thankyou_reminder", PhoneKey: "owner_phone", EmailKey: "owner_email",
+		Subject: func(p map[string]any) string {
+			if mInt(p, "unthanked") == 1 {
+				return "One guest is waiting for your thank-you"
+			}
+			return fmt.Sprintf("%d guests are waiting for your thank-you", mInt(p, "unthanked"))
+		},
+		Data: func(p map[string]any, _ *tenantInfo) map[string]any {
+			return map[string]any{"name": waParam(p["owner_name"], "there"), "registry": mStr(p, "registry_title"),
+				"count": fmt.Sprintf("%d", mInt(p, "unthanked")), "one": mInt(p, "unthanked") == 1}
+		},
+		WATemplate: "hadia_thankyou_reminder_v1_btn",
+		WAParams:   func(d map[string]any) []string { return mParams(d, "name", "count", "registry") },
+		Skip:       func(p map[string]any) bool { return mStr(p, "owner_phone") == "" && mStr(p, "owner_email") == "" },
 	}}},
 	"item.link_changed": {{PathKey: "owner_url", maskaniMapping: maskaniMapping{
 		TemplateID: "hadia/item_link_changed", EmailKey: "owner_email",

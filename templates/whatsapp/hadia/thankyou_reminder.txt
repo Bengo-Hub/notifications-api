@@ -1,0 +1,3 @@
+Hello {{ or .name "there" }},
+
+It has been a week since your event on *{{ .registry }}*. {{ .count }} of your guests have not been thanked yet. Open your gift log to send each one a thank-you.

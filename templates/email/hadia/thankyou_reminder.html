@@ -1,0 +1,16 @@
+{{ define "content" }}
+  <p>Hello {{ or .name "there" }},</p>
+  <h2>A thank-you goes a long way</h2>
+  <p>
+    It has been a week since your event on {{ .registry }}.
+    {{ if .one }}One guest who gave you a gift has{{ else }}{{ .count }} guests who gave you gifts have{{ end }}
+    not been thanked yet.
+  </p>
+  <p>Open your gift log to see who gave what and send each guest a thank-you on WhatsApp with one tap.</p>
+  {{ if .action_link }}
+  <p>
+    <a class="button" href="{{ .action_link }}">Open your gift log</a>
+  </p>
+  {{ end }}
+  <p style="color:#6b7280;">You can switch these reminders off in your account's notification settings.</p>
+{{ end }}
