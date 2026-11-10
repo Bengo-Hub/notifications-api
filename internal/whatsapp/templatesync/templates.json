@@ -993,6 +993,17 @@
     ]
   },
   {
+    "name": "hadia_member_invited_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/hadia/member_invited.txt (params: inviter, registry; button: app)",
+    "body": "Hello,\n\n{{1}} invited you to help run the Hadia gift registry *{{2}}*. Sign in with this phone number to see it and help with the gifts. Hadia will never ask for your M-Pesa PIN.",
+    "example": ["Amina", "Amina and Tom's wedding"],
+    "buttons": [
+      {"type": "URL", "text": "Sign in to Hadia", "url": "https://hadiafrica.com/{{1}}", "example": ["app"]}
+    ]
+  },
+  {
     "name": "hadia_thankyou_reminder_v1_btn",
     "category": "UTILITY",
     "language": "en_US",

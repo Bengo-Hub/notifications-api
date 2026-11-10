@@ -1,0 +1,11 @@
+{{ define "content" }}
+  <p>Hello,</p>
+  <p>{{ .inviter }} invited you to help run the Hadia gift registry {{ .registry }}.</p>
+  <p>Sign in with the phone number this invitation was sent to, and the registry appears in your account.</p>
+  {{ if .action_link }}
+  <p>
+    <a class="button" href="{{ .action_link }}">Sign in to Hadia</a>
+  </p>
+  {{ end }}
+  <p style="color:#6b7280;">Hadia will never ask for your M-Pesa PIN or a code someone sent you.</p>
+{{ end }}

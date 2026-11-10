@@ -256,6 +256,19 @@ var hadiaMappings = map[string][]hadiaMessage{
 		WAParams:   func(d map[string]any) []string { return mParams(d, "name", "count", "registry") },
 		Skip:       func(p map[string]any) bool { return mStr(p, "owner_phone") == "" && mStr(p, "owner_email") == "" },
 	}}},
+	// A registry owner invited a co-owner (FR-04, 10 November 2026). WhatsApp only: the invitee has no
+	// account or email yet. Until Meta approves the template and Hadia's number is live nothing goes,
+	// and hadia-ui lets the owner share the invitation themselves.
+	"registry.member_invited": {{PathKey: "sign_in_url", maskaniMapping: maskaniMapping{
+		TemplateID: "hadia/member_invited", PhoneKey: "invitee_phone",
+		Subject:    func(p map[string]any) string { return "You are invited to help run a gift registry" },
+		Data: func(p map[string]any, _ *tenantInfo) map[string]any {
+			return map[string]any{"inviter": waParam(p["inviter_name"], "A Hadia host"), "registry": mStr(p, "registry_title")}
+		},
+		WATemplate: "hadia_member_invited_v1_btn",
+		WAParams:   func(d map[string]any) []string { return mParams(d, "inviter", "registry") },
+		Skip:       func(p map[string]any) bool { return mStr(p, "invitee_phone") == "" },
+	}}},
 	"item.link_changed": {{PathKey: "owner_url", maskaniMapping: maskaniMapping{
 		TemplateID: "hadia/item_link_changed", EmailKey: "owner_email",
 		Subject: func(p map[string]any) string {
