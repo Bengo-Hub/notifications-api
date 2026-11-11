@@ -475,4 +475,11 @@ func startAuthNotificationConsumer(ctx context.Context, nc *nats.Conn, cfg *conf
 		return eventslib.QueueSubscribe(logg, nc, "auth.membership.invited.notify", "notif-membership-invite",
 			tenantDecisionHandler("auth/membership_invite", "You have been invited to join an organisation"))
 	})
+
+	// A platform owner invites a new business to an app (auth-api AdminHandler.InviteBusiness):
+	// the link opens the app's /join page and starts sign-up with the invite.
+	subscribeWithRetry(ctx, nil, logg, "auth business invite consumer", true, func() (*nats.Subscription, error) {
+		return eventslib.QueueSubscribe(logg, nc, "auth.business.invited.notify", "notif-business-invite",
+			tenantDecisionHandler("auth/business_invite", "You are invited to set up your business on Codevertex"))
+	})
 }

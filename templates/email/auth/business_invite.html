@@ -1,0 +1,10 @@
+{{ define "content" }}
+  <p>Hi {{ .name }},</p>
+  <p>You are invited to set up <strong>{{ .org_name }}</strong> on Codevertex.</p>
+  <p>Create your account with this email address and your workspace is ready straight away. You then go through a short setup and land on your dashboard.</p>
+  <p>
+    <a href="{{ .login_url }}" style="background:{{ or .brand_primary_color "#0F766E" }};color:#ffffff !important;text-decoration:none;padding:10px 16px;border-radius:6px;display:inline-block;">Accept the invitation</a>
+  </p>
+  <p style="color:#6b7280;">The link works for 7 days and only for this email address. If you were not expecting it, ignore this email; nothing is created until you sign up.</p>
+  <p style="color:#6b7280;">Cheers,<br/>{{ or .brand_name .brand }}</p>
+{{ end }}
