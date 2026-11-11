@@ -12,6 +12,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/bengobox/notifications-api/internal/config"
+	"github.com/bengobox/notifications-api/internal/contacts"
 	"github.com/bengobox/notifications-api/internal/messaging"
 )
 
@@ -155,9 +156,28 @@ var libraryMappings = map[string]libraryNotificationMapping{
 	},
 }
 
+// libraryMember is the member a library event is about: the payload's email and name, replaced
+// field by field by the CRM contact's when the event carries crm_contact_id. Library events do
+// not carry crm_contact_id yet, so until library-api adds it this is the payload as before.
+func libraryMember(ctx context.Context, res *contacts.Resolver, evt libraryEvent, ti *tenantInfo) contacts.Recipient {
+	email, _ := evt.Payload["email"].(string)
+	name, _ := evt.Payload["name"].(string)
+	fallback := contacts.Recipient{Name: name, Email: email}
+	contactID, _ := evt.Payload["crm_contact_id"].(string)
+	id := contacts.ParseID(contactID)
+	if id == uuid.Nil {
+		return fallback
+	}
+	tenantID := contacts.ParseID(evt.TenantID)
+	if ti != nil && ti.ID != uuid.Nil {
+		tenantID = ti.ID
+	}
+	return res.Resolve(ctx, tenantID, id, fallback)
+}
+
 // startLibraryConsumer subscribes to library.> events and republishes them as
 // notification messages (routed to the tenant librarian / admin).
-func startLibraryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamContext, cfg *config.Config, tr *tenantResolver, logg *zap.Logger) {
+func startLibraryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamContext, cfg *config.Config, tr *tenantResolver, crmContacts *contacts.Resolver, logg *zap.Logger) {
 	if nc == nil || js == nil {
 		logg.Warn("skipping library consumer: NATS not available")
 		return
@@ -181,11 +201,12 @@ func startLibraryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamC
 			_ = m.Nak()
 			return
 		}
-		// Patron-direct when the event carries a member email; else fall back to the librarian.
+		member := libraryMember(ctx, crmContacts, evt, ti)
+		// Patron-direct when the member has an email; else fall back to the librarian.
 		recipient := ti.ContactEmail
 		target := messaging.TargetStaff
-		if memberEmail, _ := evt.Payload["email"].(string); memberEmail != "" {
-			recipient = memberEmail
+		if member.Email != "" {
+			recipient = member.Email
 			target = messaging.TargetCustomer
 		}
 		if recipient == "" {
@@ -193,8 +214,8 @@ func startLibraryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamC
 			return
 		}
 		data := mapping.DataBuilder(evt.Payload, ti.Website)
-		if n, _ := evt.Payload["name"].(string); n != "" {
-			data["name"] = n // greet the actual member when known
+		if member.Name != "" {
+			data["name"] = member.Name // greet the actual member when known
 		}
 
 		msg := messaging.Message{

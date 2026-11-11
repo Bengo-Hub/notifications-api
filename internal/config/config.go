@@ -34,6 +34,9 @@ type ServicesConfig struct {
 	// MarketflowAPI is where a tenant's customer list lives (broadcast audiences, AI drafts).
 	// In-cluster by default, like every other caller of marketflow-api.
 	MarketflowAPI string `envconfig:"MARKETFLOW_API_URL" default:"http://marketflow-api.marketflow.svc.cluster.local:4000"`
+	// MarketflowServiceURL is the CRM base URL for the shared crm client: customer name, email
+	// and phone are looked up there at send time. Same env name as the other services. In-cluster.
+	MarketflowServiceURL string `envconfig:"MARKETFLOW_SERVICE_URL" default:"http://marketflow-api.marketflow.svc.cluster.local:4000"`
 	// EmailProvisioner is the only service holding the mail server's admin login; the delivery
 	// webhook key is pushed to Stalwart through it. In-cluster.
 	EmailProvisioner string `envconfig:"EMAIL_PROVISIONER_URL" default:"http://email-provisioner.email.svc.cluster.local:8080"`

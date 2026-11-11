@@ -14,7 +14,7 @@ require (
 	github.com/Bengo-Hub/shared-auth-client v0.4.1
 	github.com/Bengo-Hub/shared-events v0.11.1
 	github.com/Bengo-Hub/shared-ratelimit v0.3.1
-	github.com/Bengo-Hub/shared-service-client v0.3.1
+	github.com/Bengo-Hub/shared-service-client v0.5.0
 	github.com/SherClockHolmes/webpush-go v1.4.0
 	github.com/gin-gonic/gin v1.11.0
 	github.com/go-chi/chi/v5 v5.4.0

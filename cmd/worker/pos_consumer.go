@@ -9,10 +9,12 @@ import (
 	"time"
 
 	eventslib "github.com/Bengo-Hub/shared-events"
+	"github.com/google/uuid"
 	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
 
 	"github.com/bengobox/notifications-api/internal/config"
+	"github.com/bengobox/notifications-api/internal/contacts"
 	"github.com/bengobox/notifications-api/internal/messaging"
 	"github.com/bengobox/notifications-api/internal/moneyfmt"
 )
@@ -175,6 +177,37 @@ var posNotices = map[string]posNotice{
 	},
 }
 
+// withCRMRecipient puts the CRM contact's name, email and phone into the notice's payload fields
+// when the event carries crm_contact_id (the contact the notice goes to). The payload's own values
+// stay as the fallback, field by field, so a CRM outage still sends. The event passed in is not
+// changed; a copy is returned.
+func withCRMRecipient(ctx context.Context, res *contacts.Resolver, evt posEvent, ti *tenantInfo) posEvent {
+	n, ok := posNotices[evt.EventType]
+	if !ok || res == nil {
+		return evt
+	}
+	contactID := contacts.ParseID(payStr(evt.Payload, "crm_contact_id"))
+	if contactID == uuid.Nil {
+		return evt
+	}
+	tenantID := contacts.ParseID(evt.TenantID)
+	if ti != nil && ti.ID != uuid.Nil {
+		tenantID = ti.ID
+	}
+	rec := res.Resolve(ctx, tenantID, contactID, contacts.Recipient{
+		Name:  payStr(evt.Payload, n.NameKey),
+		Email: payStr(evt.Payload, n.EmailKey),
+		Phone: payStr(evt.Payload, n.PhoneKey),
+	})
+	p := make(map[string]any, len(evt.Payload)+3)
+	for k, v := range evt.Payload {
+		p[k] = v
+	}
+	p[n.NameKey], p[n.EmailKey], p[n.PhoneKey] = rec.Name, rec.Email, rec.Phone
+	evt.Payload = p
+	return evt
+}
+
 // posPartyNotice builds the notice for one event, or false when there is no template for the
 // event or no customer contact on it.
 func posPartyNotice(evt posEvent, ti *tenantInfo) (partyNotice, bool) {
@@ -219,7 +252,7 @@ func posPartyNotice(evt posEvent, ti *tenantInfo) (partyNotice, bool) {
 }
 
 // startPosConsumer subscribes to pos.> events and sends the customer notices in posNotices.
-func startPosConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamContext, cfg *config.Config, tr *tenantResolver, logg *zap.Logger) {
+func startPosConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamContext, cfg *config.Config, tr *tenantResolver, crmContacts *contacts.Resolver, logg *zap.Logger) {
 	if nc == nil || js == nil {
 		logg.Warn("skipping pos consumer: NATS not available")
 		return
@@ -242,6 +275,7 @@ func startPosConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamConte
 			_ = m.Nak()
 			return
 		}
+		evt = withCRMRecipient(ctx, crmContacts, evt, ti)
 		notice, ok := posPartyNotice(evt, ti)
 		if !ok {
 			logg.Debug("pos event: no customer contact, nothing to send", zap.String("type", evt.EventType))

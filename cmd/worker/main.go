@@ -25,6 +25,7 @@ import (
 	eventslib "github.com/Bengo-Hub/shared-events"
 	ratelimit "github.com/Bengo-Hub/shared-ratelimit"
 	serviceclient "github.com/Bengo-Hub/shared-service-client"
+	"github.com/Bengo-Hub/shared-service-client/crm"
 
 	entdb "github.com/bengobox/notifications-api/internal/database"
 	"github.com/bengobox/notifications-api/internal/ent"
@@ -33,6 +34,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/bengobox/notifications-api/internal/config"
+	"github.com/bengobox/notifications-api/internal/contacts"
 	"github.com/bengobox/notifications-api/internal/encryption"
 	"github.com/bengobox/notifications-api/internal/messaging"
 	"github.com/bengobox/notifications-api/internal/platform/database"
@@ -253,6 +255,10 @@ func main() {
 	// Tenant resolver for event consumers and template branding
 	tr := newTenantResolver(client, tenantCache, cfg.Services.AuthAPI)
 
+	// Customer name, email and phone come from the MarketFlow CRM when an event carries
+	// crm_contact_id; the event's own fields are the fallback. Cached in process for 5 minutes.
+	crmContacts := contacts.New(crm.New(cfg.Services.MarketflowServiceURL, cfg.Security.APIKey, logg.Named("crm")), logg.Named("contacts"))
+
 	// Paid channels are gated at the source: every consumer publishes through messaging.Publish,
 	// which drops an SMS or WhatsApp message for a tenant with no plan, bundle or credit before it
 	// is queued, rendered or logged.
@@ -412,7 +418,7 @@ func main() {
 	startInventoryConsumer(ctx, nc, js, cfg, tr, logg)
 
 	// Start library event consumer (library-service → overdue / hold-ready / fine / member alerts)
-	startLibraryConsumer(ctx, nc, js, cfg, tr, logg)
+	startLibraryConsumer(ctx, nc, js, cfg, tr, crmContacts, logg)
 
 	// Start order status event consumer (ordering-service → customer notifications)
 	startOrderConsumer(ctx, nc, js, cfg, tr, prefGate, templateChannels, logg)
@@ -437,7 +443,7 @@ func main() {
 	startDeliveryConsumer(ctx, nc, js, cfg, tr, client, logg)
 
 	// Start POS event consumer (pos-service → order/payment notifications)
-	startPosConsumer(ctx, nc, js, cfg, tr, logg)
+	startPosConsumer(ctx, nc, js, cfg, tr, crmContacts, logg)
 
 	// Hadia's daily owner gift summary (N3): held alerts live in Postgres. Without the pool every
 	// owner alert goes out at once, as before.
