@@ -1,10 +1,10 @@
 {{ define "content" }}
   <p>Hello {{ .name }},</p>
   <h2 style="color: #dc2626;">Action Required: {{ .days_remaining }} day(s) left to pay</h2>
-  <p>Your subscription for <strong>{{ .plan_name }}</strong> has reached the end of its billing period and is now in a grace period. Your services remain active for now, but access will be <strong>blocked</strong> if payment is not received.</p>
+  <p>Your {{ if .plan_name }}<strong>{{ .plan_name }}</strong> {{ end }}subscription has reached the end of its billing period and is now in a grace period. Your services remain active for now, but access will be <strong>blocked</strong> if payment is not received.</p>
 
   <div style="background:#fef2f2; border:1px solid #fecaca; padding:16px; border-radius:6px; margin:16px 0;">
-    <strong>Plan:</strong> {{ .plan_name }}<br/>
+    {{ if .plan_name }}<strong>Plan:</strong> {{ .plan_name }}<br/>{{ end }}
     {{ if .invoice_number }}<strong>Invoice:</strong> {{ .invoice_number }}<br/>{{ end }}
     <strong>Amount Due:</strong> {{ .amount }}<br/>
     <strong>Days Remaining:</strong> {{ .days_remaining }}<br/>

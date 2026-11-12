@@ -208,6 +208,21 @@ func waParam(v interface{}, def string) string {
 // no decimals when whole, 2 decimals otherwise) — matching the format Meta's approved order
 // templates were drafted and approved against (see templates.json's "example" values). Amounts
 // arrive as float64 off the wire (encoding/json decodes all JSON numbers that way).
+// formatEventTime shows an RFC3339 time from an event as a date and time in Kenya (EAT), e.g.
+// "12 Nov 2026, 6:00 PM". Ordering sends scheduled_for as a raw time.Time, which customers read as
+// "2026-11-12T15:00:00Z". A value that does not parse is returned as it is.
+func formatEventTime(v interface{}) string {
+	s, _ := v.(string)
+	if s == "" {
+		return ""
+	}
+	t, err := time.Parse(time.RFC3339Nano, s)
+	if err != nil {
+		return s
+	}
+	return t.In(time.FixedZone("EAT", 3*3600)).Format("02 Jan 2006, 3:04 PM")
+}
+
 func formatMoney(amount interface{}, currency interface{}) string {
 	amt, _ := amount.(float64)
 	cur, _ := currency.(string)
@@ -476,7 +491,7 @@ var orderMappings = map[string]orderNotificationMapping{
 			return map[string]interface{}{
 				"name":          data["customer_name"],
 				"order_number":  data["order_number"],
-				"scheduled_for": data["scheduled_for"],
+				"scheduled_for": formatEventTime(data["scheduled_for"]),
 				"total_amount":  formatMoney(data["total_amount"], data["currency"]),
 				"currency":      data["currency"],
 				"order_link":    orderLink(data, orderAppURL),

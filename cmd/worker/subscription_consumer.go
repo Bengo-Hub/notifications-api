@@ -42,7 +42,7 @@ var subscriptionMappings = map[string]subscriptionNotificationMapping{
 		DataBuilder: func(payload map[string]any, tenantWebsite string) map[string]any {
 			return map[string]any{
 				"name":        "Admin",
-				"plan_name":   payload["plan_code"],
+				"plan_name":   firstNonEmpty(payload["plan_name"], payload["plan_code"]),
 				"status":      payload["status"],
 				"bundle_code": payload["bundle_code"],
 				"trial_days":  payload["trial_days"],
@@ -79,10 +79,11 @@ var subscriptionMappings = map[string]subscriptionNotificationMapping{
 		EmailSubject: "Your subscription has been cancelled",
 		DataBuilder: func(payload map[string]any, tenantWebsite string) map[string]any {
 			return map[string]any{
-				"name":        "Admin",
-				"plan_name":   payload["plan_code"],
-				"reason":      payload["reason"],
-				"action_link": fmt.Sprintf("%s/settings/subscription", tenantWebsite),
+				"name":         "Admin",
+				"plan_name":    firstNonEmpty(payload["plan_name"], payload["plan_code"]),
+				"reason":       payload["reason"],
+				"access_until": payload["access_until"],
+				"action_link":  fmt.Sprintf("%s/settings/subscription", tenantWebsite),
 			}
 		},
 	},
@@ -161,7 +162,7 @@ var subscriptionMappings = map[string]subscriptionNotificationMapping{
 		DataBuilder: func(payload map[string]any, tenantWebsite string) map[string]any {
 			return map[string]any{
 				"name":           "Admin",
-				"plan_name":      payload["plan_code"],
+				"plan_name":      firstNonEmpty(payload["plan_name"], payload["plan_code"]),
 				"days_remaining": payload["days_remaining"],
 				"grace_ends_at":  payload["grace_ends_at"],
 				"amount":         payload["amount"],
@@ -177,7 +178,7 @@ var subscriptionMappings = map[string]subscriptionNotificationMapping{
 		DataBuilder: func(payload map[string]any, tenantWebsite string) map[string]any {
 			return map[string]any{
 				"name":           "Admin",
-				"plan_name":      payload["plan_code"],
+				"plan_name":      firstNonEmpty(payload["plan_name"], payload["plan_code"]),
 				"days_remaining": payload["days_remaining"],
 				"grace_ends_at":  payload["grace_ends_at"],
 				"amount":         payload["amount"],
@@ -185,6 +186,50 @@ var subscriptionMappings = map[string]subscriptionNotificationMapping{
 				"payment_link":   firstNonEmpty(payload["pay_link"], fmt.Sprintf("%s/settings/subscription", tenantWebsite)),
 			}
 		},
+	},
+	// expired fires when grace ends unpaid and access is blocked (subscriptions-api renewal.go). It
+	// carries the same plan, invoice and pay link as the grace reminders.
+	"expired": {
+		TemplateID:   "subscription/subscription_expired",
+		EmailSubject: "Your access is blocked: pay to restore your services",
+		DataBuilder: func(payload map[string]any, tenantWebsite string) map[string]any {
+			return map[string]any{
+				"name":           "Admin",
+				"plan_name":      firstNonEmpty(payload["plan_name"], payload["plan_code"]),
+				"blocked_on":     payload["blocked_on"],
+				"amount":         payload["amount"],
+				"invoice_number": payload["invoice_number"],
+				"payment_link":   firstNonEmpty(payload["pay_link"], fmt.Sprintf("%s/settings/subscription", tenantWebsite)),
+			}
+		},
+	},
+	// payment_required fires when a payment provider reports a failed or lapsed payment and the
+	// subscription is suspended (subscriptions-api webhook.go).
+	"payment_required": {
+		TemplateID:   "subscription/account_notice",
+		EmailSubject: "Payment required: your subscription is suspended",
+		DataBuilder: func(payload map[string]any, tenantWebsite string) map[string]any {
+			return map[string]any{
+				"name":        "Admin",
+				"heading":     "Payment required",
+				"message":     "We could not collect your subscription payment, so your subscription is suspended. Pay now to restore access.",
+				"action_text": "Pay now",
+				"action_link": fmt.Sprintf("%s/settings/subscription", tenantWebsite),
+			}
+		},
+	},
+	// Dormancy (subscriptions-api dormancy.go): no activity for the dormancy period gives a warning
+	// with a deadline, then suspension and a queued data deletion. The wording comes from the
+	// event's notification block so the policy text lives with the policy.
+	"dormancy.warning": {
+		TemplateID:   "subscription/account_notice",
+		EmailSubject: "Your account is inactive",
+		DataBuilder:  dormancyData("Your account is inactive", "Reactivate my account"),
+	},
+	"dormancy.suspended": {
+		TemplateID:   "subscription/account_notice",
+		EmailSubject: "Your account has been suspended",
+		DataBuilder:  dormancyData("Your account has been suspended", "Contact support"),
 	},
 	// Support agreements (subscriptions-api support_fee.go / support_fee_invoice.go): the standard
 	// hosting and support fee of one-time-license tenants and any special support agreement. An
@@ -231,6 +276,30 @@ func upgradeTrialData(payload map[string]any, tenantWebsite string) map[string]a
 		}
 	}
 	return out
+}
+
+// dormancyData fills the account notice for a dormancy event. The message is the policy text
+// subscriptions-api sends in payload.notification; a warning adds its deadline and links to the
+// subscription page, a suspension points to platform support (support@codevertexafrica.com).
+func dormancyData(heading, actionText string) func(map[string]any, string) map[string]any {
+	return func(payload map[string]any, tenantWebsite string) map[string]any {
+		message := ""
+		if n, ok := payload["notification"].(map[string]any); ok {
+			message, _ = n["message"].(string)
+		}
+		link := fmt.Sprintf("%s/settings/subscription", tenantWebsite)
+		if _, warning := payload["grace_ends_at"]; !warning {
+			link = "mailto:support@codevertexafrica.com"
+		}
+		return map[string]any{
+			"name":        "Admin",
+			"heading":     heading,
+			"message":     message,
+			"deadline":    formatEventDate(payload["grace_ends_at"]),
+			"action_text": actionText,
+			"action_link": link,
+		}
+	}
 }
 
 // supportGraceData fills the grace-reminder template for a support charge. plan_name carries the

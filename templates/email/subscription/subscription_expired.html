@@ -1,0 +1,18 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <h2 style="color: #dc2626;">Your access is blocked</h2>
+  <p>The grace period on your {{ if .plan_name }}<strong>{{ .plan_name }}</strong> {{ end }}subscription has ended without payment, so access to your services is now blocked. Your data is kept safe, and paying the invoice restores access straight away.</p>
+
+  <div style="background:#fef2f2; border:1px solid #fecaca; padding:16px; border-radius:6px; margin:16px 0;">
+    {{ if .plan_name }}<strong>Plan:</strong> {{ .plan_name }}<br/>{{ end }}
+    {{ if .invoice_number }}<strong>Invoice:</strong> {{ .invoice_number }}<br/>{{ end }}
+    {{ if .amount }}<strong>Amount due:</strong> {{ .amount }}<br/>{{ end }}
+    {{ if .blocked_on }}<strong>Blocked on:</strong> {{ .blocked_on }}{{ end }}
+  </div>
+
+  {{ if .payment_link }}
+  <p>
+    <a class="button" href="{{ .payment_link }}">Pay and restore access</a>
+  </p>
+  {{ end }}
+{{ end }}

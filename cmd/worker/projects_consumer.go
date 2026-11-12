@@ -39,12 +39,12 @@ var projectsMappings = map[string]projectsNotificationMapping{
 		EmailSubject: "Project milestone reached",
 		DataBuilder: func(payload map[string]any, tenantWebsite string) map[string]any {
 			return map[string]any{
-				"name":            "Team",
-				"project_name":    payload["project_name"],
-				"milestone_name":  payload["milestone_name"],
-				"completion_date": payload["completion_date"],
-				"progress":        payload["progress"],
-				"action_link":     fmt.Sprintf("%s/projects/%s", tenantWebsite, payload["project_id"]),
+				"name":             "Team",
+				"project_name":     payload["project_name"],
+				"milestone_name":   payload["milestone_name"],
+				"completion_date":  formatEventDate(payload["completion_date"]),
+				"project_progress": payload["progress"], // the template reads project_progress
+				"action_link":      fmt.Sprintf("%s/projects/%s", tenantWebsite, payload["project_id"]),
 			}
 		},
 	},

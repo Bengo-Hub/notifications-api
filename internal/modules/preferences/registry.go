@@ -96,6 +96,12 @@ var Registry = []Type{
 	{Key: "subscription/subscription_upgraded", Label: "Subscription upgraded", Group: "Subscription", Class: ClassEssential},
 	{Key: "subscription/subscription_downgraded", Label: "Subscription downgraded", Group: "Subscription", Class: ClassEssential},
 	{Key: "subscription/subscription_cancelled", Label: "Subscription cancelled", Group: "Subscription", Class: ClassEssential},
+	{Key: "subscription/subscription_expired", Label: "Access blocked after grace", Group: "Subscription", Class: ClassEssential},
+	{Key: "subscription/upgrade_trial_started", Label: "Upgrade trial started", Group: "Subscription", Class: ClassEssential},
+	{Key: "subscription/upgrade_trial_ending", Label: "Upgrade trial ending", Group: "Subscription", Class: ClassEssential},
+	{Key: "subscription/upgrade_trial_ended", Label: "Upgrade trial ended", Group: "Subscription", Class: ClassEssential},
+	{Key: "subscription/plan_change_scheduled", Label: "Plan change scheduled", Group: "Subscription", Class: ClassEssential},
+	{Key: "subscription/account_notice", Label: "Payment required and inactive account notices", Group: "Subscription", Class: ClassEssential},
 
 	// ── Orders (customer-facing lifecycle) ───────────────────────────────────
 	{Key: "ordering/order_placed", Label: "Order placed confirmation", Group: "Orders", Class: ClassEssential},

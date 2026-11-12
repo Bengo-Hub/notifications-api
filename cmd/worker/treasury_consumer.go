@@ -78,7 +78,10 @@ var treasuryMappings = map[string]treasuryNotificationMapping{
 				"payout_id":        payload["reference"],
 				"payout_method":    "Bank Transfer",
 				"reference_number": payload["transfer_code"],
-				"payout_link":      fmt.Sprintf("%s/dashboard/settlements", serviceURL("NOTIFICATIONS_TREASURY_APP_URL", tenantWebsite)),
+				// treasury-api sends no completion time on payout.completed; the settlement covers
+				// period_start to period_end, so the email shows the period end.
+				"payout_date": formatEventDate(firstNonEmpty(payload["completed_at"], payload["period_end"])),
+				"payout_link": fmt.Sprintf("%s/dashboard/settlements", serviceURL("NOTIFICATIONS_TREASURY_APP_URL", tenantWebsite)),
 			}
 		},
 	},
@@ -87,7 +90,8 @@ var treasuryMappings = map[string]treasuryNotificationMapping{
 		EmailSubject: "Your refund has been processed",
 		DataBuilder: func(payload map[string]any, tenantWebsite string) map[string]any {
 			return map[string]any{
-				"name":           payload["customer_name"],
+				// treasury-api sends no customer name on refund.completed.
+				"name":           firstNonEmpty(payload["customer_name"], "there"),
 				"amount":         payload["amount"],
 				"currency":       payload["currency"],
 				"reference_type": payload["reference_type"],
@@ -496,4 +500,3 @@ func startTreasuryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStream
 		nats.MaxDeliver(3),
 	)
 }
-

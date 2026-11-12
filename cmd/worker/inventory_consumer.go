@@ -18,7 +18,7 @@ import (
 
 // inventoryEvent is the CloudEvents envelope from inventory-service.
 type inventoryEvent struct {
-	ID       string                 `json:"id"`
+	ID            string                 `json:"id"`
 	EventType     string                 `json:"event_type"`
 	AggregateType string                 `json:"aggregate_type"`
 	TenantID      string                 `json:"tenant_id"`
@@ -46,7 +46,7 @@ var inventoryMappings = map[string]inventoryNotificationMapping{
 				"current_stock": data["available"],
 				"min_threshold": data["reorder_level"],
 				"unit":          "",
-				"location":      data["warehouse_id"],
+				"location":      firstNonEmpty(data["warehouse_name"], "your warehouse"),
 				"item_link":     fmt.Sprintf("%s/dashboard/inventory?sku=%s", tenantWebsite, data["sku"]),
 			}
 		},
@@ -56,35 +56,18 @@ var inventoryMappings = map[string]inventoryNotificationMapping{
 		EmailSubject: "URGENT: Stock Out Alert",
 		DataBuilder: func(data map[string]interface{}, tenantWebsite string) map[string]interface{} {
 			return map[string]interface{}{
-				"name":      "Store Manager",
-				"item_name": data["name"],
-				"item_sku":  data["sku"],
-				"location":  data["warehouse_id"],
-				"item_link": fmt.Sprintf("%s/dashboard/inventory?sku=%s", tenantWebsite, data["sku"]),
+				"name":          "Store Manager",
+				"item_name":     data["name"],
+				"item_sku":      data["sku"],
+				"location":      firstNonEmpty(data["warehouse_name"], "your warehouse"),
+				"stockout_time": formatEventDate(data["detected_at"]),
+				"item_link":     fmt.Sprintf("%s/dashboard/inventory?sku=%s", tenantWebsite, data["sku"]),
 			}
 		},
 	},
-	// Event ticket issued — delivered to the buyer with their ticket code.
-	"inventory.ticket.issued": {
-		TemplateID:   "events/ticket_issued",
-		EmailSubject: "Your event ticket",
-		ToBuyer:      true,
-		DataBuilder: func(data map[string]interface{}, tenantWebsite string) map[string]interface{} {
-			buyer, _ := data["buyer_name"].(string)
-			if buyer == "" {
-				buyer = "there"
-			}
-			return map[string]interface{}{
-				"buyer_name":   buyer,
-				"code":         data["code"],
-				"tier_name":    data["tier_name"],
-				"quantity":     data["quantity"],
-				"currency":    data["currency"],
-				"total_price": data["total_price"],
-				"ticket_link": "",
-			}
-		},
-	},
+	// inventory.ticket.issued is emailed by the API process's cross-service subscriber
+	// (internal/modules/events/subscriber.go handleTicketIssued), which adds the ticket PDF link. A
+	// copy here sent buyers a second email without the link; it was removed on 12 November 2026.
 }
 
 // startInventoryConsumer subscribes to inventory.> events from the inventory-service
@@ -103,7 +86,7 @@ func startInventoryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStrea
 			return
 		}
 
-		mapping, ok := inventoryMappings[evt.AggregateType + "." + evt.EventType]
+		mapping, ok := inventoryMappings[evt.AggregateType+"."+evt.EventType]
 		if !ok {
 			logg.Debug("inventory event: unhandled type, skipping", zap.String("type", evt.EventType))
 			_ = m.Ack()
