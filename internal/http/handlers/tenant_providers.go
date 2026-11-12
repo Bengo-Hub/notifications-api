@@ -479,7 +479,9 @@ func (h *TenantProviders) TestProvider(w http.ResponseWriter, r *http.Request) {
 			})
 			return
 		}
-		dec, cerr := h.credits.Check(ctx, tid, credits.ServiceWhatsApp, 1, false)
+		// The test message is a free plain text and is never charged: this only asks whether any
+		// WhatsApp category would allow a send, and consumes nothing.
+		dec, cerr := h.credits.CheckAnyWhatsApp(ctx, tid)
 		if cerr != nil || !dec.Allowed {
 			reason := "whatsapp billing could not be checked"
 			if cerr == nil {

@@ -72,6 +72,34 @@ func TestSendGateBlocksUnentitledTenantsAndCachesTheAnswer(t *testing.T) {
 	}
 }
 
+// The gate asks about the message's own category: a tenant out of promotion credits can still send
+// order updates.
+func TestSendGateChecksTheMessagesWhatsAppCategory(t *testing.T) {
+	var paths []string
+	c := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
+		paths = append(paths, r.URL.Path)
+		if r.URL.Path == "/api/v1/s2s/credits/"+ServiceWhatsAppMarketing+"/check" {
+			_, _ = w.Write([]byte(`{"allowed":false,"reason":"insufficient_credits"}`))
+			return
+		}
+		_, _ = w.Write([]byte(`{"allowed":true}`))
+	})
+	tid := uuid.New()
+	g := NewSendGate(c, func(context.Context, string) (uuid.UUID, bool) { return tid, true }, time.Minute, zap.NewNop())
+	ctx := context.Background()
+	promo := messaging.Message{TenantID: "t", Channel: "whatsapp", Metadata: map[string]interface{}{"template_name": "broadcast_update_v1"}}
+	order := messaging.Message{TenantID: "t", Channel: "whatsapp", Metadata: map[string]interface{}{"template_name": "ordering_order_placed_v3_btn"}}
+	if r := g.Blocked(ctx, promo); r == "" {
+		t.Fatal("no promotion credits: the broadcast is blocked")
+	}
+	if r := g.Blocked(ctx, order); r != "" {
+		t.Fatalf("order updates have their own credits: %q", r)
+	}
+	if len(paths) != 2 || paths[1] != "/api/v1/s2s/credits/"+ServiceWhatsAppUtility+"/check" {
+		t.Fatalf("each category is asked separately: %v", paths)
+	}
+}
+
 func TestSendGateLeavesUnknownAnswersToTheWorker(t *testing.T) {
 	c := newTestClient(t, func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusBadGateway) })
 	g := NewSendGate(c, func(_ context.Context, s string) (uuid.UUID, bool) { return uuid.New(), true }, time.Minute, zap.NewNop())

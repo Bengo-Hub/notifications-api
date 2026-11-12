@@ -25,7 +25,12 @@
    - Multi-organisation and multi-branch support with isolated data domains, branding overrides, and onboarding APIs for external apps to create/link tenants.
    - Per-organisation preferences, quota policies, audit trails, and billing metrics.
 3. **SMS/WhatsApp Billing (Priority 1)**
-   - Owned by **subscriptions-api** (balances, bundles, WhatsApp monthly plans, KES 1 overage billed on the next invoice).
+   - Owned by **subscriptions-api** (balances and bundles; WhatsApp credits per message category since 2026-11-12, the
+     monthly WhatsApp plans retired; SMS credits only, no overage).
+   - Follow-ups (2026-11-12): the credit guide (`GET /api/v1/settings/whatsapp/credit-categories`) sorts messages by
+     the delivery log's notification id, not the Meta template sent; regenerate Swagger; the rest are listed in
+     subscriptions-api `docs/plan.md`. The worker picks the category from
+     the message's template (`credits.WhatsAppServiceFor`) and inbox replies spend "Replies to customers" credits.
    - This service charges each send through `internal/modules/credits`: consume before sending, refund when the provider
      rejects, early 402 from the HTTP API. Exempt tenants and platform scope sends are never charged.
    - Tenant Admin: balances, plans and bundles are shown in notifications-ui from subscriptions-api.
@@ -124,7 +129,7 @@
     - [x] `CreditTransaction` tracks `provider_cost` + `platform_fee` for profit analytics
     - [x] `DeductCredits` now tracks platform profit; markup validation in `UpdatePlatformBilling` handler
     - [x] WhatsApp subscription service: plans, subscribe, activate, cancel, quota check
-    - [x] Default plan seeds on startup: Basic (KES 500/100 msgs), Standard (KES 1000/500 msgs), Pro (KES 2000/unlimited)
+    - [x] Default plan seeds on startup (historical; WhatsApp plans retired 2026-11-12, credits per category replace them)
     - [x] Treasury consumer handles `reference_type=whatsapp_subscription` → activates subscription
     - [x] Enqueue handler: WhatsApp uses subscription + quota check (HTTP 402); SMS uses credit balance
     - [x] New routes: `GET /api/v1/billing/whatsapp/plans` (public), subscription CRUD (auth required)

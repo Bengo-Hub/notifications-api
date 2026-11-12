@@ -9,10 +9,18 @@
     - `email_notifications_per_day`: Starter=50, Growth=500, Professional=5,000
     - `webhook_calls_per_day`: Starter=100, Growth=1,000, Professional=10,000
   - **Billed per message** (no rate limit): SMS and WhatsApp are charged by subscriptions-api. A tenant needs an active
-    subscription with the channel activated (by buying a bundle or, for WhatsApp, a monthly plan). Each message is paid from
-    the plan allowance, then bundles, then KES 1 overage billed on the next invoice, and sending pauses when unpaid overage
-    reaches the platform cap. The API answers `402` with an `error` of `no_subscription`, `service_not_activated`,
-    `insufficient_credits` or `overage_cap`. The platform tenant, the demo tenant and exempt tenants are never charged.
+    subscription with the channel activated by buying credits. SMS is credits only (KES 1 per segment per recipient):
+    a send that does not fit the SMS credits is refused with a "buy SMS credits" message, and auto top-up, where the
+    tenant switched it on, buys more before that happens. WhatsApp is prepaid credits sold per
+    message category, 1 credit per message per recipient, and a send spends only its own category: "Promotions and
+    broadcasts" (Meta MARKETING), "Order, payment and account updates" (UTILITY), "Login and verification codes"
+    (AUTHENTICATION) and "Replies to customers" (SERVICE: free-form text, including inbox replies). The category comes
+    from the message's `metadata.template_name` through `internal/whatsapp/templatesync/templates.json`; no template means
+    a reply. The monthly WhatsApp plans were retired on 2026-11-12. The API answers `402` with an `error` of
+    `no_subscription`, `service_not_activated`, `insufficient_credits` or `overage_cap` and the `service` it checked.
+    The provider Test button's plain text is never charged. The platform tenant, the demo tenant and exempt tenants are
+    never charged. `GET /api/v1/settings/whatsapp/credit-categories` lists the categories in plain words with
+    the tenant's own messages of the last 90 days in each.
     Event-driven SMS and WhatsApp for a tenant that may not pay are dropped before they are queued and are not logged
     (see `docs/channel-routing.md`, Paid channel gate).
   - Each recipient counts as one unit. Returns `429` with `X-RateLimit-*` headers when exceeded.

@@ -2,7 +2,6 @@ package credits
 
 import (
 	"context"
-	"strings"
 	"sync"
 	"time"
 
@@ -52,20 +51,10 @@ func NewSendGate(client *Client, resolve func(ctx context.Context, tenant string
 	return &SendGate{client: client, resolve: resolve, ttl: ttl, log: log, now: time.Now, answers: map[gateKey]gateAnswer{}}
 }
 
-// ServiceForChannel is the credits service a channel spends, "" for channels that are not paid.
-func ServiceForChannel(channel string) string {
-	switch strings.ToLower(channel) {
-	case "sms":
-		return ServiceSMS
-	case "whatsapp":
-		return ServiceWhatsApp
-	}
-	return ""
-}
-
-// Blocked implements messaging.ChannelGate.
+// Blocked implements messaging.ChannelGate. A WhatsApp message is checked against its own
+// category's credits (ServiceForMessage), and answers are cached per tenant and category.
 func (g *SendGate) Blocked(ctx context.Context, msg messaging.Message) string {
-	service := ServiceForChannel(msg.Channel)
+	service := ServiceForMessage(msg)
 	if service == "" || g == nil || g.client == nil || msg.EffectiveSenderScope() == messaging.SenderScopePlatform {
 		return ""
 	}

@@ -105,6 +105,34 @@ func TestRefundUsesDerivedKeyAndCheckEncodesQuery(t *testing.T) {
 	}
 }
 
+// The provider Test button sends a free plain text: it is allowed when WhatsApp is usable at all
+// (any category answers yes), and nothing is ever consumed.
+func TestCheckAnyWhatsAppAllowsWhenOneCategoryCan(t *testing.T) {
+	var consumed bool
+	c := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.URL.Path, "/consume") {
+			consumed = true
+		}
+		if r.URL.Path == "/api/v1/s2s/credits/"+ServiceWhatsAppService+"/check" {
+			_, _ = w.Write([]byte(`{"allowed":true}`))
+			return
+		}
+		_, _ = w.Write([]byte(`{"allowed":false,"reason":"insufficient_credits"}`))
+	})
+	d, err := c.CheckAnyWhatsApp(context.Background(), uuid.New())
+	if err != nil || !d.Allowed || consumed {
+		t.Fatalf("one category with credits is enough: %+v %v consumed=%v", d, err, consumed)
+	}
+
+	none := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`{"allowed":false,"reason":"service_not_activated"}`))
+	})
+	d, err = none.CheckAnyWhatsApp(context.Background(), uuid.New())
+	if err != nil || d.Allowed || d.Reason != ReasonServiceNotActivated {
+		t.Fatalf("no category: %+v %v", d, err)
+	}
+}
+
 func TestSMSSegments(t *testing.T) {
 	long := strings.Repeat("a", 161)
 	cases := []struct {

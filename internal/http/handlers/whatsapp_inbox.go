@@ -192,6 +192,12 @@ func (h *WhatsAppInboxHandler) Reply(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case errors.Is(err, whatsappinbox.ErrNotFound):
 			jsonError(w, http.StatusNotFound, "conversation not found")
+		case errors.Is(err, whatsappinbox.ErrNoCredits):
+			jsonResponse(w, http.StatusPaymentRequired, map[string]string{
+				"error":   "insufficient_credits",
+				"service": "whatsapp_service",
+				"message": err.Error(),
+			})
 		case errors.Is(err, whatsappinbox.ErrWindowClosed):
 			jsonResponse(w, http.StatusConflict, map[string]string{
 				"error":   "window_closed",

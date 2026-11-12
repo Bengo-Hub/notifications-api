@@ -282,10 +282,6 @@ func (h *NotificationHandler) Enqueue(w http.ResponseWriter, r *http.Request) {
 	// Pre-send credit guard: SMS and WhatsApp need an active subscription with the channel
 	// activated and units, bundles or room for overage. This only answers early with a 402; the
 	// worker's charge is the real decision, so a check that cannot run never blocks a send.
-	if (req.Channel == "sms" || req.Channel == "whatsapp") && h.refuseForCredits(w, r, tenant, req.Channel, len(req.To)) {
-		return
-	}
-
 	msg := messaging.Message{
 		TenantID:       tenant,
 		Channel:        req.Channel,
@@ -298,6 +294,11 @@ func (h *NotificationHandler) Enqueue(w http.ResponseWriter, r *http.Request) {
 		RequestID:      requestID,
 		IdempotencyKey: idemp,
 		QueuedAt:       time.Now(),
+	}
+	// A WhatsApp message is checked against its own category's credits (its template's Meta
+	// category, or replies to customers for free-form text).
+	if service := credits.ServiceForMessage(msg); service != "" && h.refuseForCredits(w, r, tenant, req.Channel, service, len(req.To)) {
+		return
 	}
 
 	if _, err := messaging.Publish(r.Context(), h.nats, h.eventsCfg, msg); err != nil {
@@ -377,7 +378,7 @@ func (h *NotificationHandler) enqueueSandbox(w http.ResponseWriter, r *http.Requ
 
 // refuseForCredits writes a 402 and returns true when subscriptions-api says the send would be
 // refused. Unknown tenants and a failing check let the send through to the worker.
-func (h *NotificationHandler) refuseForCredits(w http.ResponseWriter, r *http.Request, tenant, channel string, recipients int) bool {
+func (h *NotificationHandler) refuseForCredits(w http.ResponseWriter, r *http.Request, tenant, channel, service string, recipients int) bool {
 	if h.credits == nil {
 		return false
 	}
@@ -385,7 +386,7 @@ func (h *NotificationHandler) refuseForCredits(w http.ResponseWriter, r *http.Re
 	if !ok {
 		return false
 	}
-	dec, err := h.credits.Check(r.Context(), tid, channel, int64(max(recipients, 1)), false)
+	dec, err := h.credits.Check(r.Context(), tid, service, int64(max(recipients, 1)), false)
 	if err != nil {
 		h.log.Warn("credit pre-check failed, leaving the decision to the worker", zap.Error(err), zap.String("tenant", tenant))
 		return false
@@ -398,7 +399,8 @@ func (h *NotificationHandler) refuseForCredits(w http.ResponseWriter, r *http.Re
 	json.NewEncoder(w).Encode(map[string]any{
 		"error":     dec.Reason,
 		"channel":   channel,
-		"message":   credits.RefusalMessage(channel, dec.Reason),
+		"service":   service,
+		"message":   credits.RefusalMessage(service, dec.Reason),
 		"topup_url": h.upgradeURL,
 	})
 	return true

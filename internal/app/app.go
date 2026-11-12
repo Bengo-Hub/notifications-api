@@ -373,7 +373,8 @@ func New(ctx context.Context) (*App, error) {
 	if natsConn != nil {
 		whatsappInboxHub.SetRelay(eventslib.NewBroadcaster(log, natsConn, "notifications"))
 	}
-	whatsappInboxService := whatsappinbox.NewService(entClient, providerManager, whatsappInboxHub, natsConn, cfg.Events, log)
+	// Staff replies spend "Replies to customers" WhatsApp credits (owner, 12 November 2026).
+	whatsappInboxService := whatsappinbox.NewService(entClient, providerManager, whatsappInboxHub, natsConn, cfg.Events, log).WithCharger(creditsClient)
 	whatsappInboxHandler := handlers.NewWhatsAppInboxHandler(whatsappInboxService, whatsappInboxHub, cfg.HTTP.AllowedOrigins, log)
 	webhookHandler := handlers.NewWebhookHandler(entClient, log, cfg.HTTP.PublicBaseURL, whatsappInboxService).WithOptOut(suppressionSvc).
 		WithMetaAppSecret(func(ctx context.Context) string {
@@ -423,7 +424,7 @@ func New(ctx context.Context) (*App, error) {
 	whatsappEmbeddedSignupHandler := handlers.NewWhatsAppEmbeddedSignupHandler(entClient, log, providerManager).
 		WithTemplateAutoSync(tenantTemplates.AutoSync).
 		WithProfileAutoSync(whatsappProfileService.AutoSync)
-	whatsappTemplatesHandler := handlers.NewWhatsAppTemplates(providerManager, log, tenantTemplates)
+	whatsappTemplatesHandler := handlers.NewWhatsAppTemplates(providerManager, log, tenantTemplates).WithDeliveryLog(entClient)
 	mailDeliveryHandler := handlers.NewMailDeliveryHandler(
 		maildelivery.NewService(maildelivery.NewEntStore(entClient), handlers.NewMailDeliverySuppressor(redisClient), log),
 		maildelivery.NewKeys(platformkey.NewStore(entClient)),

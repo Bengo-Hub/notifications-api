@@ -24,6 +24,7 @@ import (
 	"github.com/bengobox/notifications-api/internal/ent/whatsappconversation"
 	"github.com/bengobox/notifications-api/internal/ent/whatsappmessage"
 	"github.com/bengobox/notifications-api/internal/messaging"
+	"github.com/bengobox/notifications-api/internal/modules/credits"
 	"github.com/bengobox/notifications-api/internal/modules/identity"
 	"github.com/bengobox/notifications-api/internal/providers"
 	"github.com/bengobox/notifications-api/internal/providers/whatsapp"
@@ -40,6 +41,17 @@ var ErrWindowClosed = errors.New("the 24h customer-service window has closed for
 // ErrNotFound is returned when a conversation doesn't exist or doesn't belong to the caller's tenant.
 var ErrNotFound = errors.New("conversation not found")
 
+// ErrNoCredits is returned by Reply when the tenant has no "Replies to customers" WhatsApp
+// credits (or WhatsApp is not activated). The wrapped text says what to buy.
+var ErrNoCredits = errors.New("no WhatsApp credits for replies to customers")
+
+// ReplyCharger spends WhatsApp "Replies to customers" credits for a staff reply and refunds them
+// when Meta refuses it (credits.Client).
+type ReplyCharger interface {
+	Consume(ctx context.Context, tenantID uuid.UUID, service string, units int64, key, description string, platformScope bool) (credits.Decision, error)
+	Refund(ctx context.Context, tenantID uuid.UUID, service, consumeKey string) error
+}
+
 type Service struct {
 	client      *ent.Client
 	providerMgr *providers.Manager
@@ -47,6 +59,14 @@ type Service struct {
 	nc          *nats.Conn
 	eventsCfg   config.EventsConfig
 	log         *zap.Logger
+	charger     ReplyCharger
+}
+
+// WithCharger charges each staff reply one "Replies to customers" credit (owner, 12 November
+// 2026: the lowest charge is KES 1 a message, replies included). Without it replies are free.
+func (s *Service) WithCharger(c ReplyCharger) *Service {
+	s.charger = c
+	return s
 }
 
 func NewService(client *ent.Client, providerMgr *providers.Manager, hub *Hub, nc *nats.Conn, eventsCfg config.EventsConfig, log *zap.Logger) *Service {
@@ -296,6 +316,21 @@ func (s *Service) Reply(ctx context.Context, tenantID, conversationID, senderUse
 		return nil, fmt.Errorf("resolve whatsapp provider: %w", err)
 	}
 
+	// One "Replies to customers" credit, taken before the send and given back if Meta refuses it.
+	// A billing service that cannot answer holds the reply (never a free send).
+	chargeKey := "inbox-reply:" + conv.ID.String() + ":" + uuid.NewString()
+	charged := false
+	if s.charger != nil {
+		dec, cerr := s.charger.Consume(ctx, tenantID, credits.ServiceWhatsAppService, 1, chargeKey, "WhatsApp: inbox reply", false)
+		if cerr != nil {
+			return nil, fmt.Errorf("check whatsapp credits: %w", cerr)
+		}
+		if !dec.Allowed {
+			return nil, fmt.Errorf("%w: %s", ErrNoCredits, credits.RefusalMessage(credits.ServiceWhatsAppService, dec.Reason))
+		}
+		charged = dec.Charged()
+	}
+
 	var waMessageID string
 	if mc, ok := prov.(*whatsapp.MetaCloudProvider); ok {
 		waMessageID, err = mc.SendTextMessage(ctx, conv.CustomerWaID, body)
@@ -303,6 +338,13 @@ func (s *Service) Reply(ctx context.Context, tenantID, conversationID, senderUse
 		err = prov.SendWhatsApp(ctx, "", []string{conv.CustomerWaID}, body, nil)
 	}
 	if err != nil {
+		if charged {
+			rctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 10*time.Second)
+			if rerr := s.charger.Refund(rctx, tenantID, credits.ServiceWhatsAppService, chargeKey); rerr != nil {
+				s.log.Error("whatsapp reply refund failed; support must reconcile", zap.String("key", chargeKey), zap.Error(rerr))
+			}
+			cancel()
+		}
 		return nil, fmt.Errorf("send reply: %w", err)
 	}
 

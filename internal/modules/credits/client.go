@@ -13,7 +13,9 @@ import (
 	"github.com/google/uuid"
 )
 
-// Service codes understood by subscriptions-api.
+// Service codes understood by subscriptions-api. WhatsApp sends use one of the category services
+// (whatsapp_category.go); ServiceWhatsApp is the retired single service, which subscriptions-api
+// still answers as utility credits.
 const (
 	ServiceSMS      = "sms"
 	ServiceWhatsApp = "whatsapp"
@@ -121,21 +123,42 @@ func (c *Client) Check(ctx context.Context, tenantID uuid.UUID, service string, 
 	return d, nil
 }
 
-// RefusalMessage turns a refusal reason into text a sender can act on.
+// CheckAnyWhatsApp answers whether the tenant can use WhatsApp at all: allowed when any category
+// would allow one message. Used where nothing is charged (the provider Test button, which sends a
+// free plain text). It never consumes. A refusal carries the last category's reason.
+func (c *Client) CheckAnyWhatsApp(ctx context.Context, tenantID uuid.UUID) (Decision, error) {
+	var last Decision
+	for _, cat := range whatsAppCategories {
+		d, err := c.Check(ctx, tenantID, cat.Service, 1, false)
+		if err != nil {
+			return Decision{}, err
+		}
+		if d.Allowed {
+			return d, nil
+		}
+		last = d
+	}
+	return last, nil
+}
+
+// RefusalMessage turns a refusal reason into text a sender can act on. WhatsApp categories are
+// named in plain words, never by Meta's category.
 func RefusalMessage(service, reason string) string {
-	label := "SMS"
-	if service == ServiceWhatsApp {
-		label = "WhatsApp"
+	label, credits := "SMS", "SMS"
+	if cat, ok := whatsAppCategoryByService(service); ok {
+		label, credits = "WhatsApp", "WhatsApp \""+cat.Name+"\""
+	} else if service == ServiceWhatsApp {
+		label, credits = "WhatsApp", "WhatsApp"
 	}
 	switch reason {
 	case ReasonNoSubscription:
 		return "the sender has no active subscription"
 	case ReasonServiceNotActivated:
-		return fmt.Sprintf("%s is not activated: buy a %s bundle or plan first", label, label)
+		return fmt.Sprintf("%s is not activated: buy %s credits first", label, credits)
 	case ReasonInsufficient:
-		return fmt.Sprintf("the sender has no %s units left", label)
+		return fmt.Sprintf("no %s credits left: buy %s credits to keep sending", credits, credits)
 	case ReasonOverageCap:
-		return fmt.Sprintf("unpaid %s overage reached the limit: pay your invoice or buy a bundle", label)
+		return fmt.Sprintf("unpaid %s overage reached the limit: pay your invoice or buy credits", label)
 	}
 	return fmt.Sprintf("%s sending is not allowed for this sender", label)
 }

@@ -937,9 +937,9 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 		}
 
 		// Tenant-scope sends (everything else): the sender must hold an active subscription with
-		// SMS activated, and every segment to every recipient is charged against its bundles and
-		// then at KES 1 as overage, whether the send uses the tenant's own provider or falls back to
-		// the platform's. The charge happens before the send and is refunded if the provider
+		// SMS activated, and every segment to every recipient is charged against its SMS credits
+		// (credits only since 12 November 2026: a send that does not fit is refused with "buy SMS
+		// credits"), whether the send uses the tenant's own provider or falls back to the platform's. The charge happens before the send and is refunded if the provider
 		// rejects it, so a failed send is never billed and an unverifiable one is never free.
 		if !tenantResolved || tenantID == uuid.Nil {
 			return skippedUnpaid("the sender could not be identified for SMS billing")
@@ -968,8 +968,10 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 		// Every tenant needs an active subscription with WhatsApp activated; the platform tenant, the
 		// demo tenant and exempt tenants are answered as exempt by subscriptions-api. A platform-scope
 		// send (invoices and reminders the platform sends a tenant) goes out on the platform's own
-		// account and is never charged to the tenant. Each message is one unit per recipient, spent
-		// from the plan allowance, then bundles, then KES 1 overage, and refunded if the send fails.
+		// account and is never charged to the tenant. Each message is one credit per recipient from
+		// the credits of its own category (owner, 12 November 2026): the Meta category of its
+		// template, or "replies to customers" for a free-form message (credits.WhatsAppServiceFor).
+		// It is refunded if the send fails.
 		//
 		// The number is resolved first: a tenant with no WhatsApp number of its own never sends on
 		// the platform's (owner, 9 November 2026), and must not be charged for a message that
@@ -986,17 +988,23 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 				return skippedUnpaid("the sender could not be identified for WhatsApp billing")
 			}
 			units := int64(max(len(msg.To), 1))
-			dec, cerr := cc.Consume(ctx, tenantID, credits.ServiceWhatsApp, units, chargeKey, "WhatsApp: "+msg.TemplateID, false)
+			waService, resolved := credits.WhatsAppServiceForMessage(*msg)
+			if !resolved {
+				templateName, _ := msg.Metadata["template_name"].(string)
+				logg.Warn("whatsapp template not in the manifest: billed as order, payment and account updates",
+					zap.String("template_id", msg.TemplateID), zap.String("template_name", templateName))
+			}
+			dec, cerr := cc.Consume(ctx, tenantID, waService, units, chargeKey, "WhatsApp: "+msg.TemplateID, false)
 			if cerr != nil {
 				logg.Warn("whatsapp send held: credit check failed (fail-closed)", zap.String("tenant_id", tenantID.String()), zap.Error(cerr))
 				return cerr
 			}
 			if !dec.Allowed {
 				logg.Warn("whatsapp send skipped by credit check", zap.String("tenant_id", tenantID.String()),
-					zap.String("template", msg.TemplateID), zap.String("reason", dec.Reason))
-				return skippedUnpaid(credits.RefusalMessage(credits.ServiceWhatsApp, dec.Reason))
+					zap.String("template", msg.TemplateID), zap.String("service", waService), zap.String("reason", dec.Reason))
+				return skippedUnpaid(credits.RefusalMessage(waService, dec.Reason))
 			}
-			defer refundOnFailure(ctx, cc, logg, &retErr, dec, tenantID, credits.ServiceWhatsApp, chargeKey)
+			defer refundOnFailure(ctx, cc, logg, &retErr, dec, tenantID, waService, chargeKey)
 		}
 
 		waMetadata := make(map[string]interface{})

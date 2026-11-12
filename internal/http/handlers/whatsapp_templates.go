@@ -10,6 +10,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 
+	"github.com/bengobox/notifications-api/internal/ent"
 	"github.com/bengobox/notifications-api/internal/providers"
 	"github.com/bengobox/notifications-api/internal/whatsapp/templatesync"
 	"github.com/bengobox/notifications-api/internal/whatsapp/tenanttemplates"
@@ -24,6 +25,9 @@ type WhatsAppTemplates struct {
 	// tenant syncs the templates a tenant uses to the tenant's own WABA (tenant settings routes,
 	// see TenantStatus and TenantSync). Nil leaves those routes unmounted.
 	tenant *tenanttemplates.Service
+	// deliveryLogs feeds the WhatsApp credit guide (CreditCategories); nil leaves the tenant's
+	// own message list empty.
+	deliveryLogs *ent.Client
 }
 
 // NewWhatsAppTemplates creates the handler. manager resolves the WABA ID + access token from the
@@ -291,6 +295,8 @@ func (h *WhatsAppTemplates) TenantSync(w http.ResponseWriter, r *http.Request) {
 // adminOnly guards both: the status call reads the tenant's WABA with its own token, and only a
 // tenant admin (the role that can connect the number) may use it.
 func (h *WhatsAppTemplates) RegisterTenantTemplateRoutes(r chi.Router, adminOnly func(http.Handler) http.Handler) {
+	// The credit guide only reads the tenant's own sends: any settings reader may see it.
+	r.Get("/whatsapp/credit-categories", h.CreditCategories)
 	if h.tenant == nil {
 		return
 	}
