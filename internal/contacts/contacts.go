@@ -1,7 +1,11 @@
 // Package contacts finds who a notification goes to. The MarketFlow CRM owns customer
 // identity, so when an event carries a CRM contact id the name, email and phone come from the
-// CRM at send time. The event's own fields are only a fallback while producers still send
-// them, and they cover any CRM outage: a lookup failure never drops a notification.
+// CRM at send time. Producers send name, email and phone only for people with no CRM contact
+// (unlinked: the CRM was down, refused the link, or there was no consent), so for those the
+// event's own fields are what the notice uses. When an event carries both, the CRM wins field
+// by field. When the CRM cannot be reached, Lookup reports it so a consumer with nothing else
+// to send to can retry the event instead of dropping it. A contact deleted or erased in the
+// CRM can still be served from the cache for up to DefaultTTL.
 //
 // Nothing here logs personal data. Logs carry tenant and contact ids only.
 package contacts
@@ -87,18 +91,31 @@ func newResolver(l lookup, log *zap.Logger, ttl time.Duration, maxEntries int) *
 // value there, else from fallback. With no tenant or contact id, or when the CRM cannot be
 // reached, fallback is returned unchanged.
 func (r *Resolver) Resolve(ctx context.Context, tenantID, contactID uuid.UUID, fallback Recipient) Recipient {
+	rec, _ := r.Lookup(ctx, tenantID, contactID, fallback)
+	return rec
+}
+
+// Lookup is Resolve that also says when the CRM could not answer (an outage or a refused
+// call). Producers stop sending name, email and phone for a contact the CRM holds, so a
+// consumer left with nothing to send to uses the error to retry the event later instead of
+// dropping it. A disabled client, a missing id or a contact the CRM does not know give a nil
+// error: retrying would not change the answer.
+func (r *Resolver) Lookup(ctx context.Context, tenantID, contactID uuid.UUID, fallback Recipient) (Recipient, error) {
 	if r == nil || r.crm == nil || tenantID == uuid.Nil || contactID == uuid.Nil {
-		return fallback
+		return fallback, nil
 	}
-	fromCRM, ok := r.load(ctx, tenantID, contactID)
-	if !ok {
-		return fallback
+	fromCRM, err := r.load(ctx, tenantID, contactID)
+	if err != nil {
+		if errors.Is(err, crm.ErrDisabled) {
+			return fallback, nil
+		}
+		return fallback, err
 	}
 	return Recipient{
 		Name:  firstNonEmpty(fromCRM.Name, fallback.Name),
 		Email: firstNonEmpty(fromCRM.Email, fallback.Email),
 		Phone: firstNonEmpty(fromCRM.Phone, fallback.Phone),
-	}
+	}, nil
 }
 
 // ParseID reads a contact or tenant id from an event field. Blank or malformed values give
@@ -111,9 +128,9 @@ func ParseID(raw string) uuid.UUID {
 	return id
 }
 
-// load returns the cached or freshly fetched contact. ok is false only when the CRM could not
-// answer; a contact the CRM does not know is cached as an empty recipient.
-func (r *Resolver) load(ctx context.Context, tenantID, contactID uuid.UUID) (Recipient, bool) {
+// load returns the cached or freshly fetched contact. The error is set only when the CRM could
+// not answer; a contact the CRM does not know is cached as an empty recipient.
+func (r *Resolver) load(ctx context.Context, tenantID, contactID uuid.UUID) (Recipient, error) {
 	key := cacheKey{tenant: tenantID, contact: contactID}
 	now := r.now()
 
@@ -121,7 +138,7 @@ func (r *Resolver) load(ctx context.Context, tenantID, contactID uuid.UUID) (Rec
 	if e, hit := r.entries[key]; hit {
 		if now.Before(e.expires) {
 			r.mu.Unlock()
-			return e.rec, true
+			return e.rec, nil
 		}
 		delete(r.entries, key)
 	}
@@ -135,7 +152,7 @@ func (r *Resolver) load(ctx context.Context, tenantID, contactID uuid.UUID) (Rec
 				zap.String("crm_contact_id", contactID.String()),
 				zap.Error(err))
 		}
-		return Recipient{}, false
+		return Recipient{}, err
 	}
 
 	var rec Recipient
@@ -154,7 +171,7 @@ func (r *Resolver) load(ctx context.Context, tenantID, contactID uuid.UUID) (Rec
 	r.mu.Lock()
 	r.store(key, cacheEntry{rec: rec, expires: now.Add(r.ttl)}, now)
 	r.mu.Unlock()
-	return rec, true
+	return rec, nil
 }
 
 // store adds an entry, making room first when the cache is full: expired entries go first,

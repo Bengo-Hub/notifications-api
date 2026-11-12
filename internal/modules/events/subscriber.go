@@ -15,6 +15,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/bengobox/notifications-api/internal/config"
+	"github.com/bengobox/notifications-api/internal/contacts"
 	"github.com/bengobox/notifications-api/internal/ent"
 	"github.com/bengobox/notifications-api/internal/messaging"
 	"github.com/bengobox/notifications-api/internal/moneyfmt"
@@ -35,6 +36,18 @@ type Subscriber struct {
 	// internalKey is the shared INTERNAL_SERVICE_KEY for auth-api's S2S routes (alert channels,
 	// tenant admins).
 	internalKey string
+	// crmContacts finds a CRM-linked customer's name, email and phone for a sale receipt whose
+	// event carries crm_contact_id instead of the customer's details. nil: receipts use the
+	// event's own fields only.
+	crmContacts contactLookup
+}
+
+// WithContacts sets the CRM contact resolver used for receipts of CRM-linked customers.
+func (s *Subscriber) WithContacts(res *contacts.Resolver) *Subscriber {
+	if res != nil {
+		s.crmContacts = res
+	}
+	return s
 }
 
 // WithInternalKey sets the key used for auth-api's S2S routes.
@@ -114,7 +127,6 @@ func (s *Subscriber) Start(ctx context.Context) error {
 	}
 
 	subs := []sub{
-		{"inventory", "inventory.stock.low", "notif-inventory-low-stock", s.handleLowStock},
 		{"inventory", "inventory.purchase_order.received", "notif-po-received", s.handlePOReceived},
 		{"inventory", "inventory.ticket.issued", "notif-ticket-issued", s.handleTicketIssued},
 		// logistics.task.assigned is handled by the worker's delivery consumer (notifyRiderAssigned:
@@ -429,6 +441,7 @@ func (s *Subscriber) handleSaleNotification(msg *nats.Msg) {
 			CustomerPhone      string  `json:"customer_phone"`
 			CustomerEmail      string  `json:"customer_email"`
 			CustomerName       string  `json:"customer_name"`
+			CrmContactID       string  `json:"crm_contact_id"`
 			TotalAmount        float64 `json:"total_amount"`
 			Currency           string  `json:"currency"`
 			EtimsInvoiceNumber string  `json:"etims_invoice_number"`
@@ -444,6 +457,27 @@ func (s *Subscriber) handleSaleNotification(msg *nats.Msg) {
 	p := envelope.Payload
 	phone := strings.TrimSpace(p.CustomerPhone)
 	email := strings.TrimSpace(p.CustomerEmail)
+	// pos-api names a CRM-linked customer on a receipt request by crm_contact_id alone (plus a
+	// phone or email the cashier typed for this send): the name, email and phone come from the
+	// CRM. pos.sale.finalized still carries the sale's phone and name for treasury, so the
+	// automatic receipt keeps using those and does not ask the CRM on every sale.
+	if msg.Subject == "pos.sale.notification_requested" && p.TenantID != "" && contacts.ParseID(p.CrmContactID) != uuid.Nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		rec, lookupErr := saleRecipient(ctx, s.crmContacts, p.TenantID, p.CrmContactID,
+			contacts.Recipient{Name: p.CustomerName, Email: email, Phone: phone})
+		cancel()
+		p.CustomerName, email, phone = rec.Name, rec.Email, rec.Phone
+		if phone == "" && email == "" {
+			if lookupErr != nil {
+				retrySaleCRMLookup(msg, s.log, p.TenantID, p.CrmContactID)
+				return
+			}
+			s.log.Info("sale receipt: linked contact has no email or phone in the CRM, receipt dropped",
+				zap.String("tenant_id", p.TenantID), zap.String("crm_contact_id", p.CrmContactID))
+			_ = msg.Ack()
+			return
+		}
+	}
 	// Nothing to send to (no customer contact captured on the sale) → ack and move on.
 	if p.TenantID == "" || (phone == "" && email == "") {
 		_ = msg.Ack()
@@ -498,35 +532,9 @@ func (s *Subscriber) handleSaleNotification(msg *nats.Msg) {
 	_ = msg.Ack()
 }
 
-func (s *Subscriber) handleLowStock(msg *nats.Msg) {
-	var envelope struct {
-		Payload struct {
-			TenantID  string  `json:"tenant_id"`
-			ItemName  string  `json:"item_name"`
-			ItemSKU   string  `json:"item_sku"`
-			Quantity  float64 `json:"quantity"`
-			Threshold float64 `json:"reorder_point"`
-		} `json:"payload"`
-	}
-	if err := json.Unmarshal(msg.Data, &envelope); err != nil {
-		s.log.Warn("low_stock: unmarshal failed", zap.Error(err))
-		_ = msg.Nak()
-		return
-	}
-	p := envelope.Payload
-	if p.TenantID == "" {
-		_ = msg.Ack()
-		return
-	}
-	s.publish(p.TenantID, "email", "inventory/low_stock_alert", messaging.TargetTenantAdmin, nil, map[string]any{
-		"item_name":     p.ItemName,
-		"item_sku":      p.ItemSKU,
-		"quantity":      p.Quantity,
-		"reorder_point": p.Threshold,
-	})
-	s.log.Info("low_stock notification dispatched", zap.String("tenant_id", p.TenantID), zap.String("sku", p.ItemSKU))
-	_ = msg.Ack()
-}
+// inventory.stock.low is emailed by the worker's inventory consumer (cmd/worker/inventory_consumer.go),
+// which reads the fields inventory-api sends and honours the tenant's alert settings. A second
+// handler here sent a duplicate email with blank item details; it was removed on 12 November 2026.
 
 func (s *Subscriber) handlePOReceived(msg *nats.Msg) {
 	var envelope struct {

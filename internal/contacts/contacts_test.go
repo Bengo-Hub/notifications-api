@@ -148,3 +148,42 @@ func TestCacheIsBounded(t *testing.T) {
 		t.Fatalf("cache holds %d entries, want at most 3", n)
 	}
 }
+
+// Lookup tells the caller when the CRM could not answer, so a consumer whose event carries
+// only the contact id can retry later instead of dropping the notice.
+func TestLookupReportsOutage(t *testing.T) {
+	srv, _ := fakeCRM(t, http.StatusServiceUnavailable)
+	r := New(crm.New(srv.URL, "key", nil), nil)
+
+	got, err := r.Lookup(context.Background(), tenantID, contactID, Recipient{})
+	if err == nil {
+		t.Fatal("an outage must be reported")
+	}
+	if got != (Recipient{}) {
+		t.Fatalf("outage: got %+v, want the fallback", got)
+	}
+}
+
+func TestLookupAnsweredOrNothingToLookUpIsNotAnError(t *testing.T) {
+	srv, _ := fakeCRM(t, http.StatusOK, crm.Contact{ID: contactID, Email: "jane@example.com"})
+	r := New(crm.New(srv.URL, "key", nil), nil)
+	if got, err := r.Lookup(context.Background(), tenantID, contactID, Recipient{}); err != nil || got.Email != "jane@example.com" {
+		t.Fatalf("answered: got %+v, %v", got, err)
+	}
+	// A contact the CRM does not know is an answer, not an outage.
+	if _, err := r.Lookup(context.Background(), tenantID, uuid.New(), Recipient{}); err != nil {
+		t.Fatalf("unknown contact: %v", err)
+	}
+	// A disabled client, a missing id and a nil resolver have nothing to retry.
+	disabled := New(crm.New("", "", nil), nil)
+	if _, err := disabled.Lookup(context.Background(), tenantID, contactID, Recipient{}); err != nil {
+		t.Fatalf("disabled: %v", err)
+	}
+	if _, err := r.Lookup(context.Background(), tenantID, uuid.Nil, Recipient{}); err != nil {
+		t.Fatalf("no contact id: %v", err)
+	}
+	var nilResolver *Resolver
+	if _, err := nilResolver.Lookup(context.Background(), tenantID, contactID, Recipient{}); err != nil {
+		t.Fatalf("nil resolver: %v", err)
+	}
+}

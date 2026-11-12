@@ -1,11 +1,10 @@
 {{ define "content" }}
   <p>Hello {{ .name }},</p>
-  <p>A fine has been added to a member's account.</p>
-  <p><strong>Member:</strong> {{ .member_id }}</p>
-  <p><strong>Reason:</strong> {{ .reason }}</p>
+  <p>A fine of {{ .amount }} has been added to {{ if .member_name }}the library account of {{ .member_name }}{{ else }}a library account{{ end }}.</p>
+  {{ if .reason }}<p><strong>Reason:</strong> {{ .reason }}</p>{{ end }}
   <p><strong>Amount:</strong> {{ .amount }}</p>
   <p>
-    <a class="button" href="{{ .dashboard }}">Manage Fines</a>
+    <a class="button" href="{{ .dashboard }}">View fines</a>
   </p>
-  <p class="muted">The fine can be collected or waived from the Fines screen.</p>
+  <p class="muted">A fine can be paid, or waived by the library, from the Fines screen.</p>
 {{ end }}

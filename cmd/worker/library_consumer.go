@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	eventslib "github.com/Bengo-Hub/shared-events"
@@ -38,11 +39,11 @@ var libraryMappings = map[string]libraryNotificationMapping{
 		EmailSubject: "Library item overdue",
 		DataBuilder: func(data map[string]interface{}, tenantWebsite string) map[string]interface{} {
 			return map[string]interface{}{
-				"name":       "Librarian",
-				"member_id":  data["member_id"],
-				"loan_id":    data["loan_id"],
-				"due_at":     data["due_at"],
-				"dashboard":  fmt.Sprintf("%s/circulation", tenantWebsite),
+				"name":      "Librarian",
+				"member_id": data["member_id"],
+				"loan_id":   data["loan_id"],
+				"due_at":    data["due_at"],
+				"dashboard": fmt.Sprintf("%s/circulation", tenantWebsite),
 			}
 		},
 	},
@@ -51,11 +52,11 @@ var libraryMappings = map[string]libraryNotificationMapping{
 		EmailSubject: "A reserved item is ready for pickup",
 		DataBuilder: func(data map[string]interface{}, tenantWebsite string) map[string]interface{} {
 			return map[string]interface{}{
-				"name":        "Librarian",
-				"member_id":   data["member_id"],
-				"bib_record":  data["bib_record_id"],
-				"expires_at":  data["expires_at"],
-				"dashboard":   fmt.Sprintf("%s/holds", tenantWebsite),
+				"name":       "Librarian",
+				"member_id":  data["member_id"],
+				"bib_record": data["bib_record_id"],
+				"expires_at": data["expires_at"],
+				"dashboard":  fmt.Sprintf("%s/holds", tenantWebsite),
 			}
 		},
 	},
@@ -64,11 +65,13 @@ var libraryMappings = map[string]libraryNotificationMapping{
 		EmailSubject: "A fine was added to a member account",
 		DataBuilder: func(data map[string]interface{}, tenantWebsite string) map[string]interface{} {
 			return map[string]interface{}{
-				"name":      "Librarian",
-				"member_id": data["member_id"],
-				"amount":    data["amount"],
-				"reason":    data["reason"],
-				"dashboard": fmt.Sprintf("%s/fines", tenantWebsite),
+				// member_name is filled from the resolved member (buildLibraryNotice); the raw
+				// member id is never shown. reason arrives as a code (OVERDUE, membership).
+				"name":        "Librarian",
+				"member_name": "",
+				"amount":      data["amount"],
+				"reason":      fineReasonText(data["reason"]),
+				"dashboard":   fmt.Sprintf("%s/fines", tenantWebsite),
 			}
 		},
 	},
@@ -91,7 +94,7 @@ var libraryMappings = map[string]libraryNotificationMapping{
 			return map[string]interface{}{
 				"name":        "Member",
 				"amount":      data["amount"],
-				"expires_at":  data["expires_at"],
+				"expires_at":  formatEventDate(data["expires_at"]),
 				"renewal_url": fmt.Sprintf("%s/my-account", tenantWebsite),
 			}
 		},
@@ -156,23 +159,92 @@ var libraryMappings = map[string]libraryNotificationMapping{
 	},
 }
 
-// libraryMember is the member a library event is about: the payload's email and name, replaced
-// field by field by the CRM contact's when the event carries crm_contact_id. Library events do
-// not carry crm_contact_id yet, so until library-api adds it this is the payload as before.
-func libraryMember(ctx context.Context, res *contacts.Resolver, evt libraryEvent, ti *tenantInfo) contacts.Recipient {
+// fineReasonText turns library-api's fine reason code into words for the email ("" when absent).
+func fineReasonText(v interface{}) string {
+	switch code, _ := v.(string); strings.ToUpper(code) {
+	case "":
+		return ""
+	case "OVERDUE":
+		return "Overdue loan"
+	case "LOST":
+		return "Lost item"
+	case "DAMAGE":
+		return "Damaged item"
+	case "MEMBERSHIP":
+		return "Membership fee"
+	default:
+		return strings.ToUpper(code[:1]) + strings.ToLower(strings.ReplaceAll(code[1:], "_", " "))
+	}
+}
+
+// libraryMember is the member a library event is about. library-api sends crm_contact_id alone
+// for a member linked to the CRM, and email and name only for an unlinked member; when both are
+// present the CRM contact wins field by field. The error is set when the CRM could not answer.
+func libraryMember(ctx context.Context, res *contacts.Resolver, evt libraryEvent, ti *tenantInfo) (contacts.Recipient, error) {
 	email, _ := evt.Payload["email"].(string)
 	name, _ := evt.Payload["name"].(string)
 	fallback := contacts.Recipient{Name: name, Email: email}
 	contactID, _ := evt.Payload["crm_contact_id"].(string)
 	id := contacts.ParseID(contactID)
 	if id == uuid.Nil {
-		return fallback
+		return fallback, nil
 	}
 	tenantID := contacts.ParseID(evt.TenantID)
 	if ti != nil && ti.ID != uuid.Nil {
 		tenantID = ti.ID
 	}
-	return res.Resolve(ctx, tenantID, id, fallback)
+	return res.Lookup(ctx, tenantID, id, fallback)
+}
+
+// libraryNotice is one library email: who it goes to, as whom, and the template data.
+type libraryNotice struct {
+	To     string
+	Target string
+	Data   map[string]interface{}
+}
+
+// noticeOutcome is what a consumer does with an event once the recipient is resolved.
+type noticeOutcome int
+
+const (
+	noticeSend  noticeOutcome = iota // send (an empty To means nobody to send to: ack)
+	noticeRetry                      // the CRM was unreachable: redeliver later
+	noticeDrop                       // a linked member with no email: ack without sending
+)
+
+// libraryContactID is the CRM contact the event names, or uuid.Nil.
+func libraryContactID(evt libraryEvent) uuid.UUID {
+	raw, _ := evt.Payload["crm_contact_id"].(string)
+	return contacts.ParseID(raw)
+}
+
+// buildLibraryNotice picks the recipient and template data for an event.
+//   - The member gets it when they have an email.
+//   - A member linked to the CRM (the event carries crm_contact_id) never falls back to the
+//     librarian: with no email resolved the outcome is noticeRetry when the CRM could not be
+//     reached, else noticeDrop (CRM client switched off, or the CRM does not know the contact).
+//   - An unlinked member without an email goes to the tenant's librarian address, as before
+//     (To is empty when there is none either).
+func buildLibraryNotice(ctx context.Context, res *contacts.Resolver, evt libraryEvent, ti *tenantInfo, mapping libraryNotificationMapping) (libraryNotice, noticeOutcome) {
+	member, lookupErr := libraryMember(ctx, res, evt, ti)
+	if member.Email == "" && libraryContactID(evt) != uuid.Nil {
+		if lookupErr != nil {
+			return libraryNotice{}, noticeRetry
+		}
+		return libraryNotice{}, noticeDrop
+	}
+	n := libraryNotice{To: ti.ContactEmail, Target: messaging.TargetStaff}
+	if member.Email != "" {
+		n.To, n.Target = member.Email, messaging.TargetCustomer
+	}
+	n.Data = mapping.DataBuilder(evt.Payload, ti.Website)
+	if member.Name != "" {
+		n.Data["name"] = member.Name // greet the actual member when known
+		if _, ok := n.Data["member_name"]; ok {
+			n.Data["member_name"] = member.Name
+		}
+	}
+	return n, noticeSend
 }
 
 // startLibraryConsumer subscribes to library.> events and republishes them as
@@ -201,21 +273,23 @@ func startLibraryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamC
 			_ = m.Nak()
 			return
 		}
-		member := libraryMember(ctx, crmContacts, evt, ti)
-		// Patron-direct when the member has an email; else fall back to the librarian.
-		recipient := ti.ContactEmail
-		target := messaging.TargetStaff
-		if member.Email != "" {
-			recipient = member.Email
-			target = messaging.TargetCustomer
-		}
-		if recipient == "" {
+		notice, outcome := buildLibraryNotice(ctx, crmContacts, evt, ti, mapping)
+		switch outcome {
+		case noticeRetry:
+			retryCRMLookup(m, logg, "library", evt.EventType, evt.TenantID, libraryContactID(evt).String())
+			return
+		case noticeDrop:
+			logg.Info("library event: linked member has no email in the CRM, notice dropped",
+				zap.String("type", evt.EventType), zap.String("tenant_id", evt.TenantID),
+				zap.String("crm_contact_id", libraryContactID(evt).String()))
 			_ = m.Ack()
 			return
 		}
-		data := mapping.DataBuilder(evt.Payload, ti.Website)
-		if member.Name != "" {
-			data["name"] = member.Name // greet the actual member when known
+		// Patron-direct when the member has an email; else fall back to the librarian.
+		recipient, target, data := notice.To, notice.Target, notice.Data
+		if recipient == "" {
+			_ = m.Ack()
+			return
 		}
 
 		msg := messaging.Message{
@@ -247,6 +321,6 @@ func startLibraryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamC
 		nats.Durable("notifications-library"),
 		nats.ManualAck(),
 		nats.AckWait(30*time.Second),
-		nats.MaxDeliver(3),
+		nats.MaxDeliver(crmRetryMaxDeliver),
 	)
 }

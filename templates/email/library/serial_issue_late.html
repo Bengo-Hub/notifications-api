@@ -1,7 +1,7 @@
 {{ define "content" }}
   <p>Hello {{ .name }},</p>
   <p>A serial issue has not been received by its expected date and requires follow-up.</p>
-  <p><strong>Issue No:</strong> {{ .issue_no }}</p>
+  {{ if .issue_no }}<p><strong>Issue No:</strong> {{ .issue_no }}</p>{{ end }}
   <p><strong>Expected Date:</strong> {{ .expected_date }}</p>
   <p>Please contact the vendor or mark the issue as claimed in the serials module.</p>
   <p>

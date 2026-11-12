@@ -24,7 +24,9 @@ import (
 	sharedcache "github.com/Bengo-Hub/cache"
 	ratelimit "github.com/Bengo-Hub/shared-ratelimit"
 	serviceclient "github.com/Bengo-Hub/shared-service-client"
+	"github.com/Bengo-Hub/shared-service-client/crm"
 	"github.com/bengobox/notifications-api/internal/config"
+	"github.com/bengobox/notifications-api/internal/contacts"
 	entdb "github.com/bengobox/notifications-api/internal/database"
 	"github.com/bengobox/notifications-api/internal/encryption"
 	"github.com/bengobox/notifications-api/internal/ent"
@@ -408,7 +410,9 @@ func New(ctx context.Context) (*App, error) {
 		crossServiceSubscriber = eventsmod.New(natsConn, cfg.Events, log).
 			WithAuthAPI(cfg.Services.AuthAPI).
 			WithInternalKey(cfg.Security.APIKey).
-			WithEntClient(entClient)
+			WithEntClient(entClient).
+			// Receipt requests for CRM-linked customers carry only crm_contact_id.
+			WithContacts(contacts.New(crm.New(cfg.Services.MarketflowServiceURL, cfg.Security.APIKey, log.Named("crm")), log.Named("contacts")))
 	}
 
 	return &App{

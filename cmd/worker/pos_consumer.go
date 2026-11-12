@@ -178,23 +178,33 @@ var posNotices = map[string]posNotice{
 }
 
 // withCRMRecipient puts the CRM contact's name, email and phone into the notice's payload fields
-// when the event carries crm_contact_id (the contact the notice goes to). The payload's own values
-// stay as the fallback, field by field, so a CRM outage still sends. The event passed in is not
-// changed; a copy is returned.
-func withCRMRecipient(ctx context.Context, res *contacts.Resolver, evt posEvent, ti *tenantInfo) posEvent {
+// when the event carries crm_contact_id.
+//
+// Contract with pos-api: crm_contact_id is always the contact of the person the notice goes to.
+// For loyalty.referral_earned that is the REFERRER (the notice reads the referrer_* fields), never
+// the referred friend. pos-api sends name, email and phone only for people with no CRM contact;
+// for a linked person the event carries the id alone and every detail comes from the CRM. When
+// both are present the CRM wins field by field.
+//
+// For hotel.check_in and hotel.check_out the CRM details replace what the guest gave at the desk
+// for the notice only; the guest register in pos-api keeps what the guest wrote.
+//
+// The error is set when the CRM could not answer. The event passed in is not changed; a copy is
+// returned.
+func withCRMRecipient(ctx context.Context, res *contacts.Resolver, evt posEvent, ti *tenantInfo) (posEvent, error) {
 	n, ok := posNotices[evt.EventType]
 	if !ok || res == nil {
-		return evt
+		return evt, nil
 	}
 	contactID := contacts.ParseID(payStr(evt.Payload, "crm_contact_id"))
 	if contactID == uuid.Nil {
-		return evt
+		return evt, nil
 	}
 	tenantID := contacts.ParseID(evt.TenantID)
 	if ti != nil && ti.ID != uuid.Nil {
 		tenantID = ti.ID
 	}
-	rec := res.Resolve(ctx, tenantID, contactID, contacts.Recipient{
+	rec, err := res.Lookup(ctx, tenantID, contactID, contacts.Recipient{
 		Name:  payStr(evt.Payload, n.NameKey),
 		Email: payStr(evt.Payload, n.EmailKey),
 		Phone: payStr(evt.Payload, n.PhoneKey),
@@ -205,7 +215,16 @@ func withCRMRecipient(ctx context.Context, res *contacts.Resolver, evt posEvent,
 	}
 	p[n.NameKey], p[n.EmailKey], p[n.PhoneKey] = rec.Name, rec.Email, rec.Phone
 	evt.Payload = p
-	return evt
+	return evt, err
+}
+
+// posNoticeFor resolves who the event's notice goes to and builds it. retry is true when the
+// event names a CRM contact, there is no email or phone to send to, and the CRM could not be
+// reached: the message is redelivered later instead of being dropped.
+func posNoticeFor(ctx context.Context, res *contacts.Resolver, evt posEvent, ti *tenantInfo) (notice partyNotice, ok, retry bool) {
+	resolved, lookupErr := withCRMRecipient(ctx, res, evt, ti)
+	notice, ok = posPartyNotice(resolved, ti)
+	return notice, ok, !ok && lookupErr != nil
 }
 
 // posPartyNotice builds the notice for one event, or false when there is no template for the
@@ -275,10 +294,20 @@ func startPosConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamConte
 			_ = m.Nak()
 			return
 		}
-		evt = withCRMRecipient(ctx, crmContacts, evt, ti)
-		notice, ok := posPartyNotice(evt, ti)
+		notice, ok, retry := posNoticeFor(ctx, crmContacts, evt, ti)
+		contactID := payStr(evt.Payload, "crm_contact_id")
+		if retry {
+			retryCRMLookup(m, logg, "pos", evt.EventType, evt.TenantID, contactID)
+			return
+		}
 		if !ok {
-			logg.Debug("pos event: no customer contact, nothing to send", zap.String("type", evt.EventType))
+			if contacts.ParseID(contactID) != uuid.Nil {
+				logg.Info("pos event: linked contact has no email or phone in the CRM, notice dropped",
+					zap.String("type", evt.EventType), zap.String("tenant_id", evt.TenantID),
+					zap.String("crm_contact_id", contactID))
+			} else {
+				logg.Debug("pos event: no customer contact, nothing to send", zap.String("type", evt.EventType))
+			}
 			_ = m.Ack()
 			return
 		}
@@ -296,7 +325,7 @@ func startPosConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamConte
 		nats.Durable("notifications-pos-orders"),
 		nats.ManualAck(),
 		nats.AckWait(30*time.Second),
-		nats.MaxDeliver(3),
+		nats.MaxDeliver(crmRetryMaxDeliver),
 	)
 }
 

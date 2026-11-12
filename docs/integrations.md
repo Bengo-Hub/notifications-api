@@ -184,10 +184,42 @@ WhatsApp UTILITY template; a customer with neither contact gets nothing.
 | `pos.hotel.check_in` | `pos/hotel_check_in` | `pos_hotel_check_in_v1` | `guest_email`, `guest_phone` |
 | `pos.hotel.check_out` | `pos/hotel_check_out` | `pos_hotel_check_out_v1` | `guest_email`, `guest_phone` |
 
+**Recipient from the CRM.** The CRM owns customer identity, so pos-api and library-api send only `crm_contact_id` (plus
+record ids) for a person linked to the CRM, and no name, email or phone. The POS and library consumers fetch the
+contact's name, email and phone from the CRM at send time (`internal/contacts`, shared CRM client `BatchGet`, answers
+cached for 5 minutes per tenant and contact). `crm_contact_id` always names the person the notice goes to; for
+`pos.loyalty.referral_earned` that is the referrer, and the CRM details fill the `referrer_*` fields. For hotel check-in
+and check-out the CRM details are used for the notice only; the guest register in pos-api is unchanged. A person with no
+CRM link still arrives with the payload fields in the table above (and `email`/`name` for library events), and those are
+used as they are. When both are present the CRM wins field by field.
+
+When an event names a CRM contact and has no email or phone of its own:
+- If the CRM cannot be reached, the message is redelivered after 30 seconds, up to 3 deliveries in all
+  (`cmd/worker/crm_retry.go`). On the last delivery it is acknowledged and dropped with one "gave up after max
+  deliveries" log line.
+- If the CRM answers but has no email or phone for the contact, the CRM client is switched off (no URL or key), or the
+  CRM does not know the contact (erased, or held under another tenant id), the notice is dropped with one log line.
+- A linked library member's notice never goes to the librarian instead. The librarian copy is only for members with no
+  CRM link and no email, as before.
+
+The 3-delivery bound is the durable's `MaxDeliver` (`crmRetryMaxDeliver`). nats.go will not bind to an existing durable
+whose `MaxDeliver` differs, so a change to that value also needs `notifications-pos-orders` (pos stream) and
+`notifications-library` (library stream) edited or deleted once on the server. A contact deleted or erased in the CRM
+can still be served from the cache for up to 5 minutes. Logs carry tenant and contact ids only.
+
 Sale receipts are handled by `internal/modules/events` (`handleSaleNotification`):
-- `pos.sale.notification_requested` (the cashier's Send Notification): email or WhatsApp as pos-api resolved it.
+- `pos.sale.notification_requested` (the cashier's Send Notification): email or WhatsApp as pos-api resolved it. For a
+  customer linked to the CRM the event carries `crm_contact_id` and no name; the API process looks the contact up in the
+  CRM (`sale_recipient.go`, the same `internal/contacts` resolver, wired in `internal/app`). A `customer_phone` or
+  `customer_email` on a linked event is what the cashier typed for this send and wins over the CRM; the name always
+  comes from the CRM. With no email or phone left: the CRM unreachable means a redelivery after 30 seconds until the
+  durable's last delivery (`notif-pos-sale-notify`, `MaxDeliver` 5), then one "gave up" log line and a drop; a CRM
+  answer with no email or phone, an unknown contact or a switched off CRM client means a drop with one log line. Logs
+  carry tenant and contact ids only. An unlinked customer's fields are used as they are.
 - `pos.sale.finalized` (automatic, every finished sale): email when the sale has an address; WhatsApp only when the
-  tenant switched on "WhatsApp receipt after every sale" (`pos/receipt_on_sale`, optional, off by default).
+  tenant switched on "WhatsApp receipt after every sale" (`pos/receipt_on_sale`, optional, off by default). This one
+  still reads the sale's own `customer_phone` and never asks the CRM, so the automatic receipt costs no CRM call per
+  sale; if pos-api ever drops the phone from `sale.finalized`, add the same lookup here.
 
 Removed on 2026-10-31 because they could never deliver: order status changed and payment recorded (no customer
 contact, they fell back to emailing the business), waiter called (no phone; the kitchen screen handles it live),

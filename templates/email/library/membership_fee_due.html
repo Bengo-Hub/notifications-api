@@ -2,7 +2,7 @@
   <p>Hello {{ .name }},</p>
   <p>Your library membership is due for renewal. Please renew to keep borrowing access.</p>
   <p><strong>Renewal Amount:</strong> {{ .amount }}</p>
-  <p><strong>Membership Expires:</strong> {{ .expires_at }}</p>
+  {{ if .expires_at }}<p><strong>Membership Expires:</strong> {{ .expires_at }}</p>{{ end }}
   <p>
     <a class="button" href="{{ .renewal_url }}">Renew Membership</a>
   </p>
