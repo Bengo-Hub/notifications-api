@@ -3,13 +3,16 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 
 	"github.com/bengobox/notifications-api/internal/providers"
 	"github.com/bengobox/notifications-api/internal/whatsapp/templatesync"
+	"github.com/bengobox/notifications-api/internal/whatsapp/tenanttemplates"
 )
 
 // WhatsAppTemplates exposes platform-admin management of the drafted WhatsApp message templates —
@@ -18,12 +21,16 @@ import (
 type WhatsAppTemplates struct {
 	manager *providers.Manager
 	logger  *zap.Logger
+	// tenant syncs the templates a tenant uses to the tenant's own WABA (tenant settings routes,
+	// see TenantStatus and TenantSync). Nil leaves those routes unmounted.
+	tenant *tenanttemplates.Service
 }
 
 // NewWhatsAppTemplates creates the handler. manager resolves the WABA ID + access token from the
 // platform tenant's own whatsapp/meta_cloud settings — see Manager.LoadWhatsAppTemplateCredentials.
-func NewWhatsAppTemplates(manager *providers.Manager, logger *zap.Logger) *WhatsAppTemplates {
-	return &WhatsAppTemplates{manager: manager, logger: logger.Named("whatsapp-templates")}
+// tenant serves the per-tenant template routes.
+func NewWhatsAppTemplates(manager *providers.Manager, logger *zap.Logger, tenant *tenanttemplates.Service) *WhatsAppTemplates {
+	return &WhatsAppTemplates{manager: manager, logger: logger.Named("whatsapp-templates"), tenant: tenant}
 }
 
 type syncTemplatesRequest struct {
@@ -192,6 +199,103 @@ func (h *WhatsAppTemplates) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	jsonResponse(w, http.StatusOK, deleteTemplatesResponse{WABAID: wabaID, Results: results, Summary: summary})
+}
+
+// tenantTemplateTimeout bounds one tenant status or sync call to Meta. The calls run on a context
+// detached from the request, so a browser that stops waiting never leaves a batch half submitted.
+const tenantTemplateTimeout = 2 * time.Minute
+
+// tenantTemplatesError answers a failed tenant template call: a missing connection is the
+// caller's to fix (400), anything else is Meta's or ours (502).
+func (h *WhatsAppTemplates) tenantTemplatesError(w http.ResponseWriter, tenantID, what string, err error) {
+	if errors.Is(err, tenanttemplates.ErrCredentials) {
+		jsonError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	h.logger.Error("tenant whatsapp templates: "+what+" failed", zap.String("tenant_id", tenantID), zap.Error(err))
+	jsonError(w, http.StatusBadGateway, what+" failed: "+err.Error())
+}
+
+// TenantStatus lists each template the acting tenant uses with its review status on the tenant's
+// own WhatsApp Business Account (APPROVED, PENDING, REJECTED with Meta's reason, or MISSING).
+// @Summary WhatsApp template status on the tenant's own WABA
+// @Tags Settings
+// @Produce json
+// @Success 200 {object} tenanttemplates.StatusReport
+// @Failure 400,502 {object} errorResponse
+// @Security bearerAuth
+// @Router /settings/whatsapp/templates [get]
+func (h *WhatsAppTemplates) TenantStatus(w http.ResponseWriter, r *http.Request) {
+	if h.tenant == nil {
+		jsonError(w, http.StatusServiceUnavailable, "tenant whatsapp templates are not configured")
+		return
+	}
+	tenantID := resolveActingTenantID(r)
+	if tenantID == "" {
+		jsonError(w, http.StatusBadRequest, "tenant_id required")
+		return
+	}
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(r.Context()), tenantTemplateTimeout)
+	defer cancel()
+	rep, err := h.tenant.TenantTemplateStatus(ctx, tenantID)
+	if err != nil {
+		h.tenantTemplatesError(w, tenantID, "template status", err)
+		return
+	}
+	jsonResponse(w, http.StatusOK, rep)
+}
+
+type tenantSyncRequest struct {
+	DryRun bool `json:"dry_run"`
+}
+
+// TenantSync submits the templates the acting tenant uses that are not yet on its own WABA, at
+// most tenanttemplates.BatchSize per call; the caller repeats while remaining is above 0.
+// @Summary Sync WhatsApp templates to the tenant's own WABA
+// @Tags Settings
+// @Accept json
+// @Produce json
+// @Param request body tenantSyncRequest false "Sync options"
+// @Success 200 {object} tenanttemplates.SyncReport
+// @Failure 400,502 {object} errorResponse
+// @Security bearerAuth
+// @Router /settings/whatsapp/templates/sync [post]
+func (h *WhatsAppTemplates) TenantSync(w http.ResponseWriter, r *http.Request) {
+	if h.tenant == nil {
+		jsonError(w, http.StatusServiceUnavailable, "tenant whatsapp templates are not configured")
+		return
+	}
+	// The tenant always comes from the caller's token; X-Tenant-ID counts only for a platform owner.
+	tenantID := resolveActingTenantID(r)
+	if tenantID == "" {
+		jsonError(w, http.StatusBadRequest, "tenant_id required")
+		return
+	}
+	var req tenantSyncRequest
+	_ = json.NewDecoder(r.Body).Decode(&req) // an empty body is a live sync
+
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(r.Context()), tenantTemplateTimeout)
+	defer cancel()
+	rep, err := h.tenant.SyncTenantTemplates(ctx, tenantID, req.DryRun)
+	if err != nil {
+		h.tenantTemplatesError(w, tenantID, "template sync", err)
+		return
+	}
+	h.logger.Info("tenant whatsapp template sync",
+		zap.String("tenant_id", tenantID), zap.Bool("dry_run", req.DryRun),
+		zap.Any("summary", rep.Summary), zap.Int("remaining", rep.Remaining))
+	jsonResponse(w, http.StatusOK, rep)
+}
+
+// RegisterTenantTemplateRoutes mounts the tenant template routes on the tenant /settings router.
+// adminOnly guards both: the status call reads the tenant's WABA with its own token, and only a
+// tenant admin (the role that can connect the number) may use it.
+func (h *WhatsAppTemplates) RegisterTenantTemplateRoutes(r chi.Router, adminOnly func(http.Handler) http.Handler) {
+	if h.tenant == nil {
+		return
+	}
+	r.With(adminOnly).Get("/whatsapp/templates", h.TenantStatus)
+	r.With(adminOnly).Post("/whatsapp/templates/sync", h.TenantSync)
 }
 
 // RegisterWhatsAppTemplateRoutes registers the sync endpoint under /platform.

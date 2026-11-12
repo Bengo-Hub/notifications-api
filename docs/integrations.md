@@ -478,6 +478,43 @@ Onboarding:
 
 **Status**: Planned for future implementation
 
+#### Tenant template sync (own WhatsApp Business Account)
+
+Meta approves message templates per WhatsApp Business Account (WABA). A tenant that connects its own number through Embedded Signup gets a new WABA with none of our templates, so every template send from its number fails until they exist there. Hadia hit exactly this (WABA 1625290866305102), while Urban Loft worked because its WABA already had them.
+
+I sync only the templates a tenant can actually send (owner decision "Only what the tenant uses"), and I do it automatically after a successful Embedded Signup plus on demand from a button (owner decision "Auto-sync on connect + button").
+
+- Code: `internal/whatsapp/tenanttemplates` (selection, usage sources, sync and status), reusing `internal/whatsapp/templatesync` against the tenant's WABA and token from `Manager.LoadTenantWhatsAppTemplateCredentials`. That loader reads only the tenant's own whatsapp/meta_cloud row (`waba_id`, encrypted `access_token`) and never falls back to the platform WABA.
+- Routes (tenant admins, the billing-manage permission that connects the number; the tenant comes from the token, X-Tenant-ID only for a platform owner):
+  - `GET /api/v1/settings/whatsapp/templates`: each selected template with its Meta status (APPROVED, PENDING, REJECTED with Meta's reason, or MISSING).
+  - `POST /api/v1/settings/whatsapp/templates/sync` with `{"dry_run": false}`: submits up to 10 missing templates per call and returns `remaining`; the UI calls again until it is 0.
+- Auto-sync: Embedded Signup starts `Service.AutoSync` in the background once the number is saved. It runs batch after batch on a detached context (10 minute limit), logs the outcome and never changes the signup response.
+
+**Which templates a tenant gets.** The map lives in `internal/whatsapp/tenanttemplates/selection.json`. Setting `WHATSAPP_TENANT_TEMPLATE_MAP_FILE` to a JSON file of the same shape replaces it without a release.
+
+| Service or product | Manifest prefixes |
+|---|---|
+| always (shared) | `auth_`, `subscription_`, `credits_`, `broadcast_`, `occasion_` |
+| ordering | `ordering_` |
+| pos | `pos_` |
+| logistics | `logistics_` |
+| inventory | `inventory_` |
+| treasury, finance | `finance_` |
+| erp | `finance_`, `hrm_`, `payroll_` |
+| hrm / payroll | `hrm_` / `payroll_` |
+| isp, ispbilling | `ispbilling_` |
+| library | `library_` |
+| maskani | `maskani_` |
+| digitika | `digitika_` |
+| hadia | `hadia_` |
+
+A tenant uses a service when either source names it:
+
+1. The caller's token: `active_service_tags` and `active_products`, read only when the token belongs to that tenant (a platform owner acting for a tenant carries the platform's own entitlements).
+2. The tenant's delivery logs from the last 180 days, any channel and outcome: the first segment of the template id, so `ordering/order_placed` means ordering and `hadia/gift_receipt` means hadia. A WhatsApp send skipped for want of a template still counts.
+
+Names in neither list are ignored (`whatsapp/inbox_reply` is a free reply inside the 24 hour window and needs no template). Platform-only templates (`codevertex_` enquiries, `provider_balance_low`) appear in no list, so they never reach a tenant's WABA.
+
 ---
 
 ## Event-Driven Architecture

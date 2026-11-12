@@ -57,6 +57,7 @@ import (
 	providerconfig "github.com/bengobox/notifications-api/internal/providers/config"
 	sandboxmod "github.com/bengobox/notifications-api/internal/sandbox"
 	"github.com/bengobox/notifications-api/internal/shared/logger"
+	"github.com/bengobox/notifications-api/internal/whatsapp/tenanttemplates"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
@@ -385,8 +386,18 @@ func New(ctx context.Context) (*App, error) {
 	}
 	// Messages to the platform WhatsApp number go to MarketFlow's assistant (Sprint 17).
 	webhookHandler.WithAssistantInbound(natsConn)
-	whatsappEmbeddedSignupHandler := handlers.NewWhatsAppEmbeddedSignupHandler(entClient, log, providerManager)
-	whatsappTemplatesHandler := handlers.NewWhatsAppTemplates(providerManager, log)
+	// Per-tenant template sync: the templates each tenant uses, to its own WABA (see package
+	// tenanttemplates for the service-to-prefix map and WHATSAPP_TENANT_TEMPLATE_MAP_FILE).
+	tenantTemplateSelection, selErr := tenanttemplates.LoadSelection()
+	if selErr != nil {
+		log.Error("tenant whatsapp template map unreadable, using the built-in map", zap.Error(selErr))
+		tenantTemplateSelection = tenanttemplates.DefaultSelection()
+	}
+	tenantTemplates := tenanttemplates.New(providerManager.LoadTenantWhatsAppTemplateCredentials, tenantTemplateSelection, log,
+		tenanttemplates.ClaimsServices, tenanttemplates.DeliveryLogServices(entClient, tenanttemplates.DeliveryLogWindow))
+	whatsappEmbeddedSignupHandler := handlers.NewWhatsAppEmbeddedSignupHandler(entClient, log, providerManager).
+		WithTemplateAutoSync(tenantTemplates.AutoSync)
+	whatsappTemplatesHandler := handlers.NewWhatsAppTemplates(providerManager, log, tenantTemplates)
 	mailDeliveryHandler := handlers.NewMailDeliveryHandler(
 		maildelivery.NewService(maildelivery.NewEntStore(entClient), handlers.NewMailDeliverySuppressor(redisClient), log),
 		maildelivery.NewKeys(platformkey.NewStore(entClient)),

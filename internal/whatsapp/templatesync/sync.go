@@ -326,6 +326,31 @@ func (s *Syncer) delete(ctx context.Context, name string) error {
 	return nil
 }
 
+// ExistingTemplate is one template as Meta lists it on the WABA: its review status (APPROVED,
+// PENDING, REJECTED, PAUSED, DISABLED ...) and, for a rejection, Meta's reason.
+type ExistingTemplate struct {
+	Status         string `json:"status"`
+	RejectedReason string `json:"rejected_reason,omitempty"`
+}
+
+// FetchExisting lists every template already on the WABA, keyed by name. Used by the tenant
+// template status view, which shows each selected template's Meta status without changing anything.
+func (s *Syncer) FetchExisting(ctx context.Context) (map[string]ExistingTemplate, error) {
+	existing, err := s.fetchExisting(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out := make(map[string]ExistingTemplate, len(existing))
+	for name, mt := range existing {
+		reason := mt.RejectedReason
+		if reason == "NONE" {
+			reason = ""
+		}
+		out[name] = ExistingTemplate{Status: mt.Status, RejectedReason: reason}
+	}
+	return out, nil
+}
+
 // fetchExisting paginates through every template already on the WABA, keyed by name.
 func (s *Syncer) fetchExisting(ctx context.Context) (map[string]metaTemplate, error) {
 	out := map[string]metaTemplate{}

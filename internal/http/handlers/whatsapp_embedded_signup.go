@@ -19,6 +19,7 @@ import (
 	"github.com/bengobox/notifications-api/internal/ent"
 	"github.com/bengobox/notifications-api/internal/ent/providersetting"
 	"github.com/bengobox/notifications-api/internal/providers"
+	pcfg "github.com/bengobox/notifications-api/internal/providers/config"
 )
 
 // defaultGraphBase is Meta's Graph API host; tests point the handler at a fake one.
@@ -52,6 +53,17 @@ type WhatsAppEmbeddedSignupHandler struct {
 	encrypt   func(string) (string, error)
 	newPIN    func() (string, error)
 	save      func(ctx context.Context, tenantID string, rows []signupSetting) error
+	// autoSync, when set, submits the templates the tenant uses to its new WABA (owner decision
+	// "Auto-sync on connect + button"). It runs in the background after a successful completion
+	// only, on a context detached from the request; its outcome is logged and never changes the
+	// signup response.
+	autoSync func(ctx context.Context, tenantID string)
+}
+
+// WithTemplateAutoSync sets the background template sync started after a successful signup.
+func (h *WhatsAppEmbeddedSignupHandler) WithTemplateAutoSync(fn func(ctx context.Context, tenantID string)) *WhatsAppEmbeddedSignupHandler {
+	h.autoSync = fn
+	return h
 }
 
 // signupSetting is one tenant provider_settings row written on completion.
@@ -171,8 +183,17 @@ func (h *WhatsAppEmbeddedSignupHandler) Complete(w http.ResponseWriter, r *http.
 		return
 	}
 
+	// Sends and the template sync read these rows through a short per-pod cache; drop it so the
+	// new number and token are used at once rather than after the cache expires.
+	pcfg.InvalidateCache()
+
 	h.log.Info("whatsapp embedded signup completed",
 		zap.String("tenant_id", tenantID), zap.String("waba_id", req.WABAID), zap.String("phone_number_id", req.PhoneNumberID))
+	if h.autoSync != nil {
+		// Detached from the request, which ends with this response. The caller's claims stay in
+		// the context, so its active services can steer the template selection.
+		go h.autoSync(context.WithoutCancel(r.Context()), tenantID)
+	}
 	jsonResponse(w, http.StatusOK, map[string]any{
 		"message":         "WhatsApp number connected",
 		"phone_number_id": req.PhoneNumberID,

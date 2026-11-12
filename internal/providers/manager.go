@@ -117,6 +117,43 @@ func (m *Manager) LoadWhatsAppTemplateCredentials(ctx context.Context) (wabaID, 
 	return wabaID, accessToken, nil
 }
 
+// LoadTenantWhatsAppTemplateCredentials resolves the WABA ID and access token of a tenant's own
+// WhatsApp Business Account (the rows Embedded Signup saves), for managing that WABA's message
+// templates. Meta approves templates per WABA, so a tenant with its own number needs our templates
+// on its own WABA before its template sends can work. Only the tenant's own whatsapp/meta_cloud
+// row counts: there is deliberately no fallback to the platform's WABA, which would sync the
+// platform's account while reporting it as the tenant's.
+func (m *Manager) LoadTenantWhatsAppTemplateCredentials(ctx context.Context, tenantID string) (wabaID, accessToken string, err error) {
+	if strings.TrimSpace(tenantID) == "" {
+		return "", "", errors.New("tenant id is required")
+	}
+	s, loadErr := pcfg.LoadTenantOnlyProviderSettings(ctx, m.dbCfg, tenantID, m.env, "whatsapp", "meta_cloud", m.decryptionKey)
+	return tenantTemplateCredentials(s, loadErr)
+}
+
+// ErrNoTenantWABA: the tenant has not connected a WhatsApp Business Account of its own.
+var ErrNoTenantWABA = errors.New("no WhatsApp Business Account is connected for this tenant: connect a number under Settings > Providers > WhatsApp first")
+
+// ErrNoTenantWABAToken: the tenant's WABA has no access token saved (a number entered by hand
+// rather than through Embedded Signup), so its templates cannot be managed.
+var ErrNoTenantWABAToken = errors.New("the connected WhatsApp Business Account has no access token saved: reconnect the number with Embedded Signup")
+
+// tenantTemplateCredentials picks the WABA ID and token out of a tenant's own settings.
+func tenantTemplateCredentials(s pcfg.Settings, loadErr error) (string, string, error) {
+	if loadErr != nil {
+		return "", "", fmt.Errorf("load tenant WhatsApp settings: %w", loadErr)
+	}
+	wabaID := strings.TrimSpace(s["waba_id"])
+	token := strings.TrimSpace(s["access_token"])
+	if wabaID == "" {
+		return "", "", ErrNoTenantWABA
+	}
+	if token == "" {
+		return "", "", ErrNoTenantWABAToken
+	}
+	return wabaID, token, nil
+}
+
 // ErrNoWhatsAppNumber: the tenant has no registered WhatsApp number of its own and may not use the
 // platform's. Retrying cannot help, so the worker records the send as skipped.
 var ErrNoWhatsAppNumber = errors.New("no WhatsApp number registered for this tenant")
@@ -340,14 +377,9 @@ func (m *Manager) TestConnection(ctx context.Context, tenantID, channel, provide
 		if err != nil {
 			return nil, err
 		}
-		// A free-form text body only works inside an active 24h reply window, so the test uses
-		// "hello_world" — the sample template Meta pre-approves by default on every WhatsApp
-		// Business Account specifically for this kind of connectivity/send check.
+		// A free plain text, never a paid template (see whatsAppTestSend).
 		if to != "" {
-			return nil, prov.SendWhatsApp(ctx, "", []string{to}, "", map[string]interface{}{
-				"template_name":     "hello_world",
-				"template_language": "en_US",
-			})
+			return nil, whatsAppTestSend(ctx, prov, to)
 		}
 		if infoProv, ok := prov.(AccountInfoProvider); ok {
 			return infoProv.AccountInfo(ctx)

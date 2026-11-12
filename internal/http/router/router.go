@@ -327,6 +327,15 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 					if webhooks != nil {
 						s.Get("/webhooks", webhooks.Config)
 					}
+					// The tenant's own WhatsApp templates (status and sync to its own WABA): tenant
+					// admins only, the same billing-manage permission that connects the number.
+					if whatsappTemplates != nil {
+						adminOnly := func(next http.Handler) http.Handler { return next }
+						if authenticator != nil {
+							adminOnly = authenticator.RequirePermissions(identity.PermBillingManage)
+						}
+						whatsappTemplates.RegisterTenantTemplateRoutes(s, adminOnly)
+					}
 				})
 
 				// Notification-type preferences (per-tenant toggles feeding the worker's

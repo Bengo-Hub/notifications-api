@@ -1,0 +1,20 @@
+{
+  "shared": ["auth_", "subscription_", "credits_", "broadcast_", "occasion_"],
+  "services": {
+    "ordering": ["ordering_"],
+    "pos": ["pos_"],
+    "logistics": ["logistics_"],
+    "inventory": ["inventory_"],
+    "treasury": ["finance_"],
+    "finance": ["finance_"],
+    "erp": ["finance_", "hrm_", "payroll_"],
+    "hrm": ["hrm_"],
+    "payroll": ["payroll_"],
+    "isp": ["ispbilling_"],
+    "ispbilling": ["ispbilling_"],
+    "library": ["library_"],
+    "maskani": ["maskani_"],
+    "digitika": ["digitika_"],
+    "hadia": ["hadia_"]
+  }
+}
