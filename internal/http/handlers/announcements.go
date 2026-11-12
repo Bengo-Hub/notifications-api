@@ -73,7 +73,7 @@ func viewOf(a *ent.Announcement) announcementView {
 // @Param service query string true "App key, e.g. pos, treasury, inventory"
 // @Param tenant query string false "Viewer's tenant (id or slug): adds that tenant's own banners"
 // @Success 200 {object} map[string]any "announcements: []"
-// @Router /api/v1/announcements/active [get]
+// @Router /announcements/active [get]
 func (h *AnnouncementHandler) Active(w http.ResponseWriter, r *http.Request) {
 	list, err := h.svc.Active(r.Context(), r.URL.Query().Get("service"), h.svc.ResolveTenant(r.Context(), r.URL.Query().Get("tenant")))
 	if err != nil {
@@ -122,7 +122,7 @@ func (h *AnnouncementHandler) announcementOwner(r *http.Request) (*uuid.UUID, bo
 // @Tags Announcements
 // @Produce json
 // @Success 200 {object} map[string]any
-// @Router /api/v1/announcements [get]
+// @Router /announcements [get]
 func (h *AnnouncementHandler) List(w http.ResponseWriter, r *http.Request) {
 	owner, ok := h.announcementOwner(r)
 	if !ok {
@@ -145,7 +145,7 @@ func (h *AnnouncementHandler) List(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param body body announcements.Input true "Announcement"
 // @Success 201 {object} map[string]any
-// @Router /api/v1/announcements [post]
+// @Router /announcements [post]
 func (h *AnnouncementHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var in announcements.Input
 	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
@@ -176,7 +176,7 @@ func (h *AnnouncementHandler) Create(w http.ResponseWriter, r *http.Request) {
 // @Param id path string true "Announcement ID"
 // @Param body body announcements.Input true "Announcement"
 // @Success 200 {object} map[string]any
-// @Router /api/v1/announcements/{id} [put]
+// @Router /announcements/{id} [put]
 func (h *AnnouncementHandler) Update(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -205,7 +205,7 @@ func (h *AnnouncementHandler) Update(w http.ResponseWriter, r *http.Request) {
 // @Tags Announcements
 // @Param id path string true "Announcement ID"
 // @Success 204
-// @Router /api/v1/announcements/{id} [delete]
+// @Router /announcements/{id} [delete]
 func (h *AnnouncementHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {

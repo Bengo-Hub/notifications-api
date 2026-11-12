@@ -88,7 +88,7 @@ type s2sBroadcastRequest struct {
 // @Accept json
 // @Produce json
 // @Success 201 {object} map[string]any
-// @Router /api/v1/s2s/broadcasts [post]
+// @Router /s2s/broadcasts [post]
 func (h *BroadcastHandler) S2SCreate(w http.ResponseWriter, r *http.Request) {
 	var req s2sBroadcastRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -194,7 +194,7 @@ func viewBroadcast(b *ent.Broadcast) broadcastView {
 // @Param limit query int false "Page size (max 100)"
 // @Param offset query int false "Offset"
 // @Success 200 {object} map[string]any
-// @Router /api/v1/broadcasts [get]
+// @Router /broadcasts [get]
 func (h *BroadcastHandler) List(w http.ResponseWriter, r *http.Request) {
 	s, ok := h.senderOr400(w, r)
 	if !ok {
@@ -225,7 +225,7 @@ func (h *BroadcastHandler) List(w http.ResponseWriter, r *http.Request) {
 // @Tags Broadcasts
 // @Produce json
 // @Success 200 {object} map[string]any
-// @Router /api/v1/broadcasts/summary [get]
+// @Router /broadcasts/summary [get]
 func (h *BroadcastHandler) Summary(w http.ResponseWriter, r *http.Request) {
 	s, ok := h.senderOr400(w, r)
 	if !ok {
@@ -251,7 +251,7 @@ func (h *BroadcastHandler) Summary(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param body body broadcasts.Input true "Broadcast"
 // @Success 201 {object} map[string]any
-// @Router /api/v1/broadcasts [post]
+// @Router /broadcasts [post]
 func (h *BroadcastHandler) Create(w http.ResponseWriter, r *http.Request) {
 	s, ok := h.senderOr400(w, r)
 	if !ok {
@@ -275,7 +275,7 @@ func (h *BroadcastHandler) Create(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param id path string true "Broadcast ID"
 // @Success 200 {object} map[string]any
-// @Router /api/v1/broadcasts/{id} [get]
+// @Router /broadcasts/{id} [get]
 func (h *BroadcastHandler) Get(w http.ResponseWriter, r *http.Request) {
 	s, ok := h.senderOr400(w, r)
 	if !ok {
@@ -305,7 +305,7 @@ func (h *BroadcastHandler) Get(w http.ResponseWriter, r *http.Request) {
 // @Param id path string true "Broadcast ID"
 // @Param body body broadcasts.Input true "Broadcast"
 // @Success 200 {object} map[string]any
-// @Router /api/v1/broadcasts/{id} [put]
+// @Router /broadcasts/{id} [put]
 func (h *BroadcastHandler) Update(w http.ResponseWriter, r *http.Request) {
 	s, ok := h.senderOr400(w, r)
 	if !ok {
@@ -333,7 +333,7 @@ func (h *BroadcastHandler) Update(w http.ResponseWriter, r *http.Request) {
 // @Tags Broadcasts
 // @Param id path string true "Broadcast ID"
 // @Success 204
-// @Router /api/v1/broadcasts/{id} [delete]
+// @Router /broadcasts/{id} [delete]
 func (h *BroadcastHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	s, ok := h.senderOr400(w, r)
 	if !ok {
@@ -358,7 +358,7 @@ func (h *BroadcastHandler) Delete(w http.ResponseWriter, r *http.Request) {
 // @Param id path string true "Broadcast ID"
 // @Param action path string true "submit | approve | reject | pause | resume | cancel"
 // @Success 200 {object} map[string]any
-// @Router /api/v1/broadcasts/{id}/{action} [post]
+// @Router /broadcasts/{id}/{action} [post]
 func (h *BroadcastHandler) Act(w http.ResponseWriter, r *http.Request) {
 	s, ok := h.senderOr400(w, r)
 	if !ok {
@@ -400,7 +400,7 @@ type recipientView struct {
 // @Param status query string false "Filter by status"
 // @Param channel query string false "Filter by channel"
 // @Success 200 {object} map[string]any
-// @Router /api/v1/broadcasts/{id}/recipients [get]
+// @Router /broadcasts/{id}/recipients [get]
 func (h *BroadcastHandler) Recipients(w http.ResponseWriter, r *http.Request) {
 	s, ok := h.senderOr400(w, r)
 	if !ok {
@@ -440,7 +440,7 @@ func (h *BroadcastHandler) Recipients(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param id path string true "Broadcast ID"
 // @Success 200 {object} map[string]any
-// @Router /api/v1/broadcasts/{id}/estimate [post]
+// @Router /broadcasts/{id}/estimate [post]
 func (h *BroadcastHandler) Estimate(w http.ResponseWriter, r *http.Request) {
 	s, ok := h.senderOr400(w, r)
 	if !ok {
@@ -527,7 +527,7 @@ func (h *BroadcastHandler) resolverFor(b *ent.Broadcast) (broadcasts.Resolver, e
 // @Param after query string false "Cursor from the previous page"
 // @Param limit query int false "Page size (max 100)"
 // @Success 200 {object} map[string]any
-// @Router /api/v1/broadcasts/{id}/audience [get]
+// @Router /broadcasts/{id}/audience [get]
 func (h *BroadcastHandler) Audience(w http.ResponseWriter, r *http.Request) {
 	s, ok := h.senderOr400(w, r)
 	if !ok {
@@ -570,7 +570,7 @@ func (h *BroadcastHandler) Audience(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param id path string true "Broadcast ID"
 // @Success 200 {object} map[string]any
-// @Router /api/v1/broadcasts/{id}/exclusions [put]
+// @Router /broadcasts/{id}/exclusions [put]
 func (h *BroadcastHandler) Exclusions(w http.ResponseWriter, r *http.Request) {
 	s, ok := h.senderOr400(w, r)
 	if !ok {
@@ -618,7 +618,7 @@ func stringsOf(v any) []string {
 // @Accept json
 // @Produce json
 // @Success 200 {object} map[string]any
-// @Router /api/v1/broadcasts/preview [post]
+// @Router /broadcasts/preview [post]
 func (h *BroadcastHandler) Preview(w http.ResponseWriter, r *http.Request) {
 	s, ok := h.senderOr400(w, r)
 	if !ok {
@@ -657,7 +657,7 @@ func (h *BroadcastHandler) Preview(w http.ResponseWriter, r *http.Request) {
 // @Tags Broadcasts
 // @Produce json
 // @Success 200 {object} map[string]any
-// @Router /api/v1/broadcasts/whatsapp-templates [get]
+// @Router /broadcasts/whatsapp-templates [get]
 func (h *BroadcastHandler) WhatsAppTemplates(w http.ResponseWriter, r *http.Request) {
 	type tpl struct {
 		Name   string   `json:"name"`
@@ -675,7 +675,7 @@ func (h *BroadcastHandler) WhatsAppTemplates(w http.ResponseWriter, r *http.Requ
 // @Tags Occasions
 // @Produce json
 // @Success 200 {object} map[string]any
-// @Router /api/v1/occasions [get]
+// @Router /occasions [get]
 func (h *BroadcastHandler) ListOccasions(w http.ResponseWriter, r *http.Request) {
 	s, ok := h.senderOr400(w, r)
 	if !ok {
@@ -698,7 +698,7 @@ func (h *BroadcastHandler) ListOccasions(w http.ResponseWriter, r *http.Request)
 // @Produce json
 // @Param key path string true "Occasion key"
 // @Success 200 {object} map[string]any
-// @Router /api/v1/occasions/{key} [put]
+// @Router /occasions/{key} [put]
 func (h *BroadcastHandler) SaveOccasion(w http.ResponseWriter, r *http.Request) {
 	s, ok := h.senderOr400(w, r)
 	if !ok {
@@ -753,7 +753,7 @@ func (h *BroadcastHandler) SaveOccasion(w http.ResponseWriter, r *http.Request) 
 // @Tags Occasions
 // @Param key path string true "Occasion key"
 // @Success 204
-// @Router /api/v1/occasions/{key} [delete]
+// @Router /occasions/{key} [delete]
 func (h *BroadcastHandler) DeleteOccasion(w http.ResponseWriter, r *http.Request) {
 	s, ok := h.senderOr400(w, r)
 	if !ok {
@@ -776,7 +776,7 @@ func (h *BroadcastHandler) DeleteOccasion(w http.ResponseWriter, r *http.Request
 // @Produce json
 // @Param key path string true "Occasion key"
 // @Success 200 {object} map[string]any
-// @Router /api/v1/occasions/{key}/draft [post]
+// @Router /occasions/{key}/draft [post]
 func (h *BroadcastHandler) DraftOccasion(w http.ResponseWriter, r *http.Request) {
 	s, ok := h.senderOr400(w, r)
 	if !ok {
@@ -804,7 +804,7 @@ func (h *BroadcastHandler) DraftOccasion(w http.ResponseWriter, r *http.Request)
 // @Produce json
 // @Param token path string true "Signed token from the link"
 // @Success 200 {object} map[string]any
-// @Router /api/v1/public/unsubscribe/{token} [get]
+// @Router /public/unsubscribe/{token} [get]
 func (h *BroadcastHandler) UnsubscribeInfo(w http.ResponseWriter, r *http.Request) {
 	t, err := h.suppress.Verify(chi.URLParam(r, "token"))
 	if err != nil {
@@ -832,7 +832,7 @@ func (h *BroadcastHandler) UnsubscribeInfo(w http.ResponseWriter, r *http.Reques
 // @Tags Unsubscribe
 // @Param token path string true "Signed token from the link"
 // @Success 200 {object} map[string]any
-// @Router /api/v1/public/unsubscribe/{token} [post]
+// @Router /public/unsubscribe/{token} [post]
 func (h *BroadcastHandler) Unsubscribe(w http.ResponseWriter, r *http.Request) {
 	t, err := h.suppress.Verify(chi.URLParam(r, "token"))
 	if err != nil {

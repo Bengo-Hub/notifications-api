@@ -25,7 +25,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Returns delivery statistics for the tenant. Query: range (e.g. 24h, 7d). tenantId may be omitted from the path (falls back to JWT claims or X-Tenant-ID header) for platform-context callers.",
+                "description": "Returns delivery statistics for the tenant. Query: range (24h, 7d, 30d). Platform owners may pass a tenant (X-Tenant-ID or the path) or scope=all for every tenant.",
                 "tags": [
                     "Analytics"
                 ],
@@ -33,8 +33,14 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Time range (e.g. 24h, 7d)",
+                        "description": "Time range (24h, 7d, 30d)",
                         "name": "range",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "all = platform-wide (platform owners only)",
+                        "name": "scope",
                         "in": "query"
                     }
                 ],
@@ -58,7 +64,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Returns delivery statistics for the tenant. Query: range (e.g. 24h, 7d). tenantId may be omitted from the path (falls back to JWT claims or X-Tenant-ID header) for platform-context callers.",
+                "description": "Returns delivery statistics for the tenant. Query: range (24h, 7d, 30d). Platform owners may pass a tenant (X-Tenant-ID or the path) or scope=all for every tenant.",
                 "tags": [
                     "Analytics"
                 ],
@@ -72,8 +78,14 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Time range (e.g. 24h, 7d)",
+                        "description": "Time range (24h, 7d, 30d)",
                         "name": "range",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "all = platform-wide (platform owners only)",
+                        "name": "scope",
                         "in": "query"
                     }
                 ],
@@ -97,7 +109,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Returns paginated delivery log entries for the tenant. Query: limit, offset, channel, status, from, to. tenantId may be omitted from the path (falls back to JWT claims or X-Tenant-ID header) for platform-context callers.",
+                "description": "Returns paginated delivery log entries with masked recipients. Query: limit, offset, channel, status, from, to, scope (all = platform-wide, platform owners only).",
                 "tags": [
                     "Analytics"
                 ],
@@ -148,7 +160,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Returns paginated delivery log entries for the tenant. Query: limit, offset, channel, status, from, to. tenantId may be omitted from the path (falls back to JWT claims or X-Tenant-ID header) for platform-context callers.",
+                "description": "Returns paginated delivery log entries with masked recipients. Query: limit, offset, channel, status, from, to, scope (all = platform-wide, platform owners only).",
                 "tags": [
                     "Analytics"
                 ],
@@ -195,37 +207,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/announcements/active": {
-            "get": {
-                "description": "The banners an app's dashboard shows now (public, cached). Dismissal is per user, client side.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Announcements"
-                ],
-                "summary": "Active announcements for an app",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "App key, e.g. pos, treasury, inventory",
-                        "name": "service",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "announcements: []",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/platform/announcements": {
+        "/announcements": {
             "get": {
                 "produces": [
                     "application/json"
@@ -233,7 +215,7 @@ const docTemplate = `{
                 "tags": [
                     "Announcements"
                 ],
-                "summary": "List announcements (platform)",
+                "summary": "List announcements (platform tenant: every tenant; other tenants: their own users)",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -254,7 +236,7 @@ const docTemplate = `{
                 "tags": [
                     "Announcements"
                 ],
-                "summary": "Publish an announcement (platform)",
+                "summary": "Publish an announcement (platform tenant: every tenant; other tenants: their own users)",
                 "parameters": [
                     {
                         "description": "Announcement",
@@ -277,7 +259,43 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/platform/announcements/{id}": {
+        "/announcements/active": {
+            "get": {
+                "description": "The banners an app's dashboard shows now (public, cached). Dismissal is per user, client side.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Announcements"
+                ],
+                "summary": "Active announcements for an app",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "App key, e.g. pos, treasury, inventory",
+                        "name": "service",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Viewer's tenant (id or slug): adds that tenant's own banners",
+                        "name": "tenant",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "announcements: []",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/announcements/{id}": {
             "put": {
                 "consumes": [
                     "application/json"
@@ -288,7 +306,7 @@ const docTemplate = `{
                 "tags": [
                     "Announcements"
                 ],
-                "summary": "Update an announcement (platform)",
+                "summary": "Update an announcement (platform tenant: every tenant; other tenants: their own users)",
                 "parameters": [
                     {
                         "type": "string",
@@ -321,7 +339,7 @@ const docTemplate = `{
                 "tags": [
                     "Announcements"
                 ],
-                "summary": "Delete an announcement (platform)",
+                "summary": "Delete an announcement (platform tenant: every tenant; other tenants: their own users)",
                 "parameters": [
                     {
                         "type": "string",
@@ -334,6 +352,461 @@ const docTemplate = `{
                 "responses": {
                     "204": {
                         "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/billing/whatsapp/connection": {
+            "delete": {
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "description": "Deregisters the number and unsubscribes the app on Meta (best effort), then removes the tenant's saved connection.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "WhatsApp"
+                ],
+                "summary": "Disconnect the tenant's WhatsApp number",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.disconnectResult"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/broadcasts": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Broadcasts"
+                ],
+                "summary": "List broadcasts",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Comma separated statuses",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Only occasion greetings",
+                        "name": "occasion",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size (max 100)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Broadcasts"
+                ],
+                "summary": "Create a broadcast draft",
+                "parameters": [
+                    {
+                        "description": "Broadcast",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_bengobox_notifications-api_internal_modules_broadcasts.Input"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/broadcasts/preview": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Broadcasts"
+                ],
+                "summary": "Render a message for a sample recipient and check its placeholders",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/broadcasts/summary": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Broadcasts"
+                ],
+                "summary": "Broadcasts awaiting approval (menu badge)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/broadcasts/whatsapp-templates": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Broadcasts"
+                ],
+                "summary": "Approved WhatsApp templates a broadcast can use, with the values each one takes",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/broadcasts/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Broadcasts"
+                ],
+                "summary": "Get a broadcast with its per-channel counts",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Broadcast ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Broadcasts"
+                ],
+                "summary": "Edit a draft or a broadcast awaiting approval",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Broadcast ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Broadcast",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_bengobox_notifications-api_internal_modules_broadcasts.Input"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Broadcasts"
+                ],
+                "summary": "Delete a draft",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Broadcast ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/broadcasts/{id}/audience": {
+            "get": {
+                "description": "Addresses are masked. Each row says per channel whether it sends or why not (opted out, no consent, no valid address, left out).",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Broadcasts"
+                ],
+                "summary": "Review who a broadcast goes to (paged), with the address each channel would use",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Broadcast ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Cursor from the previous page",
+                        "name": "after",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page size (max 100)",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/broadcasts/{id}/estimate": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Broadcasts"
+                ],
+                "summary": "Count who a broadcast would reach on each channel, before approving it",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Broadcast ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/broadcasts/{id}/exclusions": {
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Broadcasts"
+                ],
+                "summary": "Leave people out of a broadcast, or put them back, before it sends",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Broadcast ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/broadcasts/{id}/recipients": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Broadcasts"
+                ],
+                "summary": "A broadcast's recipients (addresses masked)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Broadcast ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by status",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by channel",
+                        "name": "channel",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/broadcasts/{id}/{action}": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Broadcasts"
+                ],
+                "summary": "Submit, approve, reject, pause, resume or cancel a broadcast",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Broadcast ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "submit | approve | reject | pause | resume | cancel",
+                        "name": "action",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
                     }
                 }
             }
@@ -373,6 +846,107 @@ const docTemplate = `{
                         "description": "Prometheus metrics payload",
                         "schema": {
                             "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/occasions": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Occasions"
+                ],
+                "summary": "The sender's occasions with their next date",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/occasions/{key}": {
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Occasions"
+                ],
+                "summary": "Switch an occasion on or off, set auto-send, channels and wording, or add a custom one",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Occasion key",
+                        "name": "key",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Occasions"
+                ],
+                "summary": "Remove a tenant's custom occasion or its changes to a shared one",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Occasion key",
+                        "name": "key",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/occasions/{key}/draft": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Occasions"
+                ],
+                "summary": "Create this year's greeting for an occasion now, for review and approval",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Occasion key",
+                        "name": "key",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
                         }
                     }
                 }
@@ -812,6 +1386,59 @@ const docTemplate = `{
                 }
             }
         },
+        "/public/unsubscribe/{token}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Unsubscribe"
+                ],
+                "summary": "What an unsubscribe link is for (public)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Signed token from the link",
+                        "name": "token",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Unsubscribe"
+                ],
+                "summary": "Unsubscribe (public, one-click per RFC 8058)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Signed token from the link",
+                        "name": "token",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/readyz": {
             "get": {
                 "description": "Validates connectivity to Postgres, Redis, and NATS (when configured).",
@@ -833,6 +1460,301 @@ const docTemplate = `{
                         "description": "Service Unavailable",
                         "schema": {
                             "$ref": "#/definitions/internal_http_handlers.readinessResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/s2s/broadcasts": {
+            "post": {
+                "description": "MarketFlow hands campaign sends to the broadcast engine; they wait for the tenant's approval.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Broadcasts"
+                ],
+                "summary": "Create a tenant broadcast from another service (internal key)",
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/settings/whatsapp/credit-categories": {
+            "get": {
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "description": "One entry per WhatsApp credit category (promotions and broadcasts; order, payment and account updates; login and verification codes; replies to customers) with the tenant's own messages of the last 90 days.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "WhatsApp"
+                ],
+                "summary": "Which WhatsApp messages use which credits",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/settings/whatsapp/profile": {
+            "get": {
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "WhatsApp business profile of the tenant's own number",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_bengobox_notifications-api_internal_whatsapp_profile.Profile"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    },
+                    "502": {
+                        "description": "Bad Gateway",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "Update the WhatsApp business profile",
+                "parameters": [
+                    {
+                        "description": "Fields to change",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_bengobox_notifications-api_internal_whatsapp_profile.Update"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_bengobox_notifications-api_internal_whatsapp_profile.Profile"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    },
+                    "502": {
+                        "description": "Bad Gateway",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/settings/whatsapp/profile/photo": {
+            "post": {
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "multipart/form-data",
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "Set the WhatsApp profile photo",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_bengobox_notifications-api_internal_whatsapp_profile.Profile"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    },
+                    "502": {
+                        "description": "Bad Gateway",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/settings/whatsapp/profile/sync-branding": {
+            "post": {
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "Fill the WhatsApp business profile from the business's branding",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.syncBrandingResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    },
+                    "502": {
+                        "description": "Bad Gateway",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/settings/whatsapp/templates": {
+            "get": {
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "WhatsApp template status on the tenant's own WABA",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_bengobox_notifications-api_internal_whatsapp_tenanttemplates.StatusReport"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    },
+                    "502": {
+                        "description": "Bad Gateway",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/settings/whatsapp/templates/sync": {
+            "post": {
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "Sync WhatsApp templates to the tenant's own WABA",
+                "parameters": [
+                    {
+                        "description": "Sync options",
+                        "name": "request",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.tenantSyncRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_bengobox_notifications-api_internal_whatsapp_tenanttemplates.SyncReport"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    },
+                    "502": {
+                        "description": "Bad Gateway",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
                         }
                     }
                 }
@@ -1205,6 +2127,147 @@ const docTemplate = `{
                 }
             }
         },
+        "github_com_bengobox_notifications-api_internal_modules_broadcasts.Content": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "$ref": "#/definitions/github_com_bengobox_notifications-api_internal_modules_broadcasts.EmailContent"
+                },
+                "in_app": {
+                    "$ref": "#/definitions/github_com_bengobox_notifications-api_internal_modules_broadcasts.InAppContent"
+                },
+                "push": {
+                    "$ref": "#/definitions/github_com_bengobox_notifications-api_internal_modules_broadcasts.PushContent"
+                },
+                "sms": {
+                    "$ref": "#/definitions/github_com_bengobox_notifications-api_internal_modules_broadcasts.SMSContent"
+                },
+                "whatsapp": {
+                    "$ref": "#/definitions/github_com_bengobox_notifications-api_internal_modules_broadcasts.WhatsAppContent"
+                }
+            }
+        },
+        "github_com_bengobox_notifications-api_internal_modules_broadcasts.EmailContent": {
+            "type": "object",
+            "properties": {
+                "body": {
+                    "type": "string"
+                },
+                "subject": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_bengobox_notifications-api_internal_modules_broadcasts.InAppContent": {
+            "type": "object",
+            "properties": {
+                "audience": {
+                    "description": "all | admins",
+                    "type": "string"
+                },
+                "cta_label": {
+                    "type": "string"
+                },
+                "cta_url": {
+                    "type": "string"
+                },
+                "days": {
+                    "description": "how long the banner shows, default 7",
+                    "type": "integer"
+                },
+                "services": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "summary": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "tone": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_bengobox_notifications-api_internal_modules_broadcasts.Input": {
+            "type": "object",
+            "properties": {
+                "audience": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "channels": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "class": {
+                    "type": "string"
+                },
+                "consent_attested": {
+                    "type": "boolean"
+                },
+                "content": {
+                    "$ref": "#/definitions/github_com_bengobox_notifications-api_internal_modules_broadcasts.Content"
+                },
+                "kind": {
+                    "type": "string"
+                },
+                "send_at": {
+                    "type": "string"
+                },
+                "sender_name": {
+                    "description": "Sender-facing settings kept in metadata.",
+                    "type": "string"
+                },
+                "timezone": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_bengobox_notifications-api_internal_modules_broadcasts.PushContent": {
+            "type": "object",
+            "properties": {
+                "body": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_bengobox_notifications-api_internal_modules_broadcasts.SMSContent": {
+            "type": "object",
+            "properties": {
+                "body": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_bengobox_notifications-api_internal_modules_broadcasts.WhatsAppContent": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "params": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "template": {
+                    "type": "string"
+                }
+            }
+        },
         "github_com_bengobox_notifications-api_internal_modules_templates.TemplateSummary": {
             "type": "object",
             "properties": {
@@ -1243,19 +2306,100 @@ const docTemplate = `{
                 }
             }
         },
+        "github_com_bengobox_notifications-api_internal_whatsapp_profile.Profile": {
+            "type": "object",
+            "properties": {
+                "about": {
+                    "type": "string"
+                },
+                "address": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "display_name": {
+                    "description": "DisplayName is Meta's verified_name, NameStatus its review state (APPROVED, PENDING_REVIEW,\nDECLINED, AVAILABLE_WITHOUT_REVIEW, EXPIRED, NONE).",
+                    "type": "string"
+                },
+                "display_phone_number": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "name_status": {
+                    "type": "string"
+                },
+                "new_display_name": {
+                    "description": "NewDisplayName and NewNameStatus describe a requested name change still being reviewed.",
+                    "type": "string"
+                },
+                "new_name_status": {
+                    "type": "string"
+                },
+                "phone_number_id": {
+                    "type": "string"
+                },
+                "photo_url": {
+                    "type": "string"
+                },
+                "quality_rating": {
+                    "description": "QualityRating is GREEN, YELLOW, RED, or NA/UNKNOWN for a number with too little traffic.",
+                    "type": "string"
+                },
+                "vertical": {
+                    "type": "string"
+                },
+                "websites": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "github_com_bengobox_notifications-api_internal_whatsapp_profile.Update": {
+            "type": "object",
+            "properties": {
+                "about": {
+                    "type": "string"
+                },
+                "address": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "vertical": {
+                    "type": "string"
+                },
+                "websites": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
         "github_com_bengobox_notifications-api_internal_whatsapp_templatesync.Outcome": {
             "type": "string",
             "enum": [
                 "created",
                 "skipped",
                 "deleted",
-                "failed"
+                "failed",
+                "queued"
             ],
             "x-enum-varnames": [
                 "OutcomeCreated",
                 "OutcomeSkipped",
                 "OutcomeDeleted",
-                "OutcomeFailed"
+                "OutcomeFailed",
+                "OutcomeQueued"
             ]
         },
         "github_com_bengobox_notifications-api_internal_whatsapp_templatesync.Result": {
@@ -1284,6 +2428,79 @@ const docTemplate = `{
                 },
                 "outcome": {
                     "$ref": "#/definitions/github_com_bengobox_notifications-api_internal_whatsapp_templatesync.Outcome"
+                }
+            }
+        },
+        "github_com_bengobox_notifications-api_internal_whatsapp_tenanttemplates.StatusReport": {
+            "type": "object",
+            "properties": {
+                "services": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "summary": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer"
+                    }
+                },
+                "templates": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_bengobox_notifications-api_internal_whatsapp_tenanttemplates.TemplateStatus"
+                    }
+                },
+                "waba_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_bengobox_notifications-api_internal_whatsapp_tenanttemplates.SyncReport": {
+            "type": "object",
+            "properties": {
+                "remaining": {
+                    "type": "integer"
+                },
+                "results": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_bengobox_notifications-api_internal_whatsapp_templatesync.Result"
+                    }
+                },
+                "services": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "summary": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer"
+                    }
+                },
+                "waba_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_bengobox_notifications-api_internal_whatsapp_tenanttemplates.TemplateStatus": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "status": {
+                    "description": "Status is Meta's review status (APPROVED, PENDING, REJECTED, PAUSED, DISABLED ...), or\nMISSING when the template has not been submitted to this WABA.",
+                    "type": "string"
                 }
             }
         },
@@ -1341,6 +2558,16 @@ const docTemplate = `{
                 },
                 "errorRate": {
                     "type": "number"
+                },
+                "failed": {
+                    "type": "integer"
+                },
+                "scope": {
+                    "description": "\"tenant\" or \"platform\"",
+                    "type": "string"
+                },
+                "skipped": {
+                    "type": "integer"
                 },
                 "timeSeries": {
                     "type": "array",
@@ -1451,6 +2678,29 @@ const docTemplate = `{
                 },
                 "waba_id": {
                     "type": "string"
+                }
+            }
+        },
+        "internal_http_handlers.disconnectResult": {
+            "type": "object",
+            "properties": {
+                "deregistered": {
+                    "description": "Deregistered is true when Meta released the number from Cloud API.",
+                    "type": "boolean"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "notes": {
+                    "description": "Notes explain any Meta step that could not be done, e.g. an account already deleted.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "unsubscribed": {
+                    "description": "Unsubscribed is true when our app stopped receiving the account's webhooks.",
+                    "type": "boolean"
                 }
             }
         },
@@ -1566,11 +2816,44 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_http_handlers.syncBrandingResponse": {
+            "type": "object",
+            "properties": {
+                "filled": {
+                    "description": "Filled lists the fields set from the branding (\"about\", \"email\", \"photo\" ...).",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "profile": {
+                    "$ref": "#/definitions/github_com_bengobox_notifications-api_internal_whatsapp_profile.Profile"
+                },
+                "warnings": {
+                    "description": "Warnings explain what could not be used (an SVG logo, a too long tagline ...).",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
         "internal_http_handlers.syncTemplatesRequest": {
             "type": "object",
             "properties": {
+                "batch_size": {
+                    "description": "BatchSize caps how many templates one call submits (default 5, at most 10); the rest come\nback queued and the caller calls again until remaining is 0.",
+                    "type": "integer"
+                },
                 "dry_run": {
                     "type": "boolean"
+                },
+                "names": {
+                    "description": "Names limits the run to these exact template names: the UI's submit queue sends one batch\nof names per call, so a template Meta refused is not retried by every later batch.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "only": {
                     "description": "name prefixes, e.g. [\"finance_\"] — empty means every template",
@@ -1584,6 +2867,9 @@ const docTemplate = `{
         "internal_http_handlers.syncTemplatesResponse": {
             "type": "object",
             "properties": {
+                "remaining": {
+                    "type": "integer"
+                },
                 "results": {
                     "type": "array",
                     "items": {
@@ -1661,6 +2947,14 @@ const docTemplate = `{
                 },
                 "slug": {
                     "type": "string"
+                }
+            }
+        },
+        "internal_http_handlers.tenantSyncRequest": {
+            "type": "object",
+            "properties": {
+                "dry_run": {
+                    "type": "boolean"
                 }
             }
         },

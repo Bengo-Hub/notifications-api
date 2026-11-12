@@ -136,6 +136,15 @@ type disconnectResult struct {
 // deletes the tenant's connection rows (number, account, token, PIN), so sends stop at once and a
 // fresh Embedded Signup starts clean. Meta has no API to delete a WhatsApp Business Account; the
 // note says to remove it in WhatsApp Manager when wanted.
+//
+// @Summary Disconnect the tenant's WhatsApp number
+// @Description Deregisters the number and unsubscribes the app on Meta (best effort), then removes the tenant's saved connection.
+// @Tags WhatsApp
+// @Produce json
+// @Success 200 {object} disconnectResult
+// @Failure 400,404,500 {object} errorResponse
+// @Security bearerAuth
+// @Router /billing/whatsapp/connection [delete]
 func (h *WhatsAppEmbeddedSignupHandler) Disconnect(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.WithoutCancel(r.Context()), signupTimeout)
 	defer cancel()
