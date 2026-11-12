@@ -46,7 +46,17 @@ func NewManager(db *pgxpool.Pool, dbCfg config.PostgresConfig, cfg config.Provid
 // used for Graph API management calls made on a tenant's behalf (e.g. Embedded Signup completion:
 // subscribing our webhook to a newly connected WABA, registering a newly connected phone number)
 // where the platform's Tech Provider access, not any per-tenant credential, is what's needed.
+//
+// The credentials live on the platform tenant's own whatsapp/meta_cloud row, the one its real
+// sends and template management use (LoadWhatsAppTemplateCredentials). The literal "platform"
+// tier is only the fallback: reading it alone found no access_token, so every Embedded Signup
+// failed with "platform WhatsApp credentials not configured" (2026-11-12).
 func (m *Manager) LoadPlatformMetaCredentials(ctx context.Context) (pcfg.Settings, error) {
+	if m.PlatformID != "" {
+		if s, err := pcfg.LoadTenantOnlyProviderSettings(ctx, m.dbCfg, m.PlatformID, m.env, "whatsapp", "meta_cloud", m.decryptionKey); err == nil && s["access_token"] != "" {
+			return s, nil
+		}
+	}
 	return pcfg.LoadTenantProviderSettings(ctx, m.dbCfg, "platform", m.env, "whatsapp", "meta_cloud", m.decryptionKey)
 }
 
