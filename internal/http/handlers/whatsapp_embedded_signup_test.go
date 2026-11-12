@@ -223,6 +223,55 @@ func TestEmbeddedSignupFlagsMissingPaymentMethod(t *testing.T) {
 	}
 }
 
+func disconnectReq(h *WhatsAppEmbeddedSignupHandler) *httptest.ResponseRecorder {
+	r := httptest.NewRequest(http.MethodDelete, "/api/v1/billing/whatsapp/connection", nil)
+	r = r.WithContext(httpware.WithTenantID(r.Context(), "tenant-1"))
+	w := httptest.NewRecorder()
+	h.Disconnect(w, r)
+	return w
+}
+
+// Disconnect releases the number on Meta, unsubscribes our app and always removes the local rows;
+// an account already deleted on Meta only adds notes.
+func TestDisconnectReleasesOnMetaAndRemovesLocally(t *testing.T) {
+	for _, deleted := range []bool{false, true} {
+		g := &fakeGraph{}
+		if deleted {
+			g.failPath = "/v26.0/P1/deregister"
+		}
+		srv := g.server(t)
+		h, _ := newSignupHandler(t, srv.URL, fullCreds)
+		removed := ""
+		h.conn = func(context.Context, string) (string, string, string, string) { return "P1", "W1", "biz-token", "v26.0" }
+		h.remove = func(_ context.Context, tenantID string) error { removed = tenantID; return nil }
+
+		w := disconnectReq(h)
+		if w.Code != http.StatusOK || removed != "tenant-1" {
+			t.Fatalf("deleted=%v: status %d, removed %q", deleted, w.Code, removed)
+		}
+		var res disconnectResult
+		_ = json.Unmarshal(w.Body.Bytes(), &res)
+		if res.Deregistered == deleted || !res.Unsubscribed {
+			t.Errorf("deleted=%v: result %+v", deleted, res)
+		}
+		if g.auth["/v26.0/P1/deregister"] != "Bearer biz-token" {
+			t.Errorf("deregister must use the tenant's own token, got %q", g.auth["/v26.0/P1/deregister"])
+		}
+		if !strings.Contains(strings.Join(g.calls, "|"), "DELETE /v26.0/W1/subscribed_apps") {
+			t.Errorf("calls = %v, want the unsubscribe", g.calls)
+		}
+	}
+}
+
+func TestDisconnectWithoutConnection(t *testing.T) {
+	h, _ := newSignupHandler(t, "http://unused", fullCreds)
+	h.conn = func(context.Context, string) (string, string, string, string) { return "", "", "", "" }
+	h.remove = func(context.Context, string) error { t.Fatal("nothing to remove"); return nil }
+	if w := disconnectReq(h); w.Code != http.StatusNotFound {
+		t.Fatalf("status %d, want 404", w.Code)
+	}
+}
+
 func TestEmbeddedSignupRequiresCode(t *testing.T) {
 	h, _ := newSignupHandler(t, "http://unused", fullCreds)
 	w := postSignup(h, `{"waba_id":"W1","phone_number_id":"P1"}`)

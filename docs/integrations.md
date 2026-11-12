@@ -515,6 +515,53 @@ A tenant uses a service when either source names it:
 
 Names in neither list are ignored (`whatsapp/inbox_reply` is a free reply inside the 24 hour window and needs no template). Platform-only templates (`codevertex_` enquiries, `provider_balance_low`) appear in no list, so they never reach a tenant's WABA.
 
+#### Business profile and display name (tenant numbers)
+
+On 2026-11-12 Hadia's newly connected number (phone number ID 1446431481882844, WABA 1625290866305102) showed customers a bare number: no name, no photo. Two separate things in Meta decide how a Cloud API number looks, and I manage both per tenant.
+
+**1. The display name (`verified_name`).** This is the name given at signup, and Meta reviews it. What Meta's documentation says, checked on 2026-11-12:
+
+- The display name always appears in the number's WhatsApp profile. It appears at the top of individual chats and in the chat list only once the name is approved through display name verification ([Display names](https://developers.facebook.com/documentation/business-messaging/whatsapp/display-names)).
+- That verification is not something I can request: it runs on its own when the business reaches a higher messaging limit ([Display names](https://developers.facebook.com/documentation/business-messaging/whatsapp/display-names)). A new business portfolio starts at a messaging limit of 250; it reaches 2,000 by completing Meta Business Verification, through partner verification, or by sending 2,000 delivered messages outside customer service windows to unique numbers within 30 days with high quality templates ([Messaging limits](https://developers.facebook.com/docs/whatsapp/messaging-limits)).
+- Until then, for a business that has not completed Business Verification, the name shows only in small text next to the phone number in the contacts view, not in the chat list or the chat itself; after verification it shows in both ([AWS End User Messaging, WhatsApp business account types](https://docs.aws.amazon.com/social-messaging/latest/userguide/whatsapp-business-account.html), which restates Meta's rule; Meta's own page above gives the same condition in shorter form).
+- A customer who saved the number under their own name sees that name instead ([Display names](https://developers.facebook.com/documentation/business-messaging/whatsapp/display-names)).
+- An Official Business Account adds a checkmark in the profile and chat header. It needs a verified business portfolio, two step verification on the number and a notable, often searched brand; Meta decides at its discretion ([Official Business Accounts](https://developers.facebook.com/documentation/business-messaging/whatsapp/official-business-accounts/)).
+- `name_status` values: `APPROVED`, `AVAILABLE_WITHOUT_REVIEW`, `PENDING_REVIEW`, `DECLINED`, `EXPIRED`, `NONE` ([Phone numbers](https://developers.facebook.com/docs/whatsapp/cloud-api/phone-numbers)). A requested change shows as `new_display_name` and `new_name_status`. A name can be changed 10 times in 30 days; once a new name is approved the number must be registered again (`POST /{phone-number-id}/register`) within 14 days, and registering before approval does nothing ([Display names](https://developers.facebook.com/documentation/business-messaging/whatsapp/display-names)).
+
+The phone number endpoint gives no reason for a declined name; Meta sends it only in the `phone_number_name_update` webhook, which I do not store yet, so the settings page explains the usual cause (the name must match the registered business or brand) instead.
+
+So for Hadia the name will only show in chats once Hadia's business portfolio is verified and its limit rises. The photo and profile below show right away.
+
+**2. The business profile.** `GET` and `POST /{phone-number-id}/whatsapp_business_profile` ([Business profiles](https://developers.facebook.com/docs/whatsapp/cloud-api/reference/business-profiles)). Fields and Meta's limits, all enforced before calling Meta:
+
+| Field | Limit |
+|---|---|
+| `about` | 1 to 139 characters, cannot be empty |
+| `address` | 256 characters |
+| `description` | 512 characters |
+| `email` | 128 characters, valid email |
+| `websites` | at most 2, each at most 256 characters, with `http://` or `https://` (I add `https://` when missing) |
+| `vertical` | one of Meta's 21 categories (`RESTAURANT`, `RETAIL`, `BEAUTY` ...) or empty |
+| `profile_picture_handle` | a handle from the Resumable Upload API |
+
+POST needs `"messaging_product": "whatsapp"`. The GET answer is wrapped in `data[0]` and carries `profile_picture_url` once a photo is set.
+
+**The photo.** Meta's [Resumable Upload API](https://developers.facebook.com/docs/graph-api/guides/upload): `POST /{app-id}/uploads?file_name&file_length&file_type` opens a session (`{"id":"upload:..."}`, sometimes with its own `?sig=` query, which I keep as given), then `POST /upload:{session}` with the raw bytes, header `file_offset: 0` and `Authorization: OAuth <token>` (OAuth, not Bearer) returns `{"h": "<handle>"}`, which I set as `profile_picture_handle`. The app ID is the platform's `app_id` on Platform > Providers > WhatsApp (`WHATSAPP_APP_ID` as fallback); the token is the tenant's own business token from Embedded Signup. Upload file types are PDF, JPEG, PNG and MP4; I accept JPEG and PNG only, sniffed from the bytes. The current Cloud API reference names no size or dimension limits, so I apply Meta's published profile photo rules: at most 5 MB, at least 192x192 (640x640 is best; WhatsApp crops to a circle, so the logo should sit in the middle).
+
+**Code and routes.**
+
+- Service: `internal/whatsapp/profile` (`Get`, `Update`, `SetPhotoBytes`, `SetPhotoFromURL`, `SyncFromBranding`, `AutoSync`). Credentials come from `Manager.LoadTenantWhatsAppProfileCredentials`: the tenant's own whatsapp/meta_cloud row only (`phone_number_id`, encrypted `access_token`, optional `api_version`), never the platform's number. The Graph version is `whatsapp.GraphVersion`.
+- Branding comes from auth-api the same way the worker's email templates get it (`profile.AuthAPIBranding`): the local tenant row gives the slug, then the shared cache library's `GetTenantDetails` gives name, `logo_url`, `contact_email`, `website`, and metadata `tagline` (used as `about`), `description` and `address` when present.
+- Routes, tenant admins only (billing-manage, the same guard as the template routes; the tenant comes from the token, X-Tenant-ID only for a platform owner). Meta calls run on a detached context with a 2 minute limit:
+  - `GET /api/v1/settings/whatsapp/profile`: display name, its status and any pending new name, quality rating, the profile fields and photo URL.
+  - `PUT /api/v1/settings/whatsapp/profile`: any of `about`, `address`, `description`, `email`, `websites`, `vertical`; answers with the profile as Meta now has it.
+  - `POST /api/v1/settings/whatsapp/profile/photo`: multipart field `file`, or `{"url": "..."}` (http, https or a `data:` URI). A URL is only fetched from a public address: loopback, private, link local and carrier grade NAT ranges are refused, redirects included.
+  - `POST /api/v1/settings/whatsapp/profile/sync-branding`: fills only the empty fields, and the photo when none is set, from the branding. Returns `filled`, `warnings` (an SVG logo, an invalid email) and the profile.
+- Errors: no connected number or a value Meta would refuse is a 400 with a plain reason; Meta's own refusal is a 502 carrying Meta's message, code and `fbtrace_id`.
+- After Embedded Signup: `WithProfileAutoSync(Service.AutoSync)` runs `SyncFromBranding` in the background next to the template auto-sync, after a successful save only, with a 3 minute limit. It only logs; it never changes the signup answer.
+
+To fix Hadia's number now: open Settings > Providers > WhatsApp as a Hadia admin and press "Use our logo and details", or call `POST /api/v1/settings/whatsapp/profile/sync-branding` as a platform owner with `X-Tenant-ID` set to Hadia's tenant ID.
+
 ---
 
 ## Event-Driven Architecture

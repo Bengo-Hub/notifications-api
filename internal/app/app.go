@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -57,6 +58,7 @@ import (
 	providerconfig "github.com/bengobox/notifications-api/internal/providers/config"
 	sandboxmod "github.com/bengobox/notifications-api/internal/sandbox"
 	"github.com/bengobox/notifications-api/internal/shared/logger"
+	waprofile "github.com/bengobox/notifications-api/internal/whatsapp/profile"
 	"github.com/bengobox/notifications-api/internal/whatsapp/tenanttemplates"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
@@ -395,8 +397,32 @@ func New(ctx context.Context) (*App, error) {
 	}
 	tenantTemplates := tenanttemplates.New(providerManager.LoadTenantWhatsAppTemplateCredentials, tenantTemplateSelection, log,
 		tenanttemplates.ClaimsServices, tenanttemplates.DeliveryLogServices(entClient, tenanttemplates.DeliveryLogWindow))
+	// Business profile of a tenant's own number (name status, photo, about), filled from the
+	// tenant's auth-api branding on connect and editable under Settings > Providers > WhatsApp.
+	whatsappProfileService := waprofile.New(
+		func(ctx context.Context, tenantID string) (waprofile.Credentials, error) {
+			id, token, ver, err := providerManager.LoadTenantWhatsAppProfileCredentials(ctx, tenantID)
+			return waprofile.Credentials{PhoneNumberID: id, AccessToken: token, APIVersion: ver}, err
+		},
+		func(ctx context.Context) (string, error) {
+			s, err := providerManager.LoadPlatformMetaCredentials(ctx)
+			if id := strings.TrimSpace(s["app_id"]); id != "" {
+				return id, nil
+			}
+			if id := strings.TrimSpace(os.Getenv("WHATSAPP_APP_ID")); id != "" {
+				return id, nil
+			}
+			if err == nil {
+				err = errors.New("no WhatsApp app_id configured")
+			}
+			return "", err
+		},
+		waprofile.AuthAPIBranding(entClient, templateCache, cfg.Services.AuthAPI),
+		log)
+	whatsappProfileHandler := handlers.NewWhatsAppProfileHandler(whatsappProfileService, log)
 	whatsappEmbeddedSignupHandler := handlers.NewWhatsAppEmbeddedSignupHandler(entClient, log, providerManager).
-		WithTemplateAutoSync(tenantTemplates.AutoSync)
+		WithTemplateAutoSync(tenantTemplates.AutoSync).
+		WithProfileAutoSync(whatsappProfileService.AutoSync)
 	whatsappTemplatesHandler := handlers.NewWhatsAppTemplates(providerManager, log, tenantTemplates)
 	mailDeliveryHandler := handlers.NewMailDeliveryHandler(
 		maildelivery.NewService(maildelivery.NewEntStore(entClient), handlers.NewMailDeliverySuppressor(redisClient), log),
@@ -404,7 +430,7 @@ func New(ctx context.Context) (*App, error) {
 		maildelivery.ProvisionerApplier(cfg.Services.EmailProvisioner, cfg.Services.MailDeliveryWebhookURL, nil),
 		redisClient, cfg.Services.MailDeliveryWebhookURL, log)
 
-	httpRouter := router.New(log, healthHandler, notificationHandler, templateHandler, platformProviders, tenantProviders, analyticsHandler, settingsHandler, rbacHandler, authMeHandler, deviceTokenHandler, cfg.Security.APIKey, authMiddleware, authenticator, cfg.HTTP.AllowedOrigins, tenantSyncer, rateLimiter, serviceConfigHandler, encryptionKeyHandler, notificationPrefsHandler, developerKeyAuth, swaggerHandler, webhookHandler, whatsappEmbeddedSignupHandler, whatsappTemplatesHandler, whatsappInboxHandler, announcementHandler, broadcastHandler, mailDeliveryHandler,
+	httpRouter := router.New(log, healthHandler, notificationHandler, templateHandler, platformProviders, tenantProviders, analyticsHandler, settingsHandler, rbacHandler, authMeHandler, deviceTokenHandler, cfg.Security.APIKey, authMiddleware, authenticator, cfg.HTTP.AllowedOrigins, tenantSyncer, rateLimiter, serviceConfigHandler, encryptionKeyHandler, notificationPrefsHandler, developerKeyAuth, swaggerHandler, webhookHandler, whatsappEmbeddedSignupHandler, whatsappTemplatesHandler, whatsappProfileHandler, whatsappInboxHandler, announcementHandler, broadcastHandler, mailDeliveryHandler,
 		tenantExportHandler(exportSQLDB, cfg.Security.APIKey))
 
 	httpServer := &http.Server{

@@ -59,11 +59,30 @@ type WhatsAppEmbeddedSignupHandler struct {
 	// only, on a context detached from the request; its outcome is logged and never changes the
 	// signup response.
 	autoSync func(ctx context.Context, tenantID string)
+	// profileSync, when set, fills the new number's business profile (about, email, website,
+	// photo) from the tenant's branding, so customers do not see a bare number (2026-11-12). Same
+	// rules as autoSync: background, after success only, never changes the response.
+	profileSync func(ctx context.Context, tenantID string)
+	// conn reads the tenant's own connection (never the platform's) for Disconnect: phone number id,
+	// WABA id, business token and Graph version; empty values when the tenant has none.
+	conn func(ctx context.Context, tenantID string) (phoneID, wabaID, token, version string)
+	// remove deletes the tenant's own whatsapp/meta_cloud connection rows.
+	remove func(ctx context.Context, tenantID string) error
 }
+
+// connectionKeys are the tenant rows a connection writes and Disconnect removes. Other settings
+// (for example the preferred provider) stay.
+var connectionKeys = []string{"phone_number_id", "waba_id", "access_token", "registration_pin"}
 
 // WithTemplateAutoSync sets the background template sync started after a successful signup.
 func (h *WhatsAppEmbeddedSignupHandler) WithTemplateAutoSync(fn func(ctx context.Context, tenantID string)) *WhatsAppEmbeddedSignupHandler {
 	h.autoSync = fn
+	return h
+}
+
+// WithProfileAutoSync sets the background business profile fill started after a successful signup.
+func (h *WhatsAppEmbeddedSignupHandler) WithProfileAutoSync(fn func(ctx context.Context, tenantID string)) *WhatsAppEmbeddedSignupHandler {
+	h.profileSync = fn
 	return h
 }
 
@@ -88,7 +107,113 @@ func NewWhatsAppEmbeddedSignupHandler(client *ent.Client, log *zap.Logger, pm *p
 	}
 	h.encrypt = pm.EncryptSecret
 	h.save = h.saveTenantSettings
+	h.conn = func(ctx context.Context, tenantID string) (string, string, string, string) {
+		phoneID, token, version, _ := pm.LoadTenantWhatsAppProfileCredentials(ctx, tenantID)
+		wabaID, wabaToken, _ := pm.LoadTenantWhatsAppTemplateCredentials(ctx, tenantID)
+		if token == "" {
+			token = wabaToken
+		}
+		return phoneID, wabaID, token, version
+	}
+	h.remove = h.removeTenantConnection
 	return h
+}
+
+// disconnectResult says what was undone on Meta; local removal always happens.
+type disconnectResult struct {
+	Message string `json:"message"`
+	// Deregistered is true when Meta released the number from Cloud API.
+	Deregistered bool `json:"deregistered"`
+	// Unsubscribed is true when our app stopped receiving the account's webhooks.
+	Unsubscribed bool `json:"unsubscribed"`
+	// Notes explain any Meta step that could not be done, e.g. an account already deleted.
+	Notes []string `json:"notes,omitempty"`
+}
+
+// Disconnect removes the tenant's own WhatsApp connection (owner, 2026-11-12). On Meta it
+// deregisters the number from Cloud API and unsubscribes our app from the account, each best
+// effort: an account the owner already deleted in WhatsApp Manager only adds a note. Then it
+// deletes the tenant's connection rows (number, account, token, PIN), so sends stop at once and a
+// fresh Embedded Signup starts clean. Meta has no API to delete a WhatsApp Business Account; the
+// note says to remove it in WhatsApp Manager when wanted.
+func (h *WhatsAppEmbeddedSignupHandler) Disconnect(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(r.Context()), signupTimeout)
+	defer cancel()
+	tenantID := resolveActingTenantID(r)
+	if tenantID == "" {
+		jsonError(w, http.StatusBadRequest, "tenant_id required")
+		return
+	}
+	phoneID, wabaID, token, version := h.conn(ctx, tenantID)
+	if phoneID == "" && wabaID == "" {
+		jsonError(w, http.StatusNotFound, "no WhatsApp number is connected")
+		return
+	}
+	res := disconnectResult{Message: "WhatsApp number disconnected"}
+	apiVersion := whatsapp.GraphVersion(version)
+	if token == "" {
+		res.Notes = append(res.Notes, "no stored access token, so nothing was changed on Meta")
+	} else {
+		if phoneID != "" {
+			if err := h.graphPost(ctx, apiVersion, phoneID+"/deregister", token, nil); err != nil {
+				h.log.Warn("whatsapp disconnect: deregister failed", zap.String("tenant_id", tenantID), zap.Error(err))
+				res.Notes = append(res.Notes, "the number could not be deregistered on Meta (it may already be deleted)")
+			} else {
+				res.Deregistered = true
+			}
+		}
+		if wabaID != "" {
+			if err := h.graphDelete(ctx, apiVersion, wabaID+"/subscribed_apps", token); err != nil {
+				h.log.Warn("whatsapp disconnect: unsubscribe failed", zap.String("tenant_id", tenantID), zap.Error(err))
+				res.Notes = append(res.Notes, "the WhatsApp account could not be unsubscribed on Meta (it may already be deleted)")
+			} else {
+				res.Unsubscribed = true
+			}
+		}
+	}
+	if err := h.remove(ctx, tenantID); err != nil {
+		h.log.Error("whatsapp disconnect: removing local connection failed", zap.String("tenant_id", tenantID), zap.Error(err))
+		jsonError(w, http.StatusInternalServerError, "could not remove the saved WhatsApp connection, try again")
+		return
+	}
+	pcfg.InvalidateCache()
+	res.Notes = append(res.Notes, "to delete the WhatsApp account itself, remove it in WhatsApp Manager; Meta offers no API for that")
+	h.log.Info("whatsapp number disconnected", zap.String("tenant_id", tenantID),
+		zap.String("waba_id", wabaID), zap.String("phone_number_id", phoneID),
+		zap.Bool("deregistered", res.Deregistered), zap.Bool("unsubscribed", res.Unsubscribed))
+	jsonResponse(w, http.StatusOK, res)
+}
+
+func (h *WhatsAppEmbeddedSignupHandler) graphDelete(ctx context.Context, apiVersion, path, accessToken string) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete,
+		fmt.Sprintf("%s/%s/%s", h.graphBase, apiVersion, path), nil)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+	resp, err := h.http.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode >= 300 {
+		return fmt.Errorf("meta graph api %s: %s: %s", path, resp.Status, string(body))
+	}
+	return nil
+}
+
+// removeTenantConnection deletes the tenant's own connection rows (every environment).
+func (h *WhatsAppEmbeddedSignupHandler) removeTenantConnection(ctx context.Context, tenantID string) error {
+	_, err := h.client.ProviderSetting.Delete().
+		Where(
+			providersetting.TenantID(tenantID),
+			providersetting.ProviderType("whatsapp"),
+			providersetting.ProviderName("meta_cloud"),
+			providersetting.KeyIn(connectionKeys...),
+		).
+		Exec(ctx)
+	return err
 }
 
 type completeSignupRequest struct {
@@ -194,6 +319,9 @@ func (h *WhatsAppEmbeddedSignupHandler) Complete(w http.ResponseWriter, r *http.
 		// Detached from the request, which ends with this response. The caller's claims stay in
 		// the context, so its active services can steer the template selection.
 		go h.autoSync(context.WithoutCancel(r.Context()), tenantID)
+	}
+	if h.profileSync != nil {
+		go h.profileSync(context.WithoutCancel(r.Context()), tenantID)
 	}
 	resp := map[string]any{
 		"message":         "WhatsApp number connected",

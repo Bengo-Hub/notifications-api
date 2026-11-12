@@ -131,6 +131,37 @@ func (m *Manager) LoadTenantWhatsAppTemplateCredentials(ctx context.Context, ten
 	return tenantTemplateCredentials(s, loadErr)
 }
 
+// LoadTenantWhatsAppProfileCredentials resolves a tenant's own Cloud API number, the business
+// token Embedded Signup saved for it and its Graph API version setting, for reading and editing
+// that number's business profile. Like the template credentials, only the tenant's own
+// whatsapp/meta_cloud row counts: never the platform's number.
+func (m *Manager) LoadTenantWhatsAppProfileCredentials(ctx context.Context, tenantID string) (phoneNumberID, accessToken, apiVersion string, err error) {
+	if strings.TrimSpace(tenantID) == "" {
+		return "", "", "", errors.New("tenant id is required")
+	}
+	s, loadErr := pcfg.LoadTenantOnlyProviderSettings(ctx, m.dbCfg, tenantID, m.env, "whatsapp", "meta_cloud", m.decryptionKey)
+	return tenantProfileCredentials(s, loadErr)
+}
+
+// ErrNoTenantPhoneNumber: the tenant has not connected a WhatsApp number of its own.
+var ErrNoTenantPhoneNumber = errors.New("no WhatsApp number is connected for this business: connect one under Settings > Providers > WhatsApp first")
+
+// tenantProfileCredentials picks the number, token and version out of a tenant's own settings.
+func tenantProfileCredentials(s pcfg.Settings, loadErr error) (string, string, string, error) {
+	if loadErr != nil {
+		return "", "", "", fmt.Errorf("load tenant WhatsApp settings: %w", loadErr)
+	}
+	id := strings.TrimSpace(s["phone_number_id"])
+	token := strings.TrimSpace(s["access_token"])
+	if id == "" {
+		return "", "", "", ErrNoTenantPhoneNumber
+	}
+	if token == "" {
+		return "", "", "", ErrNoTenantWABAToken
+	}
+	return id, token, strings.TrimSpace(s["api_version"]), nil
+}
+
 // ErrNoTenantWABA: the tenant has not connected a WhatsApp Business Account of its own.
 var ErrNoTenantWABA = errors.New("no WhatsApp Business Account is connected for this tenant: connect a number under Settings > Providers > WhatsApp first")
 
