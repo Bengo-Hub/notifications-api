@@ -1,14 +1,19 @@
 {{ define "content" }}
-  <p>Hello {{ .name }},</p>
+  <p>Hello {{ if .name }}{{ .name }}{{ else }}there{{ end }},</p>
   <p>Your delivery has been completed!</p>
-  <p><strong>Order ID:</strong> {{ .order_id }}</p>
+  {{ if .order_id }}
+  <p><strong>Order:</strong> {{ .order_id }}</p>
+  {{ end }}
+  {{ if .delivered_at }}
   <p><strong>Delivered At:</strong> {{ .delivered_at }}</p>
+  {{ end }}
   {{ if .proof_of_delivery }}
   <p><strong>Proof of Delivery:</strong> {{ .proof_of_delivery }}</p>
   {{ end }}
+  {{ if .order_link }}
   <p>
-    <a class="button" href="{{ .order_link }}">View Order</a>
+    <a class="button" href="{{ .order_link }}">View Delivery</a>
   </p>
+  {{ end }}
   <p class="muted">Thank you for your order!</p>
 {{ end }}
-

@@ -77,7 +77,8 @@ func (s *Subscriber) WithEntClient(client *ent.Client) *Subscriber {
 	return s
 }
 
-// Start subscribes to inventory, KDS, and payroll events.
+// Start subscribes to the cross-service events this process handles (inventory, POS, treasury,
+// ERP, logistics, MarketFlow, ISP and others).
 func (s *Subscriber) Start(ctx context.Context) error {
 	js, err := s.nc.JetStream()
 	if err != nil {
@@ -134,7 +135,9 @@ func (s *Subscriber) Start(ctx context.Context) error {
 		// Customer sale receipt/invoice — auto on finalize + explicit "New Sale Notification".
 		{"pos", "pos.sale.finalized", "notif-pos-sale-finalized", s.handleSaleNotification},
 		{"pos", "pos.sale.notification_requested", "notif-pos-sale-notify", s.handleSaleNotification},
-		{"treasury", "treasury.payroll.disbursed", "notif-payroll-disbursed", s.handlePayrollDisbursed},
+		// treasury.payroll.disbursed was removed on 12 November 2026 (owner decision): nothing in
+		// treasury or erp publishes it and there was no SMS template. Build it with the payroll
+		// disbursement through treasury. The stale durable notif-payroll-disbursed can be deleted.
 		// Platform-ops alert: PayHero refuses prompts until an account's service wallet is topped up.
 		{"treasury", "treasury.payhero.service_wallet_short", "notif-payhero-service-wallet-short", s.handlePayHeroServiceWalletShort},
 		// Payment provider outage and recovery: ops on email, Slack and WhatsApp; affected tenants by email.
@@ -625,44 +628,6 @@ func (s *Subscriber) handleTicketIssued(msg *nats.Msg) {
 	})
 	s.log.Info("ticket_issued notification dispatched",
 		zap.String("tenant_id", envelope.TenantID), zap.String("code", p.Code), zap.String("to", p.BuyerEmail))
-	_ = msg.Ack()
-}
-
-func (s *Subscriber) handlePayrollDisbursed(msg *nats.Msg) {
-	var envelope struct {
-		Payload struct {
-			TenantID   string  `json:"tenant_id"`
-			StaffName  string  `json:"staff_name"`
-			StaffPhone string  `json:"staff_phone"`
-			Amount     float64 `json:"amount"`
-			Currency   string  `json:"currency"`
-			Period     string  `json:"period"`
-		} `json:"payload"`
-	}
-	if err := json.Unmarshal(msg.Data, &envelope); err != nil {
-		s.log.Warn("payroll_disbursed: unmarshal failed", zap.Error(err))
-		_ = msg.Nak()
-		return
-	}
-	p := envelope.Payload
-	if p.TenantID == "" {
-		_ = msg.Ack()
-		return
-	}
-	var to []string
-	if p.StaffPhone != "" {
-		to = append(to, p.StaffPhone)
-	}
-	s.publish(p.TenantID, "sms", "payroll/disbursed", messaging.TargetStaff, to, map[string]any{
-		"staff_name": p.StaffName,
-		"amount":     p.Amount,
-		"currency":   p.Currency,
-		"period":     p.Period,
-	})
-	s.log.Info("payroll_disbursed notification dispatched",
-		zap.String("tenant_id", p.TenantID),
-		zap.String("staff_name", p.StaffName),
-	)
 	_ = msg.Ack()
 }
 

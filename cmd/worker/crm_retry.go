@@ -8,14 +8,14 @@ import (
 )
 
 // A notice whose recipient comes from the CRM (the event carries crm_contact_id and no email or
-// phone of its own) is retried while the CRM cannot be reached, then dropped. The pos and library
-// consumers subscribe with nats.MaxDeliver(crmRetryMaxDeliver), so the server stops redelivering
-// at the same count this code treats as the last delivery.
+// phone of its own) is retried while the CRM cannot be reached, then dropped. The pos, library
+// and logistics delivery consumers subscribe with nats.MaxDeliver(crmRetryMaxDeliver), so the
+// server stops redelivering at the same count this code treats as the last delivery.
 //
 // nats.go refuses to bind to an existing durable whose MaxDeliver differs from the one asked for,
 // so changing crmRetryMaxDeliver also needs the durable (notifications-pos-orders on the pos
-// stream, notifications-library on the library stream) edited or deleted once on the server,
-// otherwise the consumer does not start.
+// stream, notifications-library on the library stream, notifications-logistics-delivery on the
+// logistics stream) edited or deleted once on the server, otherwise the consumer does not start.
 const (
 	crmRetryDelay      = 30 * time.Second
 	crmRetryMaxDeliver = 3

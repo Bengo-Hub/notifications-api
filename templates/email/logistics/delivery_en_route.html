@@ -1,0 +1,22 @@
+{{ define "content" }}
+  <p>Hello {{ if .name }}{{ .name }}{{ else }}there{{ end }},</p>
+  <p>Your order is on its way!</p>
+  {{ if .order_id }}
+  <p><strong>Order:</strong> {{ .order_id }}</p>
+  {{ end }}
+  {{ if .driver_name }}
+  <p><strong>Rider:</strong> {{ .driver_name }}</p>
+  {{ end }}
+  {{ if .driver_phone }}
+  <p><strong>Rider Contact:</strong> {{ .driver_phone }}</p>
+  {{ end }}
+  {{ if .estimated_arrival }}
+  <p><strong>Estimated Arrival:</strong> {{ .estimated_arrival }}</p>
+  {{ end }}
+  {{ if .tracking_link }}
+  <p>
+    <a class="button" href="{{ .tracking_link }}">Track Delivery</a>
+  </p>
+  {{ end }}
+  <p class="muted">Please be ready to receive your order.</p>
+{{ end }}

@@ -31,21 +31,43 @@ the caller did not set it), `getting_started_link` and `sent_at`. Nothing fills 
 | Library late serial | Empty issue number | library-api sends `issue_no` |
 | Scheduled order | Raw timestamp | Shown as a date and time in Kenya time |
 | Purchase order received | No supplier name | inventory-api sends `supplier_name` |
+| Customer delivery emails (`delivery_consumer.go`) | Never sent: logistics-api sent no customer, `logistics/delivery_en_route` had no template, and the estimated arrival, delivered time, proof of delivery, failure reason and support button were never filled | logistics-api keeps the order's customer in the task metadata and sends `crm_contact_id` (CRM-linked) or `customer_email`, `customer_name`, `customer_phone` on the task events listed in logistics-api's docs/integrations.md, plus `estimated_arrival` and `delivered_at`, and the rider's name and phone on `task.en_route_dropoff` / `task.en_route`. The consumer resolves a CRM contact through `internal/contacts` (retrying while the CRM is down), greets the customer by name, links to the public tracker, describes the proof of delivery and links the tenant's support email. The Rider line shows only when the event names a rider, and the rider's own job alert goes out on the first delivery only, so a CRM retry never repeats it. New template `logistics/delivery_en_route`; optional lines are guarded. Covered by `cmd/worker/delivery_template_test.go` |
+| Customer delivery emails for pos-api orders | Never sent: pos-api's `buildDeliveryTaskRequest` passed only the customer's name and phone | pos-api sends `crm_contact_id` for a CRM-linked customer, else the customer's email (with the name and phone), on the S2S task create |
+
+## Delivery email decisions, 12 November 2026
+
+- **(a) Ordering orders**: the `source_service` `ordering` skip in `delivery_consumer.go` stays.
+  Ordering owns the customer messages for its own orders.
+- **(b) pos-api passes the customer**: `buildDeliveryTaskRequest` sends `crm_contact_id` for a
+  CRM-linked customer, else the customer's email, with the name and phone as before. A linked
+  customer goes out by id only, the same rule pos-api's own events follow.
+- **(c) Estimated arrival**: shown only while it is still in the future. logistics-api's
+  `estimatedArrival` skips a zero or past requested drop-off or SLA due time.
+- **(d) Failed deliveries**: the customer keeps getting the failed email, with the reason and the
+  tenant's support contact.
 
 ## Paths that still do not send
 
 These render nothing blank because they never send at all. Each needs a decision or publisher
 work before it is switched on.
 
-- **Delivery emails to customers** (`delivery_consumer.go`): logistics-api never sends
-  `customer_email`, so every customer delivery email is skipped. `logistics/delivery_en_route` also
-  has no email template; one is needed before `customer_email` is added.
+- **Delivery emails for ordering orders**: skipped on purpose, decision (a). Ordering owns the
+  customer conversation for its own orders (out for delivery, delivered; a failed delivery is a
+  staff alert there), so `delivery_consumer.go` sends the logistics delivery emails only for tasks
+  from other sources (pos-api, dispatcher-created and S2S tasks). The estimated arrival shows only
+  when the task has a requested drop-off or SLA due time still ahead; the live routing ETA is not
+  on the status events.
 - **Maskani visitor pass by email**: maskani-api sends only `visitor_phone`, so the pass goes out on
   WhatsApp only. That matches the gate flow, which collects a phone number.
-- **Supplier PO confirmation**: inventory-api does not send `supplier_email`. Sending it would start
-  emailing suppliers automatically on goods receipt, which is the owner's call.
-- **Payroll disbursed SMS**: there is no `templates/sms/payroll/disbursed` template and no publisher
-  of `treasury.payroll.disbursed` in treasury-api or erp.
+- **Supplier PO confirmation**: inventory-api does not send `supplier_email`, so suppliers get no
+  email on goods receipt. Decided 12 November 2026: keep it off for now; tenants send purchase
+  orders to suppliers themselves. Turning it on later means adding `supplier_email` to
+  `purchase_order.received` behind a per-tenant switch.
+- **Payroll disbursed SMS**: there was no `templates/sms/payroll/disbursed` template and no publisher
+  of `treasury.payroll.disbursed` in treasury-api or erp. I removed the dead subscriber on 12
+  November 2026; it gets built with payroll disbursement through treasury. The payroll emails ERP
+  requests (`payroll/payroll_disbursed` and the others in docs/integrations.md) are a separate path
+  and still work.
 - **Library e-book expired**: declared in library-api but never published.
 
 ## Not checked against a publisher

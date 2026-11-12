@@ -440,7 +440,7 @@ func main() {
 	startTreasuryConsumer(ctx, nc, js, cfg, tr, pm, dbPool, prefGate, templateChannels, logg)
 
 	// Start delivery task event consumer (logistics-service → delivery status notifications)
-	startDeliveryConsumer(ctx, nc, js, cfg, tr, client, logg)
+	startDeliveryConsumer(ctx, nc, js, cfg, tr, client, crmContacts, logg)
 
 	// Start POS event consumer (pos-service → order/payment notifications)
 	startPosConsumer(ctx, nc, js, cfg, tr, crmContacts, logg)

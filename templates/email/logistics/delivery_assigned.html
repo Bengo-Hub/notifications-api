@@ -1,14 +1,19 @@
 {{ define "content" }}
-  <p>Hello {{ .name }},</p>
-  <p>Your delivery has been assigned to a driver!</p>
-  <p><strong>Order ID:</strong> {{ .order_id }}</p>
-  <p><strong>Driver:</strong> {{ .driver_name }}</p>
+  <p>Hello {{ if .name }}{{ .name }}{{ else }}there{{ end }},</p>
+  <p>Your delivery has been assigned to a rider!</p>
+  {{ if .order_id }}
+  <p><strong>Order:</strong> {{ .order_id }}</p>
+  {{ end }}
+  {{ if .driver_name }}
+  <p><strong>Rider:</strong> {{ .driver_name }}</p>
+  {{ end }}
   {{ if .estimated_arrival }}
   <p><strong>Estimated Arrival:</strong> {{ .estimated_arrival }}</p>
   {{ end }}
+  {{ if .tracking_link }}
   <p>
     <a class="button" href="{{ .tracking_link }}">Track Delivery</a>
   </p>
+  {{ end }}
   <p class="muted">You'll receive updates as your order progresses.</p>
 {{ end }}
-

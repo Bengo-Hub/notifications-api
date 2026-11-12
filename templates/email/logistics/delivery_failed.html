@@ -1,14 +1,19 @@
 {{ define "content" }}
-  <p>Hello {{ .name }},</p>
+  <p>Hello {{ if .name }}{{ .name }}{{ else }}there{{ end }},</p>
   <p>We're sorry, but your delivery could not be completed.</p>
-  <p><strong>Order ID:</strong> {{ .order_id }}</p>
+  {{ if .order_id }}
+  <p><strong>Order:</strong> {{ .order_id }}</p>
+  {{ end }}
   {{ if .failure_reason }}
   <p><strong>Reason:</strong> {{ .failure_reason }}</p>
   {{ end }}
   <p>We'll contact you shortly to resolve this issue or arrange a redelivery.</p>
+  {{ if .support_link }}
   <p>
     <a class="button" href="{{ .support_link }}">Contact Support</a>
   </p>
+  {{ else if .support_phone }}
+  <p><strong>Call us:</strong> {{ .support_phone }}</p>
+  {{ end }}
   <p class="muted">We apologize for the inconvenience.</p>
 {{ end }}
-

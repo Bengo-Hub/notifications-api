@@ -235,17 +235,25 @@ the tenant admin). The duplicate loyalty and waiter handlers in `internal/module
 - Delivery completion notifications
 - Driver assignment notifications
 
-**Events Consumed**:
-- `logistics.task.assigned` - Notify customer driver assigned
-- `logistics.task.en_route` - Send ETA update
-- `logistics.task.completed` - Send delivery confirmation
+**Events Consumed** (`cmd/worker/delivery_consumer.go`, customer emails):
+
+| Event | Email template |
+|-------|----------------|
+| `logistics.task.assigned` | `logistics/delivery_assigned` (the rider also gets `logistics/rider_job_assigned`) |
+| `logistics.task.en_route_dropoff`, `logistics.task.en_route` | `logistics/delivery_en_route` |
+| `logistics.task.completed`, `logistics.task.delivered` | `logistics/delivery_completed` |
+| `logistics.task.failed` | `logistics/delivery_failed` |
+
+The customer is the CRM contact when the event carries `crm_contact_id` (looked up through
+`internal/contacts`, retried while the CRM is down, dropped when the CRM has no email), else the
+event's `customer_email` and `customer_name`. An event with neither sends nothing. Tasks with
+`source_service` `ordering` send none of these: ordering-backend owns the customer conversation
+for its own orders. The emails read `order_number` (else `tracking_code`), `rider_name`,
+`rider_phone`, `estimated_arrival`, `delivered_at`, `delivered_via`, `recipient_name`,
+`proof_photo` and `failure_reason`; the Track button opens the logistics public tracker
+(`/track/{tracking_code}`) and the failed email links the tenant's contact email, else shows its contact phone.
 
 **Events Published**: None
-
-**Template Mapping**:
-- `task_assigned` → `driver_assigned_sms` template
-- `task_en_route` → `eta_update_push` template
-- `task_completed` → `delivery_complete_email` template
 
 **Vehicle insurance (events)**: `logistics.fleet.vehicle_insurance_expiring` and
 `logistics.fleet.vehicle_insurance_expired` (logistics-api's hourly insurance monitor; payload: plate,

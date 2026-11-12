@@ -202,10 +202,12 @@ var Registry = []Type{
 	{Key: "logistics/vehicle_insurance_expiring", Label: "Vehicle insurance expiring (rider and business)", Group: "Logistics", Class: ClassEssential},
 	{Key: "logistics/vehicle_insurance_expired", Label: "Vehicle insurance expired (rider and business)", Group: "Logistics", Class: ClassEssential},
 	{Key: "logistics/rider_onboarding_approved", Label: "Rider onboarding approved", Group: "Logistics", Class: ClassEssential},
-	{Key: "logistics/delivery_assigned", Label: "Delivery assigned (rider)", Group: "Logistics", Class: ClassEssential},
-	{Key: "logistics/delivery_failed", Label: "Delivery failed alert", Group: "Logistics", Class: ClassEssential},
-	{Key: "logistics/delivery_en_route", Label: "Delivery en route", Group: "Logistics", Class: ClassOptional},
-	{Key: "logistics/delivery_completed", Label: "Delivery completed", Group: "Logistics", Class: ClassOptional},
+	// Customer delivery emails from logistics task events (cmd/worker/delivery_consumer.go). The
+	// rider's own job alert is logistics/rider_job_assigned.
+	{Key: "logistics/delivery_assigned", Label: "Delivery assigned (customer)", Group: "Logistics", Class: ClassEssential},
+	{Key: "logistics/delivery_failed", Label: "Delivery failed (customer)", Group: "Logistics", Class: ClassEssential},
+	{Key: "logistics/delivery_en_route", Label: "Delivery on its way (customer)", Group: "Logistics", Class: ClassOptional},
+	{Key: "logistics/delivery_completed", Label: "Delivery completed (customer)", Group: "Logistics", Class: ClassOptional},
 	{Key: "logistics/rider_kyc_submitted", Label: "Rider KYC submitted", Group: "Logistics", Class: ClassOptional},
 	{Key: "logistics/rider_suspended", Label: "Rider suspended", Group: "Logistics", Class: ClassOptional},
 	{Key: "logistics/rider_rejected", Label: "Rider rejected", Group: "Logistics", Class: ClassOptional},
