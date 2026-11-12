@@ -24,6 +24,13 @@ import (
 // defaultGraphBase is Meta's Graph API host; tests point the handler at a fake one.
 const defaultGraphBase = "https://graph.facebook.com"
 
+// signupTimeout bounds the whole completion (code exchange, subscribe, status check, register,
+// save); graphCallTimeout bounds each call to Meta. Register alone has taken over 14 seconds.
+const (
+	signupTimeout    = 3 * time.Minute
+	graphCallTimeout = 90 * time.Second
+)
+
 // WhatsAppEmbeddedSignupHandler completes a tenant's WhatsApp Embedded Signup, Meta's flow for a
 // Tech Provider (Codevertex: one app, many businesses, each with its own number):
 // https://developers.facebook.com/docs/whatsapp/embedded-signup/implementation
@@ -58,7 +65,7 @@ func NewWhatsAppEmbeddedSignupHandler(client *ent.Client, log *zap.Logger, pm *p
 	h := &WhatsAppEmbeddedSignupHandler{
 		client:    client,
 		log:       log.Named("whatsapp.embedded_signup"),
-		http:      &http.Client{Timeout: 15 * time.Second},
+		http:      &http.Client{Timeout: graphCallTimeout},
 		graphBase: defaultGraphBase,
 		newPIN:    randomPIN,
 	}
@@ -80,7 +87,11 @@ type completeSignupRequest struct {
 // Complete finalizes a tenant's Embedded Signup and saves the number as the tenant's own WhatsApp
 // settings (the same rows the manual settings form writes, so sends resolve to it unchanged).
 func (h *WhatsAppEmbeddedSignupHandler) Complete(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	// The calls to Meta run to the end even if the browser gives up first: Meta's register call
+	// can take longer than the UI's request timeout, and cancelling it halfway left a number
+	// half registered with a PIN nobody kept (2026-11-12).
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(r.Context()), signupTimeout)
+	defer cancel()
 	tenantID := resolveActingTenantID(r)
 	if tenantID == "" {
 		jsonError(w, http.StatusBadRequest, "tenant_id required")
@@ -119,31 +130,40 @@ func (h *WhatsAppEmbeddedSignupHandler) Complete(w http.ResponseWriter, r *http.
 		return
 	}
 
-	pin, err := h.newPIN()
-	if err != nil {
-		jsonError(w, http.StatusInternalServerError, "could not create a registration PIN")
-		return
-	}
-	if err := h.graphPost(ctx, apiVersion, req.PhoneNumberID+"/register", businessToken, map[string]any{
-		"messaging_product": "whatsapp",
-		"pin":               pin,
-	}); err != nil {
-		h.log.Error("embedded signup: phone registration failed", zap.String("phone_number_id", req.PhoneNumberID), zap.Error(err))
-		jsonError(w, http.StatusBadGateway, "failed to register the phone number for Cloud API: "+err.Error())
-		return
+	// A number already on Cloud API (an earlier attempt registered it) is not registered again:
+	// a new PIN would be refused against the one that attempt set.
+	pin := ""
+	if !h.onCloudAPI(ctx, apiVersion, req.PhoneNumberID, businessToken) {
+		if pin, err = h.newPIN(); err != nil {
+			jsonError(w, http.StatusInternalServerError, "could not create a registration PIN")
+			return
+		}
+		if err := h.graphPost(ctx, apiVersion, req.PhoneNumberID+"/register", businessToken, map[string]any{
+			"messaging_product": "whatsapp",
+			"pin":               pin,
+		}); err != nil {
+			h.log.Error("embedded signup: phone registration failed", zap.String("phone_number_id", req.PhoneNumberID), zap.Error(err))
+			jsonError(w, http.StatusBadGateway, "failed to register the phone number for Cloud API: "+err.Error())
+			return
+		}
 	}
 
+	rows := []signupSetting{
+		{key: "phone_number_id", value: req.PhoneNumberID},
+		{key: "waba_id", value: req.WABAID},
+	}
 	encToken, err := h.encrypt(businessToken)
 	if err == nil {
-		var encPIN string
-		if encPIN, err = h.encrypt(pin); err == nil {
-			err = h.save(ctx, tenantID, []signupSetting{
-				{key: "phone_number_id", value: req.PhoneNumberID},
-				{key: "waba_id", value: req.WABAID},
-				{key: "access_token", value: encToken, secret: true},
-				{key: "registration_pin", value: encPIN, secret: true},
-			})
+		rows = append(rows, signupSetting{key: "access_token", value: encToken, secret: true})
+		if pin != "" {
+			var encPIN string
+			if encPIN, err = h.encrypt(pin); err == nil {
+				rows = append(rows, signupSetting{key: "registration_pin", value: encPIN, secret: true})
+			}
 		}
+	}
+	if err == nil {
+		err = h.save(ctx, tenantID, rows)
 	}
 	if err != nil {
 		h.log.Error("embedded signup: failed to store tenant settings", zap.String("tenant_id", tenantID), zap.Error(err))
@@ -184,6 +204,32 @@ func (h *WhatsAppEmbeddedSignupHandler) exchangeCode(ctx context.Context, apiVer
 		return "", errors.New("code exchange: no access_token in the answer")
 	}
 	return out.AccessToken, nil
+}
+
+// onCloudAPI reports whether Meta already lists the number as registered on Cloud API. Any
+// failure to tell counts as not registered, so register is attempted as before.
+func (h *WhatsAppEmbeddedSignupHandler) onCloudAPI(ctx context.Context, apiVersion, phoneNumberID, accessToken string) bool {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet,
+		fmt.Sprintf("%s/%s/%s?fields=platform_type,status", h.graphBase, apiVersion, phoneNumberID), nil)
+	if err != nil {
+		return false
+	}
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+	resp, err := h.http.Do(req)
+	if err != nil {
+		return false
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode >= 300 {
+		return false
+	}
+	var out struct {
+		PlatformType string `json:"platform_type"`
+	}
+	if json.NewDecoder(resp.Body).Decode(&out) != nil {
+		return false
+	}
+	return out.PlatformType == "CLOUD_API"
 }
 
 func (h *WhatsAppEmbeddedSignupHandler) graphPost(ctx context.Context, apiVersion, path, accessToken string, body map[string]any) error {

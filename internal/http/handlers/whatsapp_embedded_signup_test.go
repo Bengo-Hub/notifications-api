@@ -21,8 +21,9 @@ type fakeGraph struct {
 	calls    []string
 	auth     map[string]string // path -> Authorization header
 	bodies   map[string]string
-	exchange string // query string of the code exchange
-	failPath string
+	exchange    string // query string of the code exchange
+	failPath    string
+	phoneStatus string // answer to GET /{phone_number_id}; empty means not registered yet
 }
 
 func (g *fakeGraph) server(t *testing.T) *httptest.Server {
@@ -44,6 +45,14 @@ func (g *fakeGraph) server(t *testing.T) *httptest.Server {
 		if strings.HasSuffix(r.URL.Path, "/oauth/access_token") {
 			g.exchange = r.URL.RawQuery
 			_, _ = w.Write([]byte(`{"access_token":"business-token","token_type":"bearer"}`))
+			return
+		}
+		if r.Method == http.MethodGet {
+			if g.phoneStatus != "" {
+				_, _ = w.Write([]byte(g.phoneStatus))
+			} else {
+				_, _ = w.Write([]byte(`{"platform_type":"NOT_APPLICABLE","status":"PENDING","id":"P1"}`))
+			}
 			return
 		}
 		_, _ = w.Write([]byte(`{"success":true}`))
@@ -98,7 +107,7 @@ func TestEmbeddedSignupExchangesCodeAndUsesBusinessToken(t *testing.T) {
 	if w.Code != http.StatusOK {
 		t.Fatalf("status %d: %s", w.Code, w.Body.String())
 	}
-	want := []string{"GET /v21.0/oauth/access_token", "POST /v21.0/W1/subscribed_apps", "POST /v21.0/P1/register"}
+	want := []string{"GET /v21.0/oauth/access_token", "POST /v21.0/W1/subscribed_apps", "GET /v21.0/P1", "POST /v21.0/P1/register"}
 	if strings.Join(g.calls, "|") != strings.Join(want, "|") {
 		t.Fatalf("calls = %v, want %v", g.calls, want)
 	}
@@ -138,6 +147,47 @@ func TestEmbeddedSignupExchangesCodeAndUsesBusinessToken(t *testing.T) {
 	}
 	if strings.Contains(w.Body.String(), "business-token") || strings.Contains(w.Body.String(), "123456") {
 		t.Error("response leaks the token or PIN")
+	}
+}
+
+// Meta's register call can outlast the browser's request timeout. A browser that gives up must
+// not cancel the calls to Meta halfway (2026-11-12: "register ... context canceled" after 14.5s).
+func TestEmbeddedSignupSurvivesClientDisconnect(t *testing.T) {
+	g := &fakeGraph{}
+	srv := g.server(t)
+	h, saved := newSignupHandler(t, srv.URL, fullCreds)
+
+	ctx, cancel := context.WithCancel(httpware.WithTenantID(context.Background(), "tenant-1"))
+	cancel() // the browser already went away
+	r := httptest.NewRequest(http.MethodPost, "/api/v1/billing/whatsapp/embedded-signup/complete",
+		bytes.NewBufferString(`{"code":"c","waba_id":"W1","phone_number_id":"P1"}`)).WithContext(ctx)
+	w := httptest.NewRecorder()
+	h.Complete(w, r)
+	if w.Code != http.StatusOK || saved.tenant != "tenant-1" {
+		t.Fatalf("status %d, saved %q: the signup must finish without the client", w.Code, saved.tenant)
+	}
+}
+
+// A retry after a cancelled attempt finds the number already on Cloud API: register is skipped,
+// since re-registering with a new PIN would fail against the PIN the first attempt set.
+func TestEmbeddedSignupSkipsRegisterWhenAlreadyOnCloudAPI(t *testing.T) {
+	g := &fakeGraph{phoneStatus: `{"platform_type":"CLOUD_API","status":"CONNECTED","id":"P1"}`}
+	srv := g.server(t)
+	h, saved := newSignupHandler(t, srv.URL, fullCreds)
+
+	w := postSignup(h, `{"code":"c","waba_id":"W1","phone_number_id":"P1"}`)
+	if w.Code != http.StatusOK {
+		t.Fatalf("status %d: %s", w.Code, w.Body.String())
+	}
+	for _, c := range g.calls {
+		if strings.HasSuffix(c, "/register") {
+			t.Fatalf("register must be skipped, calls = %v", g.calls)
+		}
+	}
+	for _, r := range saved.rows {
+		if r.key == "registration_pin" {
+			t.Fatal("no PIN was set by us, so none may be saved")
+		}
 	}
 }
 
