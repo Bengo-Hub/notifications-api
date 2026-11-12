@@ -265,7 +265,7 @@ func TestEmbeddedSignupStartsTemplateAutoSync(t *testing.T) {
 }
 
 func TestEmbeddedSignupNoAutoSyncOnFailure(t *testing.T) {
-	for _, fail := range []string{"/v21.0/oauth/access_token", "/v21.0/W1/subscribed_apps", "/v21.0/P1/register"} {
+	for _, fail := range []string{"/v26.0/oauth/access_token", "/v26.0/W1/subscribed_apps", "/v26.0/P1/register"} {
 		g := &fakeGraph{failPath: fail}
 		srv := g.server(t)
 		h, _ := newSignupHandler(t, srv.URL, fullCreds)

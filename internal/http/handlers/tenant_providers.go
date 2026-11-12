@@ -507,6 +507,11 @@ func (h *TenantProviders) TestProvider(w http.ResponseWriter, r *http.Request) {
 	}
 
 	message := "test message sent successfully"
+	if req.ProviderType == "whatsapp" {
+		// Meta accepts the free plain-text test at once and reports delivery seconds later: it is
+		// refused (#131047) unless the person wrote to this number in the last 24 hours.
+		message = "test message accepted by Meta. It reaches the phone only if that person wrote to this WhatsApp number in the last 24 hours; delivery shows in Monitoring"
+	}
 	if info != nil {
 		message = "connection verified"
 	}

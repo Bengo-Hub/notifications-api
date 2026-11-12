@@ -16,9 +16,10 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/bengobox/notifications-api/internal/providers/whatsapp"
 )
 
-const apiVersion = "v25.0"
 
 //go:embed templates.json
 var manifestJSON []byte
@@ -134,7 +135,12 @@ type Syncer struct {
 	client *http.Client
 	// GraphURL overrides Meta's Graph API base (tests only).
 	GraphURL string
+	// APIVersion is the Graph API version; empty follows whatsapp.GraphVersion (the
+	// META_GRAPH_API_VERSION setting, else the platform default).
+	APIVersion string
 }
+
+func (s *Syncer) version() string { return whatsapp.GraphVersion(s.APIVersion) }
 
 func (s *Syncer) graph() string {
 	if s.GraphURL != "" {
@@ -307,7 +313,7 @@ func (s *Syncer) DeleteByPrefix(ctx context.Context, prefixes []string, dryRun b
 // language variants of that name at once — this manifest only ever registers one language per
 // name, so that's a non-issue here, just the documented behavior).
 func (s *Syncer) delete(ctx context.Context, name string) error {
-	url := fmt.Sprintf("%s/%s/%s/message_templates?name=%s", s.graph(), apiVersion, s.WABAID, name)
+	url := fmt.Sprintf("%s/%s/%s/message_templates?name=%s", s.graph(), s.version(), s.WABAID, name)
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, url, nil)
 	if err != nil {
 		return err
@@ -354,7 +360,7 @@ func (s *Syncer) FetchExisting(ctx context.Context) (map[string]ExistingTemplate
 // fetchExisting paginates through every template already on the WABA, keyed by name.
 func (s *Syncer) fetchExisting(ctx context.Context) (map[string]metaTemplate, error) {
 	out := map[string]metaTemplate{}
-	url := fmt.Sprintf("%s/%s/%s/message_templates?fields=name,status,rejected_reason&limit=200", s.graph(), apiVersion, s.WABAID)
+	url := fmt.Sprintf("%s/%s/%s/message_templates?fields=name,status,rejected_reason&limit=200", s.graph(), s.version(), s.WABAID)
 
 	for url != "" {
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
@@ -442,7 +448,7 @@ func (s *Syncer) create(ctx context.Context, def TemplateDef) error {
 		return err
 	}
 
-	url := fmt.Sprintf("%s/%s/%s/message_templates", s.graph(), apiVersion, s.WABAID)
+	url := fmt.Sprintf("%s/%s/%s/message_templates", s.graph(), s.version(), s.WABAID)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(data))
 	if err != nil {
 		return err

@@ -39,10 +39,7 @@ type MetaCloudConfig struct {
 }
 
 func NewMetaCloudProvider(cfg MetaCloudConfig) *MetaCloudProvider {
-	version := cfg.APIVersion
-	if version == "" {
-		version = "v20.0"
-	}
+	version := GraphVersion(cfg.APIVersion)
 	return &MetaCloudProvider{
 		accessToken:   cfg.AccessToken,
 		phoneNumberID: cfg.PhoneNumberID,

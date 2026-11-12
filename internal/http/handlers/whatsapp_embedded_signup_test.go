@@ -24,6 +24,7 @@ type fakeGraph struct {
 	exchange    string // query string of the code exchange
 	failPath    string
 	phoneStatus string // answer to GET /{phone_number_id}; empty means not registered yet
+	wabaAnswer  string // answer to GET /W1 (the account's primary_funding_id)
 }
 
 func (g *fakeGraph) server(t *testing.T) *httptest.Server {
@@ -45,6 +46,10 @@ func (g *fakeGraph) server(t *testing.T) *httptest.Server {
 		if strings.HasSuffix(r.URL.Path, "/oauth/access_token") {
 			g.exchange = r.URL.RawQuery
 			_, _ = w.Write([]byte(`{"access_token":"business-token","token_type":"bearer"}`))
+			return
+		}
+		if r.Method == http.MethodGet && strings.HasSuffix(r.URL.Path, "/W1") {
+			_, _ = w.Write([]byte(g.wabaAnswer))
 			return
 		}
 		if r.Method == http.MethodGet {
@@ -93,7 +98,7 @@ func postSignup(h *WhatsAppEmbeddedSignupHandler, body string) *httptest.Respons
 	return w
 }
 
-var fullCreds = map[string]string{"app_id": "app-1", "app_secret": "shh", "access_token": "platform-token", "api_version": "v21.0"}
+var fullCreds = map[string]string{"app_id": "app-1", "app_secret": "shh", "access_token": "platform-token", "api_version": "v26.0"}
 
 // The fix for "Object with ID ... does not exist, cannot be loaded due to missing permissions":
 // the platform token has no rights on a WABA a customer just created, so the signup code must be
@@ -107,7 +112,7 @@ func TestEmbeddedSignupExchangesCodeAndUsesBusinessToken(t *testing.T) {
 	if w.Code != http.StatusOK {
 		t.Fatalf("status %d: %s", w.Code, w.Body.String())
 	}
-	want := []string{"GET /v21.0/oauth/access_token", "POST /v21.0/W1/subscribed_apps", "GET /v21.0/P1", "POST /v21.0/P1/register"}
+	want := []string{"GET /v26.0/oauth/access_token", "POST /v26.0/W1/subscribed_apps", "GET /v26.0/P1", "POST /v26.0/P1/register", "GET /v26.0/W1"}
 	if strings.Join(g.calls, "|") != strings.Join(want, "|") {
 		t.Fatalf("calls = %v, want %v", g.calls, want)
 	}
@@ -116,13 +121,13 @@ func TestEmbeddedSignupExchangesCodeAndUsesBusinessToken(t *testing.T) {
 			t.Errorf("code exchange query %q missing %q", g.exchange, q)
 		}
 	}
-	for _, p := range []string{"/v21.0/W1/subscribed_apps", "/v21.0/P1/register"} {
+	for _, p := range []string{"/v26.0/W1/subscribed_apps", "/v26.0/P1/register"} {
 		if g.auth[p] != "Bearer business-token" {
 			t.Errorf("%s used %q, want the business token", p, g.auth[p])
 		}
 	}
 	var reg map[string]string
-	_ = json.Unmarshal([]byte(g.bodies["/v21.0/P1/register"]), &reg)
+	_ = json.Unmarshal([]byte(g.bodies["/v26.0/P1/register"]), &reg)
 	if reg["messaging_product"] != "whatsapp" || reg["pin"] != "123456" {
 		t.Errorf("register body = %v", reg)
 	}
@@ -191,6 +196,33 @@ func TestEmbeddedSignupSkipsRegisterWhenAlreadyOnCloudAPI(t *testing.T) {
 	}
 }
 
+// A new account without a payment method is flagged in the response; one with a funding source,
+// or one Meta could not be asked about, is not.
+func TestEmbeddedSignupFlagsMissingPaymentMethod(t *testing.T) {
+	cases := []struct {
+		name, answer string
+		missing      bool
+	}{
+		{"no funding source", `{"id":"W1"}`, true},
+		{"funded", `{"id":"W1","primary_funding_id":"F1"}`, false},
+		{"unreadable", `not json`, false},
+	}
+	for _, c := range cases {
+		g := &fakeGraph{wabaAnswer: c.answer}
+		srv := g.server(t)
+		h, _ := newSignupHandler(t, srv.URL, fullCreds)
+		w := postSignup(h, `{"code":"c","waba_id":"W1","phone_number_id":"P1"}`)
+		if w.Code != http.StatusOK {
+			t.Fatalf("%s: status %d", c.name, w.Code)
+		}
+		var body map[string]any
+		_ = json.Unmarshal(w.Body.Bytes(), &body)
+		if got := body["payment_method_missing"] == true; got != c.missing {
+			t.Errorf("%s: payment_method_missing = %v, want %v", c.name, got, c.missing)
+		}
+	}
+}
+
 func TestEmbeddedSignupRequiresCode(t *testing.T) {
 	h, _ := newSignupHandler(t, "http://unused", fullCreds)
 	w := postSignup(h, `{"waba_id":"W1","phone_number_id":"P1"}`)
@@ -213,7 +245,7 @@ func TestEmbeddedSignupNeedsAppIDAndSecret(t *testing.T) {
 }
 
 func TestEmbeddedSignupStopsWhenExchangeFails(t *testing.T) {
-	g := &fakeGraph{failPath: "/v21.0/oauth/access_token"}
+	g := &fakeGraph{failPath: "/v26.0/oauth/access_token"}
 	srv := g.server(t)
 	h, saved := newSignupHandler(t, srv.URL, fullCreds)
 	w := postSignup(h, `{"code":"bad","waba_id":"W1","phone_number_id":"P1"}`)

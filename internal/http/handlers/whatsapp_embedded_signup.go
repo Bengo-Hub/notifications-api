@@ -20,6 +20,7 @@ import (
 	"github.com/bengobox/notifications-api/internal/ent/providersetting"
 	"github.com/bengobox/notifications-api/internal/providers"
 	pcfg "github.com/bengobox/notifications-api/internal/providers/config"
+	"github.com/bengobox/notifications-api/internal/providers/whatsapp"
 )
 
 // defaultGraphBase is Meta's Graph API host; tests point the handler at a fake one.
@@ -127,7 +128,7 @@ func (h *WhatsAppEmbeddedSignupHandler) Complete(w http.ResponseWriter, r *http.
 			"WhatsApp App ID and App Secret are not set: add them under Platform > Providers > WhatsApp (Meta Cloud)")
 		return
 	}
-	apiVersion := firstNonEmptyValue(creds["api_version"], "v21.0")
+	apiVersion := whatsapp.GraphVersion(creds["api_version"])
 
 	businessToken, err := h.exchangeCode(ctx, apiVersion, appID, appSecret, req.Code)
 	if err != nil {
@@ -194,10 +195,46 @@ func (h *WhatsAppEmbeddedSignupHandler) Complete(w http.ResponseWriter, r *http.
 		// the context, so its active services can steer the template selection.
 		go h.autoSync(context.WithoutCancel(r.Context()), tenantID)
 	}
-	jsonResponse(w, http.StatusOK, map[string]any{
+	resp := map[string]any{
 		"message":         "WhatsApp number connected",
 		"phone_number_id": req.PhoneNumberID,
-	})
+	}
+	// Meta refuses paid template messages (#131042) from an account with no payment method, and
+	// there is no API to add a card, so say so now instead of at the first failed send (owner,
+	// 2026-11-12: Codevertex attaches its card once per tenant account).
+	if has, known := h.hasPaymentMethod(ctx, apiVersion, req.WABAID, businessToken); known && !has {
+		h.log.Warn("embedded signup: the new WhatsApp account has no payment method",
+			zap.String("tenant_id", tenantID), zap.String("waba_id", req.WABAID))
+		resp["payment_method_missing"] = true
+		resp["waba_id"] = req.WABAID
+	}
+	jsonResponse(w, http.StatusOK, resp)
+}
+
+// hasPaymentMethod reads the account's primary_funding_id. known is false when Meta could not be
+// asked, so a failed check never claims a payment method is missing.
+func (h *WhatsAppEmbeddedSignupHandler) hasPaymentMethod(ctx context.Context, apiVersion, wabaID, accessToken string) (has, known bool) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet,
+		fmt.Sprintf("%s/%s/%s?fields=primary_funding_id", h.graphBase, apiVersion, wabaID), nil)
+	if err != nil {
+		return false, false
+	}
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+	resp, err := h.http.Do(req)
+	if err != nil {
+		return false, false
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode >= 300 {
+		return false, false
+	}
+	var out struct {
+		PrimaryFundingID string `json:"primary_funding_id"`
+	}
+	if json.NewDecoder(resp.Body).Decode(&out) != nil {
+		return false, false
+	}
+	return out.PrimaryFundingID != "", true
 }
 
 // exchangeCode trades the popup's one-time code for the business integration token. Errors never
