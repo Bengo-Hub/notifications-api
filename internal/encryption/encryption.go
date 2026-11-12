@@ -15,6 +15,8 @@ var SecretKeys = map[string]bool{
 	"auth_id":      true, // Plivo
 	"access_token": true, // Meta WhatsApp Cloud API permanent system-user token
 	"app_secret":   true, // Meta app secret (webhook signature verification)
+	// Two-step verification PIN set when Embedded Signup registers a tenant's number.
+	"registration_pin": true,
 	"private_key":  true, // FCM service-account key
 	// FCM service account JSON as saved by the push provider settings (it embeds the private
 	// key); was missing, so a tenant-saved service account was stored in plain text.

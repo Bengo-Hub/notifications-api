@@ -12,6 +12,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/bengobox/notifications-api/internal/config"
+	"github.com/bengobox/notifications-api/internal/encryption"
 	pcfg "github.com/bengobox/notifications-api/internal/providers/config"
 	"github.com/bengobox/notifications-api/internal/providers/email"
 	"github.com/bengobox/notifications-api/internal/providers/push"
@@ -51,13 +52,48 @@ func NewManager(db *pgxpool.Pool, dbCfg config.PostgresConfig, cfg config.Provid
 // sends and template management use (LoadWhatsAppTemplateCredentials). The literal "platform"
 // tier is only the fallback: reading it alone found no access_token, so every Embedded Signup
 // failed with "platform WhatsApp credentials not configured" (2026-11-12).
+//
+// The app ID and app secret (code exchange, webhook signatures) are saved from Platform >
+// Providers, which writes the "platform" tier, so both tiers are merged: the platform tenant's
+// non-empty values win over the tier's.
 func (m *Manager) LoadPlatformMetaCredentials(ctx context.Context) (pcfg.Settings, error) {
+	tier, tierErr := pcfg.LoadTenantProviderSettings(ctx, m.dbCfg, "platform", m.env, "whatsapp", "meta_cloud", m.decryptionKey)
+	var own pcfg.Settings
 	if m.PlatformID != "" {
-		if s, err := pcfg.LoadTenantOnlyProviderSettings(ctx, m.dbCfg, m.PlatformID, m.env, "whatsapp", "meta_cloud", m.decryptionKey); err == nil && s["access_token"] != "" {
-			return s, nil
+		if s, err := pcfg.LoadTenantOnlyProviderSettings(ctx, m.dbCfg, m.PlatformID, m.env, "whatsapp", "meta_cloud", m.decryptionKey); err == nil {
+			own = s
 		}
 	}
-	return pcfg.LoadTenantProviderSettings(ctx, m.dbCfg, "platform", m.env, "whatsapp", "meta_cloud", m.decryptionKey)
+	merged := mergeMetaCredentials(tier, own)
+	if len(merged) == 0 && tierErr != nil {
+		return nil, tierErr
+	}
+	return merged, nil
+}
+
+// mergeMetaCredentials overlays own's non-empty values on tier.
+func mergeMetaCredentials(tier, own pcfg.Settings) pcfg.Settings {
+	out := pcfg.Settings{}
+	for k, v := range tier {
+		if v != "" {
+			out[k] = v
+		}
+	}
+	for k, v := range own {
+		if v != "" {
+			out[k] = v
+		}
+	}
+	return out
+}
+
+// EncryptSecret encrypts a provider secret with the same key the settings loaders decrypt with.
+// It refuses rather than store a secret in plain text when no valid key is configured.
+func (m *Manager) EncryptSecret(v string) (string, error) {
+	if len(m.decryptionKey) != 32 {
+		return "", errors.New("provider secret encryption key is not configured")
+	}
+	return encryption.Encrypt(v, m.decryptionKey)
 }
 
 // LoadWhatsAppTemplateCredentials resolves the WABA ID + access token used for template
