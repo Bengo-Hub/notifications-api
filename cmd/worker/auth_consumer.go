@@ -482,4 +482,18 @@ func startAuthNotificationConsumer(ctx context.Context, nc *nats.Conn, cfg *conf
 		return eventslib.QueueSubscribe(logg, nc, "auth.business.invited.notify", "notif-business-invite",
 			tenantDecisionHandler("auth/business_invite", "You are invited to set up your business on Codevertex"))
 	})
+
+	// A custom domain after a downgrade (auth-api domains EnforcePlans, owner 2026-11-12): the
+	// grace starts, the domain is paused after it, or an upgrade restores it. auth-api writes the
+	// sentence for each in "reason"; the email goes to the tenant's contact email.
+	for _, d := range []struct{ kind, subject string }{
+		{"grace", "Your custom domain needs a plan that includes it"},
+		{"paused", "Your custom domain is paused"},
+		{"restored", "Your custom domain is working again"},
+	} {
+		subscribeWithRetry(ctx, nil, logg, "auth domain "+d.kind+" consumer", true, func() (*nats.Subscription, error) {
+			return eventslib.QueueSubscribe(logg, nc, "auth.domain."+d.kind+".notify", "notif-domain-"+d.kind,
+				tenantDecisionHandler("auth/domain_notice", d.subject))
+		})
+	}
 }

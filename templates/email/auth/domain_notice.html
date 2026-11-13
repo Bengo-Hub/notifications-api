@@ -1,0 +1,9 @@
+{{ define "content" }}
+  <p>Hi {{ .name }},</p>
+  <p>{{ .reason }}</p>
+  <p>
+    <a href="{{ .login_url }}" style="background:{{ or .brand_primary_color "#0F766E" }};color:#ffffff !important;text-decoration:none;padding:10px 16px;border-radius:6px;display:inline-block;">Manage your domain</a>
+  </p>
+  <p style="color:#6b7280;">You get this email because {{ .org_name }} has a custom domain connected on Codevertex.</p>
+  <p style="color:#6b7280;">Cheers,<br/>{{ or .brand_name .brand }}</p>
+{{ end }}
