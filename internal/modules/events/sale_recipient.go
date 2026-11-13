@@ -22,7 +22,26 @@ type contactLookup interface {
 // existing durable whose MaxDeliver differs, so it is not changed here.
 const saleCRMRetryDelay = 30 * time.Second
 
-// saleRecipient returns who a pos.sale.notification_requested receipt goes to.
+// needsCRMRecipient reports whether a sale receipt event's recipient must be read from the CRM.
+// A receipt request with a contact id always asks (the name comes from the CRM). The automatic
+// pos.sale.finalized receipt asks only when the event names a linked contact and carries no phone
+// or email (pos-api sends ids only for linked customers, S2-8 I-4), so an anonymous or unlinked
+// sale never costs a CRM call.
+func needsCRMRecipient(subject, contactID, phone, email string) bool {
+	if contacts.ParseID(contactID) == uuid.Nil {
+		return false
+	}
+	switch subject {
+	case "pos.sale.notification_requested":
+		return true
+	case "pos.sale.finalized":
+		return phone == "" && email == ""
+	}
+	return false
+}
+
+// saleRecipient returns who a sale receipt goes to (a receipt request, or the automatic receipt
+// of an ids-only pos.sale.finalized).
 //
 // pos-api sends crm_contact_id alone for a CRM-linked customer, plus customer_phone or
 // customer_email only when the cashier typed one for this send. typed holds whatever the event

@@ -146,3 +146,26 @@ func TestRetrySaleCRMLookupWithoutMetadataRetries(t *testing.T) {
 		t.Fatal("want a retry")
 	}
 }
+
+// The automatic receipt asks the CRM only for an ids-only linked sale; a receipt request with a
+// contact id always asks; nothing asks without a contact id.
+func TestNeedsCRMRecipient(t *testing.T) {
+	id := uuid.NewString()
+	for _, c := range []struct {
+		subject, contact, phone, email string
+		want                           bool
+	}{
+		{"pos.sale.finalized", id, "", "", true},
+		{"pos.sale.finalized", id, "+254712000111", "", false},
+		{"pos.sale.finalized", id, "", "a@example.com", false},
+		{"pos.sale.finalized", "", "", "", false},
+		{"pos.sale.notification_requested", id, "+254712000111", "", true},
+		{"pos.sale.notification_requested", "", "", "", false},
+		{"pos.sale.notification_requested", "not-a-uuid", "", "", false},
+		{"pos.other", id, "", "", false},
+	} {
+		if got := needsCRMRecipient(c.subject, c.contact, c.phone, c.email); got != c.want {
+			t.Errorf("needsCRMRecipient(%q, %q, %q, %q) = %v, want %v", c.subject, c.contact, c.phone, c.email, got, c.want)
+		}
+	}
+}

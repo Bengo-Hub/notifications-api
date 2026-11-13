@@ -487,11 +487,10 @@ func (s *Subscriber) handleSaleNotification(msg *nats.Msg) {
 	p := envelope.Payload
 	phone := strings.TrimSpace(p.CustomerPhone)
 	email := strings.TrimSpace(p.CustomerEmail)
-	// pos-api names a CRM-linked customer on a receipt request by crm_contact_id alone (plus a
+	// pos-api names a CRM-linked customer by crm_contact_id alone (plus, on a receipt request, a
 	// phone or email the cashier typed for this send): the name, email and phone come from the
-	// CRM. pos.sale.finalized still carries the sale's phone and name for treasury, so the
-	// automatic receipt keeps using those and does not ask the CRM on every sale.
-	if msg.Subject == "pos.sale.notification_requested" && p.TenantID != "" && contacts.ParseID(p.CrmContactID) != uuid.Nil {
+	// CRM. See needsCRMRecipient for when the automatic receipt asks.
+	if p.TenantID != "" && needsCRMRecipient(msg.Subject, p.CrmContactID, phone, email) {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		rec, lookupErr := saleRecipient(ctx, s.crmContacts, p.TenantID, p.CrmContactID,
 			contacts.Recipient{Name: p.CustomerName, Email: email, Phone: phone})
