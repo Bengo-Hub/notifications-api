@@ -80,6 +80,41 @@ func InvalidateCache() {
 	cacheMu.Unlock()
 }
 
+// ListTenantsWithSetting returns the tenants (never the literal "platform" tiers) holding an
+// active, non-empty key for channel/provider, e.g. every tenant with a whatsapp/meta_cloud
+// waba_id. Used by platform reports that walk every connected account.
+func ListTenantsWithSetting(ctx context.Context, dbCfg config.PostgresConfig, environment, channel, provider, key string) ([]string, error) {
+	dsn := dbCfg.URL
+	if env := os.Getenv("POSTGRES_URL"); env != "" {
+		dsn = env
+	} else if env := os.Getenv("NOTIFICATIONS_POSTGRES_URL"); env != "" {
+		dsn = env
+	}
+	if dsn == "" {
+		return nil, nil
+	}
+	client, err := sharedClient(ctx, dsn)
+	if err != nil {
+		return nil, err
+	}
+	return client.ProviderSetting.Query().
+		Where(
+			providersetting.TenantIDNEQ("platform"),
+			providersetting.Or(
+				providersetting.EnvironmentEQ(environment),
+				providersetting.EnvironmentEQ("production"),
+			),
+			providersetting.ChannelEQ(channel),
+			providersetting.ProviderEQ(provider),
+			providersetting.KeyEQ(key),
+			providersetting.ValueNEQ(""),
+			providersetting.IsActive(true),
+		).
+		Unique(true).
+		Select(providersetting.FieldTenantID).
+		Strings(ctx)
+}
+
 func loadProviderSettings(ctx context.Context, dbCfg config.PostgresConfig, tenantID, environment, channel, provider string, decryptionKey []byte, includePlatformTiers bool) (Settings, error) {
 	dsn := dbCfg.URL
 	if env := os.Getenv("POSTGRES_URL"); env != "" {

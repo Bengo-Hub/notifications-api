@@ -30,6 +30,7 @@ import (
 	"github.com/bengobox/notifications-api/internal/contacts"
 	entdb "github.com/bengobox/notifications-api/internal/database"
 	"github.com/bengobox/notifications-api/internal/encryption"
+	"github.com/bengobox/notifications-api/internal/fxrate"
 	"github.com/bengobox/notifications-api/internal/ent"
 	enttenant "github.com/bengobox/notifications-api/internal/ent/tenant"
 	handlers "github.com/bengobox/notifications-api/internal/http/handlers"
@@ -431,7 +432,15 @@ func New(ctx context.Context) (*App, error) {
 		maildelivery.ProvisionerApplier(cfg.Services.EmailProvisioner, cfg.Services.MailDeliveryWebhookURL, nil),
 		redisClient, cfg.Services.MailDeliveryWebhookURL, log)
 
-	httpRouter := router.New(log, healthHandler, notificationHandler, templateHandler, platformProviders, tenantProviders, analyticsHandler, settingsHandler, rbacHandler, authMeHandler, deviceTokenHandler, cfg.Security.APIKey, authMiddleware, authenticator, cfg.HTTP.AllowedOrigins, tenantSyncer, rateLimiter, serviceConfigHandler, encryptionKeyHandler, notificationPrefsHandler, developerKeyAuth, swaggerHandler, webhookHandler, whatsappEmbeddedSignupHandler, whatsappTemplatesHandler, whatsappProfileHandler, whatsappInboxHandler, announcementHandler, broadcastHandler, mailDeliveryHandler,
+	// Platform > WhatsApp costs: Meta's charges next to tenant credits (owner decision 2026-11-12).
+	var fxRedis redis.UniversalClient
+	if redisClient != nil {
+		fxRedis = redisClient
+	}
+	fxRates := fxrate.New(cfg.Services.TreasuryAPI, cfg.Security.APIKey, cfg.Services.FXPlatformTenantSlug, fxRedis)
+	whatsappCosts := whatsappCostsHandler(providerManager, creditsClient, entClient, redisClient, fxRates, log)
+
+	httpRouter := router.New(log, healthHandler, notificationHandler, templateHandler, platformProviders, tenantProviders, analyticsHandler, settingsHandler, rbacHandler, authMeHandler, deviceTokenHandler, cfg.Security.APIKey, authMiddleware, authenticator, cfg.HTTP.AllowedOrigins, tenantSyncer, rateLimiter, serviceConfigHandler, encryptionKeyHandler, notificationPrefsHandler, developerKeyAuth, swaggerHandler, webhookHandler, whatsappEmbeddedSignupHandler, whatsappTemplatesHandler, whatsappProfileHandler, whatsappInboxHandler, announcementHandler, broadcastHandler, mailDeliveryHandler, whatsappCosts,
 		tenantExportHandler(exportSQLDB, cfg.Security.APIKey))
 
 	httpServer := &http.Server{

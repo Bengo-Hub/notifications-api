@@ -399,6 +399,76 @@ const docTemplate = `{
                 }
             }
         },
+        "/billing/whatsapp/managed-link": {
+            "post": {
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "description": "Platform owners only. Checks the number belongs to the WhatsApp account, subscribes the webhook, registers the number when needed and saves it for the tenant named in X-Tenant-ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "WhatsApp"
+                ],
+                "summary": "Link a number from the Codevertex portfolio to a tenant",
+                "parameters": [
+                    {
+                        "description": "Phone number ID and WhatsApp account ID",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.managedLinkRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    },
+                    "502": {
+                        "description": "Bad Gateway",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/broadcasts": {
             "get": {
                 "produces": [
@@ -1279,6 +1349,63 @@ const docTemplate = `{
                         "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/platform/whatsapp/costs": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Per WhatsApp Business Account we send from and per number on it: Meta's messages and cost by category (pricing_analytics, in the account's currency), the tenant's WhatsApp credits spent by category, KES paid and a margin estimate where Meta bills in KES. A WABA Meta refuses shows its error instead of failing the report. Cached for one hour per range.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Platform"
+                ],
+                "summary": "WhatsApp costs per account and number (platform owner)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "First day, YYYY-MM-DD (UTC). Default: first day of this month",
+                        "name": "from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Last day, YYYY-MM-DD (UTC). Default: today",
+                        "name": "to",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_bengobox_notifications-api_internal_modules_wacost.Report"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     }
                 }
@@ -2306,6 +2433,221 @@ const docTemplate = `{
                 }
             }
         },
+        "github_com_bengobox_notifications-api_internal_modules_wacost.Credits": {
+            "type": "object",
+            "properties": {
+                "bought": {
+                    "type": "integer"
+                },
+                "consumed": {
+                    "type": "integer"
+                },
+                "consumed_value_kes": {
+                    "type": "number"
+                },
+                "kes_paid": {
+                    "type": "number"
+                },
+                "overage_kes": {
+                    "type": "number"
+                }
+            }
+        },
+        "github_com_bengobox_notifications-api_internal_modules_wacost.Report": {
+            "type": "object",
+            "properties": {
+                "cached": {
+                    "type": "boolean"
+                },
+                "categories": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "credits_error": {
+                    "type": "string"
+                },
+                "from": {
+                    "type": "string"
+                },
+                "generated_at": {
+                    "type": "string"
+                },
+                "notes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "tenants_on_platform_number": {
+                    "description": "Unbilled lists tenants with credit movement but no WhatsApp row, which send from the\nplatform's number; their Meta cost is inside the platform number's row.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_bengobox_notifications-api_internal_modules_wacost.Row"
+                    }
+                },
+                "to": {
+                    "type": "string"
+                },
+                "totals": {
+                    "$ref": "#/definitions/github_com_bengobox_notifications-api_internal_modules_wacost.Totals"
+                },
+                "wabas": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_bengobox_notifications-api_internal_modules_wacost.WABA"
+                    }
+                }
+            }
+        },
+        "github_com_bengobox_notifications-api_internal_modules_wacost.Row": {
+            "type": "object",
+            "properties": {
+                "consumed_value_kes": {
+                    "type": "number"
+                },
+                "credits": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/github_com_bengobox_notifications-api_internal_modules_wacost.Credits"
+                    }
+                },
+                "credits_consumed": {
+                    "type": "integer"
+                },
+                "display_phone_number": {
+                    "type": "string"
+                },
+                "kes_paid": {
+                    "type": "number"
+                },
+                "margin_kes": {
+                    "type": "number"
+                },
+                "meta": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/github_com_bengobox_notifications-api_internal_modules_wacost.Usage"
+                    }
+                },
+                "meta_cost": {
+                    "type": "number"
+                },
+                "meta_cost_kes": {
+                    "description": "MetaCostKES is Meta's cost converted with treasury's rate, and MarginKES the credits value\nless it. Both are unset when the rate is unavailable or Meta's side could not be read.",
+                    "type": "number"
+                },
+                "meta_currency": {
+                    "type": "string"
+                },
+                "meta_messages": {
+                    "type": "integer"
+                },
+                "note": {
+                    "description": "Note explains a row that needs it in plain words.",
+                    "type": "string"
+                },
+                "phone_number_id": {
+                    "type": "string"
+                },
+                "tenant": {
+                    "description": "Tenant is the slug, \"platform\" for the platform's own number, or \"unassigned\" for a number\nno row claims.",
+                    "type": "string"
+                },
+                "tenant_id": {
+                    "type": "string"
+                },
+                "verified_name": {
+                    "type": "string"
+                },
+                "waba_id": {
+                    "type": "string"
+                },
+                "whole_account": {
+                    "description": "WholeAccount marks the row holding a WABA's total when Meta did not split it by number.",
+                    "type": "boolean"
+                }
+            }
+        },
+        "github_com_bengobox_notifications-api_internal_modules_wacost.Totals": {
+            "type": "object",
+            "properties": {
+                "consumed_value_kes": {
+                    "type": "number"
+                },
+                "credits_consumed": {
+                    "type": "integer"
+                },
+                "kes_paid": {
+                    "type": "number"
+                },
+                "margin_kes": {
+                    "type": "number"
+                },
+                "meta_cost": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "number",
+                        "format": "float64"
+                    }
+                },
+                "meta_cost_kes": {
+                    "type": "number"
+                },
+                "meta_messages": {
+                    "type": "integer"
+                },
+                "rate_unavailable": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "github_com_bengobox_notifications-api_internal_modules_wacost.Usage": {
+            "type": "object",
+            "properties": {
+                "cost": {
+                    "type": "number"
+                },
+                "messages": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_bengobox_notifications-api_internal_modules_wacost.WABA": {
+            "type": "object",
+            "properties": {
+                "currency": {
+                    "type": "string"
+                },
+                "error": {
+                    "description": "Error is Meta's refusal or a missing token; the rest of the report still renders.",
+                    "type": "string"
+                },
+                "kes_per_unit": {
+                    "description": "KESPerUnit is treasury's rate for Currency; RateUnavailable is set when none could be read.",
+                    "type": "number"
+                },
+                "owner": {
+                    "type": "string"
+                },
+                "rate_unavailable": {
+                    "type": "boolean"
+                },
+                "rows": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_bengobox_notifications-api_internal_modules_wacost.Row"
+                    }
+                },
+                "token_source": {
+                    "type": "string"
+                },
+                "waba_id": {
+                    "type": "string"
+                }
+            }
+        },
         "github_com_bengobox_notifications-api_internal_whatsapp_profile.Profile": {
             "type": "object",
             "properties": {
@@ -2747,6 +3089,17 @@ const docTemplate = `{
                 "status": {
                     "type": "string",
                     "example": "ok"
+                }
+            }
+        },
+        "internal_http_handlers.managedLinkRequest": {
+            "type": "object",
+            "properties": {
+                "phone_number_id": {
+                    "type": "string"
+                },
+                "waba_id": {
+                    "type": "string"
                 }
             }
         },

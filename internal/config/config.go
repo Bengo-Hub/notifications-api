@@ -48,6 +48,12 @@ type ServicesConfig struct {
 	// tenant's slug and name (case-insensitive, part of the word is enough): partner and internal
 	// tenants that are not platform customers.
 	BroadcastExcludedTenants []string `envconfig:"BROADCAST_EXCLUDED_TENANTS" default:"masterspace,kura,mccl,migori"`
+	// TreasuryAPI is the platform's one source of exchange rates (S2S convert endpoint), used to
+	// show Meta's WhatsApp charges in KES on the platform cost report. Same env name and default
+	// as marketflow-ai.
+	TreasuryAPI string `envconfig:"TREASURY_API_URL" default:"https://booksapi.codevertexafrica.com"`
+	// FXPlatformTenantSlug is the tenant whose platform-level rates treasury converts with.
+	FXPlatformTenantSlug string `envconfig:"FX_PLATFORM_TENANT_SLUG" default:"codevertex"`
 }
 
 type AppConfig struct {

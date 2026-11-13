@@ -19,7 +19,7 @@ import (
 	"github.com/bengobox/notifications-api/internal/modules/tenant"
 )
 
-func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handlers.NotificationHandler, templates *handlers.TemplateHandler, platformProviders *handlers.PlatformProviders, tenantProviders *handlers.TenantProviders, analytics *handlers.AnalyticsHandler, settings *handlers.SettingsHandler, rbacHandler *handlers.RBACHandler, authMeHandler *handlers.AuthMeHandler, deviceTokens *handlers.DeviceTokenHandler, apiKey string, authMiddleware *authclient.AuthMiddleware, authenticator *identityhandler.Authenticator, allowedOrigins []string, tenantSyncer *tenant.Syncer, rateLimiter *ratelimit.Quota, serviceConfig *handlers.ServiceConfigHandler, encryptionKey *handlers.EncryptionKeyHandler, notificationPrefs *handlers.PreferencesHandler, developerKeyAuth *devauth.DeveloperKeyAuth, swaggerHandler *handlers.SwaggerHandler, webhooks *handlers.WebhookHandler, whatsappEmbeddedSignup *handlers.WhatsAppEmbeddedSignupHandler, whatsappTemplates *handlers.WhatsAppTemplates, whatsappProfile *handlers.WhatsAppProfileHandler, whatsappInbox *handlers.WhatsAppInboxHandler, announcementsH *handlers.AnnouncementHandler, broadcastsH *handlers.BroadcastHandler, mailDelivery *handlers.MailDeliveryHandler, tenantExport http.Handler) http.Handler {
+func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handlers.NotificationHandler, templates *handlers.TemplateHandler, platformProviders *handlers.PlatformProviders, tenantProviders *handlers.TenantProviders, analytics *handlers.AnalyticsHandler, settings *handlers.SettingsHandler, rbacHandler *handlers.RBACHandler, authMeHandler *handlers.AuthMeHandler, deviceTokens *handlers.DeviceTokenHandler, apiKey string, authMiddleware *authclient.AuthMiddleware, authenticator *identityhandler.Authenticator, allowedOrigins []string, tenantSyncer *tenant.Syncer, rateLimiter *ratelimit.Quota, serviceConfig *handlers.ServiceConfigHandler, encryptionKey *handlers.EncryptionKeyHandler, notificationPrefs *handlers.PreferencesHandler, developerKeyAuth *devauth.DeveloperKeyAuth, swaggerHandler *handlers.SwaggerHandler, webhooks *handlers.WebhookHandler, whatsappEmbeddedSignup *handlers.WhatsAppEmbeddedSignupHandler, whatsappTemplates *handlers.WhatsAppTemplates, whatsappProfile *handlers.WhatsAppProfileHandler, whatsappInbox *handlers.WhatsAppInboxHandler, announcementsH *handlers.AnnouncementHandler, broadcastsH *handlers.BroadcastHandler, mailDelivery *handlers.MailDeliveryHandler, whatsappCosts *handlers.WhatsAppCostsHandler, tenantExport http.Handler) http.Handler {
 	r := chi.NewRouter()
 
 	// Client IP from the edge's trusted header only (chi's RealIP trusts any forwarded header).
@@ -205,6 +205,10 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 				}
 				if mailDelivery != nil {
 					mailDelivery.RegisterPlatformRoutes(platform)
+				}
+				// WhatsApp costs: Meta's charges next to tenant credits (platform owners only).
+				if whatsappCosts != nil {
+					whatsappCosts.RegisterPlatformRoutes(platform)
 				}
 			})
 
