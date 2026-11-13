@@ -99,6 +99,9 @@ func (s *Subscriber) Start(ctx context.Context) error {
 	deliverNewDurables := map[string]bool{
 		"notif-platform-new-tenant":          true,
 		"notif-payhero-service-wallet-short": true,
+		// Stream hadia keeps 7 days: a first DeliverAll would send a week of old health reports.
+		"notif-hadia-ops-health-daily":  true,
+		"notif-hadia-ops-health-weekly": true,
 	}
 
 	streams := map[string][]string{
@@ -143,6 +146,11 @@ func (s *Subscriber) Start(ctx context.Context) error {
 		// Payment provider outage and recovery: ops on email, Slack and WhatsApp; affected tenants by email.
 		{"treasury", "treasury.gateway.degraded", "notif-gateway-degraded", s.handleGatewayDegraded},
 		{"treasury", "treasury.gateway.recovered", "notif-gateway-recovered", s.handleGatewayRecovered},
+		// Hadia's platform health reports (responders platform_ops): ops email and Slack, and ops
+		// WhatsApp only for a daily report that needs a person. Stream hadia belongs to hadia-api, so it
+		// is not in the streams map above; the subscribe waits for it.
+		{"hadia", "hadia.ops.health_daily", "notif-hadia-ops-health-daily", s.handleHadiaHealthDaily},
+		{"hadia", "hadia.ops.health_weekly", "notif-hadia-ops-health-weekly", s.handleHadiaHealthWeekly},
 		{"erp", "erp.email.requested", "notif-erp-email-req", s.handleERPEmailRequested},
 		{"erp", "erp.notification.requested", "notif-erp-notif-req", s.handleERPNotificationRequested},
 		{"isp", "isp.subscriber.created", "notif-isp-subscriber-created", s.handleISPSubscriberCreated},

@@ -1,0 +1,3 @@
+Hello {{ or .name "there" }},
+
+*{{ .registry }}* has closed after your event with {{ .amount }} still to be paid to you, but you have no verified M-Pesa number to pay it to. Add your number and confirm it; the money is paid to it automatically once its 48-hour hold ends.

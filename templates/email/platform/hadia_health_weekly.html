@@ -1,0 +1,34 @@
+{{ define "content" }}
+  <h2>Hadia weekly health report</h2>
+  {{ if and .week_from .week_to }}
+  <p>For the week of {{ .week_from }} to {{ .week_to }}.</p>
+  {{ end }}
+  <table role="presentation" style="width:100%;border-collapse:collapse;margin:16px 0">
+    <tbody>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Gifts received</strong></td><td style="padding:6px 0">{{ .payments_count }}, worth {{ .payments_value }}</td></tr>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Payouts completed</strong></td><td style="padding:6px 0">{{ .payouts_count }}</td></tr>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Paid out, gross</strong></td><td style="padding:6px 0">{{ .payouts_gross }}</td></tr>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Paid out, net</strong></td><td style="padding:6px 0">{{ .payouts_net }}</td></tr>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Open cases</strong></td><td style="padding:6px 0">{{ .defects_total }}</td></tr>
+    </tbody>
+  </table>
+  {{ if .defects }}
+  <p><strong>Open cases by kind</strong></p>
+  <table role="presentation" style="width:100%;border-collapse:collapse;margin:8px 0 16px">
+    <tbody>
+      {{ range .defects }}<tr><td style="padding:4px 12px 4px 0">{{ .kind }}</td><td style="padding:4px 0">{{ .count }}</td></tr>
+      {{ end }}
+    </tbody>
+  </table>
+  {{ end }}
+  {{ if .currency_scope }}
+  <p style="color:#6b7280;">Money figures: {{ .currency_scope }}.</p>
+  {{ end }}
+  <p style="color:#6b7280;">
+    Availability and support tickets are not in this report: Hadia records no health check history
+    and the ticketing client has no count read.
+  </p>
+  {{ if .generated_at }}
+  <p style="color:#6b7280;">Report generated {{ .generated_at }}.</p>
+  {{ end }}
+{{ end }}

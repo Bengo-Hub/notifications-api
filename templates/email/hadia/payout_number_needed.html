@@ -1,0 +1,18 @@
+{{ define "content" }}
+  <p>Hello {{ or .name "there" }},</p>
+  <h2>Add a payout number to receive your gifts</h2>
+  <p>
+    {{ or .registry "Your registry" }} has closed after your event{{ if .amount }} with <strong>{{ .amount }}</strong> still to be paid to you{{ else }} with money still to be paid to you{{ end }}.
+    Hadia can only pay your gifts to an M-Pesa number you have verified, and your account does not have one yet.
+  </p>
+  <p>
+    Add your M-Pesa number and confirm it with the code we send to it. For your safety a new number is held for 48 hours.
+    After that the money is paid to it automatically, with nothing more for you to do.
+  </p>
+  <p>Hadia support has been told as well and may contact you to help.</p>
+  {{ if .action_link }}
+  <p>
+    <a class="button" href="{{ .action_link }}">Add your payout number</a>
+  </p>
+  {{ end }}
+{{ end }}

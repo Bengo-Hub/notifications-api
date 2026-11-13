@@ -133,19 +133,42 @@ func (s *Subscriber) handleGatewayRecovered(msg *nats.Msg) {
 	_ = msg.Ack()
 }
 
-// alertOps sends an ops alert by email, Slack and WhatsApp. Each channel is best effort.
+// alertOps sends a treasury ops alert by email, Slack and WhatsApp. Each channel is best effort.
 func (s *Subscriber) alertOps(ctx context.Context, tenantID, template, subject string, data map[string]any, text string) {
+	s.sendOpsAlert(ctx, opsAlert{TenantID: tenantID, Template: template, Subject: subject, Data: data, Text: text,
+		From: "Codevertex Treasury", SlackPrefix: ":warning: ", WhatsApp: true})
+}
+
+// opsAlert is one platform-ops notice. From names the sender on the WhatsApp service notice, and
+// WhatsApp false keeps a routine report to email and Slack.
+type opsAlert struct {
+	TenantID    string
+	Template    string
+	Subject     string
+	Data        map[string]any
+	Text        string
+	From        string
+	SlackPrefix string
+	WhatsApp    bool
+}
+
+// sendOpsAlert sends one ops notice on every ops channel: email to the platform alert list, and the
+// Slack webhook and WhatsApp numbers in auth-api's platform_alert_channels. Each channel is best effort.
+func (s *Subscriber) sendOpsAlert(ctx context.Context, a opsAlert) {
 	if to := s.platformAlertRecipients(); len(to) > 0 {
-		s.publishWithMetadata(tenantID, "email", template, messaging.TargetPlatformAdmin, to, data, map[string]any{"subject": subject})
+		s.publishWithMetadata(a.TenantID, "email", a.Template, messaging.TargetPlatformAdmin, to, a.Data, map[string]any{"subject": a.Subject})
 	}
 	settings := s.platformAlertSettings(ctx)
 	if hook := settings["slack_webhook_url"]; hook != "" {
-		s.postSlack(ctx, hook, ":warning: "+text)
+		s.postSlack(ctx, hook, a.SlackPrefix+a.Text)
+	}
+	if !a.WhatsApp {
+		return
 	}
 	if phones := splitList(settings["alert_whatsapp_to"]); len(phones) > 0 {
-		s.publishWithMetadata(tenantID, "whatsapp", "", messaging.TargetPlatformAdmin, phones,
-			map[string]any{"body": text},
-			map[string]any{"template_name": opsWhatsAppTemplate, "template_params": []string{"Ops team", "Codevertex Treasury", text}})
+		s.publishWithMetadata(a.TenantID, "whatsapp", "", messaging.TargetPlatformAdmin, phones,
+			map[string]any{"body": a.Text},
+			map[string]any{"template_name": opsWhatsAppTemplate, "template_params": []string{"Ops team", a.From, a.Text}})
 	}
 }
 

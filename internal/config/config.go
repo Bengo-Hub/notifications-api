@@ -114,7 +114,7 @@ type ProviderConfig struct {
 	SMTPPort               int    `envconfig:"PROVIDERS_SMTP_PORT" default:"587"`
 	SMTPUsername           string `envconfig:"PROVIDERS_SMTP_USERNAME"`
 	SMTPPassword           string `envconfig:"PROVIDERS_SMTP_PASSWORD"`
-	SMTPFrom               string `envconfig:"PROVIDERS_SMTP_FROM" default:"no-reply@bengobox.com"`
+	SMTPFrom               string `envconfig:"PROVIDERS_SMTP_FROM" default:"no-reply@codevertexafrica.com"`
 	SMTPStartTLS           bool   `envconfig:"PROVIDERS_SMTP_STARTTLS" default:"false"`
 	FCMServiceAccount      string `envconfig:"PROVIDERS_FCM_SERVICE_ACCOUNT"`
 	// Platform Firebase project fallback (used when no platform/tenant push provider settings
@@ -128,13 +128,15 @@ type ProviderConfig struct {
 	FCMWebVAPIDKey          string `envconfig:"PROVIDERS_FCM_WEB_VAPID_KEY"`
 	APNSCert                string `envconfig:"PROVIDERS_APNS_CERT"`
 	APNSKey                 string `envconfig:"PROVIDERS_APNS_KEY"`
-	DefaultEmailSender      string `envconfig:"PROVIDERS_DEFAULT_EMAIL_SENDER" default:"Urban Cafe <hello@bengobox.com>"`
-	DefaultSMSSender        string `envconfig:"PROVIDERS_DEFAULT_SMS_SENDER" default:"codevertex"`
+	// Platform mail (approval codes, billing, alerts) goes out as Codevertex unless a tenant has its
+	// own sender. It was "Urban Cafe <hello@bengobox.com>" until 13 November 2026.
+	DefaultEmailSender string `envconfig:"PROVIDERS_DEFAULT_EMAIL_SENDER" default:"Codevertex <no-reply@codevertexafrica.com>"`
+	DefaultSMSSender   string `envconfig:"PROVIDERS_DEFAULT_SMS_SENDER" default:"codevertex"`
 	// WhatsAppSharedNumberTenants are the tenant IDs allowed to send their own (tenant-scoped)
 	// WhatsApp from the platform's number. Every other tenant needs its own registered number
 	// (owner, 9 November 2026). Default: the codevertex-demo tenant, for sales demos.
 	WhatsAppSharedNumberTenants []string `envconfig:"PROVIDERS_WHATSAPP_SHARED_NUMBER_TENANTS" default:"982ffb25-0e07-4bbb-8e04-c4c2af2550b6"`
-	DefaultPushTopic        string `envconfig:"PROVIDERS_DEFAULT_PUSH_TOPIC" default:"general"`
+	DefaultPushTopic            string   `envconfig:"PROVIDERS_DEFAULT_PUSH_TOPIC" default:"general"`
 	// Email send protection — avoid provider rate-limit blocks (e.g. Zoho "mail rate
 	// exceeded") by pacing sends, and protect sender reputation / reduce failure logs by
 	// validating recipients (syntax + MX) and suppressing hard-bounced addresses.

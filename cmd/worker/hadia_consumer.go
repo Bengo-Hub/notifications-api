@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 
 	"github.com/bengobox/notifications-api/internal/config"
 	"github.com/bengobox/notifications-api/internal/messaging"
+	"github.com/bengobox/notifications-api/internal/moneyfmt"
 )
 
 // Hadia (gift registry, one client tenant) notifications. hadia-api publishes hadia.<event_type>
@@ -121,6 +123,20 @@ func mInt(p map[string]any, key string) int {
 		return int(v)
 	}
 	return 0
+}
+
+// hadiaMoneyIn formats an amount in the payload's own currency ("KES 6,450"), KES when the payload
+// names none; "" when the amount is absent.
+func hadiaMoneyIn(p map[string]any, key string) string {
+	f, err := strconv.ParseFloat(mStr(p, key), 64)
+	if err != nil {
+		return mStr(p, key)
+	}
+	currency := mStr(p, "currency")
+	if currency == "" {
+		currency = "KES"
+	}
+	return moneyfmt.Format(f, currency)
 }
 
 // mPercent words a whole per cent from the payload ("75%"); "" when absent.
@@ -276,7 +292,7 @@ var hadiaMappings = map[string][]hadiaMessage{
 	// and hadia-ui lets the owner share the invitation themselves.
 	"registry.member_invited": {{PathKey: "sign_in_url", maskaniMapping: maskaniMapping{
 		TemplateID: "hadia/member_invited", PhoneKey: "invitee_phone",
-		Subject:    func(p map[string]any) string { return "You are invited to help run a gift registry" },
+		Subject: func(p map[string]any) string { return "You are invited to help run a gift registry" },
 		Data: func(p map[string]any, _ *tenantInfo) map[string]any {
 			return map[string]any{"inviter": waParam(p["inviter_name"], "A Hadia host"), "registry": mStr(p, "registry_title")}
 		},
@@ -289,7 +305,7 @@ var hadiaMappings = map[string][]hadiaMessage{
 	// Meta approves the template and Hadia's number is live.
 	"registry.change_requested": {{PathKey: "owner_url", maskaniMapping: maskaniMapping{
 		TemplateID: "hadia/change_requested", PhoneKey: "owner_phone", EmailKey: "owner_email",
-		Subject:    func(p map[string]any) string { return "A co-owner is waiting for your approval" },
+		Subject: func(p map[string]any) string { return "A co-owner is waiting for your approval" },
 		Data: func(p map[string]any, _ *tenantInfo) map[string]any {
 			return map[string]any{"name": waParam(p["owner_name"], "there"), "co_owner": waParam(p["co_owner_name"], "A co-owner"),
 				"registry": mStr(p, "registry_title"), "change": hadiaChangeWords(mStr(p, "kind"))}
@@ -444,6 +460,21 @@ var hadiaMappings = map[string][]hadiaMessage{
 		WATemplate: "hadia_payout_part_paid_v1_btn",
 		WAParams:   func(d map[string]any) []string { return mParams(d, "name", "part", "parts", "registry", "net") },
 	}}},
+	// A registry closed at expiry with money still owed and its owner has no verified payout number
+	// past its hold (hadia-api registry/expiry_payout.go, once per registry). The button opens the
+	// registry's payouts page. The same close opens a high priority case for support and finance,
+	// which case.opened below already sends to Hadia's staff, so nothing more goes to staff here.
+	"payout.number_needed": {{PathKey: "owner_url", maskaniMapping: maskaniMapping{
+		TemplateID: "hadia/payout_number_needed", PhoneKey: "owner_phone", EmailKey: "owner_email",
+		Subject: func(map[string]any) string { return "Add a payout number to receive your Hadia gifts" },
+		Data: func(p map[string]any, _ *tenantInfo) map[string]any {
+			return map[string]any{"name": waParam(p["owner_name"], "there"), "registry": waParam(p["registry_title"], "Your registry"),
+				"amount": hadiaMoneyIn(p, "amount")}
+		},
+		WATemplate: "hadia_payout_number_needed_v1_btn",
+		WAParams:   func(d map[string]any) []string { return mParams(d, "name", "registry", "amount") },
+		Skip:       func(p map[string]any) bool { return mStr(p, "owner_phone") == "" && mStr(p, "owner_email") == "" },
+	}}},
 	// The registry was cancelled. Its free text reason goes in the email only.
 	"registry.cancelled": {{PathKey: "owner_url", maskaniMapping: maskaniMapping{
 		TemplateID: "hadia/registry_cancelled", PhoneKey: "owner_phone", EmailKey: "owner_email",
@@ -499,6 +530,9 @@ var hadiaMappings = map[string][]hadiaMessage{
 	// A new case in the exception queue, for Hadia's staff. hadia-api names who should act
 	// (responders) but owns the staff list, so it goes to the tenant's contact details. The summary
 	// stays in the email; high and urgent cases also go by WhatsApp, without it.
+	// hadia.ops.health_daily and hadia.ops.health_weekly are not mapped here: they are for platform
+	// ops, not Hadia's staff, and internal/modules/events (hadia_ops_health.go) sends them on the ops
+	// channels. This consumer acks them as unmapped.
 	"case.opened": {{
 		FixedPath: "admin/exceptions",
 		WhatsAppIf: func(p map[string]any) bool {

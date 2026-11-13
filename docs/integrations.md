@@ -358,6 +358,38 @@ Onboarding:
 
 **Note**: TruLoad integrates only with auth-service and notifications-service. No treasury integration.
 
+### Hadia (gift registry)
+
+**Integration Type**: Events (NATS), stream `hadia` (subjects `hadia.>`) owned by hadia-api, and
+`hadia_secret` for one-time codes.
+
+**Consumers**:
+- `cmd/worker/hadia_consumer.go`, durable `notifications-hadia`: every guest, owner and Hadia staff
+  message (`hadiaMappings`), templates under `templates/email/hadia/` and `templates/whatsapp/hadia/`.
+  Owner messages carry the owner's own contact details; staff messages go to the tenant's contact.
+- `internal/modules/events/hadia_ops_health.go`, durables `notif-hadia-ops-health-daily` and
+  `notif-hadia-ops-health-weekly`: the platform health reports. The worker consumer acks those two
+  as unmapped.
+
+**Added 12 November 2026** (hadia-api 41ae1d7):
+- `hadia.payout.number_needed`: a registry closed at expiry with money still owed and no verified
+  payout number. The owner gets `hadia/payout_number_needed` (email, essential) and
+  `hadia_payout_number_needed_v1_btn` (WhatsApp, params name, registry, amount; button the payouts
+  page from `owner_url`). The amount is formatted in the payload's `currency`. The same close opens a
+  high priority support and finance case; `hadia.case.opened` already tells Hadia's staff (email, and
+  WhatsApp for high and urgent), so this event sends nothing to staff.
+- `hadia.ops.health_daily` and `hadia.ops.health_weekly`: responders `platform_ops`, so they take the
+  existing ops alert path (`sendOpsAlert` in `gateway_health_alert.go`, shared with the payment
+  provider outage alert): email to `PLATFORM_ALERT_EMAILS` (`platform/hadia_health_daily` and
+  `platform/hadia_health_weekly`, locked), a one-line summary to the Slack webhook in auth-api's
+  `platform_alert_channels`, and the ops WhatsApp numbers there (`broadcast_service_notice_v1`) only
+  for a daily report that needs a person: registries whose gift log differs from treasury, failed
+  payouts in 24 hours, urgent or overdue cases, failed outbox events, or an outbox event unsent for
+  ten minutes. The weekly report never goes by WhatsApp. The failed payout count is shown as
+  approximate when the payload says so (`failed_payouts_24h_approximate`), consumer lag only when
+  hadia-api read it, and the weekly money in KES with the payload's `currency_scope` note. Both
+  durables start at new messages, so a first rollout does not replay the week the stream keeps.
+
 ---
 
 ## External Provider Integrations

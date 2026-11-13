@@ -88,6 +88,9 @@ var Registry = []Type{
 	{Key: "finance/payments_restored", Label: "Payments back to normal", Group: "Billing & Payments", Class: ClassEssential},
 	// Platform-ops alert: a visitor sent the codevertexafrica.com contact form.
 	{Key: "platform/website_enquiry", Label: "New website enquiry (platform ops)", Group: "Account & Security", Class: ClassLocked},
+	// Platform-ops reports: Hadia's daily and weekly health (hadia.ops.health_daily and _weekly).
+	{Key: "platform/hadia_health_daily", Label: "Hadia daily health report (platform ops)", Group: "Account & Security", Class: ClassLocked},
+	{Key: "platform/hadia_health_weekly", Label: "Hadia weekly health report (platform ops)", Group: "Account & Security", Class: ClassLocked},
 	// Billing notices about the tenant's own Codevertex subscription are transactional: a renewal is
 	// also the confirmation of the payment that renewed it. Optional (off by default) meant no tenant
 	// ever got one (10 November 2026), so they default on like the other billing notices.
@@ -165,6 +168,9 @@ var Registry = []Type{
 	{Key: "hadia/payout_declined", Label: "Payout not made", Group: "Gift registry", Class: ClassEssential},
 	{Key: "hadia/payout_unconfirmed", Label: "Payout being checked", Group: "Gift registry", Class: ClassEssential},
 	{Key: "hadia/payout_part_paid", Label: "Part of a payout paid", Group: "Gift registry", Class: ClassEssential},
+	// A registry closed at expiry with money owed and no verified payout number: nothing can be paid
+	// until the owner adds one, so the notice is essential.
+	{Key: "hadia/payout_number_needed", Label: "Add a payout number to receive your gifts", Group: "Gift registry", Class: ClassEssential},
 	{Key: "hadia/registry_cancelled", Label: "Registry cancelled", Group: "Gift registry", Class: ClassEssential},
 	{Key: "hadia/registry_closed", Label: "Registry closed", Group: "Gift registry", Class: ClassEssential},
 	{Key: "hadia/refund_pending", Label: "Gift being refunded", Group: "Gift registry", Class: ClassEssential},

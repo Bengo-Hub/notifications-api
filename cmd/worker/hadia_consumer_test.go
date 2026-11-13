@@ -185,6 +185,49 @@ func TestHadiaCaseOpened(t *testing.T) {
 	}
 }
 
+// hadia-api registry/expiry_payout.go: a registry closed at expiry with money owed and no verified
+// payout number asks its owner, by email and WhatsApp, to add one, with the payouts page as the button.
+// Optional fields left out of the payload never render a blank.
+func TestHadiaPayoutNumberNeeded(t *testing.T) {
+	msgs := hadiaMappings["payout.number_needed"]
+	if len(msgs) != 1 || msgs[0].Staff || msgs[0].PathKey != "owner_url" || msgs[0].PhoneKey != "owner_phone" || msgs[0].EmailKey != "owner_email" {
+		t.Fatalf("mapping: %+v", msgs)
+	}
+	m := msgs[0]
+	p := map[string]any{"registry_id": "0b6c2b8e", "registry_title": "Wedding", "amount": "45000.00", "currency": "KES",
+		"owner_name": "Amina", "owner_phone": "+254700000000", "owner_email": "a@example.com",
+		"owner_url": "https://hadiafrica.com/app/registries/0b6c2b8e/payouts", "tenant_id": "t1"}
+	if got := hadiaPath(mStr(p, "owner_url")); got != "app/registries/0b6c2b8e/payouts" {
+		t.Fatalf("button path %q", got)
+	}
+	d := m.Data(p, &tenantInfo{})
+	if got := strings.Join(m.WAParams(d), "|"); got != "Amina|Wedding|KES 45,000" {
+		t.Fatalf("WhatsApp params %q", got)
+	}
+	if !strings.Contains(m.Subject(p), "payout number") {
+		t.Fatalf("subject %q", m.Subject(p))
+	}
+	d["action_link"] = "https://hadiafrica.com/app/registries/0b6c2b8e/payouts"
+	out := renderEmail(t, m.TemplateID, d)
+	mustContain(t, "payout number needed", out, "Hello Amina", "Wedding has closed", "<strong>KES 45,000</strong>", "48 hours", "Add your payout number")
+
+	bare := m.Data(map[string]any{"owner_email": "a@example.com"}, &tenantInfo{})
+	out = renderEmail(t, m.TemplateID, bare)
+	mustContain(t, "payout number needed, bare", out, "Hello there", "Your registry has closed", "with money still to be paid to you")
+	for _, blank := range []string{"<strong></strong>", "Hello ,", " has closed after your event with  ", "Add your payout number</a>"} {
+		if strings.Contains(out, blank) {
+			t.Fatalf("bare payload renders %q:\n%s", blank, out)
+		}
+	}
+	if !m.Skip(map[string]any{}) || m.Skip(map[string]any{"owner_phone": "+254700000000"}) {
+		t.Fatal("skip only when there is neither a phone nor an email")
+	}
+	// Another currency is named, not shown as shillings.
+	if got := m.Data(map[string]any{"amount": "120.50", "currency": "USD"}, &tenantInfo{})["amount"]; got != "USD 120.50" {
+		t.Fatalf("USD amount %v", got)
+	}
+}
+
 // A payout number change alerts the OLD number (and the email), never the new one.
 func TestHadiaPayoutChangeAlertsOldNumber(t *testing.T) {
 	m := hadiaMappings["payout_destination.changed"][0]

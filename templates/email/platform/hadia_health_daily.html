@@ -1,0 +1,48 @@
+{{ define "content" }}
+  <h2>Hadia health for {{ .day }}</h2>
+  {{ if .attention }}
+  <p><strong>Needs attention:</strong></p>
+  <ul>
+    {{ range .attention }}<li>{{ . }}</li>
+    {{ end }}
+  </ul>
+  {{ else }}
+  <p>All clear: nothing in today's report needs a person.</p>
+  {{ end }}
+  <table role="presentation" style="width:100%;border-collapse:collapse;margin:16px 0">
+    <tbody>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Registries whose gift log differs from treasury</strong></td><td style="padding:6px 0">{{ .registries_differing }}</td></tr>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Payouts failed in the last 24 hours</strong></td><td style="padding:6px 0">{{ .failed_payouts }}{{ if .failed_approximate }} (approximate){{ end }}</td></tr>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Open cases</strong></td><td style="padding:6px 0">{{ .cases_open }}</td></tr>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Cases in progress</strong></td><td style="padding:6px 0">{{ .cases_in_progress }}</td></tr>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Cases past the due time</strong></td><td style="padding:6px 0">{{ .cases_overdue }}</td></tr>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Urgent cases</strong></td><td style="padding:6px 0">{{ .cases_urgent }}</td></tr>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Outbox events waiting</strong></td><td style="padding:6px 0">{{ .outbox_pending }}{{ if .outbox_oldest }}, the oldest {{ .outbox_oldest }} old{{ end }}</td></tr>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Outbox events failed</strong></td><td style="padding:6px 0">{{ .outbox_failed }}</td></tr>
+    </tbody>
+  </table>
+  {{ if .failed_approximate }}
+  <p style="color:#6b7280;">
+    The failed payout count is approximate: Hadia stores no failure time, so it counts failed payouts
+    by their last change{{ if .failed_basis }} ({{ .failed_basis }}){{ end }}, and a later change to an older failed payout brings it back into the count.
+  </p>
+  {{ end }}
+  {{ if .lag_read }}
+  <p><strong>Consumer lag</strong> (messages waiting for each consumer)</p>
+  {{ if .lag }}
+  <table role="presentation" style="width:100%;border-collapse:collapse;margin:8px 0 16px">
+    <tbody>
+      {{ range .lag }}<tr><td style="padding:4px 12px 4px 0">{{ .durable }}</td><td style="padding:4px 0">{{ .waiting }}</td></tr>
+      {{ end }}
+    </tbody>
+  </table>
+  {{ else }}
+  <p>No consumers were reported.</p>
+  {{ end }}
+  {{ else }}
+  <p style="color:#6b7280;">Consumer lag could not be read for this report.</p>
+  {{ end }}
+  {{ if .generated_at }}
+  <p style="color:#6b7280;">Report generated {{ .generated_at }}.</p>
+  {{ end }}
+{{ end }}

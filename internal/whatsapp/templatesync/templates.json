@@ -1026,6 +1026,17 @@
     ]
   },
   {
+    "name": "hadia_payout_number_needed_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/hadia/payout_number_needed.txt (params: name, registry, amount; button: app/registries/<id>/payouts)",
+    "body": "Hello {{1}},\n\n*{{2}}* has closed after your event with {{3}} still to be paid to you, but you have no verified M-Pesa number to pay it to. Add your number and confirm it; the money is paid to it automatically once its 48-hour hold ends.",
+    "example": ["Amina", "Amina and Tom's wedding", "KES 45,000"],
+    "buttons": [
+      {"type": "URL", "text": "Add payout number", "url": "https://hadiafrica.com/{{1}}", "example": ["app/registries/0b6c2b8e/payouts"]}
+    ]
+  },
+  {
     "name": "hadia_reservation_reminder_v1_btn",
     "category": "UTILITY",
     "language": "en_US",
