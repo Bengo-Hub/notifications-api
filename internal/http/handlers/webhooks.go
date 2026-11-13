@@ -106,7 +106,8 @@ func (h *WebhookHandler) AfricasTalkingDLR(w http.ResponseWriter, r *http.Reques
 	h.log.Info("africastalking delivery report",
 		zap.String("message_id", r.FormValue("id")),
 		zap.String("status", r.FormValue("status")),
-		zap.String("phone_number", r.FormValue("phoneNumber")),
+		// Never the full number in a log line: the last three digits are enough to match a report.
+		zap.String("phone_last3", phoneLast3(r.FormValue("phoneNumber"))),
 		zap.String("network_code", r.FormValue("networkCode")),
 		zap.String("failure_reason", r.FormValue("failureReason")),
 		zap.String("retry_count", r.FormValue("retryCount")),
@@ -349,4 +350,18 @@ func (h *WebhookHandler) resolveTenantByPhoneNumberID(ctx context.Context, phone
 		return ""
 	}
 	return row.TenantID
+}
+
+// phoneLast3 returns the last three digits of a phone number, or "" when it has fewer.
+func phoneLast3(phone string) string {
+	digits := make([]rune, 0, len(phone))
+	for _, r := range phone {
+		if r >= '0' && r <= '9' {
+			digits = append(digits, r)
+		}
+	}
+	if len(digits) < 3 {
+		return ""
+	}
+	return string(digits[len(digits)-3:])
 }
