@@ -2,16 +2,18 @@
   <p>Hello {{ .name }},</p>
   <h2 style="color: #059669;">Ticket Resolved</h2>
   <p>Your support ticket <strong>#{{ .ticket_id }}</strong> has been marked as resolved.</p>
-  
+
   <div style="background:#f3f4f6; padding:16px; border-radius:6px; margin:16px 0;">
-    <strong>Subject:</strong> {{ .subject }}<br/>
-    <strong>Resolution:</strong> {{ .resolution_summary }}<br/>
-    <strong>Resolved By:</strong> {{ .resolved_by }}
+    <strong>Subject:</strong> {{ .subject }}
+    {{ if .resolution_summary }}<br/><strong>Resolution:</strong> {{ .resolution_summary }}{{ end }}
+    {{ if .resolved_by }}<br/><strong>Resolved By:</strong> {{ .resolved_by }}{{ end }}
   </div>
 
-  <p>If you feel this issue is not fully resolved, you can reopen the ticket by replying to this email or visiting the portal.</p>
+  <p>If the issue is not fully resolved, reply to this email and we will reopen the ticket.</p>
 
+  {{ if .action_link }}
   <p>
-    <a class="button" href="{{ .action_link }}">View Ticket Details</a>
+    <a class="button" href="{{ .action_link }}">Visit our support page</a>
   </p>
+  {{ end }}
 {{ end }}

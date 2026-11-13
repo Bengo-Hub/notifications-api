@@ -1,0 +1,15 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <h2>New reply on your ticket</h2>
+  <p>Our team replied to your support ticket <strong>#{{ .ticket_id }}</strong>: {{ .subject }}</p>
+
+  <div style="background:#f3f4f6; padding:16px; border-radius:6px; margin:16px 0; white-space:pre-line;">{{ .comment }}</div>
+
+  <p>To answer, reply to this email.</p>
+
+  {{ if .action_link }}
+  <p>
+    <a class="button" href="{{ .action_link }}">Visit our support page</a>
+  </p>
+  {{ end }}
+{{ end }}

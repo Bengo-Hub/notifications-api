@@ -23,6 +23,10 @@ type tenantInfo struct {
 	Slug           string
 	ContactEmail   string
 	ContactPhone   string
+	// SupportEmail is where the tenant's customers are answered from (auth-api tenant metadata
+	// "support", else the contact email: cache.ResolveSupportContact). Customer mail about a
+	// support ticket uses it as Reply-To.
+	SupportEmail   string
 	Website        string
 	// AppURL is the per-tenant primary app base URL (e.g. "https://kuraweigh.kura.go.ke").
 	// Distinct from Website (corporate site). Stored in auth-api tenant metadata["app_url"].
@@ -173,6 +177,7 @@ func (r *tenantResolver) enrichFromCache(ctx context.Context, info *tenantInfo) 
 	branding := cache.GetTenantBranding(details)
 	info.ContactEmail = details.ContactEmail
 	info.ContactPhone = details.ContactPhone
+	info.SupportEmail = cache.ResolveSupportContact(details).Email
 	info.Country = details.Country
 	info.Website = normalizeWebsite(details.Website)
 	// AppURL and ServiceURLs come from auth-api tenant metadata — per-tenant deployed app domains.

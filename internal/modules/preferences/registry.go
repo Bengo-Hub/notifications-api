@@ -232,6 +232,12 @@ var Registry = []Type{
 	// ── Support / projects / education ───────────────────────────────────────
 	{Key: "ticketing/ticket_assigned", Label: "Support ticket assigned", Group: "Support & Projects", Class: ClassOptional},
 	{Key: "ticketing/ticket_resolved", Label: "Support ticket resolved", Group: "Support & Projects", Class: ClassOptional},
+	// To the person who raised a ticket: the receipt and an agent's reply are the conversation
+	// itself, so they default on; a status change that needs them (waiting for their reply,
+	// closed, cancelled, reopened) is optional like the resolved notice.
+	{Key: "ticketing/ticket_created", Label: "Support request received", Group: "Support & Projects", Class: ClassEssential},
+	{Key: "ticketing/ticket_reply", Label: "Reply on your support ticket", Group: "Support & Projects", Class: ClassEssential},
+	{Key: "ticketing/ticket_status_changed", Label: "Support ticket status update", Group: "Support & Projects", Class: ClassOptional},
 	{Key: "ticketing/ticket_sla_breached", Label: "Support ticket past its SLA", Group: "Support & Projects", Class: ClassOptional},
 	{Key: "projects/project_milestone_reached", Label: "Project milestone reached", Group: "Support & Projects", Class: ClassOptional},
 	// QA acceptance (projects-api project.qa.*): the invite is the only way in, and a blocking failure
