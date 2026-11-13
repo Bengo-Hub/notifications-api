@@ -7,6 +7,7 @@ import (
 	"time"
 
 	httpware "github.com/Bengo-Hub/httpware"
+	authclient "github.com/Bengo-Hub/shared-auth-client"
 	serviceclient "github.com/Bengo-Hub/shared-service-client"
 	"go.uber.org/zap"
 )
@@ -87,7 +88,37 @@ func (a *DeveloperKeyAuth) TryDeveloperKey(w http.ResponseWriter, r *http.Reques
 	out := httpware.WithTenantID(r.Context(), validated.TenantID)
 	out = WithEnvironment(out, validated.Environment)
 	out = context.WithValue(out, developerKeyContextKey{}, true)
+	// Carry the key's validated identity as claims, the same way auth-client's API-key path does
+	// (APIKeyValidationResult.ToClaims), so tenantContext and sendingTenant see who the key is.
+	// Without this a platform service key (service "platform", role superuser, the key producers
+	// such as truload-backend send with) lost its privilege here: every send it made for a tenant
+	// was pinned to the key's own tenant, codevertex, and went out through the platform mail
+	// account (13 November 2026). An ordinary tenant developer key has no service and no
+	// superuser role, so it stays pinned to its own tenant.
+	out = authclient.ContextWithClaims(out, developerKeyClaims(validated))
 	return out, true
+}
+
+// developerKeyClaims mirrors auth-client's APIKeyValidationResult.ToClaims for a validated key.
+func developerKeyClaims(v validateKeyResponse) *authclient.Claims {
+	isPlatformOwner := false
+	for _, role := range v.Roles {
+		if role == "superuser" {
+			isPlatformOwner = true
+			break
+		}
+	}
+	c := &authclient.Claims{
+		TenantID:        v.TenantID,
+		TenantSlug:      v.TenantSlug,
+		Scope:           v.Scopes,
+		Roles:           v.Roles,
+		ServiceName:     v.Service,
+		IsService:       v.Service != "",
+		IsPlatformOwner: isPlatformOwner,
+	}
+	c.Subject = v.ClientID // the API key's client id, as auth-client's API-key path stores it
+	return c
 }
 
 // IsDeveloperKeyRequest reports whether this request was already authenticated via a
