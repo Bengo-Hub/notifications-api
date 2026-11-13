@@ -342,8 +342,14 @@ func (h *TenantProviders) SaveProviderSettings(w http.ResponseWriter, r *http.Re
 		IsEncrypted bool
 	}
 	existing := make(map[string]existingVal, len(existingRows))
+	existingPlain := make(map[string]string, len(existingRows))
 	for _, row := range existingRows {
 		existing[row.Key] = existingVal{Value: row.Value, IsSecret: row.IsSecret, IsEncrypted: row.IsEncrypted}
+		existingPlain[row.Key] = row.Value
+	}
+	if msg := managedWhatsAppEditRefusal(req.ProviderType, req.ProviderName, httpware.IsPlatformOwner(ctx), existingPlain, req.Settings); msg != "" {
+		jsonError(w, http.StatusForbidden, msg)
+		return
 	}
 
 	_, _ = h.client.ProviderSetting.Delete().

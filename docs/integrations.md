@@ -518,6 +518,31 @@ Onboarding:
 
 **Status**: Planned for future implementation
 
+#### Managed link (number in the Codevertex portfolio)
+
+A tenant's number can be connected two ways. Embedded Signup stays the normal path: the tenant connects its own number in its own business portfolio, and I store that business's token. The managed link is the second path, for a tenant whose WhatsApp account lives inside the verified Codevertex Africa Limited portfolio (owner decision 2026-11-13). Meta's Embedded Signup never offers the portfolio of the business that owns the app, by design, so such an account can only be set up by hand in WhatsApp Manager and then linked here. Hadia is the first.
+
+Use Embedded Signup when the tenant has, or can create, its own business portfolio; its own name shows in chats once it verifies that business with Meta, and its sending limits grow with its own verification. Use the managed link when we run the account for the tenant inside our verified portfolio, so it starts with our verification and our payment method.
+
+Steps in WhatsApp Manager (Business Settings of the Codevertex Africa Limited portfolio):
+
+1. Create a new WhatsApp account inside the verified portfolio, named after the tenant.
+2. Add the tenant's phone number to that account and verify it by SMS or call.
+3. Attach the payment method under the account's payment settings (paid templates fail with #131042 without one).
+4. Under System users, assign the platform system user to the new WhatsApp account with full control. Without this every Meta call answers "missing permissions".
+5. Copy the Phone Number ID and the WhatsApp account ID from the account's API setup page.
+
+Then, signed in as a platform owner and acting for the tenant, open Settings > Providers > WhatsApp and use "Link a number from our portfolio" with those two IDs. The UI calls `POST /api/v1/billing/whatsapp/managed-link` with `{"phone_number_id": "...", "waba_id": "..."}` and the tenant in `X-Tenant-ID`. Anyone who is not a platform owner gets 403.
+
+With the platform access token (`LoadPlatformMetaCredentials`), the handler:
+
+- refuses the platform's own account and number, and any number or account already saved on another tenant (409);
+- reads the number (`display_phone_number`, `verified_name`, `platform_type`, `status`) and the account's `phone_numbers`, and refuses a number that is not in that account (400); when Meta refuses either read, the 502 carries Meta's message and says to check the system user assignment;
+- subscribes our app to the account's webhooks, and registers the number for Cloud API with a generated PIN only when it is not already on Cloud API (the PIN is saved encrypted);
+- saves `phone_number_id`, `waba_id` and `token_source=platform` on the tenant, removes any old tenant `access_token`, clears the settings cache and starts the template and profile auto-syncs, then answers like Embedded Signup (including `payment_method_missing`).
+
+`token_source=platform` is what makes sends, the template sync, the profile editor and Disconnect use the platform system user's token with the tenant's own number and account IDs (`Manager.tenantWhatsAppSettings`). Without that marker the platform token is never used for a tenant number. Only a platform owner can set the marker through the settings form, and a tenant cannot change the number or account of a managed link there. Disconnect removes the marker with the other connection rows, and a later Embedded Signup removes it too, so the tenant's own token takes over.
+
 #### Tenant template sync (own WhatsApp Business Account)
 
 Meta approves message templates per WhatsApp Business Account (WABA). A tenant that connects its own number through Embedded Signup gets a new WABA with none of our templates, so every template send from its number fails until they exist there. Hadia hit exactly this (WABA 1625290866305102), while Urban Loft worked because its WABA already had them.

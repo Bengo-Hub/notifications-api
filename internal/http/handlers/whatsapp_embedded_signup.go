@@ -68,11 +68,19 @@ type WhatsAppEmbeddedSignupHandler struct {
 	conn func(ctx context.Context, tenantID string) (phoneID, wabaID, token, version string)
 	// remove deletes the tenant's own whatsapp/meta_cloud connection rows.
 	remove func(ctx context.Context, tenantID string) error
+	// removeKeys deletes the named tenant whatsapp/meta_cloud rows: a managed link drops an old
+	// tenant access_token, and Embedded Signup drops an old token_source marker.
+	removeKeys func(ctx context.Context, tenantID string, keys ...string) error
+	// linkedElsewhere reports whether the phone number ID or WhatsApp account ID is already saved
+	// on a tenant other than tenantID.
+	linkedElsewhere func(ctx context.Context, tenantID, phoneNumberID, wabaID string) (bool, error)
+	// platformID is the platform tenant, whose own number is never linked to another tenant.
+	platformID string
 }
 
 // connectionKeys are the tenant rows a connection writes and Disconnect removes. Other settings
 // (for example the preferred provider) stay.
-var connectionKeys = []string{"phone_number_id", "waba_id", "access_token", "registration_pin"}
+var connectionKeys = []string{"phone_number_id", "waba_id", "access_token", "registration_pin", providers.TokenSourceKey}
 
 // WithTemplateAutoSync sets the background template sync started after a successful signup.
 func (h *WhatsAppEmbeddedSignupHandler) WithTemplateAutoSync(fn func(ctx context.Context, tenantID string)) *WhatsAppEmbeddedSignupHandler {
@@ -116,6 +124,9 @@ func NewWhatsAppEmbeddedSignupHandler(client *ent.Client, log *zap.Logger, pm *p
 		return phoneID, wabaID, token, version
 	}
 	h.remove = h.removeTenantConnection
+	h.removeKeys = h.removeTenantKeys
+	h.linkedElsewhere = h.numberLinkedElsewhere
+	h.platformID = pm.PlatformID
 	return h
 }
 
@@ -214,15 +225,36 @@ func (h *WhatsAppEmbeddedSignupHandler) graphDelete(ctx context.Context, apiVers
 
 // removeTenantConnection deletes the tenant's own connection rows (every environment).
 func (h *WhatsAppEmbeddedSignupHandler) removeTenantConnection(ctx context.Context, tenantID string) error {
+	return h.removeTenantKeys(ctx, tenantID, connectionKeys...)
+}
+
+// removeTenantKeys deletes the named tenant whatsapp/meta_cloud rows (every environment).
+func (h *WhatsAppEmbeddedSignupHandler) removeTenantKeys(ctx context.Context, tenantID string, keys ...string) error {
 	_, err := h.client.ProviderSetting.Delete().
 		Where(
 			providersetting.TenantID(tenantID),
 			providersetting.ProviderType("whatsapp"),
 			providersetting.ProviderName("meta_cloud"),
-			providersetting.KeyIn(connectionKeys...),
+			providersetting.KeyIn(keys...),
 		).
 		Exec(ctx)
 	return err
+}
+
+// numberLinkedElsewhere looks for the phone number ID or WhatsApp account ID on any other tenant's
+// whatsapp/meta_cloud rows (both are saved in plain text).
+func (h *WhatsAppEmbeddedSignupHandler) numberLinkedElsewhere(ctx context.Context, tenantID, phoneNumberID, wabaID string) (bool, error) {
+	return h.client.ProviderSetting.Query().
+		Where(
+			providersetting.TenantIDNEQ(tenantID),
+			providersetting.ProviderType("whatsapp"),
+			providersetting.ProviderName("meta_cloud"),
+			providersetting.Or(
+				providersetting.And(providersetting.Key("phone_number_id"), providersetting.Value(phoneNumberID)),
+				providersetting.And(providersetting.Key("waba_id"), providersetting.Value(wabaID)),
+			),
+		).
+		Exist(ctx)
 }
 
 type completeSignupRequest struct {
@@ -316,6 +348,15 @@ func (h *WhatsAppEmbeddedSignupHandler) Complete(w http.ResponseWriter, r *http.
 		h.log.Error("embedded signup: failed to store tenant settings", zap.String("tenant_id", tenantID), zap.Error(err))
 		jsonError(w, http.StatusInternalServerError, "connected to Meta but failed to save the number, contact support")
 		return
+	}
+	// A tenant moving from a managed link to its own account must use its new business token, so
+	// the managed link marker goes.
+	if h.removeKeys != nil {
+		if err := h.removeKeys(ctx, tenantID, providers.TokenSourceKey); err != nil {
+			h.log.Error("embedded signup: could not remove the managed link marker", zap.String("tenant_id", tenantID), zap.Error(err))
+			jsonError(w, http.StatusInternalServerError, "connected to Meta but failed to save the number, contact support")
+			return
+		}
 	}
 
 	// Sends and the template sync read these rows through a short per-pod cache; drop it so the

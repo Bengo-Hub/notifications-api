@@ -315,6 +315,9 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 							wa.Use(authenticator.RequirePermissions(identity.PermBillingManage))
 						}
 						wa.Post("/embedded-signup/complete", whatsappEmbeddedSignup.Complete)
+						// Links a number from the Codevertex verified portfolio to the tenant named
+						// in X-Tenant-ID; the handler refuses anyone but a platform owner.
+						wa.Post("/managed-link", whatsappEmbeddedSignup.ManagedLink)
 						// Removes the tenant's own connection (and releases it on Meta when it exists).
 						wa.Delete("/connection", whatsappEmbeddedSignup.Disconnect)
 					})

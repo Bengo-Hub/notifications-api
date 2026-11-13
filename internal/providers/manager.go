@@ -33,6 +33,64 @@ type Manager struct {
 	vapidMu    sync.Mutex
 	vapidCache *push.WebPushConfig
 	vapidAt    time.Time
+
+	// Test seams for the WhatsApp credential resolution; nil means the database.
+	tenantOnlyWhatsApp func(ctx context.Context, tenantID string) (pcfg.Settings, error)
+	platformMeta       func(ctx context.Context) (pcfg.Settings, error)
+}
+
+// TokenSourceKey is the tenant whatsapp/meta_cloud row that marks a managed link: a number a
+// platform owner created in a WhatsApp account inside the Codevertex verified portfolio and linked
+// to the tenant (POST /billing/whatsapp/managed-link). Its value TokenSourcePlatform means the
+// platform system user's token, assigned to that account, is used with the tenant's own number
+// and account IDs. It is not a secret.
+const (
+	TokenSourceKey      = "token_source"
+	TokenSourcePlatform = "platform"
+)
+
+// loadTenantOnlyWhatsApp reads the tenant's own whatsapp/meta_cloud rows (no platform fallback).
+func (m *Manager) loadTenantOnlyWhatsApp(ctx context.Context, tenantID string) (pcfg.Settings, error) {
+	if m.tenantOnlyWhatsApp != nil {
+		return m.tenantOnlyWhatsApp(ctx, tenantID)
+	}
+	return pcfg.LoadTenantOnlyProviderSettings(ctx, m.dbCfg, tenantID, m.env, "whatsapp", "meta_cloud", m.decryptionKey)
+}
+
+// tenantWhatsAppSettings is the tenant's own whatsapp/meta_cloud settings with the access token
+// resolved. Only a tenant row marked token_source=platform gets the platform token; without that
+// marker the tenant's own token (or none) is kept, so a tenant number can never send with another
+// account's token by accident.
+func (m *Manager) tenantWhatsAppSettings(ctx context.Context, tenantID string) (pcfg.Settings, error) {
+	s, err := m.loadTenantOnlyWhatsApp(ctx, tenantID)
+	if err != nil {
+		return s, err
+	}
+	if strings.TrimSpace(s[TokenSourceKey]) != TokenSourcePlatform {
+		return s, nil
+	}
+	var platform pcfg.Settings
+	if m.platformMeta != nil {
+		platform, _ = m.platformMeta(ctx)
+	} else {
+		platform, _ = m.LoadPlatformMetaCredentials(ctx)
+	}
+	return applyPlatformToken(s, platform), nil
+}
+
+// applyPlatformToken returns a copy of a managed-link tenant's settings using the platform's
+// access token (never a stale tenant token left behind) and, when the tenant has none, the
+// platform's Graph API version. The tenant's own number and account IDs stay.
+func applyPlatformToken(own, platform pcfg.Settings) pcfg.Settings {
+	out := pcfg.Settings{}
+	for k, v := range own {
+		out[k] = v
+	}
+	out["access_token"] = strings.TrimSpace(platform["access_token"])
+	if strings.TrimSpace(out["api_version"]) == "" {
+		out["api_version"] = platform["api_version"]
+	}
+	return out
 }
 
 // NewManager creates a provider manager. decryptionKey is optional (32 bytes) for decrypting provider secrets at rest.
@@ -127,7 +185,7 @@ func (m *Manager) LoadTenantWhatsAppTemplateCredentials(ctx context.Context, ten
 	if strings.TrimSpace(tenantID) == "" {
 		return "", "", errors.New("tenant id is required")
 	}
-	s, loadErr := pcfg.LoadTenantOnlyProviderSettings(ctx, m.dbCfg, tenantID, m.env, "whatsapp", "meta_cloud", m.decryptionKey)
+	s, loadErr := m.tenantWhatsAppSettings(ctx, tenantID)
 	return tenantTemplateCredentials(s, loadErr)
 }
 
@@ -139,7 +197,7 @@ func (m *Manager) LoadTenantWhatsAppProfileCredentials(ctx context.Context, tena
 	if strings.TrimSpace(tenantID) == "" {
 		return "", "", "", errors.New("tenant id is required")
 	}
-	s, loadErr := pcfg.LoadTenantOnlyProviderSettings(ctx, m.dbCfg, tenantID, m.env, "whatsapp", "meta_cloud", m.decryptionKey)
+	s, loadErr := m.tenantWhatsAppSettings(ctx, tenantID)
 	return tenantProfileCredentials(s, loadErr)
 }
 
@@ -210,7 +268,9 @@ func (m *Manager) GetWhatsAppProvider(ctx context.Context, tenantID string, pref
 	for _, name := range dedup(order) {
 		switch name {
 		case "meta_cloud":
-			s, _ := pcfg.LoadTenantOnlyProviderSettings(ctx, m.dbCfg, tenantID, m.env, "whatsapp", "meta_cloud", m.decryptionKey)
+			// A managed-link tenant (token_source=platform) resolves to its own number with the
+			// platform system user's token; any other tenant keeps its own token.
+			s, _ := m.tenantWhatsAppSettings(ctx, tenantID)
 			accessToken := s["access_token"]
 			phoneNumberID := s["phone_number_id"]
 			apiVersion := s["api_version"]
