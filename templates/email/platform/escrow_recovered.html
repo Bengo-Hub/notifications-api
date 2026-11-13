@@ -1,0 +1,21 @@
+{{ define "content" }}
+  <h2>Escrow recovered{{ if .shared }} on shared PayHero account {{ .vendor_id }}{{ else }} for {{ .tenant_list }}{{ end }}</h2>
+  <p>
+    Treasury's hourly escrow reconciliation found the PayHero wallet covering the escrow pots again:
+    it holds {{ .wallet_balance }} against {{ .owed }} owed. The shortfall incident is closed.
+  </p>
+  <p>
+    Team wallet withdrawals and the daily commission sweep run again for
+    {{ if .shared }}each tenant on this account{{ else }}this tenant{{ end }}. Nothing else needs doing.
+  </p>
+  <table role="presentation" style="width:100%;border-collapse:collapse;margin:16px 0">
+    <tbody>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Scope</strong></td><td style="padding:6px 0">{{ if .shared }}Shared account, PayHero vendor {{ .vendor_id }}{{ else }}Own account{{ end }}</td></tr>
+      <tr><td style="padding:6px 12px 6px 0"><strong>{{ if eq .tenant_count 1 }}Tenant{{ else }}Tenants{{ end }}</strong></td><td style="padding:6px 0">{{ .tenant_list }}</td></tr>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Wallet balance</strong></td><td style="padding:6px 0">{{ .wallet_balance }}</td></tr>
+      <tr><td style="padding:6px 12px 6px 0"><strong>{{ if .shared }}Owed by every tenant on the account{{ else }}Owed to pots and in flight{{ end }}</strong></td><td style="padding:6px 0">{{ .owed }}</td></tr>
+      {{ if .as_of }}<tr><td style="padding:6px 12px 6px 0"><strong>Checked</strong></td><td style="padding:6px 0">{{ .as_of }}</td></tr>{{ end }}
+      {{ if .incident_id }}<tr><td style="padding:6px 12px 6px 0"><strong>Incident</strong></td><td style="padding:6px 0">{{ .incident_id }}</td></tr>{{ end }}
+    </tbody>
+  </table>
+{{ end }}

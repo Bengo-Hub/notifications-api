@@ -1,0 +1,26 @@
+{{ define "content" }}
+  <h2>QA session {{ .state }}: {{ .session_title }}</h2>
+  <p>
+    {{ if eq .state "closed" }}Testing has ended on the platform acceptance session {{ .session_title }}{{ if .subject }} ({{ .subject }}){{ end }} and its results are frozen into the report.
+    {{ if .outcome_known }}{{ if .passed }}The pass rule is met; the owner can now accept it.{{ else }}The pass rule is not met, so it cannot be accepted.{{ end }}{{ end }}
+    {{ else if eq .state "accepted" }}The platform acceptance session {{ .session_title }}{{ if .subject }} ({{ .subject }}){{ end }} was accepted and is signed off.
+    {{ else }}The platform acceptance session {{ .session_title }}{{ if .subject }} ({{ .subject }}){{ end }} was rejected. Its failures stay on record in the frozen report.{{ end }}
+  </p>
+  {{ if .reason }}
+  <p><strong>Reason:</strong> {{ .reason }}</p>
+  {{ end }}
+  <table role="presentation" style="width:100%;border-collapse:collapse;margin:16px 0">
+    <tbody>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Session</strong></td><td style="padding:6px 0">{{ .session_title }}</td></tr>
+      {{ if .subject }}<tr><td style="padding:6px 12px 6px 0"><strong>Testing</strong></td><td style="padding:6px 0">{{ .subject }}</td></tr>{{ end }}
+      {{ if .outcome_known }}<tr><td style="padding:6px 12px 6px 0"><strong>Pass rule</strong></td><td style="padding:6px 0">{{ if .passed }}Met{{ else }}Not met{{ end }}</td></tr>{{ end }}
+      {{ if .score }}<tr><td style="padding:6px 12px 6px 0"><strong>Score</strong></td><td style="padding:6px 0">{{ .score }} of 100</td></tr>{{ end }}
+      {{ if .document_hash }}<tr><td style="padding:6px 12px 6px 0"><strong>Report SHA-256</strong></td><td style="padding:6px 0"><code>{{ .document_hash }}</code></td></tr>{{ end }}
+    </tbody>
+  </table>
+  {{ if .link }}
+  <p>
+    <a class="button" href="{{ .link }}">Open the session</a>
+  </p>
+  {{ end }}
+{{ end }}

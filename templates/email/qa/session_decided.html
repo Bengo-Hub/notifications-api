@@ -1,0 +1,24 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <h2>{{ .session_title }} was {{ if .accepted }}accepted{{ else }}rejected{{ end }}</h2>
+  <p>
+    {{ if .accepted }}The acceptance session is signed off: the pass rule was met and the result is final.{{ else }}The acceptance session was rejected. Its failures stay on record in the frozen report.{{ end }}
+  </p>
+  {{ if .reason }}
+  <p><strong>Reason:</strong> {{ .reason }}</p>
+  {{ end }}
+  <table role="presentation" style="width:100%;border-collapse:collapse;margin:16px 0">
+    <tbody>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Session</strong></td><td style="padding:6px 0">{{ .session_title }}</td></tr>
+      {{ if .subject }}<tr><td style="padding:6px 12px 6px 0"><strong>Testing</strong></td><td style="padding:6px 0">{{ .subject }}</td></tr>{{ end }}
+      {{ if .organisation }}<tr><td style="padding:6px 12px 6px 0"><strong>Run by</strong></td><td style="padding:6px 0">{{ .organisation }}</td></tr>{{ end }}
+      <tr><td style="padding:6px 12px 6px 0"><strong>Decision</strong></td><td style="padding:6px 0">{{ if .accepted }}Accepted{{ else }}Rejected{{ end }}</td></tr>
+      {{ if .document_hash }}<tr><td style="padding:6px 12px 6px 0"><strong>Report SHA-256</strong></td><td style="padding:6px 0"><code>{{ .document_hash }}</code></td></tr>{{ end }}
+    </tbody>
+  </table>
+  {{ if .link }}
+  <p>
+    <a class="button" href="{{ .link }}">Open the session</a>
+  </p>
+  {{ end }}
+{{ end }}

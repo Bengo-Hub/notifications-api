@@ -1,0 +1,33 @@
+{{ define "content" }}
+  <h2>Escrow shortfall{{ if .shared }} on shared PayHero account {{ .vendor_id }}{{ else }} for {{ .tenant_list }}{{ end }}</h2>
+  <p>
+    Treasury's hourly escrow reconciliation found the PayHero wallet holding {{ .wallet_balance }}
+    against {{ .owed }} owed to escrow pots, {{ .shortfall }} short.
+    {{ if .shared }}This wallet is shared by {{ if eq .tenant_count 1 }}a tenant{{ else }}{{ .tenant_count }} tenants{{ end }} on the platform's root account, and it must cover the pots of every tenant on it together.{{ else }}This is the tenant's own wallet.{{ end }}
+  </p>
+  <p>
+    What is blocked: every Team wallet withdrawal and the daily commission sweep stay stopped for
+    {{ if .shared }}each tenant on this account{{ else }}this tenant{{ end }} until the wallet covers the pots again.
+  </p>
+  <p>
+    What to do: top up the wallet by the amount short, or investigate where the money went (a payout
+    or withdrawal that left without its record, PayHero charges booked late, or a collection not yet
+    settled). The reconciliation runs every hour and recovers by itself once the wallet covers the
+    pots; you will get a recovery notice then.
+  </p>
+  <table role="presentation" style="width:100%;border-collapse:collapse;margin:16px 0">
+    <tbody>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Scope</strong></td><td style="padding:6px 0">{{ if .shared }}Shared account, PayHero vendor {{ .vendor_id }}{{ else }}Own account{{ end }}</td></tr>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Amount short</strong></td><td style="padding:6px 0">{{ .shortfall }}</td></tr>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Wallet balance</strong></td><td style="padding:6px 0">{{ .wallet_balance }}</td></tr>
+      <tr><td style="padding:6px 12px 6px 0"><strong>{{ if .shared }}Owed by every tenant on the account{{ else }}Owed to pots and in flight{{ end }}</strong></td><td style="padding:6px 0">{{ .owed }}</td></tr>
+      {{ if .as_of }}<tr><td style="padding:6px 12px 6px 0"><strong>Checked</strong></td><td style="padding:6px 0">{{ .as_of }}</td></tr>{{ end }}
+      {{ if .incident_id }}<tr><td style="padding:6px 12px 6px 0"><strong>Incident</strong></td><td style="padding:6px 0">{{ .incident_id }}</td></tr>{{ end }}
+    </tbody>
+  </table>
+  <h3>{{ if eq .tenant_count 1 }}Tenant{{ else }}Tenants{{ end }}</h3>
+  <ul>
+    {{ range .tenants }}<li>{{ .name }}{{ if .pots }}: pots {{ .pots }}{{ end }}{{ if .in_flight }}, in flight {{ .in_flight }}{{ end }}</li>
+    {{ end }}
+  </ul>
+{{ end }}

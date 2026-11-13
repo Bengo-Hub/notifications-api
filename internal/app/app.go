@@ -449,6 +449,8 @@ func New(ctx context.Context) (*App, error) {
 			WithAuthAPI(cfg.Services.AuthAPI).
 			WithInternalKey(cfg.Security.APIKey).
 			WithEntClient(entClient).
+			// Escrow shortfall alerts keep their one-per-incident state in Redis (nil: in process).
+			WithCache(redisClient).
 			// Receipt requests for CRM-linked customers carry only crm_contact_id.
 			WithContacts(contacts.New(crm.New(cfg.Services.MarketflowServiceURL, cfg.Security.APIKey, log.Named("crm")), log.Named("contacts")))
 	}

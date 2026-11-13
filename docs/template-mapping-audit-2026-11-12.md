@@ -1,5 +1,20 @@
 # Template mapping audit, 12 November 2026
 
+## Addendum, 13 November 2026: tenant mail sent from the platform account
+
+Kura's case emails arrived from no-reply@codevertexafrica.com with Codevertex branding, although
+Kura's own SMTP account was configured and active. The delivery log filed them under the codevertex
+tenant.
+- truload-backend sends with a bng_ platform service key, which auth-api validates as service
+  "platform" with the superuser role.
+- `TryDeveloperKey` kept only the key's tenant id and dropped its roles and service.
+- Since the 11 November security fix only a privileged caller may name another tenant, so the tenant
+  in the body was ignored and the send used the platform account.
+
+Fixed in 3c223b4: the validated key now reaches the request as claims, the same way auth-client's
+API-key path does. A platform service key is privileged again; an ordinary tenant developer key
+stays pinned to its own tenant.
+
 A tenant's grace email read "Your subscription for has reached the end of its billing period" with
 an empty Plan line. The event never carried the plan and the consumer read a key that was not
 there. `html/template` prints a missing key as nothing, so these mistakes only show in the inbox. I

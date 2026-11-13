@@ -91,6 +91,12 @@ var Registry = []Type{
 	// Platform-ops reports: Hadia's daily and weekly health (hadia.ops.health_daily and _weekly).
 	{Key: "platform/hadia_health_daily", Label: "Hadia daily health report (platform ops)", Group: "Account & Security", Class: ClassLocked},
 	{Key: "platform/hadia_health_weekly", Label: "Hadia weekly health report (platform ops)", Group: "Account & Security", Class: ClassLocked},
+	// Platform-ops alerts: treasury's escrow reconciliation found a wallet short of its pots, and its recovery.
+	{Key: "platform/escrow_shortfall", Label: "Escrow wallet shortfall (platform ops)", Group: "Account & Security", Class: ClassLocked},
+	{Key: "platform/escrow_recovered", Label: "Escrow wallet recovered (platform ops)", Group: "Account & Security", Class: ClassLocked},
+	// Platform-ops alerts from projects-api QA acceptance on a Codevertex service session.
+	{Key: "platform/qa_result_failed", Label: "QA blocking failure on a platform session (platform ops)", Group: "Account & Security", Class: ClassLocked},
+	{Key: "platform/qa_session_update", Label: "QA platform session closed or decided (platform ops)", Group: "Account & Security", Class: ClassLocked},
 	// Billing notices about the tenant's own Codevertex subscription are transactional: a renewal is
 	// also the confirmation of the payment that renewed it. Optional (off by default) meant no tenant
 	// ever got one (10 November 2026), so they default on like the other billing notices.
@@ -228,6 +234,12 @@ var Registry = []Type{
 	{Key: "ticketing/ticket_resolved", Label: "Support ticket resolved", Group: "Support & Projects", Class: ClassOptional},
 	{Key: "ticketing/ticket_sla_breached", Label: "Support ticket past its SLA", Group: "Support & Projects", Class: ClassOptional},
 	{Key: "projects/project_milestone_reached", Label: "Project milestone reached", Group: "Support & Projects", Class: ClassOptional},
+	// QA acceptance (projects-api project.qa.*): the invite is the only way in, and a blocking failure
+	// or a decision stops or settles the work, so all four default on.
+	{Key: "qa/invite", Label: "QA session invitation", Group: "Support & Projects", Class: ClassEssential},
+	{Key: "qa/result_failed", Label: "QA blocking failure recorded", Group: "Support & Projects", Class: ClassEssential},
+	{Key: "qa/session_closed", Label: "QA session closed", Group: "Support & Projects", Class: ClassEssential},
+	{Key: "qa/session_decided", Label: "QA session accepted or rejected", Group: "Support & Projects", Class: ClassEssential},
 	{Key: "digitika/enrollment_confirmed", Label: "Enrollment confirmed", Group: "Education", Class: ClassEssential},
 	{Key: "digitika/installment_receipt", Label: "Installment receipt", Group: "Education", Class: ClassEssential},
 	{Key: "digitika/installment_reminder", Label: "Installment reminder and overdue notice", Group: "Education", Class: ClassEssential},

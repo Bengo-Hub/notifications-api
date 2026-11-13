@@ -68,6 +68,8 @@ func startProjectsConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStream
 
 		mapping, ok := projectsMappings[evt.EventType]
 		if !ok {
+			// qa.* (QA acceptance) is sent by the events subscriber's own durable,
+			// notifications-projects-qa (internal/modules/events/project_qa.go), so it lands here.
 			logg.Debug("projects event: unhandled type, skipping", zap.String("type", evt.EventType))
 			_ = m.Ack()
 			return

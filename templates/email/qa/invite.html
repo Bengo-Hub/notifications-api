@@ -1,0 +1,27 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <h2>You are invited to {{ .session_title }}</h2>
+  <p>
+    {{ if .invited_by }}{{ .invited_by }}{{ if .organisation }} at {{ .organisation }}{{ end }}{{ else if .organisation }}{{ .organisation }}{{ else }}The session owner{{ end }}
+    invited you to this acceptance session with the role {{ .role }}: you will {{ .role_task }}.
+  </p>
+  <table role="presentation" style="width:100%;border-collapse:collapse;margin:16px 0">
+    <tbody>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Session</strong></td><td style="padding:6px 0">{{ .session_title }}</td></tr>
+      {{ if .subject }}<tr><td style="padding:6px 12px 6px 0"><strong>Testing</strong></td><td style="padding:6px 0">{{ .subject }}</td></tr>{{ end }}
+      {{ if .organisation }}<tr><td style="padding:6px 12px 6px 0"><strong>Run by</strong></td><td style="padding:6px 0">{{ .organisation }}</td></tr>{{ end }}
+      <tr><td style="padding:6px 12px 6px 0"><strong>Your role</strong></td><td style="padding:6px 0">{{ .role }}</td></tr>
+    </tbody>
+  </table>
+  {{ if .invite_link }}
+  <p>
+    <a class="button" href="{{ .invite_link }}">Open the session</a>
+  </p>
+  <p class="muted">
+    The page asks for this email address and sends a code to it, so the link only works for you.
+  </p>
+  {{ else }}
+  <p>The session owner will send you the link to open it.</p>
+  {{ end }}
+  <p class="muted">If you did not expect this invitation, you can ignore this email.</p>
+{{ end }}

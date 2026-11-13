@@ -1,0 +1,25 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <h2>{{ .criterion_title }} failed in {{ .session_title }}</h2>
+  <p>
+    {{ if .raised_by_hand }}A defect was raised by hand for a criterion that is failing{{ else }}A tester recorded a failure{{ end }}{{ if .severity_label }} at severity {{ .severity_label }}{{ end }}.
+    While it stays open the session cannot be accepted.
+  </p>
+  <table role="presentation" style="width:100%;border-collapse:collapse;margin:16px 0">
+    <tbody>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Criterion</strong></td><td style="padding:6px 0">{{ .criterion_title }}</td></tr>
+      {{ if .area_code }}<tr><td style="padding:6px 12px 6px 0"><strong>Area</strong></td><td style="padding:6px 0">{{ .area_code }}</td></tr>{{ end }}
+      {{ if .requirement_ref }}<tr><td style="padding:6px 12px 6px 0"><strong>Requirement</strong></td><td style="padding:6px 0">{{ .requirement_ref }}</td></tr>{{ end }}
+      {{ if .feature_code }}<tr><td style="padding:6px 12px 6px 0"><strong>Feature</strong></td><td style="padding:6px 0">{{ .feature_code }}</td></tr>{{ end }}
+      {{ if .severity_label }}<tr><td style="padding:6px 12px 6px 0"><strong>Severity</strong></td><td style="padding:6px 0">{{ .severity_label }}</td></tr>{{ end }}
+      {{ if .ticket_status }}<tr><td style="padding:6px 12px 6px 0"><strong>Ticket</strong></td><td style="padding:6px 0">{{ .ticket_status }}</td></tr>{{ end }}
+      {{ if .tester_hint }}<tr><td style="padding:6px 12px 6px 0"><strong>Tester</strong></td><td style="padding:6px 0">{{ .tester_hint }}</td></tr>{{ end }}
+      <tr><td style="padding:6px 12px 6px 0"><strong>Session</strong></td><td style="padding:6px 0">{{ .session_title }}{{ if .subject }} ({{ .subject }}){{ end }}</td></tr>
+    </tbody>
+  </table>
+  {{ if .link }}
+  <p>
+    <a class="button" href="{{ .link }}">Open the session</a>
+  </p>
+  {{ end }}
+{{ end }}

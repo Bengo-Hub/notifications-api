@@ -40,6 +40,11 @@ type Subscriber struct {
 	// event carries crm_contact_id instead of the customer's details. nil: receipts use the
 	// event's own fields only.
 	crmContacts contactLookup
+	// escrow gathers shared-account escrow alerts and keeps their dedupe state
+	// (escrow_shortfall_alert.go).
+	escrow escrowAlerts
+	// qaSeen remembers handled project.qa.* event ids when there is no Redis (project_qa.go).
+	qaSeen qaSeen
 }
 
 // WithContacts sets the CRM contact resolver used for receipts of CRM-linked customers.
@@ -102,6 +107,11 @@ func (s *Subscriber) Start(ctx context.Context) error {
 		// Stream hadia keeps 7 days: a first DeliverAll would send a week of old health reports.
 		"notif-hadia-ops-health-daily":  true,
 		"notif-hadia-ops-health-weekly": true,
+		// First rollout: an incident already open in the 72 hour window was never alerted, but the
+		// hourly checks keep it open and a recovery still reports it; replaying it would page ops on
+		// stale shortfalls.
+		"notif-escrow-reconciliation-shortfall": true,
+		"notif-escrow-reconciliation-recovered": true,
 	}
 
 	streams := map[string][]string{
@@ -146,11 +156,20 @@ func (s *Subscriber) Start(ctx context.Context) error {
 		// Payment provider outage and recovery: ops on email, Slack and WhatsApp; affected tenants by email.
 		{"treasury", "treasury.gateway.degraded", "notif-gateway-degraded", s.handleGatewayDegraded},
 		{"treasury", "treasury.gateway.recovered", "notif-gateway-recovered", s.handleGatewayRecovered},
+		// Escrow reconciliation shortfall (withdrawals and the commission sweep stop): ops on email,
+		// Slack and WhatsApp. Its recovery: ops on email and Slack. One alert per incident.
+		{"treasury", "treasury.escrow.reconciliation_shortfall", "notif-escrow-reconciliation-shortfall", s.handleEscrowShortfall},
+		{"treasury", "treasury.escrow.reconciliation_recovered", "notif-escrow-reconciliation-recovered", s.handleEscrowRecovered},
 		// Hadia's platform health reports (responders platform_ops): ops email and Slack, and ops
 		// WhatsApp only for a daily report that needs a person. Stream hadia belongs to hadia-api, so it
 		// is not in the streams map above; the subscribe waits for it.
 		{"hadia", "hadia.ops.health_daily", "notif-hadia-ops-health-daily", s.handleHadiaHealthDaily},
 		{"hadia", "hadia.ops.health_weekly", "notif-hadia-ops-health-weekly", s.handleHadiaHealthWeekly},
+		// projects-api QA acceptance (project.qa.*): invites to the invitee; failures to ops for a
+		// platform session and to the tenant's team otherwise; close and decisions to the owner and
+		// signers. Stream projects belongs to projects-api (the worker's notifications-projects
+		// durable binds it too and acks qa.* as unmapped), so it is not in the streams map above.
+		{"projects", "project.qa.>", "notifications-projects-qa", s.handleProjectQA},
 		{"erp", "erp.email.requested", "notif-erp-email-req", s.handleERPEmailRequested},
 		{"erp", "erp.notification.requested", "notif-erp-notif-req", s.handleERPNotificationRequested},
 		{"isp", "isp.subscriber.created", "notif-isp-subscriber-created", s.handleISPSubscriberCreated},

@@ -123,6 +123,32 @@ The Notifications Service is a centralized communications platform for all Codev
 - `treasury.payment.success` - Send payment receipt
 - `treasury.payment.failed` - Send payment failure notification
 - `treasury.payment_link.generated` - Send payment link
+- `treasury.escrow.reconciliation_shortfall` and `treasury.escrow.reconciliation_recovered` - escrow
+  wallet shortfall and recovery, platform ops alerts (see below)
+
+**Escrow reconciliation alerts (added 13 November 2026)**: treasury's hourly escrow reconciliation
+(`internal/modules/escrow/reconcile.go`, `ReconcileAll`) publishes
+`treasury.escrow.reconciliation_shortfall` once when a tenant's PayHero wallet first holds less than
+its pots and releases in flight owe, and `treasury.escrow.reconciliation_recovered` once when it
+covers them again. While the incident is open treasury refuses Team wallet withdrawals and skips the
+daily commission sweep. Consumer `internal/modules/events/escrow_shortfall_alert.go` on stream
+`treasury`, durables `notif-escrow-reconciliation-shortfall` and
+`notif-escrow-reconciliation-recovered`, both new messages only so a first rollout does not replay
+the 72 hours the stream keeps. Both take the ops alert path (`sendOpsAlert` in
+`gateway_health_alert.go`): the shortfall goes by email to `PLATFORM_ALERT_EMAILS`
+(`platform/escrow_shortfall`), the Slack webhook and the ops WhatsApp numbers in auth-api's
+`platform_alert_channels`; the recovery (`platform/escrow_recovered`) by email and Slack only. Both
+templates are locked. The email names the tenant(s) by name or slug from the local tenant table
+(filled from auth-api by id), never personal data, with the scope (own account, or the shared
+account and its PayHero vendor id), the amount short, what is blocked and what to do (top up or
+investigate the wallet; the reconciliation recovers by itself).
+
+Tenants on one PayHero root wallet (`scope: shared_account`, with `vendor_id` and `shared_owed`)
+each get their own incident and event; the consumer gathers a vendor's events for 10 seconds and
+sends one alert listing every tenant with its pots. Dedupe keeps one alert per incident, not one per
+hourly check or redelivery: the key is the `incident_id` (tenant plus day when it is missing) or,
+for a shared account, the vendor id, and it holds the last state alerted (short or recovered) for 14
+days in Redis (in the process when Redis is down), so only a change of state sends.
 
 **Events Published**:
 - `notifications.delivery.completed` - Invoice email opened
@@ -289,6 +315,33 @@ riders still come from `logistics.fleet.*` events (`cmd/worker/fleet_consumer.go
 - `projects.task.due` - Send deadline reminder
 - `projects.comment.created` - Notify mentioned users
 - `projects.meeting.scheduled` - Send meeting invitation
+- `project.qa.invite.created`, `project.qa.result.failed`, `project.qa.session.closed`,
+  `project.qa.session.accepted`, `project.qa.session.rejected` - QA acceptance (see below)
+
+**QA acceptance (added 13 November 2026)**: projects-api's QA module (`internal/services/qa`,
+`PublishQAEvent`) publishes `project.qa.<type>` through its outbox with aggregate `project`, so
+the events ride the existing `projects` stream (`project.>`). The worker's `notifications-projects`
+durable sees them and acks them as unmapped; they are sent by the events subscriber
+(`internal/modules/events/project_qa.go`), durable `notifications-projects-qa` on `project.qa.>`,
+because the ops alert path (`sendOpsAlert`) lives there. Every payload carries `scope`: `platform`
+for a Codevertex service session and `tenant` otherwise. A tenant event (or one with no scope)
+never reaches ops.
+
+| Event | Platform scope | Tenant scope |
+|---|---|---|
+| `invite.created` | `qa/invite` to the invited address, sent from Codevertex | `qa/invite` to the invited address, tenant sender and branding |
+| `result.failed` | Ops: `platform/qa_result_failed` email, Slack; WhatsApp for severity 1 only | `qa/result_failed` to the session owner and the tenant's contact (auth-api), admins as fallback |
+| `session.closed` | `qa/session_closed` to owner and signers (Codevertex); ops email and Slack (`platform/qa_session_update`) | `qa/session_closed` to owner and signers; tenant contact when neither is reachable |
+| `session.accepted`, `session.rejected` | `qa/session_decided` to owner and signers; ops email and Slack | `qa/session_decided` to owner and signers; tenant contact as fallback |
+
+The owner is read from the local user table by `owner_id` (auth user id). Signers come from an
+optional `signers` list (`[{email, name}]`) that projects-api does not send yet (it keeps only
+address hashes), so until then the owner gets the close and decision notices. The invite carries
+the address in the event because projects-api does not store it; this service puts it only in the
+email, never in a log. `qa/invite`, `qa/result_failed`, `qa/session_closed` and
+`qa/session_decided` are essential; the two `platform/qa_*` alerts are locked. Each event id is
+claimed once in Redis (7 days; in the process without Redis) before anything is sent, and every
+email carries the idempotency key `project-qa-<event id>`.
 
 **Events Published**: None
 
