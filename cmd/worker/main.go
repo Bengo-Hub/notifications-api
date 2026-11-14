@@ -435,6 +435,8 @@ func main() {
 	// Start reseller application decision consumer (auth-service → Certified Reseller
 	// Program applicant approve/reject emails, plain NATS)
 	startResellerApplicationNotificationConsumer(ctx, nc, cfg, logg)
+	// Material Terms of Service or Privacy Policy change, one email per user (auth-api fan-out)
+	startLegalChangeNoticeConsumer(ctx, nc, cfg, logg)
 
 	// Start treasury event consumer (treasury-service → payment/invoice notifications)
 	startTreasuryConsumer(ctx, nc, js, cfg, tr, pm, dbPool, prefGate, templateChannels, logg)
