@@ -417,15 +417,14 @@ func (s *Syncer) create(ctx context.Context, def TemplateDef) error {
 			{"type": "BUTTONS", "buttons": []map[string]any{{"type": "OTP", "otp_type": "COPY_CODE"}}},
 		}
 	} else {
-		components := []map[string]any{
-			{
-				"type": "BODY",
-				"text": def.Body,
-				"example": map[string]any{
-					"body_text": [][]string{def.Example},
-				},
-			},
+		body := map[string]any{"type": "BODY", "text": def.Body}
+		// Meta wants example values only for a body with {{n}} variables; an empty example on a body
+		// without any (notifications_test_message_v1) is refused with error 2388043 "component of type
+		// BODY is missing expected field(s) (example.body_text)".
+		if len(def.Example) > 0 {
+			body["example"] = map[string]any{"body_text": [][]string{def.Example}}
 		}
+		components := []map[string]any{body}
 		if len(def.Buttons) > 0 {
 			buttons := make([]map[string]any, 0, len(def.Buttons))
 			for _, b := range def.Buttons {

@@ -65,3 +65,44 @@ func TestRunBatchSubmitsInBatches(t *testing.T) {
 		t.Errorf("dry run: creates %d remaining %d results %d", creates.Load(), remaining, len(results))
 	}
 }
+
+// A body without {{n}} variables is sent with no example (Meta refuses an empty one with error
+// 2388043, which blocked notifications_test_message_v1 on 14 November 2026); a body with variables
+// keeps its example values.
+func TestCreateSendsExampleOnlyForVariables(t *testing.T) {
+	bodies := map[string]map[string]any{}
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			_ = json.NewEncoder(w).Encode(map[string]any{"data": []map[string]any{}})
+			return
+		}
+		var body struct {
+			Name       string           `json:"name"`
+			Components []map[string]any `json:"components"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		for _, c := range body.Components {
+			if c["type"] == "BODY" {
+				bodies[body.Name] = c
+			}
+		}
+		_, _ = w.Write([]byte(`{"id":"1","status":"PENDING"}`))
+	}))
+	defer srv.Close()
+
+	s := NewSyncer("waba", "token")
+	s.GraphURL = srv.URL
+	defs := []TemplateDef{
+		{Name: "plain", Category: "UTILITY", Language: "en_US", Body: "No variables here."},
+		{Name: "with_vars", Category: "UTILITY", Language: "en_US", Body: "Hello {{1}}.", Example: []string{"Amina"}},
+	}
+	if _, _, err := s.RunBatch(context.Background(), defs, false, 10); err != nil {
+		t.Fatal(err)
+	}
+	if _, has := bodies["plain"]["example"]; has {
+		t.Errorf("a body without variables must carry no example: %v", bodies["plain"])
+	}
+	if _, has := bodies["with_vars"]["example"]; !has {
+		t.Errorf("a body with variables keeps its example: %v", bodies["with_vars"])
+	}
+}
