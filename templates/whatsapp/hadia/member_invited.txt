@@ -1,3 +1,3 @@
 Hello,
 
-{{ .inviter }} invited you to help run the Hadia gift registry *{{ .registry }}*. Sign in with this phone number to see it and help with the gifts. Hadia will never ask for your M-Pesa PIN.
+{{ .inviter }} added you as a co-owner of the Hadia gift registry *{{ .registry }}*. Your access is ready: open Hadia with this phone number to manage it. Hadia will never ask for your M-Pesa PIN.

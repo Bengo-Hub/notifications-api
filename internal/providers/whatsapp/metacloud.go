@@ -298,6 +298,10 @@ func internationalWhatsAppNumber(raw, dialCode string) string {
 	switch {
 	case strings.HasPrefix(digits, "00"):
 		return digits[2:] // international prefix form, e.g. 00254...
+	case len(digits) == 13 && digits[0] == '2' && digits[3] == '0':
+		// An African country code with the local 0 kept ("+254 0755 670 740"): Meta refuses it as
+		// malformed (#131009), so the 0 goes. These countries' numbers are nine digits after the code.
+		return digits[:3] + digits[4:]
 	case len(digits) == 10 && strings.HasPrefix(digits, "0"):
 		return dialCode + digits[1:]
 	case len(digits) == 9 && (digits[0] == '7' || digits[0] == '1'):

@@ -30,7 +30,7 @@ func TestRouterBuilds(t *testing.T) {
 		new(handlers.EncryptionKeyHandler), new(handlers.PreferencesHandler),
 		new(devauth.DeveloperKeyAuth), new(handlers.SwaggerHandler), new(handlers.WebhookHandler),
 		new(handlers.WhatsAppEmbeddedSignupHandler), new(handlers.WhatsAppTemplates), new(handlers.WhatsAppProfileHandler), new(handlers.WhatsAppInboxHandler),
-		new(handlers.AnnouncementHandler), new(handlers.BroadcastHandler), new(handlers.MailDeliveryHandler), nil)
+		new(handlers.AnnouncementHandler), new(handlers.BroadcastHandler), new(handlers.MailDeliveryHandler), new(handlers.WhatsAppCostsHandler), nil)
 	if h == nil {
 		t.Fatal("router.New returned nil")
 	}

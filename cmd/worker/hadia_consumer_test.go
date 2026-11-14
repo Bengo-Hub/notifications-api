@@ -378,3 +378,55 @@ func TestHadiaFundAlerts(t *testing.T) {
 		t.Fatalf("behind: %s", html)
 	}
 }
+
+// Meta refused hadia_member_invited_v1_btn as INCORRECT_CATEGORY (14 November 2026). The invite now
+// goes out as v2, a co-owner notice in UTILITY with the same two params and the sign-in button, and
+// v1 is no longer declared so the sync never submits it again.
+func TestHadiaMemberInvitedV2(t *testing.T) {
+	m := hadiaMappings["registry.member_invited"][0].maskaniMapping
+	if m.WATemplate != "hadia_member_invited_v2_btn" {
+		t.Fatalf("WATemplate = %s, want hadia_member_invited_v2_btn", m.WATemplate)
+	}
+	params := m.WAParams(m.Data(map[string]any{"inviter_name": "Amina", "registry_title": "Wedding", "invitee_phone": "254700000000"}, &tenantInfo{}))
+	if len(params) != 2 || params[0] != "Amina" || params[1] != "Wedding" {
+		t.Fatalf("params = %v", params)
+	}
+
+	raw, err := os.ReadFile(filepath.Join("..", "..", "internal", "whatsapp", "templatesync", "templates.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var declared []struct {
+		Name     string            `json:"name"`
+		Category string            `json:"category"`
+		Body     string            `json:"body"`
+		Example  []string          `json:"example"`
+		Buttons  []struct {
+			Text string `json:"text"`
+		} `json:"buttons"`
+	}
+	if err := json.Unmarshal(raw, &declared); err != nil {
+		t.Fatal(err)
+	}
+	// Owner, 14 November 2026: no "sign in" anywhere (the policy's INCORRECT_CATEGORY word list).
+	want := "Hello,\n\n{{1}} added you as a co-owner of the Hadia gift registry *{{2}}*. Your access is ready: open Hadia with this phone number to manage it. Hadia will never ask for your M-Pesa PIN."
+	found := false
+	for _, d := range declared {
+		switch d.Name {
+		case "hadia_member_invited_v1_btn":
+			t.Error("the rejected v1 is still declared")
+		case "hadia_member_invited_v2_btn":
+			found = true
+			if d.Category != "UTILITY" || d.Body != want || len(d.Example) != 2 || len(d.Buttons) != 1 || d.Buttons[0].Text != "Open Hadia" {
+				t.Errorf("v2 = %+v", d)
+			}
+		}
+	}
+	if !found {
+		t.Fatal("hadia_member_invited_v2_btn is not declared")
+	}
+	txt, err := os.ReadFile(filepath.Join("..", "..", "templates", "whatsapp", "hadia", "member_invited.txt"))
+	if err != nil || !strings.Contains(string(txt), "added you as a co-owner") {
+		t.Fatalf("member_invited.txt not updated: %v", err)
+	}
+}

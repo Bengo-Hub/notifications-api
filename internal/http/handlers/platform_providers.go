@@ -521,15 +521,11 @@ func (h *PlatformProviders) TestProvider(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	message := "test message sent successfully"
-	if info != nil {
-		message = "connection verified"
-	}
 	jsonResponse(w, http.StatusOK, map[string]any{
 		"success":       true,
 		"provider_type": setting.ProviderType,
 		"provider_name": setting.ProviderName,
-		"message":       message,
+		"message":       providerTestMessage(setting.ProviderType, to, info),
 		"info":          info,
 	})
 }

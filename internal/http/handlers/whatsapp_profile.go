@@ -12,6 +12,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 
+	"github.com/bengobox/notifications-api/internal/providers"
 	"github.com/bengobox/notifications-api/internal/whatsapp/profile"
 )
 
@@ -65,6 +66,9 @@ func (h *WhatsAppProfileHandler) begin(w http.ResponseWriter, r *http.Request) (
 func (h *WhatsAppProfileHandler) fail(w http.ResponseWriter, tenantID, what string, err error) {
 	var ge *profile.GraphError
 	switch {
+	case errors.Is(err, providers.ErrTenantNumberUnlinked):
+		// A number saved without its WhatsApp account: a state to fix by linking it, not bad input.
+		jsonError(w, http.StatusConflict, providers.ErrTenantNumberUnlinked.Error())
 	case errors.Is(err, profile.ErrCredentials):
 		msg := err.Error()
 		if i := strings.Index(msg, ": "); i >= 0 {
@@ -88,7 +92,7 @@ func (h *WhatsAppProfileHandler) fail(w http.ResponseWriter, tenantID, what stri
 // @Tags Settings
 // @Produce json
 // @Success 200 {object} profile.Profile
-// @Failure 400,502 {object} errorResponse
+// @Failure 400,409,502 {object} errorResponse
 // @Security bearerAuth
 // @Router /settings/whatsapp/profile [get]
 func (h *WhatsAppProfileHandler) Get(w http.ResponseWriter, r *http.Request) {
@@ -113,7 +117,7 @@ func (h *WhatsAppProfileHandler) Get(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param request body profile.Update true "Fields to change"
 // @Success 200 {object} profile.Profile
-// @Failure 400,502 {object} errorResponse
+// @Failure 400,409,502 {object} errorResponse
 // @Security bearerAuth
 // @Router /settings/whatsapp/profile [put]
 func (h *WhatsAppProfileHandler) Update(w http.ResponseWriter, r *http.Request) {
@@ -145,7 +149,7 @@ type photoURLRequest struct {
 // @Accept multipart/form-data,json
 // @Produce json
 // @Success 200 {object} profile.Profile
-// @Failure 400,502 {object} errorResponse
+// @Failure 400,409,502 {object} errorResponse
 // @Security bearerAuth
 // @Router /settings/whatsapp/profile/photo [post]
 func (h *WhatsAppProfileHandler) Photo(w http.ResponseWriter, r *http.Request) {
@@ -205,7 +209,7 @@ type syncBrandingResponse struct {
 // @Tags Settings
 // @Produce json
 // @Success 200 {object} syncBrandingResponse
-// @Failure 400,502 {object} errorResponse
+// @Failure 400,409,502 {object} errorResponse
 // @Security bearerAuth
 // @Router /settings/whatsapp/profile/sync-branding [post]
 func (h *WhatsAppProfileHandler) SyncBranding(w http.ResponseWriter, r *http.Request) {

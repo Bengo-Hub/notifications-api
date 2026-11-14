@@ -232,6 +232,32 @@ func managedWhatsAppEditRefusal(providerType, providerName string, platformOwner
 	return ""
 }
 
+// manualWhatsAppNumberRefusal stops the settings form from saving a tenant's phone number ID with
+// nothing to use it with: no WhatsApp account, no token and no managed-link marker. That is how
+// Hadia's number was saved on 14 November 2026, and every send, template and profile call then
+// failed. A platform owner is sent to the portfolio link, which checks the number on Meta and saves
+// the account and marker with it; anyone else is told how to connect. The platform's own row is
+// left alone (its token is saved on Platform > Providers). Returns "" when the save is allowed.
+func manualWhatsAppNumberRefusal(providerType, providerName, tenantID, platformID string, platformOwner bool, existing, settings map[string]string) string {
+	if providerType != "whatsapp" || providerName != "meta_cloud" || tenantID == platformID {
+		return ""
+	}
+	value := func(k string) string {
+		if v := strings.TrimSpace(settings[k]); v != "" && v != "••••••••" {
+			return v
+		}
+		return strings.TrimSpace(existing[k])
+	}
+	if value("phone_number_id") == "" || value("waba_id") != "" || value("access_token") != "" ||
+		value(providers.TokenSourceKey) == providers.TokenSourcePlatform {
+		return ""
+	}
+	if platformOwner {
+		return "a phone number ID on its own cannot send anything: use Link a number from our portfolio above with the phone number ID and the WhatsApp account ID from WhatsApp Manager"
+	}
+	return "a WhatsApp number cannot be entered by hand: connect it with Embedded Signup (Connect WhatsApp Number), or ask Codevertex support to link a number from our portfolio for you"
+}
+
 // isGraphID accepts Meta's numeric object IDs only, so nothing else reaches a Graph URL path.
 func isGraphID(s string) bool {
 	if s == "" || len(s) > 32 {

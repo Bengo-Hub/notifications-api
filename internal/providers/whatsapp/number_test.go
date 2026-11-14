@@ -14,6 +14,14 @@ func TestInternationalWhatsAppNumber(t *testing.T) {
 		{"254712345678", "256", "254712345678"},
 		{"00256772123456", "", "256772123456"},
 		{"+1 (415) 555-0100", "", "14155550100"},
+		// The Test button on 14 November 2026: Meta answered 131009 "The phone number is malformed"
+		// for a Kenyan number. Typed with the country code and the local 0 kept, it reached Meta as
+		// 2540755670740.
+		{"0755670740", "", "254755670740"},
+		{"+254 0755670740", "", "254755670740"},
+		{"2540755670740", "", "254755670740"},
+		{"+256 0772 123456", "", "256772123456"},
+		{"+2560772123456", "254", "256772123456"},
 	}
 	for _, tc := range cases {
 		if got := internationalWhatsAppNumber(tc.raw, tc.dial); got != tc.want {

@@ -596,6 +596,14 @@ With the platform access token (`LoadPlatformMetaCredentials`), the handler:
 
 `token_source=platform` is what makes sends, the template sync, the profile editor and Disconnect use the platform system user's token with the tenant's own number and account IDs (`Manager.tenantWhatsAppSettings`). Without that marker the platform token is never used for a tenant number. Only a platform owner can set the marker through the settings form, and a tenant cannot change the number or account of a managed link there. Disconnect removes the marker with the other connection rows, and a later Embedded Signup removes it too, so the tenant's own token takes over.
 
+**A number ID saved on its own (fixed 2026-11-14).** Hadia's number (phone number ID 1471029032759769) was created in WhatsApp Manager and its ID pasted into the old "Manual Setup: Phone Number ID" field. That form saved only `phone_number_id`: no `waba_id`, no token and no `token_source`. The settings page then said "connected" while every send was skipped ("no WhatsApp number registered for this tenant"), and the template and profile pages answered 400 asking for an Embedded Signup reconnect. I closed that path:
+
+- The UI no longer has the manual field. A platform owner uses "Link a number from our portfolio" with both IDs; a tenant connects with Embedded Signup. A saved number ID without its account now shows as "Number saved but not linked yet", and the profile and templates cards stay hidden until it is linked.
+- `POST /api/v1/providers/settings` refuses (422) a whatsapp/meta_cloud save that would leave a tenant with a `phone_number_id` and no `waba_id`, no token and no `token_source=platform`. A platform owner is told to use the portfolio link with the two IDs; anyone else is told to connect with Embedded Signup or ask Codevertex support. The platform's own row is not affected.
+- A tenant already in that state gets `ErrTenantNumberUnlinked`: the template and profile routes answer 409 saying the number has to be linked from our portfolio, and a send still counts as `ErrNoWhatsAppNumber` (the worker skips it) with the same explanation in its error.
+
+Running the managed link for that tenant overwrites the half-saved rows, so nothing else needs cleaning up first.
+
 #### Tenant template sync (own WhatsApp Business Account)
 
 Meta approves message templates per WhatsApp Business Account (WABA). A tenant that connects its own number through Embedded Signup gets a new WABA with none of our templates, so every template send from its number fails until they exist there. Hadia hit exactly this (WABA 1625290866305102), while Urban Loft worked because its WABA already had them.
@@ -612,7 +620,7 @@ I sync only the templates a tenant can actually send (owner decision "Only what 
 
 | Service or product | Manifest prefixes |
 |---|---|
-| always (shared) | `auth_`, `subscription_`, `credits_`, `broadcast_`, `occasion_` |
+| always (shared) | `auth_`, `subscription_`, `credits_`, `broadcast_`, `occasion_`, `notifications_test_` (the provider Test button's template) |
 | ordering | `ordering_` |
 | pos | `pos_` |
 | logistics | `logistics_` |

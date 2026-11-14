@@ -214,10 +214,29 @@ func tenantProfileCredentials(s pcfg.Settings, loadErr error) (string, string, s
 	if id == "" {
 		return "", "", "", ErrNoTenantPhoneNumber
 	}
+	if numberUnlinked(s) {
+		return "", "", "", ErrTenantNumberUnlinked
+	}
 	if token == "" {
 		return "", "", "", ErrNoTenantWABAToken
 	}
 	return id, token, strings.TrimSpace(s["api_version"]), nil
+}
+
+// ErrTenantNumberUnlinked: a phone number ID was saved for the tenant by hand, with no WhatsApp
+// Business Account, no token and no managed-link marker, so nothing can be sent or managed with it
+// (Hadia, 14 November 2026). The fix is the portfolio link, not an Embedded Signup reconnect.
+var ErrTenantNumberUnlinked = errors.New("this WhatsApp number was saved without its WhatsApp Business Account, so it cannot be used yet: " +
+	"a Codevertex platform owner has to link it from our portfolio (Link a number from our portfolio, with the phone number ID and the WhatsApp account ID), " +
+	"or connect the number with Embedded Signup")
+
+// numberUnlinked reports a number saved with nothing to use it with: no WhatsApp account, no
+// token and no managed-link marker.
+func numberUnlinked(s pcfg.Settings) bool {
+	return strings.TrimSpace(s["phone_number_id"]) != "" &&
+		strings.TrimSpace(s["waba_id"]) == "" &&
+		strings.TrimSpace(s["access_token"]) == "" &&
+		strings.TrimSpace(s[TokenSourceKey]) != TokenSourcePlatform
 }
 
 // ErrNoTenantWABA: the tenant has not connected a WhatsApp Business Account of its own.
@@ -234,6 +253,9 @@ func tenantTemplateCredentials(s pcfg.Settings, loadErr error) (string, string, 
 	}
 	wabaID := strings.TrimSpace(s["waba_id"])
 	token := strings.TrimSpace(s["access_token"])
+	if numberUnlinked(s) {
+		return "", "", ErrTenantNumberUnlinked
+	}
 	if wabaID == "" {
 		return "", "", ErrNoTenantWABA
 	}
@@ -265,12 +287,17 @@ func (m *Manager) GetWhatsAppProvider(ctx context.Context, tenantID string, pref
 	if preferred != "" {
 		order = append([]string{strings.ToLower(preferred)}, order...)
 	}
+	noNumber := ErrNoWhatsAppNumber
 	for _, name := range dedup(order) {
 		switch name {
 		case "meta_cloud":
 			// A managed-link tenant (token_source=platform) resolves to its own number with the
 			// platform system user's token; any other tenant keeps its own token.
 			s, _ := m.tenantWhatsAppSettings(ctx, tenantID)
+			if numberUnlinked(s) {
+				// Still ErrNoWhatsAppNumber (the worker skips the send), saying what to do.
+				noNumber = fmt.Errorf("%w: %w", ErrNoWhatsAppNumber, ErrTenantNumberUnlinked)
+			}
 			accessToken := s["access_token"]
 			phoneNumberID := s["phone_number_id"]
 			apiVersion := s["api_version"]
@@ -305,7 +332,7 @@ func (m *Manager) GetWhatsAppProvider(ctx context.Context, tenantID string, pref
 			}), nil
 		}
 	}
-	return nil, ErrNoWhatsAppNumber
+	return nil, noNumber
 }
 
 // EmailReplyTo is the tenant's own Reply-To address for its emails (the `reply_to` setting of its
@@ -468,9 +495,13 @@ func (m *Manager) TestConnection(ctx context.Context, tenantID, channel, provide
 		if err != nil {
 			return nil, err
 		}
-		// A free plain text, never a paid template (see whatsAppTestSend).
+		// The approved test template, else a free text (see whatsAppTestSend).
 		if to != "" {
-			return nil, whatsAppTestSend(ctx, prov, to)
+			sentAs, err := whatsAppTestSend(ctx, prov, to)
+			if err != nil {
+				return nil, err
+			}
+			return map[string]interface{}{"sent_as": sentAs, "template": WhatsAppTestTemplate}, nil
 		}
 		if infoProv, ok := prov.(AccountInfoProvider); ok {
 			return infoProv.AccountInfo(ctx)

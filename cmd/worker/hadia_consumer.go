@@ -296,7 +296,8 @@ var hadiaMappings = map[string][]hadiaMessage{
 		Data: func(p map[string]any, _ *tenantInfo) map[string]any {
 			return map[string]any{"inviter": waParam(p["inviter_name"], "A Hadia host"), "registry": mStr(p, "registry_title")}
 		},
-		WATemplate: "hadia_member_invited_v1_btn",
+		// v1 was refused as INCORRECT_CATEGORY (14 November 2026); v2 reads as a co-owner notice.
+		WATemplate: "hadia_member_invited_v2_btn",
 		WAParams:   func(d map[string]any) []string { return mParams(d, "inviter", "registry") },
 		Skip:       func(p map[string]any) bool { return mStr(p, "invitee_phone") == "" },
 	}}},

@@ -205,7 +205,7 @@ func (s *Service) target(ctx context.Context, tenantID string) (target, error) {
 	}
 	c, err := s.creds(ctx, tenantID)
 	if err != nil {
-		return target{}, fmt.Errorf("%w: %v", ErrCredentials, err)
+		return target{}, fmt.Errorf("%w: %w", ErrCredentials, err)
 	}
 	if c.PhoneNumberID == "" || c.AccessToken == "" {
 		return target{}, fmt.Errorf("%w: no connected number or token", ErrCredentials)

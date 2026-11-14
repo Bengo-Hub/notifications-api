@@ -212,6 +212,11 @@ const tenantTemplateTimeout = 2 * time.Minute
 // tenantTemplatesError answers a failed tenant template call: a missing connection is the
 // caller's to fix (400), anything else is Meta's or ours (502).
 func (h *WhatsAppTemplates) tenantTemplatesError(w http.ResponseWriter, tenantID, what string, err error) {
+	if errors.Is(err, providers.ErrTenantNumberUnlinked) {
+		// A number saved without its WhatsApp account: a state to fix by linking it, not bad input.
+		jsonError(w, http.StatusConflict, providers.ErrTenantNumberUnlinked.Error())
+		return
+	}
 	if errors.Is(err, tenanttemplates.ErrCredentials) {
 		jsonError(w, http.StatusBadRequest, err.Error())
 		return
@@ -226,7 +231,7 @@ func (h *WhatsAppTemplates) tenantTemplatesError(w http.ResponseWriter, tenantID
 // @Tags Settings
 // @Produce json
 // @Success 200 {object} tenanttemplates.StatusReport
-// @Failure 400,502 {object} errorResponse
+// @Failure 400,409,502 {object} errorResponse
 // @Security bearerAuth
 // @Router /settings/whatsapp/templates [get]
 func (h *WhatsAppTemplates) TenantStatus(w http.ResponseWriter, r *http.Request) {
@@ -261,7 +266,7 @@ type tenantSyncRequest struct {
 // @Produce json
 // @Param request body tenantSyncRequest false "Sync options"
 // @Success 200 {object} tenanttemplates.SyncReport
-// @Failure 400,502 {object} errorResponse
+// @Failure 400,409,502 {object} errorResponse
 // @Security bearerAuth
 // @Router /settings/whatsapp/templates/sync [post]
 func (h *WhatsAppTemplates) TenantSync(w http.ResponseWriter, r *http.Request) {

@@ -610,6 +610,13 @@
     "example": ["Titus", "Codevertex Africa", "Our systems will be down for planned maintenance on Sunday from 1am to 3am."]
   },
   {
+    "name": "notifications_test_message_v1",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "Settings > Providers > WhatsApp > Test (no params): the provider test send",
+    "body": "This is a test message from the Test button in Codevertex Notifications. Messages from this business to its customers will come from this WhatsApp number. No reply is needed."
+  },
+  {
     "name": "maskani_bill_issued_v1_btn",
     "category": "UTILITY",
     "language": "en_US",
@@ -1004,14 +1011,14 @@
     ]
   },
   {
-    "name": "hadia_member_invited_v1_btn",
+    "name": "hadia_member_invited_v2_btn",
     "category": "UTILITY",
     "language": "en_US",
     "source": "whatsapp/hadia/member_invited.txt (params: inviter, registry; button: app)",
-    "body": "Hello,\n\n{{1}} invited you to help run the Hadia gift registry *{{2}}*. Sign in with this phone number to see it and help with the gifts. Hadia will never ask for your M-Pesa PIN.",
+    "body": "Hello,\n\n{{1}} added you as a co-owner of the Hadia gift registry *{{2}}*. Your access is ready: open Hadia with this phone number to manage it. Hadia will never ask for your M-Pesa PIN.",
     "example": ["Amina", "Amina and Tom's wedding"],
     "buttons": [
-      {"type": "URL", "text": "Sign in to Hadia", "url": "https://hadiafrica.com/{{1}}", "example": ["app"]}
+      {"type": "URL", "text": "Open Hadia", "url": "https://hadiafrica.com/{{1}}", "example": ["app"]}
     ]
   },
   {

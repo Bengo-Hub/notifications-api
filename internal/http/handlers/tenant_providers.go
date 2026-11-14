@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -351,6 +352,10 @@ func (h *TenantProviders) SaveProviderSettings(w http.ResponseWriter, r *http.Re
 		jsonError(w, http.StatusForbidden, msg)
 		return
 	}
+	if msg := manualWhatsAppNumberRefusal(req.ProviderType, req.ProviderName, tenantID, h.PlatformID, httpware.IsPlatformOwner(ctx), existingPlain, req.Settings); msg != "" {
+		jsonError(w, http.StatusUnprocessableEntity, msg)
+		return
+	}
 
 	_, _ = h.client.ProviderSetting.Delete().
 		Where(
@@ -485,8 +490,9 @@ func (h *TenantProviders) TestProvider(w http.ResponseWriter, r *http.Request) {
 			})
 			return
 		}
-		// The test message is a free plain text and is never charged: this only asks whether any
-		// WhatsApp category would allow a send, and consumes nothing.
+		// The test goes out as the approved utility template (Meta bills it to the tenant's own
+		// account) or a free text; this only asks whether any WhatsApp category would allow a
+		// send, and consumes no Codevertex credits.
 		dec, cerr := h.credits.CheckAnyWhatsApp(ctx, tid)
 		if cerr != nil || !dec.Allowed {
 			reason := "whatsapp billing could not be checked"
@@ -514,22 +520,30 @@ func (h *TenantProviders) TestProvider(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	message := "test message sent successfully"
-	if req.ProviderType == "whatsapp" {
-		// Meta accepts the free plain-text test at once and reports delivery seconds later: it is
-		// refused (#131047) unless the person wrote to this number in the last 24 hours.
-		message = "test message accepted by Meta. It reaches the phone only if that person wrote to this WhatsApp number in the last 24 hours; delivery shows in Monitoring"
-	}
-	if info != nil {
-		message = "connection verified"
-	}
 	jsonResponse(w, http.StatusOK, map[string]any{
 		"success":       true,
 		"provider_type": req.ProviderType,
 		"provider_name": req.ProviderName,
-		"message":       message,
+		"message":       providerTestMessage(req.ProviderType, req.To, info),
 		"info":          info,
 	})
+}
+
+// providerTestMessage is the Test button's answer. A WhatsApp test send reports how it went out:
+// Meta accepts it at once and reports delivery seconds later, and only the free text fallback is
+// limited to the 24 hour window (#131047).
+func providerTestMessage(providerType, to string, info map[string]interface{}) string {
+	if providerType == "whatsapp" && to != "" {
+		if info["sent_as"] == providers.TestSentAsTemplate {
+			return fmt.Sprintf("test message accepted by Meta as the approved template %v; delivery shows in Monitoring", info["template"])
+		}
+		return fmt.Sprintf("the test template %v is not approved on this WhatsApp account yet, so a free text was sent instead. "+
+			"It reaches the phone only if that person wrote to this WhatsApp number in the last 24 hours; delivery shows in Monitoring", info["template"])
+	}
+	if info != nil {
+		return "connection verified"
+	}
+	return "test message sent successfully"
 }
 
 func parseUUID(s string) uuid.UUID {

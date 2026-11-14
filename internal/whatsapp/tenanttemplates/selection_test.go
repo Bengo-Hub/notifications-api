@@ -181,3 +181,27 @@ func TestClaimsServicesOnlyForOwnTenant(t *testing.T) {
 		t.Fatalf("no claims: %v", got)
 	}
 }
+
+// The provider Test button sends notifications_test_message_v1 (owner, 14 November 2026), so every
+// tenant gets it with the shared set, whatever services it uses.
+func TestTestMessageTemplateIsShared(t *testing.T) {
+	sel, err := ParseSelection(defaultSelectionJSON)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defs := append([]templatesync.TemplateDef{{Name: "notifications_test_message_v1", Category: "UTILITY"}}, testDefs...)
+	for _, services := range [][]string{nil, {"hadia"}, {"ordering", "pos"}} {
+		got, _ := sel.Select(defs, services)
+		found := false
+		for _, n := range names(got) {
+			found = found || n == "notifications_test_message_v1"
+		}
+		if !found {
+			t.Fatalf("services %v: test template not selected", services)
+		}
+	}
+	raw, err := os.ReadFile(filepath.Join("..", "templatesync", "templates.json"))
+	if err != nil || !strings.Contains(string(raw), `"name": "notifications_test_message_v1"`) {
+		t.Fatalf("notifications_test_message_v1 is not declared in templates.json: %v", err)
+	}
+}

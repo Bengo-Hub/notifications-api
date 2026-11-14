@@ -75,6 +75,10 @@ working button: the suffix is the path of its link (`buttonURLSuffix`, `posButto
   reference is X, show it to the guard") was refused as `INCORRECT_CATEGORY` twice; v4 names the host
   and the unit ("Jane has booked your visit to unit B07 at Shaba Village... your booking number is
   482 915") and shows a six-digit number in two groups so it never reads as a sign-in code.
+  `hadia_member_invited_v1_btn` ("invited you to help run the registry") was refused the same way on
+  14 November 2026; v2 says who added the person and that they are now a co-owner, so it reads as a
+  notice about access already granted rather than an invitation. It also drops "sign in" from the body
+  and the button: the body says "open Hadia with this phone number" and the button reads "Open Hadia".
 - Meta rejects a UTILITY template as `INCORRECT_CATEGORY` when the wording reads as a login credential or
   a promotion. Keep these words out of bodies: password, login, username, sign in, one-time code, gate
   code, welcome, enjoy, thank you for choosing. Say "account details were sent to you separately" and

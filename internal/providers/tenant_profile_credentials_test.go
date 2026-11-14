@@ -19,7 +19,8 @@ func TestTenantProfileCredentials(t *testing.T) {
 		{name: "complete", s: pcfg.Settings{"phone_number_id": "P1", "access_token": "tok", "api_version": "v26.0"}},
 		{name: "no number", s: pcfg.Settings{"access_token": "tok"}, wantErr: ErrNoTenantPhoneNumber},
 		{name: "blank number", s: pcfg.Settings{"phone_number_id": " ", "access_token": "tok"}, wantErr: ErrNoTenantPhoneNumber},
-		{name: "no token", s: pcfg.Settings{"phone_number_id": "P1"}, wantErr: ErrNoTenantWABAToken},
+		{name: "number saved by hand", s: pcfg.Settings{"phone_number_id": "P1"}, wantErr: ErrTenantNumberUnlinked},
+		{name: "no token", s: pcfg.Settings{"phone_number_id": "P1", "waba_id": "W1"}, wantErr: ErrNoTenantWABAToken},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

@@ -1,5 +1,5 @@
 {
-  "shared": ["auth_", "subscription_", "credits_", "broadcast_", "occasion_"],
+  "shared": ["auth_", "subscription_", "credits_", "broadcast_", "occasion_", "notifications_test_"],
   "services": {
     "ordering": ["ordering_"],
     "pos": ["pos_"],
