@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"strings"
+
+	"github.com/bengobox/notifications-api/internal/providers/whatsapp"
 )
 
 // WhatsApp link policy (docs/whatsapp-template-policy.md, .claude/memory): a WhatsApp message never
@@ -37,6 +39,10 @@ func applyWhatsAppLinkButton(metadata map[string]interface{}, data map[string]in
 		return
 	}
 	if u, _ := metadata["cta_button_url"].(string); u != "" {
+		return
+	}
+	// A reply-button, list or media message already carries its own action.
+	if whatsapp.HasRichContent(metadata) {
 		return
 	}
 	for _, f := range whatsAppLinkFields {

@@ -20,6 +20,12 @@ func TestApplyWhatsAppLinkButton(t *testing.T) {
 		t.Fatalf("template sends carry their own button")
 	}
 
+	meta = map[string]interface{}{"interactive_buttons": []interface{}{map[string]interface{}{"id": "mf:cancel:r", "title": "Cancel"}}}
+	applyWhatsAppLinkButton(meta, map[string]interface{}{"cta_url": "https://marketflow.codevertexafrica.com/x"})
+	if _, ok := meta["cta_button_url"]; ok {
+		t.Fatalf("a reply-button message carries its own action")
+	}
+
 	meta = map[string]interface{}{}
 	applyWhatsAppLinkButton(meta, map[string]interface{}{"order_link": "-"})
 	if _, ok := meta["cta_button_url"]; ok {

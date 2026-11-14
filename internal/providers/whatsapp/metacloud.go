@@ -74,6 +74,9 @@ func (p *MetaCloudProvider) Name() string {
 //     (no template registration/approval needed, only the same open-reply-window requirement
 //     freeform text already has). Use this for a notification that always sends freeform and
 //     shows a link — attach it as a button rather than embedding the raw URL in the text.
+//   - metadata["template_name"] absent, interactive_buttons, interactive_list_rows or
+//     media_type/media_link set: a reply-button, list or media message (interactive.go), with a
+//     plain-text fallback when Meta refuses it. Same reply-window rule as cta_url.
 //   - metadata["template_name"] absent, no cta_button_*: falls back to the original free-form text
 //     body. metadata["preview_url"] (bool) still applies to that path.
 func (p *MetaCloudProvider) SendWhatsApp(ctx context.Context, from string, to []string, body string, metadata map[string]interface{}) error {
@@ -122,6 +125,9 @@ func (p *MetaCloudProvider) SendWhatsApp(ctx context.Context, from string, to []
 			if err == nil && id != "" && metadata != nil {
 				metadata[messaging.MetaSentMessageID] = id
 			}
+		} else if HasRichContent(metadata) {
+			// Reply buttons, a list or a media message (interactive.go), each with a text fallback.
+			_, err = p.sendRich(ctx, recipient, body, metadata)
 		} else if ctaText, _ := metadata["cta_button_text"].(string); ctaText != "" {
 			if ctaURL, _ := metadata["cta_button_url"].(string); ctaURL != "" {
 				err = p.sendInteractiveCTA(ctx, recipient, body, ctaText, ctaURL)

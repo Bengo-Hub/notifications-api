@@ -24,3 +24,31 @@ func TestInboundText(t *testing.T) {
 		}
 	}
 }
+
+// A tap carries the id we gave the button or row; typed text has none.
+func TestInboundReplyID(t *testing.T) {
+	cases := map[string]string{
+		`{"type":"text","text":{"body":"YES 1234"}}`:                                                                                    "",
+		`{"type":"button","button":{"payload":"stop","text":"Stop promotions"}}`:                                                       "stop",
+		`{"type":"interactive","interactive":{"type":"button_reply","button_reply":{"id":"mf:yes:run-1:1234","title":"Approve"}}}`:     "mf:yes:run-1:1234",
+		`{"type":"interactive","interactive":{"type":"list_reply","list_reply":{"id":"mf:f:objective:0","title":"Sales"}}}`:           "mf:f:objective:0",
+	}
+	for raw, want := range cases {
+		var m waInboundMessage
+		if err := json.Unmarshal([]byte(raw), &m); err != nil {
+			t.Fatal(err)
+		}
+		if got := inboundReplyID(m); got != want {
+			t.Errorf("%s: got %q, want %q", raw, got, want)
+		}
+	}
+	m := waInboundMessage{From: "254712345678", ID: "wamid.3", Type: "interactive"}
+	m.Interactive.Type = "button_reply"
+	m.Interactive.ButtonReply.ID = "mf:yes:run-1:1234"
+	if p := assistantInbound("pn1", m, "Approve", ""); p["reply_id"] != "mf:yes:run-1:1234" {
+		t.Fatalf("the event must carry the button id: %v", p)
+	}
+	if p := assistantInbound("pn1", waInboundMessage{ID: "w", Type: "text"}, "hi", ""); p["reply_id"] != nil {
+		t.Fatalf("typed text has no reply id: %v", p)
+	}
+}

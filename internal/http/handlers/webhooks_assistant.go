@@ -41,9 +41,11 @@ func (h *WebhookHandler) isPlatformNumber(ctx context.Context, phoneNumberID str
 	return err == nil && ok
 }
 
-// assistantInbound is the event body; the wa_message_id is the consumer's dedupe key.
+// assistantInbound is the event body; the wa_message_id is the consumer's dedupe key. reply_id
+// is set for a tapped reply button or list row (the id MarketFlow gave it), so the tap is
+// handled by what it means and not by its title.
 func assistantInbound(phoneNumberID string, m waInboundMessage, text, contactName string) map[string]any {
-	return map[string]any{
+	p := map[string]any{
 		"phone_number_id": phoneNumberID,
 		"wa_message_id":   m.ID,
 		"from":            m.From,
@@ -52,6 +54,10 @@ func assistantInbound(phoneNumberID string, m waInboundMessage, text, contactNam
 		"contact_name":    contactName,
 		"received_at":     time.Now().UTC().Format(time.RFC3339),
 	}
+	if id := inboundReplyID(m); id != "" {
+		p["reply_id"] = id
+	}
+	return p
 }
 
 // publishAssistantInbound hands one platform-number message to MarketFlow. A STOP reply and a

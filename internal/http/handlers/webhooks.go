@@ -237,6 +237,22 @@ func inboundText(m waInboundMessage) string {
 	return m.Text.Body
 }
 
+// inboundReplyID is the id behind a tap: a template quick-reply's payload, or the id we gave a
+// reply button or list row. A typed message has none. MarketFlow's assistant puts the run and
+// the approval code in its button ids, so the tap is checked like the typed "YES <code>".
+func inboundReplyID(m waInboundMessage) string {
+	switch m.Type {
+	case "button":
+		return m.Button.Payload
+	case "interactive":
+		if m.Interactive.Type == "list_reply" {
+			return m.Interactive.ListReply.ID
+		}
+		return m.Interactive.ButtonReply.ID
+	}
+	return ""
+}
+
 // WhatsAppIncoming receives Meta's WhatsApp webhook notifications (incoming customer messages and
 // outbound message status updates: sent/delivered/read/failed). Routes each notification to the
 // tenant that owns the receiving phone_number_id — every tenant can register their own WhatsApp
