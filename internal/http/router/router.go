@@ -135,6 +135,22 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 				s2s.Post("/s2s/broadcasts", broadcastsH.S2SCreate)
 			})
 		}
+		// Template review status by name (service key): MarketFlow sends its mf_*_btn templates
+		// from the platform number only once Meta approved them (Sprint 17).
+		if whatsappTemplates != nil && apiKey != "" {
+			api.Group(func(s2s chi.Router) {
+				s2s.Use(func(next http.Handler) http.Handler {
+					return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						if !httpware.ValidServiceKey(r, apiKey) {
+							http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
+							return
+						}
+						next.ServeHTTP(w, r)
+					})
+				})
+				whatsappTemplates.RegisterS2STemplateRoutes(s2s)
+			})
+		}
 		// Tenant export for auth-api's SSO tenant backups; the handler checks INTERNAL_SERVICE_KEY
 		// itself (httpware/tenantexport, Options.InternalKey).
 		if tenantExport != nil {

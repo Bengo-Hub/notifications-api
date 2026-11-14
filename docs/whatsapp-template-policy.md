@@ -96,3 +96,42 @@ working button: the suffix is the path of its link (`buttonURLSuffix`, `posButto
    admin), then submit. The results show Meta's review status (`meta_status`).
 4. Switch the code to the new name only once it shows `APPROVED`, or accept that WhatsApp is
    skipped for that message until it is.
+
+## 5. MarketFlow assistant templates (Sprint 17, for the owner to submit)
+
+MarketFlow's WhatsApp assistant writes to business owners from the platform number. Inside the
+24 hour window it sends free-form messages with reply buttons. Outside the window it needs the
+templates below. They are **not** in `templates.json` yet, so a sync cannot submit them by
+accident: the owner submits them in WhatsApp Manager on the platform WABA (Codevertex), and they
+move into the manifest once approved.
+
+MarketFlow asks `GET /api/v1/s2s/whatsapp/templates/status?tenant_id=<platform tenant>&names=...`
+(service key) before each use and sends a template only when Meta shows it `APPROVED`. Until then
+the message goes by email only (the daily brief), or the requester sees it in the Studio and gets
+the WhatsApp message the next time they write (video ready, publish result). The names can be
+changed in marketflow-api config (`MF_WA_TPL_*`) if Meta refuses one and a `_v2` is submitted.
+
+Every template: category `UTILITY`, language `en_US` (English), one `URL` button on
+`https://marketflow.codevertexafrica.com/{{1}}`. Bodies have no link and no newline in a variable.
+`{{1}}` is always the business name (MarketFlow does not hold each owner's first name).
+
+| Name | Body | Example values | Button text | Button example suffix |
+|---|---|---|---|---|
+| `mf_video_ready_v1_btn` | `Hi {{1}},\n\nYour video ad *{{2}}* has finished rendering and is waiting for your review.\n\nOpen it to approve it, post it or change a scene.` | `Jua Kali Salon`, `Weekend offer` | `Review video` | `jua-kali-salon/studio/2f6c1a9e-7b3d-4c55-9a1e-0d4b6f2e8c71` |
+| `mf_publish_result_v1_btn` | `Hi {{1}},\n\nYour video ad *{{2}}* was sent to your accounts: {{3}}.\n\nOpen your posting calendar for the details.` | `Jua Kali Salon`, `Weekend offer`, `Facebook posted, Instagram posted` | `Open calendar` | `jua-kali-salon/publishing` |
+| `mf_daily_brief_v1_btn` | `Good morning {{1}},\n\nYour marketing brief for *{{2}}* is ready.\n\nOpen it for the full page and today's suggested actions.` | `Jua Kali Salon`, `Monday 16 November` | `Open brief` | `jua-kali-salon/dashboard` |
+| `mf_new_lead_v1_btn` | `Hi {{1}},\n\nA new lead came in from {{2}}: *{{3}}*.\n\nOpen the lead to reply while it is fresh.` | `Jua Kali Salon`, `Facebook lead form`, `Brian O.` | `Open lead` | `jua-kali-salon/leads/5b0e2d7a-1c3f-4e8a-9b6d-2a7c4f1e0d93` |
+| `mf_weekly_summary_v1_btn` | `Hi {{1}},\n\nYour marketing week: {{2}} posts went out, {{3}} leads came in and {{4}} AI credits were used.\n\nOpen the full summary in MarketFlow.` | `Jua Kali Salon`, `6`, `14`, `42` | `Open summary` | `jua-kali-salon/dashboard` |
+
+Notes for the owner when submitting:
+
+- `mf_low_credits_btn` is not needed. Low AI credit alerts already go through the central
+  `credits_balance_low_v1_btn` template (`billing.balance.low`, one consumer for every credit), so a
+  second template would send two alerts for the same balance.
+- `mf_new_lead_v1_btn` and `mf_weekly_summary_v1_btn` are written for completeness. No code sends them
+  yet: new-lead alerts are email only by the owner's decision of 2026-11-11, and there is no weekly
+  summary job yet. Submitting them early does no harm.
+- Each of these messages also has an email form (the active channels rule): the daily brief email
+  exists; video ready and publish result are shown in the Studio and the posting calendar.
+- Sample values contain no real customer data. If Meta answers `INCORRECT_CATEGORY`, remove "ad"
+  from the body first (for example "Your video *{{2}}*") and submit it as `_v2`.

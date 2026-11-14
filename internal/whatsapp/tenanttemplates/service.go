@@ -169,6 +169,42 @@ func (s *Service) TenantTemplateStatus(ctx context.Context, tenantID string) (*S
 	return &StatusReport{WABAID: wabaID, Services: services, Templates: out, Summary: summary}, nil
 }
 
+// MaxStatusNames bounds one NamedStatus call.
+const MaxStatusNames = 20
+
+// NamedStatus reports Meta's review status of the named templates on the tenant's own WABA,
+// whether or not the templates are in the manifest (MISSING when a name is not on the WABA). It
+// changes nothing. Other services ask it before sending a template they ship ahead of approval,
+// such as MarketFlow's mf_*_btn templates on the platform number (Sprint 17).
+func (s *Service) NamedStatus(ctx context.Context, tenantID string, names []string) ([]TemplateStatus, error) {
+	if len(names) == 0 || len(names) > MaxStatusNames {
+		return nil, fmt.Errorf("between 1 and %d template names are required", MaxStatusNames)
+	}
+	wabaID, token, err := s.creds(ctx, tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", ErrCredentials, err)
+	}
+	existing, err := s.syncer(wabaID, token).FetchExisting(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("fetch templates from Meta: %w", err)
+	}
+	out := make([]TemplateStatus, 0, len(names))
+	seen := map[string]bool{}
+	for _, name := range names {
+		if name == "" || seen[name] {
+			continue
+		}
+		seen[name] = true
+		st := TemplateStatus{Name: name, Status: StatusMissing}
+		if mt, ok := existing[name]; ok {
+			st.Status = mt.Status
+			st.Reason = mt.RejectedReason
+		}
+		out = append(out, st)
+	}
+	return out, nil
+}
+
 // AutoSync submits every selected template, batch after batch, and logs the outcome. It is
 // started in the background after Embedded Signup: it never returns an error, and it stops when
 // nothing is left, when a batch makes no progress, or at autoSyncTimeout.

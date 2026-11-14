@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -294,6 +295,58 @@ func (h *WhatsAppTemplates) TenantSync(w http.ResponseWriter, r *http.Request) {
 		zap.String("tenant_id", tenantID), zap.Bool("dry_run", req.DryRun),
 		zap.Any("summary", rep.Summary), zap.Int("remaining", rep.Remaining))
 	jsonResponse(w, http.StatusOK, rep)
+}
+
+// templateStatusResponse is the S2S status answer.
+type templateStatusResponse struct {
+	TenantID  string                           `json:"tenant_id"`
+	Templates []tenanttemplates.TemplateStatus `json:"templates"`
+}
+
+// S2STemplateStatus reports Meta's review status of named templates on a tenant's own WABA
+// (APPROVED, PENDING, REJECTED, MISSING ...), for a service that sends a template only once Meta
+// approved it (MarketFlow's mf_*_btn templates on the platform number, Sprint 17). Service key
+// only; names are comma separated, at most tenanttemplates.MaxStatusNames. Nothing is written.
+// @Summary WhatsApp template status by name on a tenant's WABA (service key)
+// @Tags Internal
+// @Produce json
+// @Param tenant_id query string true "Tenant UUID whose WABA is read"
+// @Param names query string true "Comma-separated template names"
+// @Success 200 {object} templateStatusResponse
+// @Failure 400,409,502 {object} errorResponse
+// @Router /s2s/whatsapp/templates/status [get]
+func (h *WhatsAppTemplates) S2STemplateStatus(w http.ResponseWriter, r *http.Request) {
+	if h.tenant == nil {
+		jsonError(w, http.StatusServiceUnavailable, "tenant whatsapp templates are not configured")
+		return
+	}
+	tenantID := strings.TrimSpace(r.URL.Query().Get("tenant_id"))
+	var names []string
+	for _, n := range strings.Split(r.URL.Query().Get("names"), ",") {
+		if n = strings.TrimSpace(n); n != "" {
+			names = append(names, n)
+		}
+	}
+	if tenantID == "" || len(names) == 0 || len(names) > tenanttemplates.MaxStatusNames {
+		jsonError(w, http.StatusBadRequest, "tenant_id and 1 to 20 names are required")
+		return
+	}
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(r.Context()), tenantTemplateTimeout)
+	defer cancel()
+	st, err := h.tenant.NamedStatus(ctx, tenantID, names)
+	if err != nil {
+		h.tenantTemplatesError(w, tenantID, "template status", err)
+		return
+	}
+	jsonResponse(w, http.StatusOK, templateStatusResponse{TenantID: tenantID, Templates: st})
+}
+
+// RegisterS2STemplateRoutes mounts the service-key template routes; the caller's group checks the key.
+func (h *WhatsAppTemplates) RegisterS2STemplateRoutes(r chi.Router) {
+	if h.tenant == nil {
+		return
+	}
+	r.Get("/s2s/whatsapp/templates/status", h.S2STemplateStatus)
 }
 
 // RegisterTenantTemplateRoutes mounts the tenant template routes on the tenant /settings router.
