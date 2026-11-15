@@ -735,6 +735,15 @@ definitions:
       mimeType:
         type: string
     type: object
+  internal_http_handlers.templateStatusResponse:
+    properties:
+      templates:
+        items:
+          $ref: '#/definitions/github_com_bengobox_notifications-api_internal_whatsapp_tenanttemplates.TemplateStatus'
+        type: array
+      tenant_id:
+        type: string
+    type: object
   internal_http_handlers.templateTestSendRequest:
     properties:
       channel:
@@ -1911,6 +1920,41 @@ paths:
       summary: Create a tenant broadcast from another service (internal key)
       tags:
       - Broadcasts
+  /s2s/whatsapp/templates/status:
+    get:
+      parameters:
+      - description: Tenant UUID whose WABA is read
+        in: query
+        name: tenant_id
+        required: true
+        type: string
+      - description: Comma-separated template names
+        in: query
+        name: names
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_http_handlers.templateStatusResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
+        "502":
+          description: Bad Gateway
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
+      summary: WhatsApp template status by name on a tenant's WABA (service key)
+      tags:
+      - Internal
   /settings/whatsapp/credit-categories:
     get:
       description: One entry per WhatsApp credit category (promotions and broadcasts;
@@ -1940,6 +1984,10 @@ paths:
             $ref: '#/definitions/github_com_bengobox_notifications-api_internal_whatsapp_profile.Profile'
         "400":
           description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
+        "409":
+          description: Conflict
           schema:
             $ref: '#/definitions/internal_http_handlers.errorResponse'
         "502":
@@ -1972,6 +2020,10 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/internal_http_handlers.errorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
         "502":
           description: Bad Gateway
           schema:
@@ -1997,6 +2049,10 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/internal_http_handlers.errorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
         "502":
           description: Bad Gateway
           schema:
@@ -2019,6 +2075,10 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/internal_http_handlers.errorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
         "502":
           description: Bad Gateway
           schema:
@@ -2039,6 +2099,10 @@ paths:
             $ref: '#/definitions/github_com_bengobox_notifications-api_internal_whatsapp_tenanttemplates.StatusReport'
         "400":
           description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
+        "409":
+          description: Conflict
           schema:
             $ref: '#/definitions/internal_http_handlers.errorResponse'
         "502":
@@ -2069,6 +2133,10 @@ paths:
             $ref: '#/definitions/github_com_bengobox_notifications-api_internal_whatsapp_tenanttemplates.SyncReport'
         "400":
           description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
+        "409":
+          description: Conflict
           schema:
             $ref: '#/definitions/internal_http_handlers.errorResponse'
         "502":

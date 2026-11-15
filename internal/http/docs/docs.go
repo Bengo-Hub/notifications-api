@@ -1616,6 +1616,59 @@ const docTemplate = `{
                 }
             }
         },
+        "/s2s/whatsapp/templates/status": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Internal"
+                ],
+                "summary": "WhatsApp template status by name on a tenant's WABA (service key)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant UUID whose WABA is read",
+                        "name": "tenant_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Comma-separated template names",
+                        "name": "names",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.templateStatusResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    },
+                    "502": {
+                        "description": "Bad Gateway",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/settings/whatsapp/credit-categories": {
             "get": {
                 "security": [
@@ -1669,6 +1722,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/internal_http_handlers.errorResponse"
                         }
                     },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    },
                     "502": {
                         "description": "Bad Gateway",
                         "schema": {
@@ -1717,6 +1776,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/internal_http_handlers.errorResponse"
                         }
                     },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    },
                     "502": {
                         "description": "Bad Gateway",
                         "schema": {
@@ -1757,6 +1822,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/internal_http_handlers.errorResponse"
                         }
                     },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    },
                     "502": {
                         "description": "Bad Gateway",
                         "schema": {
@@ -1793,6 +1864,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/internal_http_handlers.errorResponse"
                         }
                     },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    },
                     "502": {
                         "description": "Bad Gateway",
                         "schema": {
@@ -1825,6 +1902,12 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
                         "schema": {
                             "$ref": "#/definitions/internal_http_handlers.errorResponse"
                         }
@@ -1874,6 +1957,12 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
                         "schema": {
                             "$ref": "#/definitions/internal_http_handlers.errorResponse"
                         }
@@ -3253,6 +3342,20 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "mimeType": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_http_handlers.templateStatusResponse": {
+            "type": "object",
+            "properties": {
+                "templates": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_bengobox_notifications-api_internal_whatsapp_tenanttemplates.TemplateStatus"
+                    }
+                },
+                "tenant_id": {
                     "type": "string"
                 }
             }
