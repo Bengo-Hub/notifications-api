@@ -41,6 +41,7 @@ import (
 	"github.com/bengobox/notifications-api/internal/modules/announcements"
 	"github.com/bengobox/notifications-api/internal/modules/credits"
 	"github.com/bengobox/notifications-api/internal/modules/broadcasts"
+	"github.com/bengobox/notifications-api/internal/modules/engagement"
 	eventsmod "github.com/bengobox/notifications-api/internal/modules/events"
 	"github.com/bengobox/notifications-api/internal/modules/identity"
 	"github.com/bengobox/notifications-api/internal/modules/maildelivery"
@@ -385,9 +386,14 @@ func New(ctx context.Context) (*App, error) {
 			}
 			return s["app_secret"]
 		}, handlers.WhatsAppSignatureRequired())
+	// Nurture engagement (delivered, read, bounced, replied) goes back to MarketFlow; the
+	// correlations the worker keeps at send time live in Redis.
+	var engagementTracker *engagement.Tracker
 	if redisClient != nil {
 		webhookHandler.WithWhatsAppFallback(redisClient, natsConn, cfg.Events)
+		engagementTracker = engagement.New(redisClient, natsConn, log)
 	}
+	webhookHandler.WithEngagement(engagementTracker)
 	// Messages to the platform WhatsApp number go to MarketFlow's assistant (Sprint 17).
 	webhookHandler.WithAssistantInbound(natsConn)
 	// Per-tenant template sync: the templates each tenant uses, to its own WABA (see package
@@ -427,7 +433,8 @@ func New(ctx context.Context) (*App, error) {
 		WithProfileAutoSync(whatsappProfileService.AutoSync)
 	whatsappTemplatesHandler := handlers.NewWhatsAppTemplates(providerManager, log, tenantTemplates).WithDeliveryLog(entClient)
 	mailDeliveryHandler := handlers.NewMailDeliveryHandler(
-		maildelivery.NewService(maildelivery.NewEntStore(entClient), handlers.NewMailDeliverySuppressor(redisClient), log),
+		maildelivery.NewService(maildelivery.NewEntStore(entClient), handlers.NewMailDeliverySuppressor(redisClient), log).
+			WithBounceHook(func(ctx context.Context, b maildelivery.Bounce) { engagementTracker.EmailBounced(ctx, b.Token) }),
 		maildelivery.NewKeys(platformkey.NewStore(entClient)),
 		maildelivery.ProvisionerApplier(cfg.Services.EmailProvisioner, cfg.Services.MailDeliveryWebhookURL, nil),
 		redisClient, cfg.Services.MailDeliveryWebhookURL, log)

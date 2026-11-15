@@ -47,6 +47,7 @@ import (
 
 	"github.com/bengobox/notifications-api/internal/modules/broadcasts"
 	"github.com/bengobox/notifications-api/internal/modules/credits"
+	"github.com/bengobox/notifications-api/internal/modules/engagement"
 	"github.com/bengobox/notifications-api/internal/modules/identity"
 	"github.com/bengobox/notifications-api/internal/modules/occasions"
 	"github.com/bengobox/notifications-api/internal/modules/preferences"
@@ -278,6 +279,9 @@ func main() {
 	// optional types deliver only when the tenant enabled them in settings.
 	prefGate := preferences.NewGate(client, redisClient, logg)
 
+	// Nurture steps report sent, failed and later engagement back to MarketFlow (package engagement).
+	engagementTracker := engagement.New(nilIfTyped(redisClient), nc, logg)
+
 	msgHandler := func(m *nats.Msg) {
 		var msg messaging.Message
 		if err := json.Unmarshal(m.Data, &msg); err != nil {
@@ -367,6 +371,7 @@ func main() {
 				recordDeliveryLog(ctx, client, &msg, gateTenant, "failed")
 				broadcasts.RecordOutcome(ctx, client, &msg, "failed", deliverErr)
 				publishDeliveryStatus(nc, msg, "failed", deliverErr, logg)
+				engagementTracker.MessageFailed(msg, deliverErr)
 				_ = m.Ack() // dead-letter: do not redeliver and hammer a blocked/rate-limited provider
 			} else {
 				// NAck triggers redelivery after AckWait (30s) — only reachable if maxDeliveryAttempts is raised >1
@@ -378,6 +383,7 @@ func main() {
 		recordDeliveryLog(ctx, client, &msg, gateTenant, "sent")
 		broadcasts.RecordOutcome(ctx, client, &msg, "sent", nil)
 		publishDeliveryStatus(nc, msg, "sent", nil, logg)
+		engagementTracker.MessageSent(ctx, msg)
 		logg.Info("message delivered",
 			zap.String("channel", msg.Channel),
 			zap.String("template", msg.TemplateID),
@@ -1032,6 +1038,14 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 			logg.Info("whatsapp send refused, trying the next number", zap.Int("failed_numbers", len(current.To)), zap.Error(err))
 			current = next
 			err = waProv.SendWhatsApp(ctx, cfg.Providers.DefaultSMSSender, current.To, rendered, current.Metadata)
+		}
+		// Meta's message id goes back on the message, so its later status callbacks can be
+		// matched to it (engagement tracking for nurture steps).
+		if id, _ := current.Metadata[messaging.MetaSentMessageID].(string); id != "" {
+			if msg.Metadata == nil {
+				msg.Metadata = map[string]any{}
+			}
+			msg.Metadata[messaging.MetaSentMessageID] = id
 		}
 		if id, _ := current.Metadata[messaging.MetaSentMessageID].(string); id != "" && rdb != nil {
 			if next, ok := messaging.NextFallback(current); ok {
