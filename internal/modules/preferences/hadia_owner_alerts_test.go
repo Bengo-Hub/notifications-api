@@ -7,7 +7,8 @@ import "testing"
 // were optional (off by default) every gift alert was dropped on staging, whatever the owner chose
 // (8 November 2026).
 func TestHadiaOwnerAlertsDefaultOn(t *testing.T) {
-	for _, id := range []string{"hadia/gift_owner_alert", "hadia/owner_gift_digest", "hadia/reservation_owner_alert", "hadia/reservation_purchased_owner"} {
+	for _, id := range []string{"hadia/gift_owner_alert", "hadia/owner_gift_digest", "hadia/reservation_owner_alert", "hadia/reservation_purchased_owner",
+		"hadia/referral_rewarded", "hadia/referral_spike"} {
 		if !DefaultEnabled(id) {
 			t.Errorf("%s is off by default; owners would never hear about their gifts", id)
 		}

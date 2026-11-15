@@ -1,0 +1,13 @@
+{{ define "content" }}
+  <p>Hello {{ or .name "there" }},</p>
+  <h2>A Gift Hadia referrer needs a look</h2>
+  <p>One {{ .kind }} has gained <strong>{{ or .rewards "3 or more" }} rewards</strong> in the last 7 days{{ if .at }}, the latest at {{ .at }} Nairobi time{{ end }}. A run like this can mean someone is inviting themselves or trading invitations, so please check the referrals behind it.</p>
+  <p>Nothing has been stopped. The daily limit and the monthly cap still apply, and a chargeback voids a reward that has not been used.</p>
+  {{ if .referral_id }}<p>The latest referral is {{ .referral_id }}.</p>{{ end }}
+  {{ if .owner_id }}<p>The referrer's owner id is {{ .owner_id }}.</p>{{ end }}
+  {{ if .action_link }}
+  <p>
+    <a class="button" href="{{ .action_link }}">Open the referrals report</a>
+  </p>
+  {{ end }}
+{{ end }}

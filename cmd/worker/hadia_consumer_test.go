@@ -430,3 +430,96 @@ func TestHadiaMemberInvitedV2(t *testing.T) {
 		t.Fatalf("member_invited.txt not updated: %v", err)
 	}
 }
+
+// Gift Hadia (hadia-api a4fad1b8, referrals/qualify.go): an owner referrer's reward goes to their
+// email with the step, the floor and the end date; a guest referrer's reward names nobody, so it
+// sends nothing; qualified is not mapped because rewarded follows it in the same transaction.
+func TestHadiaReferralRewarded(t *testing.T) {
+	if _, ok := hadiaMappings["referral.qualified"]; ok {
+		t.Fatal("referral.qualified must stay unmapped: rewarded already tells the referrer")
+	}
+	msgs := hadiaMappings["referral.rewarded"]
+	if len(msgs) != 1 || msgs[0].Staff || msgs[0].EmailKey != "owner_email" || msgs[0].PhoneKey != "" || msgs[0].PathKey != "owner_url" {
+		t.Fatalf("mapping: %+v", msgs)
+	}
+	m := msgs[0]
+	p := map[string]any{"referral_id": "5f0c2b8e-1111-4c4c-9c9c-000000000001", "reward_kind": "owner_step",
+		"rewarded_at": "2026-11-15T09:00:00Z", "reward_expires_at": "2027-11-15T09:00:00Z",
+		"referrer_owner_id": "7a1d", "owner_name": "Amina", "owner_phone": "+254700000000", "owner_email": "a@example.com",
+		"step_points": "0.50", "floor_rate": "2.00", "owner_url": "https://hadiafrica.com/app/account/gift-hadia", "tenant_id": "t1"}
+	if m.Skip(p) {
+		t.Fatal("an owner reward was skipped")
+	}
+	if got := hadiaPath(mStr(p, "owner_url")); got != "app/account/gift-hadia" {
+		t.Fatalf("link path %q", got)
+	}
+	if got := m.Subject(p); got != "Your Hadia commission is now lower" {
+		t.Fatalf("subject %q", got)
+	}
+	d := m.Data(p, &tenantInfo{})
+	if d["step"] != "0.5" || d["floor"] != "2%" || d["valid_until"] != "15 November 2027" {
+		t.Fatalf("data %+v", d)
+	}
+	d["action_link"] = "https://hadiafrica.com/app/account/gift-hadia"
+	out := renderEmail(t, m.TemplateID, d)
+	mustContain(t, "referral rewarded", out, "Hello Amina", "has received their first payout",
+		"<strong>0.5 percentage points lower</strong>", "no less than 2%", "lasts until 15 November 2027",
+		"gifts made from now on", "including money already in the registry", "not cash or credit", "See your Gift Hadia page")
+
+	// No expiry (reward_valid_days 0) says so; a bare payload never renders a blank.
+	bare := m.Data(map[string]any{"reward_kind": "owner_step", "owner_email": "a@example.com", "reward_expires_at": nil}, &tenantInfo{})
+	out = renderEmail(t, m.TemplateID, bare)
+	mustContain(t, "referral rewarded, bare", out, "Hello there", "registries is now lower.", "has no end date")
+	for _, blank := range []string{"<strong></strong>", "Hello ,", "no less than .", "lasts until .", "See your Gift Hadia page"} {
+		if strings.Contains(out, blank) {
+			t.Fatalf("bare payload renders %q:\n%s", blank, out)
+		}
+	}
+	for _, skip := range []map[string]any{
+		{"reward_kind": "guest_discount", "discount_percent": "50.00"},
+		{"reward_kind": "owner_step", "owner_phone": "+254700000000"},
+	} {
+		if !m.Skip(skip) {
+			t.Fatalf("not skipped: %v", skip)
+		}
+	}
+}
+
+// A referrer with 3 or more rewards in 7 days alerts Hadia's staff at the tenant contact, never the
+// owner, by email only, with the referrals report as its link.
+func TestHadiaReferralSpike(t *testing.T) {
+	msgs := hadiaMappings["referral.spike"]
+	if len(msgs) != 1 || !msgs[0].Staff || msgs[0].PhoneKey != "" || msgs[0].EmailKey != "" || msgs[0].WATemplate != "" {
+		t.Fatalf("mapping: %+v", msgs)
+	}
+	m := msgs[0]
+	if m.FixedPath != "admin/reports?report=referrals" {
+		t.Fatalf("path %q", m.FixedPath)
+	}
+	p := map[string]any{"referral_id": "5f0c2b8e-1111-4c4c-9c9c-000000000001", "referrer_kind": "owner", "rewards_7d": float64(3),
+		"at": "2026-11-15T09:00:00Z", "referrer_owner_id": "7a1d0000-0000-4000-8000-000000000002", "tenant_id": "t1"}
+	if got := m.Subject(p); got != "Gift Hadia check: one referrer gained 3 rewards in 7 days" {
+		t.Fatalf("subject %q", got)
+	}
+	d := m.Data(p, &tenantInfo{})
+	d["action_link"] = "https://hadiafrica.com/admin/reports?report=referrals"
+	out := renderEmail(t, m.TemplateID, d)
+	mustContain(t, "referral spike", out, "Hello Hadia team", "One registry owner has gained <strong>3 rewards</strong>",
+		"15 Nov 12:00 Nairobi time", "Nothing has been stopped", "5f0c2b8e-1111-4c4c-9c9c-000000000001",
+		"7a1d0000-0000-4000-8000-000000000002", "Open the referrals report")
+
+	// A guest referrer has no owner id; a bare payload never renders a blank.
+	guest := m.Data(map[string]any{"referrer_kind": "guest", "rewards_7d": float64(4)}, &tenantInfo{})
+	out = renderEmail(t, m.TemplateID, guest)
+	mustContain(t, "referral spike, guest", out, "One guest has gained <strong>4 rewards</strong>")
+	bare := renderEmail(t, m.TemplateID, m.Data(map[string]any{}, &tenantInfo{}))
+	for _, blank := range []string{"<strong> rewards</strong>", "owner id is .", "referral is .", ", the latest at  Nairobi"} {
+		if strings.Contains(out+bare, blank) {
+			t.Fatalf("renders %q:\n%s\n%s", blank, out, bare)
+		}
+	}
+	mustContain(t, "referral spike, bare", bare, "<strong>3 or more rewards</strong>")
+	if !strings.Contains(m.Subject(map[string]any{}), "many rewards") {
+		t.Fatal("bare subject")
+	}
+}

@@ -443,6 +443,21 @@ Onboarding:
   hadia-api read it, and the weekly money in KES with the payload's `currency_scope` note. Both
   durables start at new messages, so a first rollout does not replay the week the stream keeps.
 
+**Added 15 November 2026** (Gift Hadia, hadia-api a4fad1b8, Sprint 20):
+- `hadia.referral.rewarded`: an owner referrer (`reward_kind` `owner_step`) gets
+  `hadia/referral_rewarded` by email at `owner_email` (essential): Hadia's commission on their
+  registries is lower by `step_points`, never below `floor_rate`, what it applies to for guest-pays
+  and owner-pays registries, and until when (`reward_expires_at`, or no end date); button the Gift
+  Hadia page (`owner_url`). hadia-api sends no resulting rate, so the email does not state one. A
+  guest referrer's reward carries no contact and sends nothing.
+- `hadia.referral.spike`: 3 or more rewards for one referrer in 7 days. `hadia/referral_spike` by
+  email to the tenant's contact (Hadia staff, essential), with the referrals report as its link.
+- `hadia.referral.qualified` is acked as unmapped: the rewarded event follows it in the same
+  transaction.
+- WhatsApp for both waits for Hadia's own number. Then the rewarded mapping takes `PhoneKey`
+  `owner_phone`, a `templates/whatsapp/hadia/referral_rewarded.txt` and a template declared in
+  `templatesync/templates.json`; the spike takes a WATemplate with a `WhatsAppIf` as `case.opened` does.
+
 ---
 
 ## External Provider Integrations

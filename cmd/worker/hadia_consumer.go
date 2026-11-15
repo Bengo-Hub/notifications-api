@@ -152,6 +152,53 @@ func mPercent(p map[string]any) string {
 	return ""
 }
 
+// hadiaPoints words a rate or a step from the payload without trailing zeros ("2.00" reads "2",
+// "0.50" reads "0.5"); "" when absent or not a number.
+func hadiaPoints(p map[string]any, key string) string {
+	f, err := strconv.ParseFloat(mStr(p, key), 64)
+	if err != nil || f <= 0 {
+		return ""
+	}
+	return strconv.FormatFloat(f, 'f', -1, 64)
+}
+
+// hadiaDay words an RFC3339 time as a Nairobi date with its year ("15 November 2027"); "" when absent.
+func hadiaDay(p map[string]any, key string) string {
+	t, err := time.Parse(time.RFC3339Nano, mStr(p, key))
+	if err != nil {
+		return ""
+	}
+	return t.In(maskaniTZ).Format("2 January 2006")
+}
+
+// hadiaReferralRewardData is the referrer owner's view of a Gift Hadia step (hadia-api
+// referrals/qualify.go, reward). The payload carries the step and the floor but not the owner's
+// resulting rate, so the email states the step and links to the page that shows the rate.
+func hadiaReferralRewardData(p map[string]any, _ *tenantInfo) map[string]any {
+	d := map[string]any{"name": waParam(p["owner_name"], "there"), "step": hadiaPoints(p, "step_points"),
+		"floor": "", "valid_until": hadiaDay(p, "reward_expires_at")}
+	if f := hadiaPoints(p, "floor_rate"); f != "" {
+		d["floor"] = f + "%"
+	}
+	return d
+}
+
+// hadiaReferralSpikeData is Hadia staff's view of a referrer who gained many rewards in a week.
+func hadiaReferralSpikeData(p map[string]any, _ *tenantInfo) map[string]any {
+	kind := "referrer"
+	switch mStr(p, "referrer_kind") {
+	case "owner":
+		kind = "registry owner"
+	case "guest":
+		kind = "guest"
+	}
+	rewards := ""
+	if n := mInt(p, "rewards_7d"); n > 0 {
+		rewards = fmt.Sprintf("%d", n)
+	}
+	return map[string]any{"name": "Hadia team", "kind": kind, "rewards": rewards, "at": mTime(p, "at"), "referral_id": mStr(p, "referral_id"), "owner_id": mStr(p, "referrer_owner_id")}
+}
+
 // hadiaPayoutFailure is one of the owner's messages about a payout that did not go through, sent for
 // the reasons it is true of. A failure before treasury answered has no net yet, so the gross is shown.
 func hadiaPayoutFailure(template, subject, waTemplate string, sentFor func(reason string) bool) hadiaMessage {
@@ -528,6 +575,38 @@ var hadiaMappings = map[string][]hadiaMessage{
 		WATemplate: "hadia_premium_activated_v1_btn",
 		WAParams:   func(d map[string]any) []string { return mParams(d, "name", "registry", "amount") },
 	}}},
+	// Gift Hadia (hadia-api Sprint 20, a4fad1b8). hadia.referral.rewarded tells an owner referrer that
+	// a friend they invited was paid out, so Hadia's commission on their registries dropped by one
+	// step. Email only until Hadia's own WhatsApp number is live: then add PhoneKey "owner_phone",
+	// templates/whatsapp/hadia/referral_rewarded.txt and its WATemplate, declared in templates.json.
+	// A guest referrer's reward (reward_kind guest_discount) carries no contact details, so nothing
+	// goes; the guest sees the discount at checkout. hadia.referral.qualified is not mapped: the
+	// rewarded event follows it in the same transaction and its payload names nobody to tell, so a
+	// second message would only repeat the first. This consumer acks it as unmapped.
+	"referral.rewarded": {{PathKey: "owner_url", maskaniMapping: maskaniMapping{
+		TemplateID: "hadia/referral_rewarded", EmailKey: "owner_email",
+		Subject: func(map[string]any) string { return "Your Hadia commission is now lower" },
+		Data:    hadiaReferralRewardData,
+		Skip: func(p map[string]any) bool {
+			return mStr(p, "reward_kind") != "owner_step" || mStr(p, "owner_email") == ""
+		},
+	}}},
+	// A referrer gained 3 or more rewards in 7 days (hadia-api logs alert=gift_hadia_referrer_spike).
+	// An abuse alert for Hadia's staff at the tenant's contact, as for case.opened, never the owner.
+	// Email only: the payload names no phone, and the WhatsApp alert waits for Hadia's own number.
+	"referral.spike": {{
+		FixedPath: "admin/reports?report=referrals",
+		maskaniMapping: maskaniMapping{
+			TemplateID: "hadia/referral_spike", Staff: true,
+			Subject: func(p map[string]any) string {
+				if n := mInt(p, "rewards_7d"); n > 0 {
+					return fmt.Sprintf("Gift Hadia check: one referrer gained %d rewards in 7 days", n)
+				}
+				return "Gift Hadia check: one referrer gained many rewards in 7 days"
+			},
+			Data: hadiaReferralSpikeData,
+		},
+	}},
 	// A new case in the exception queue, for Hadia's staff. hadia-api names who should act
 	// (responders) but owns the staff list, so it goes to the tenant's contact details. The summary
 	// stays in the email; high and urgent cases also go by WhatsApp, without it.

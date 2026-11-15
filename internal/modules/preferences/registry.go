@@ -182,6 +182,10 @@ var Registry = []Type{
 	{Key: "hadia/refund_pending", Label: "Gift being refunded", Group: "Gift registry", Class: ClassEssential},
 	{Key: "hadia/refund_completed", Label: "Gift refunded", Group: "Gift registry", Class: ClassEssential},
 	{Key: "hadia/premium_activated", Label: "Premium on", Group: "Gift registry", Class: ClassEssential},
+	// Gift Hadia (Sprint 20). The reward notice confirms a change to what the owner pays, not a
+	// promotion, so it is essential; the spike is a staff abuse alert.
+	{Key: "hadia/referral_rewarded", Label: "Your commission is lower after a referral", Group: "Gift registry", Class: ClassEssential},
+	{Key: "hadia/referral_spike", Label: "Gift Hadia referrer gained many rewards in a week (staff)", Group: "Gift registry", Class: ClassEssential},
 
 	{Key: "pos/receipt_on_sale", Label: "WhatsApp receipt after every sale", Group: "POS", Class: ClassOptional},
 	{Key: "pos/pos_payment_receipt", Label: "Payment received (sent from View Payments)", Group: "POS", Class: ClassEssential},

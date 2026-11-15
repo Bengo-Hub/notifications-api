@@ -1,0 +1,17 @@
+{{ define "content" }}
+  <p>Hello {{ or .name "there" }},</p>
+  <h2>Your Hadia commission is now lower</h2>
+  <p>A friend you invited to Hadia has received their first payout, so Hadia's commission on your registries is now {{ if .step }}<strong>{{ .step }} percentage points lower</strong>{{ else }}lower{{ end }}.{{ if .floor }} Each friend who qualifies lowers it again, down to no less than {{ .floor }}.{{ end }}</p>
+  <p>It applies to every registry you own. Where your guests pay the service fee, they pay less on gifts made from now on, and you still receive every gift in full. Where you pay the commission yourself, Hadia keeps less of each payout from now on, including money already in the registry. If a promotion already gives a registry a lower rate, that lower rate stays.</p>
+  {{ if .valid_until }}
+  <p>This lower rate lasts until {{ .valid_until }}. After that the commission goes back up by this step.</p>
+  {{ else }}
+  <p>This lower rate has no end date.</p>
+  {{ end }}
+  <p>It is a lower fee, not cash or credit, so there is nothing to withdraw. Each registry's payout settings show its exact rate.</p>
+  {{ if .action_link }}
+  <p>
+    <a class="button" href="{{ .action_link }}">See your Gift Hadia page</a>
+  </p>
+  {{ end }}
+{{ end }}
