@@ -35,7 +35,14 @@ type Result struct {
 type Service struct {
 	store    Store
 	suppress Suppressor
+	onBounce func(ctx context.Context, b Bounce)
 	log      *zap.Logger
+}
+
+// WithBounceHook runs hook for every recorded bounce (nurture engagement reporting, for one).
+func (s *Service) WithBounceHook(hook func(ctx context.Context, b Bounce)) *Service {
+	s.onBounce = hook
+	return s
 }
 
 // NewService builds the service. suppress may be nil.
@@ -58,6 +65,9 @@ func (s *Service) Handle(ctx context.Context, events []Event) Result {
 			continue
 		}
 		res.Bounced += n
+		if s.onBounce != nil {
+			s.onBounce(ctx, b)
+		}
 		if b.BadAddress && s.suppress != nil {
 			s.suppress(ctx, b.Recipient, SuppressionTTL)
 			res.Suppressed++

@@ -16,6 +16,7 @@ import (
 	"github.com/bengobox/notifications-api/internal/ent"
 	"github.com/bengobox/notifications-api/internal/ent/providersetting"
 	"github.com/bengobox/notifications-api/internal/messaging"
+	"github.com/bengobox/notifications-api/internal/modules/engagement"
 	"github.com/bengobox/notifications-api/internal/modules/suppression"
 	"github.com/bengobox/notifications-api/internal/modules/whatsappinbox"
 
@@ -35,6 +36,13 @@ func (h *WebhookHandler) WithWhatsAppFallback(rdb redis.UniversalClient, nc *nat
 	if rdb != nil && nc != nil {
 		h.fallback = &whatsAppFallback{rdb: rdb, nc: nc, events: events}
 	}
+	return h
+}
+
+// WithEngagement reports nurture message statuses and replies back to MarketFlow (package
+// engagement). A nil tracker is fine.
+func (h *WebhookHandler) WithEngagement(t *engagement.Tracker) *WebhookHandler {
+	h.engagement = t
 	return h
 }
 
@@ -73,6 +81,7 @@ type WebhookHandler struct {
 	optOut        *suppression.Service
 	signature     *metaSignature
 	assistantNC   *nats.Conn // platform-number messages to MarketFlow (webhooks_assistant.go)
+	engagement    *engagement.Tracker
 }
 
 // NewWebhookHandler creates the webhook handler. publicBaseURL is this service's own externally
@@ -302,6 +311,7 @@ func (h *WebhookHandler) WhatsAppIncoming(w http.ResponseWriter, r *http.Request
 				h.handleStopReply(ctx, "whatsapp", msg.From, text, tenantID, "whatsapp_reply")
 				h.publishAssistantInbound(ctx, tenantID, phoneNumberID, msg, text, contactNames[msg.From])
 				h.publishAdReferral(ctx, tenantID, phoneNumberID, msg, contactNames[msg.From])
+				h.engagement.Replied(ctx, "whatsapp", msg.From, tenantID, msg.ID)
 				if h.inbox != nil && tenantID != "" {
 					if tid, err := uuid.Parse(tenantID); err == nil {
 						if err := h.inbox.RecordInbound(ctx, tid, phoneNumberID, msg.ID, msg.From, msg.Type, text, contactNames[msg.From]); err != nil {
@@ -333,6 +343,7 @@ func (h *WebhookHandler) WhatsAppIncoming(w http.ResponseWriter, r *http.Request
 					)
 				}
 				h.onWhatsAppStatus(ctx, status.ID, status.Status)
+				h.engagement.WhatsAppStatus(ctx, status.ID, status.Status)
 				if h.inbox != nil {
 					if err := h.inbox.RecordStatusUpdate(ctx, status.ID, status.Status); err != nil {
 						h.log.Warn("failed to record whatsapp status update", zap.Error(err), zap.String("message_id", status.ID))
