@@ -176,18 +176,24 @@ func (h *WhatsAppEmbeddedSignupHandler) RegistrationStatus(w http.ResponseWriter
 		return
 	}
 	var phone struct {
-		PlatformType string `json:"platform_type"`
-		Status       string `json:"status"`
+		PlatformType           string `json:"platform_type"`
+		Status                 string `json:"status"`
+		CodeVerificationStatus string `json:"code_verification_status"`
 	}
-	if err := h.graphGetJSON(ctx, whatsapp.GraphVersion(version), phoneID+"?fields=platform_type,status", token, &phone); err != nil {
+	if err := h.graphGetJSON(ctx, whatsapp.GraphVersion(version), phoneID+"?fields=platform_type,status,code_verification_status", token, &phone); err != nil {
 		h.log.Warn("whatsapp registration status: Meta read failed", zap.String("tenant_id", tenantID), zap.Error(err))
 		jsonResponse(w, http.StatusOK, out)
 		return
 	}
+	registered := registeredOnCloudAPI(phone.PlatformType, phone.Status)
 	out["known"] = true
 	out["status"] = phone.Status
 	out["platform_type"] = phone.PlatformType
-	out["registered"] = registeredOnCloudAPI(phone.PlatformType, phone.Status)
+	out["code_verification_status"] = phone.CodeVerificationStatus
+	out["registered"] = registered
+	// A number that is not registered and not verified needs a code before it can be registered.
+	cvs := strings.ToUpper(strings.TrimSpace(phone.CodeVerificationStatus))
+	out["needs_verification"] = !registered && cvs != "" && cvs != "VERIFIED"
 	jsonResponse(w, http.StatusOK, out)
 }
 

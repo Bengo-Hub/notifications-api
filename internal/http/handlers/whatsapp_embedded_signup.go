@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"sync"
 	"time"
 
 	"go.uber.org/zap"
@@ -82,6 +83,11 @@ type WhatsAppEmbeddedSignupHandler struct {
 	storedPIN func(ctx context.Context, tenantID string) string
 	// platformID is the platform tenant, whose own number is never linked to another tenant.
 	platformID string
+	// now is the clock for the verification code rate limits; nil means time.Now.
+	now func() time.Time
+	// verifyLimits counts verification code requests and checks per tenant (see verifyLimiter).
+	verifyLimitsMu sync.Mutex
+	verifyLimits   map[string][]time.Time
 }
 
 // connectionKeys are the tenant rows a connection writes and Disconnect removes. Other settings

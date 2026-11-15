@@ -343,6 +343,10 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 						wa.Post("/reregister", whatsappEmbeddedSignup.Reregister)
 						// The number's live Cloud API state, for the settings page.
 						wa.Get("/registration", whatsappEmbeddedSignup.RegistrationStatus)
+						// In-app re-verification (platform owners only): send a code by SMS or
+						// voice, then verify it, which also registers the number again.
+						wa.Post("/verification/request", whatsappEmbeddedSignup.RequestVerificationCode)
+						wa.Post("/verification/verify", whatsappEmbeddedSignup.VerifyCode)
 						// Removes the tenant's own connection (and releases it on Meta when it exists).
 						wa.Delete("/connection", whatsappEmbeddedSignup.Disconnect)
 					})

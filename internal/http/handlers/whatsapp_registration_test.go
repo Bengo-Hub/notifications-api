@@ -30,6 +30,11 @@ type metaSim struct {
 
 type simNumber struct {
 	status, platformType, pin string
+	// needsVerification makes register answer 133006 until a code is verified.
+	needsVerification bool
+	sentCode          string
+	sent              int
+	methods           []string
 }
 
 func newMetaSim(accounts map[string][]string) *metaSim {
@@ -55,7 +60,7 @@ func (s *metaSim) server(t *testing.T) *httptest.Server {
 			_, _ = w.Write([]byte(`{"access_token":"business-token"}`))
 		case len(parts) == 1 && r.Method == http.MethodGet:
 			if n, ok := s.numbers[parts[0]]; ok {
-				_ = json.NewEncoder(w).Encode(map[string]string{"platform_type": n.platformType, "status": n.status, "display_phone_number": "+254", "verified_name": "Biz"})
+				_ = json.NewEncoder(w).Encode(map[string]string{"platform_type": n.platformType, "status": n.status, "display_phone_number": "+254", "verified_name": "Biz", "code_verification_status": codeStatus(n)})
 				return
 			}
 			_, _ = w.Write([]byte(`{"primary_funding_id":"card-1"}`))
@@ -72,12 +77,36 @@ func (s *metaSim) server(t *testing.T) *httptest.Server {
 			var body map[string]string
 			_ = json.Unmarshal(b, &body)
 			n := s.numbers[parts[0]]
+			if n.needsVerification {
+				w.WriteHeader(http.StatusBadRequest)
+				_, _ = w.Write([]byte(`{"error":{"message":"(#133006) Phone number re-verification needed","code":133006}}`))
+				return
+			}
 			if n.pin != "" && body["pin"] != n.pin {
 				w.WriteHeader(http.StatusBadRequest)
 				_, _ = w.Write([]byte(`{"error":{"message":"(#133005) Two step verification PIN Mismatch","code":133005}}`))
 				return
 			}
 			n.pin, n.status, n.platformType = body["pin"], "CONNECTED", "CLOUD_API"
+			_, _ = w.Write([]byte(`{"success":true}`))
+		case len(parts) == 2 && parts[1] == "request_code":
+			var body map[string]string
+			_ = json.Unmarshal(b, &body)
+			n := s.numbers[parts[0]]
+			n.sent++
+			n.sentCode = []string{"481516", "234200"}[(n.sent-1)%2]
+			n.methods = append(n.methods, body["code_method"])
+			_, _ = w.Write([]byte(`{"success":true}`))
+		case len(parts) == 2 && parts[1] == "verify_code":
+			var body map[string]string
+			_ = json.Unmarshal(b, &body)
+			n := s.numbers[parts[0]]
+			if n.sentCode == "" || body["code"] != n.sentCode {
+				w.WriteHeader(http.StatusBadRequest)
+				_, _ = w.Write([]byte(`{"error":{"message":"(#136025) Verify OTP code failed","code":136025,"error_user_msg":"The code you entered is incorrect"}}`))
+				return
+			}
+			n.needsVerification, n.sentCode = false, ""
 			_, _ = w.Write([]byte(`{"success":true}`))
 		case len(parts) == 2 && parts[1] == "deregister":
 			s.numbers[parts[0]].status = "DISCONNECTED" // platform_type stays CLOUD_API
@@ -354,7 +383,7 @@ func TestManagedLinkShowsMetaRefusal(t *testing.T) {
 	if body["meta_title"] != "Phone number not verified" || body["meta_message"] != "Phone number is not verified through SMS or voice" {
 		t.Errorf("body = %v", body)
 	}
-	if !strings.Contains(body["error"].(string), "Verify the number with its SMS or voice code") || body["meta_subcode"] != float64(2593005) {
+	if !strings.Contains(body["error"].(string), "verify the number with a code sent by SMS or voice") || body["meta_subcode"] != float64(2593005) || body["needs_verification"] != true {
 		t.Errorf("body = %v", body)
 	}
 	if strings.Contains(w.Body.String(), "platform-token") {
@@ -435,4 +464,126 @@ func TestInboxWebsocketAcceptsUIOrigin(t *testing.T) {
 			_ = c.Close(websocket.StatusNormalClosure, "")
 		}
 	}
+}
+
+func codeStatus(n *simNumber) string {
+	if n.needsVerification {
+		return "EXPIRED"
+	}
+	return "VERIFIED"
+}
+
+func ownerJSON(h http.HandlerFunc, path, target, body string) *httptest.ResponseRecorder {
+	w := httptest.NewRecorder()
+	h(w, ownerRequest(http.MethodPost, path, target, body))
+	return w
+}
+
+// A number deregistered for a while needs re-verification (133006). Re-register says so with
+// needs_verification; a code is requested, a wrong code is refused with a hint, a resend replaces
+// the code, and the right code verifies and registers the number. Works for a portfolio tenant
+// and for the platform tenant (All Tenants).
+func TestVerifyThenRegister(t *testing.T) {
+	for _, tc := range []struct{ target, tenant, phone string }{
+		{"urbanloft", "urbanloft", urbanPhone},
+		{"", "platform-tenant", platformPhone},
+	} {
+		sim := newMetaSim(map[string][]string{portfolioWABA: {platformPhone, urbanPhone}})
+		srv := sim.server(t)
+		h, st := newSimHandler(t, srv.URL)
+		clock := time.Date(2026, 11, 15, 15, 0, 0, 0, time.UTC)
+		h.now = func() time.Time { return clock }
+		st.rows[tc.tenant] = map[string]string{"phone_number_id": tc.phone, "waba_id": portfolioWABA, "token_source": "platform", "registration_pin": "777777"}
+		sim.numbers[tc.phone] = &simNumber{status: "DISCONNECTED", platformType: "CLOUD_API", pin: "777777", needsVerification: true}
+		sim.subscribed[portfolioWABA] = true
+
+		w := ownerJSON(h.Reregister, "/reregister", tc.target, "")
+		var body map[string]any
+		_ = json.Unmarshal(w.Body.Bytes(), &body)
+		if w.Code != http.StatusUnprocessableEntity || body["needs_verification"] != true {
+			t.Fatalf("%s: reregister status %d: %s", tc.tenant, w.Code, w.Body.String())
+		}
+
+		state := httptest.NewRecorder()
+		h.RegistrationStatus(state, ownerRequest(http.MethodGet, "/registration", tc.target, ""))
+		var st1 map[string]any
+		_ = json.Unmarshal(state.Body.Bytes(), &st1)
+		if st1["needs_verification"] != true || st1["registered"] != false {
+			t.Fatalf("%s: registration state %v", tc.tenant, st1)
+		}
+
+		mustOK(t, "request", ownerJSON(h.RequestVerificationCode, "/verification/request", tc.target, `{"code_method":"SMS"}`))
+		// A second request straight away is refused by our rate limit, not sent to Meta.
+		if w := ownerJSON(h.RequestVerificationCode, "/verification/request", tc.target, `{"code_method":"VOICE"}`); w.Code != http.StatusTooManyRequests {
+			t.Fatalf("%s: immediate resend status %d", tc.tenant, w.Code)
+		}
+
+		w = ownerJSON(h.VerifyCode, "/verification/verify", tc.target, `{"code":"000000"}`)
+		if w.Code != http.StatusUnprocessableEntity || !strings.Contains(w.Body.String(), "wrong or has expired") || strings.Contains(w.Body.String(), "000000") {
+			t.Fatalf("%s: wrong code status %d: %s", tc.tenant, w.Code, w.Body.String())
+		}
+
+		clock = clock.Add(61 * time.Second)
+		mustOK(t, "resend", ownerJSON(h.RequestVerificationCode, "/verification/request", tc.target, `{"code_method":"VOICE"}`))
+		if n := sim.number(tc.phone); n.sent != 2 || strings.Join(n.methods, ",") != "SMS,VOICE" {
+			t.Fatalf("%s: codes sent %d by %v", tc.tenant, n.sent, n.methods)
+		}
+		// The first code was replaced by the resend.
+		if w := ownerJSON(h.VerifyCode, "/verification/verify", tc.target, `{"code":"481516"}`); w.Code != http.StatusUnprocessableEntity {
+			t.Fatalf("%s: old code status %d", tc.tenant, w.Code)
+		}
+		w = ownerJSON(h.VerifyCode, "/verification/verify", tc.target, `{"code":"234 200"}`)
+		mustOK(t, "verify", w)
+		_ = json.Unmarshal(w.Body.Bytes(), &body)
+		if body["registered"] != true || body["status"] != "CONNECTED" || body["code_verification_status"] != "VERIFIED" {
+			t.Fatalf("%s: verify answer %v", tc.tenant, body)
+		}
+		if n := sim.number(tc.phone); n.pin != "777777" {
+			t.Fatalf("%s: registered with PIN %q, want the stored one", tc.tenant, n.pin)
+		}
+		sendReady(t, h, sim, tc.tenant)
+	}
+}
+
+func TestVerificationInputAndAccess(t *testing.T) {
+	sim := newMetaSim(map[string][]string{portfolioWABA: {urbanPhone}})
+	srv := sim.server(t)
+	h, st := newSimHandler(t, srv.URL)
+	st.rows["urbanloft"] = map[string]string{"phone_number_id": urbanPhone, "waba_id": portfolioWABA, "token_source": "platform"}
+	for _, body := range []string{`{"code_method":"EMAIL"}`, `{"code_method":"SMS","language":"en-US; drop"}`} {
+		if w := ownerJSON(h.RequestVerificationCode, "/r", "urbanloft", body); w.Code != http.StatusBadRequest {
+			t.Fatalf("%s: status %d", body, w.Code)
+		}
+	}
+	if w := ownerJSON(h.VerifyCode, "/v", "urbanloft", `{"code":"12ab"}`); w.Code != http.StatusBadRequest {
+		t.Fatalf("bad code status %d", w.Code)
+	}
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodPost, "/r", bytes.NewBufferString(`{"code_method":"SMS"}`))
+	h.RequestVerificationCode(w, r.WithContext(httpware.WithTenantID(r.Context(), "urbanloft")))
+	if w.Code != http.StatusForbidden {
+		t.Fatalf("non owner status %d", w.Code)
+	}
+	if n := sim.number(urbanPhone); n.sent != 0 {
+		t.Fatal("a refused request reached Meta")
+	}
+}
+
+// Link answers needs_verification too, so the panel opens the verification step.
+func TestManagedLinkNeedsVerification(t *testing.T) {
+	sim := newMetaSim(map[string][]string{portfolioWABA: {urbanPhone}})
+	sim.numbers[urbanPhone] = &simNumber{status: "DISCONNECTED", platformType: "CLOUD_API", needsVerification: true}
+	srv := sim.server(t)
+	h, _ := newSimHandler(t, srv.URL)
+	w := simLink(h, "urbanloft", urbanPhone, portfolioWABA)
+	if w.Code != http.StatusUnprocessableEntity || !strings.Contains(w.Body.String(), `"needs_verification":true`) {
+		t.Fatalf("status %d: %s", w.Code, w.Body.String())
+	}
+	// The link is saved, so the number is verified and registered in place.
+	if p, _, _, _ := h.conn(context.Background(), "urbanloft"); p != urbanPhone {
+		t.Fatalf("link not saved: %q", p)
+	}
+	mustOK(t, "request", ownerJSON(h.RequestVerificationCode, "/r", "urbanloft", `{"code_method":"SMS"}`))
+	mustOK(t, "verify", ownerJSON(h.VerifyCode, "/v", "urbanloft", `{"code":"481516"}`))
+	sendReady(t, h, sim, "urbanloft")
 }

@@ -161,11 +161,17 @@ func (h *WhatsAppEmbeddedSignupHandler) ManagedLink(w http.ResponseWriter, r *ht
 	// platform_type alone: a deregistered number (after a Disconnect) still reports CLOUD_API, and
 	// skipping register then left Urban Loft failing every send with 133010 (15 November 2026).
 	pin := ""
+	// A number Meta wants verified again (133006) is still linked, so the settings page can verify
+	// it with a code and register it in place; the answer says needs_verification.
+	var verifyErr error
 	if !registeredOnCloudAPI(phone.PlatformType, phone.Status) {
 		if pin, err = h.registerNumber(ctx, tenantID, apiVersion, req.PhoneNumberID, token); err != nil {
 			h.log.Error("managed link: phone registration failed", zap.String("phone_number_id", req.PhoneNumberID), zap.Error(err))
-			writeMetaRefusal(w, err, token, "Meta refused to register the number for Cloud API", "")
-			return
+			if d, ok := metaRefusalOf(err); !ok || d.Code != metaNeedsVerification {
+				writeMetaRefusal(w, err, token, "Meta refused to register the number for Cloud API", "")
+				return
+			}
+			verifyErr, pin = err, ""
 		}
 	}
 
@@ -197,6 +203,12 @@ func (h *WhatsAppEmbeddedSignupHandler) ManagedLink(w http.ResponseWriter, r *ht
 		}
 	}
 	pcfg.InvalidateCache()
+	if verifyErr != nil {
+		h.log.Info("whatsapp managed link saved, the number needs verification",
+			zap.String("tenant_id", tenantID), zap.String("phone_number_id", req.PhoneNumberID))
+		writeMetaRefusal(w, verifyErr, token, "The number is linked, but Meta refused to register it for Cloud API", "")
+		return
+	}
 
 	h.log.Info("whatsapp managed link completed",
 		zap.String("tenant_id", tenantID), zap.String("waba_id", req.WABAID), zap.String("phone_number_id", req.PhoneNumberID))
@@ -358,19 +370,29 @@ func metaRefusalOf(err error) (metaErrorDetail, bool) {
 
 // metaHints are what to do about Meta refusals we have met, by error subcode.
 var metaHints = map[int]string{
-	2593005: "Verify the number with its SMS or voice code in WhatsApp Manager, then link again",
+	2593005: "verify the number with a code sent by SMS or voice (Verify this number), then link again",
 }
 
 // metaCodeHints are the same, by error code, for refusals Meta sends without a subcode.
 var metaCodeHints = map[int]string{
 	133005: "two-step verification on this number has a different PIN: reset two-step verification for the number in WhatsApp Manager, then link again",
+	133006: "Meta needs the number verified again: send a code by SMS or voice and enter it (Verify this number)",
+	136024: "Meta could not check the code: send a new code and try again",
+	136025: "the code is wrong or has expired: check it, or send a new code",
 }
 
-// sanitizeMetaText keeps Meta's text readable and safe to show: the access token is never echoed,
-// control characters go and the length is capped.
-func sanitizeMetaText(s, token string) string {
-	if token != "" {
-		s = strings.ReplaceAll(s, token, "[redacted]")
+// metaNeedsVerification is Meta's 133006 "Phone number re-verification needed": the number has to
+// be verified with an SMS or voice code before it can be registered.
+const metaNeedsVerification = 133006
+
+// sanitizeMetaText keeps Meta's text readable and safe to show: the access token (and any other
+// secret passed, such as a verification code) is never echoed, control characters go and the
+// length is capped.
+func sanitizeMetaText(s string, secrets ...string) string {
+	for _, secret := range secrets {
+		if secret != "" {
+			s = strings.ReplaceAll(s, secret, "[redacted]")
+		}
 	}
 	s = strings.Map(func(r rune) rune {
 		if r < 0x20 || r == 0x7f {
@@ -387,25 +409,28 @@ func sanitizeMetaText(s, token string) string {
 
 // writeMetaRefusal answers a failed Meta call. A refusal Meta answered is 422 with Meta's own
 // title and message (error_user_title, error_user_msg) and a hint when one is known; the error
-// text carries them too, so a client that shows only "error" still says what Meta said. Meta not
-// answering is 502. hint is added when Meta has none of its own for the subcode.
-func writeMetaRefusal(w http.ResponseWriter, err error, token, what, hint string) {
+// text carries them too, so a client that shows only "error" still says what Meta said. A 133006
+// also carries needs_verification, so the UI opens the verification step. Meta not answering is
+// 502. hint is added when Meta has none of its own for the code. Every value in redact (the token,
+// a verification code) is removed from what is shown.
+func writeMetaRefusal(w http.ResponseWriter, err error, token, what, hint string, redact ...string) {
 	if errors.Is(err, errNoPIN) {
 		jsonError(w, http.StatusInternalServerError, errNoPIN.Error())
 		return
 	}
+	secrets := append([]string{token}, redact...)
 	d, answered := metaRefusalOf(err)
 	if !answered {
-		jsonResponse(w, http.StatusBadGateway, map[string]any{"error": what + ": " + sanitizeMetaText(err.Error(), token)})
+		jsonResponse(w, http.StatusBadGateway, map[string]any{"error": what + ": " + sanitizeMetaText(err.Error(), secrets...)})
 		return
 	}
-	title := sanitizeMetaText(d.UserTitle, token)
-	msg := sanitizeMetaText(d.UserMsg, token)
+	title := sanitizeMetaText(d.UserTitle, secrets...)
+	msg := sanitizeMetaText(d.UserMsg, secrets...)
 	if msg == "" {
-		msg = sanitizeMetaText(d.Message, token)
+		msg = sanitizeMetaText(d.Message, secrets...)
 	}
 	if msg == "" {
-		msg = sanitizeMetaText(err.Error(), token)
+		msg = sanitizeMetaText(err.Error(), secrets...)
 	}
 	if h, ok := metaCodeHints[d.Code]; ok {
 		hint = h
@@ -433,6 +458,9 @@ func writeMetaRefusal(w http.ResponseWriter, err error, token, what, hint string
 	}
 	if hint != "" {
 		body["hint"] = hint
+	}
+	if d.Code == metaNeedsVerification || d.Subcode == 2593005 {
+		body["needs_verification"] = true
 	}
 	jsonResponse(w, http.StatusUnprocessableEntity, body)
 }
