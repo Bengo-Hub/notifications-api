@@ -71,16 +71,24 @@ type WhatsAppEmbeddedSignupHandler struct {
 	// removeKeys deletes the named tenant whatsapp/meta_cloud rows: a managed link drops an old
 	// tenant access_token, and Embedded Signup drops an old token_source marker.
 	removeKeys func(ctx context.Context, tenantID string, keys ...string) error
-	// linkedElsewhere reports whether the phone number ID or WhatsApp account ID is already saved
-	// on a tenant other than tenantID.
+	// linkedElsewhere reports whether the phone number ID, or a WhatsApp account ID outside the
+	// portfolio, is already saved on a tenant other than tenantID. An empty wabaID skips the
+	// account check (see numberLinkedElsewhere).
 	linkedElsewhere func(ctx context.Context, tenantID, phoneNumberID, wabaID string) (bool, error)
+	// sharedUse reports whether the phone number ID or WhatsApp account ID is also saved on another
+	// tenant or on the platform tier, so Disconnect leaves it registered and subscribed on Meta.
+	sharedUse func(ctx context.Context, tenantID, phoneNumberID, wabaID string) (phoneShared, wabaShared bool, err error)
+	// storedPIN is the tenant's saved registration PIN (decrypted), "" when none.
+	storedPIN func(ctx context.Context, tenantID string) string
 	// platformID is the platform tenant, whose own number is never linked to another tenant.
 	platformID string
 }
 
 // connectionKeys are the tenant rows a connection writes and Disconnect removes. Other settings
-// (for example the preferred provider) stay.
-var connectionKeys = []string{"phone_number_id", "waba_id", "access_token", "registration_pin", providers.TokenSourceKey}
+// (for example the preferred provider) stay. The registration PIN stays too: two-step
+// verification keeps it on Meta after a deregister, so registering the number again (a relink,
+// or Re-register number) must send the same PIN or Meta refuses it.
+var connectionKeys = []string{"phone_number_id", "waba_id", "access_token", providers.TokenSourceKey}
 
 // WithTemplateAutoSync sets the background template sync started after a successful signup.
 func (h *WhatsAppEmbeddedSignupHandler) WithTemplateAutoSync(fn func(ctx context.Context, tenantID string)) *WhatsAppEmbeddedSignupHandler {
@@ -126,6 +134,8 @@ func NewWhatsAppEmbeddedSignupHandler(client *ent.Client, log *zap.Logger, pm *p
 	h.remove = h.removeTenantConnection
 	h.removeKeys = h.removeTenantKeys
 	h.linkedElsewhere = h.numberLinkedElsewhere
+	h.sharedUse = h.connectionSharedUse
+	h.storedPIN = pm.LoadTenantWhatsAppRegistrationPIN
 	h.platformID = pm.PlatformID
 	return h
 }
@@ -144,8 +154,10 @@ type disconnectResult struct {
 // Disconnect removes the tenant's own WhatsApp connection (owner, 2026-11-12). On Meta it
 // deregisters the number from Cloud API and unsubscribes our app from the account, each best
 // effort: an account the owner already deleted in WhatsApp Manager only adds a note. Then it
-// deletes the tenant's connection rows (number, account, token, PIN), so sends stop at once and a
-// fresh Embedded Signup starts clean. Meta has no API to delete a WhatsApp Business Account; the
+// deletes the tenant's connection rows (number, account, token, marker), so sends stop at once and a
+// fresh connection starts clean. What is released on Meta is decided by disconnectPlan: never the
+// platform's own number, never a number or account another tenant still uses, and a number in the
+// portfolio only when release=true is asked for. Meta has no API to delete a WhatsApp Business Account; the
 // note says to remove it in WhatsApp Manager when wanted.
 //
 // @Summary Disconnect the tenant's WhatsApp number
@@ -171,10 +183,12 @@ func (h *WhatsAppEmbeddedSignupHandler) Disconnect(w http.ResponseWriter, r *htt
 	}
 	res := disconnectResult{Message: "WhatsApp number disconnected"}
 	apiVersion := whatsapp.GraphVersion(version)
+	plan := h.disconnectPlan(ctx, r, tenantID, phoneID, wabaID)
+	res.Notes = append(res.Notes, plan.notes...)
 	if token == "" {
 		res.Notes = append(res.Notes, "no stored access token, so nothing was changed on Meta")
 	} else {
-		if phoneID != "" {
+		if phoneID != "" && plan.deregister {
 			if err := h.graphPost(ctx, apiVersion, phoneID+"/deregister", token, nil); err != nil {
 				h.log.Warn("whatsapp disconnect: deregister failed", zap.String("tenant_id", tenantID), zap.Error(err))
 				res.Notes = append(res.Notes, "the number could not be deregistered on Meta (it may already be deleted)")
@@ -182,7 +196,7 @@ func (h *WhatsAppEmbeddedSignupHandler) Disconnect(w http.ResponseWriter, r *htt
 				res.Deregistered = true
 			}
 		}
-		if wabaID != "" {
+		if wabaID != "" && plan.unsubscribe {
 			if err := h.graphDelete(ctx, apiVersion, wabaID+"/subscribed_apps", token); err != nil {
 				h.log.Warn("whatsapp disconnect: unsubscribe failed", zap.String("tenant_id", tenantID), zap.Error(err))
 				res.Notes = append(res.Notes, "the WhatsApp account could not be unsubscribed on Meta (it may already be deleted)")
@@ -241,22 +255,6 @@ func (h *WhatsAppEmbeddedSignupHandler) removeTenantKeys(ctx context.Context, te
 	return err
 }
 
-// numberLinkedElsewhere looks for the phone number ID or WhatsApp account ID on any other tenant's
-// whatsapp/meta_cloud rows (both are saved in plain text).
-func (h *WhatsAppEmbeddedSignupHandler) numberLinkedElsewhere(ctx context.Context, tenantID, phoneNumberID, wabaID string) (bool, error) {
-	return h.client.ProviderSetting.Query().
-		Where(
-			providersetting.TenantIDNEQ(tenantID),
-			providersetting.ProviderType("whatsapp"),
-			providersetting.ProviderName("meta_cloud"),
-			providersetting.Or(
-				providersetting.And(providersetting.Key("phone_number_id"), providersetting.Value(phoneNumberID)),
-				providersetting.And(providersetting.Key("waba_id"), providersetting.Value(wabaID)),
-			),
-		).
-		Exist(ctx)
-}
-
 type completeSignupRequest struct {
 	Code          string `json:"code"`
 	WABAID        string `json:"waba_id"`
@@ -309,20 +307,15 @@ func (h *WhatsAppEmbeddedSignupHandler) Complete(w http.ResponseWriter, r *http.
 		return
 	}
 
-	// A number already on Cloud API (an earlier attempt registered it) is not registered again:
-	// a new PIN would be refused against the one that attempt set.
+	// A number already connected on Cloud API is not registered again. A deregistered number (after
+	// a Disconnect) still reports platform_type CLOUD_API, so the live status decides (15 November
+	// 2026: a relink that skipped register left every send failing with 133010).
 	pin := ""
 	if !h.onCloudAPI(ctx, apiVersion, req.PhoneNumberID, businessToken) {
-		if pin, err = h.newPIN(); err != nil {
-			jsonError(w, http.StatusInternalServerError, "could not create a registration PIN")
-			return
-		}
-		if err := h.graphPost(ctx, apiVersion, req.PhoneNumberID+"/register", businessToken, map[string]any{
-			"messaging_product": "whatsapp",
-			"pin":               pin,
-		}); err != nil {
-			h.log.Error("embedded signup: phone registration failed", zap.String("phone_number_id", req.PhoneNumberID), zap.Error(err))
-			jsonError(w, http.StatusBadGateway, "failed to register the phone number for Cloud API: "+err.Error())
+		var regErr error
+		if pin, regErr = h.registerNumber(ctx, tenantID, apiVersion, req.PhoneNumberID, businessToken); regErr != nil {
+			h.log.Error("embedded signup: phone registration failed", zap.String("phone_number_id", req.PhoneNumberID), zap.Error(regErr))
+			writeMetaRefusal(w, regErr, businessToken, "Meta refused to register the phone number for Cloud API", "")
 			return
 		}
 	}
@@ -442,8 +435,9 @@ func (h *WhatsAppEmbeddedSignupHandler) exchangeCode(ctx context.Context, apiVer
 	return out.AccessToken, nil
 }
 
-// onCloudAPI reports whether Meta already lists the number as registered on Cloud API. Any
-// failure to tell counts as not registered, so register is attempted as before.
+// onCloudAPI reports whether Meta lists the number as registered and connected on Cloud API:
+// platform_type CLOUD_API with status CONNECTED. platform_type alone stays CLOUD_API after a
+// deregister. Any failure to tell counts as not registered, so register is attempted.
 func (h *WhatsAppEmbeddedSignupHandler) onCloudAPI(ctx context.Context, apiVersion, phoneNumberID, accessToken string) bool {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet,
 		fmt.Sprintf("%s/%s/%s?fields=platform_type,status", h.graphBase, apiVersion, phoneNumberID), nil)
@@ -461,11 +455,12 @@ func (h *WhatsAppEmbeddedSignupHandler) onCloudAPI(ctx context.Context, apiVersi
 	}
 	var out struct {
 		PlatformType string `json:"platform_type"`
+		Status       string `json:"status"`
 	}
 	if json.NewDecoder(resp.Body).Decode(&out) != nil {
 		return false
 	}
-	return out.PlatformType == "CLOUD_API"
+	return registeredOnCloudAPI(out.PlatformType, out.Status)
 }
 
 func (h *WhatsAppEmbeddedSignupHandler) graphPost(ctx context.Context, apiVersion, path, accessToken string, body map[string]any) error {

@@ -34,16 +34,23 @@ const systemUserHint = "check in WhatsApp Manager that the account is in the Cod
 // here. The tenant's rows keep its own number and account IDs with token_source=platform, so its
 // sends and syncs use the platform system user's token; no tenant token is stored.
 //
-// Platform owners only, acting for the tenant named in X-Tenant-ID.
+// Platform owners only, acting for the tenant named in X-Tenant-ID. With no tenant named (All
+// Tenants in the switcher) the target is the platform tenant itself, so the platform's own number
+// can be linked again after a Disconnect (owner, 15 November 2026). Other tenants' numbers may sit
+// in the platform's own WhatsApp account (the portfolio); only the platform's own phone number is
+// kept for the platform tenant.
+//
+// A refusal from Meta answers 422 with Meta's own title and message (meta_title, meta_message,
+// meta_code, meta_subcode) and a hint when one is known; 502 is kept for Meta not answering.
 //
 // @Summary Link a number from the Codevertex portfolio to a tenant
-// @Description Platform owners only. Checks the number belongs to the WhatsApp account, subscribes the webhook, registers the number when needed and saves it for the tenant named in X-Tenant-ID.
+// @Description Platform owners only. Checks the number belongs to the WhatsApp account, subscribes the webhook, registers the number when needed and saves it for the tenant named in X-Tenant-ID, or for the platform tenant when none is named.
 // @Tags WhatsApp
 // @Accept json
 // @Produce json
 // @Param body body managedLinkRequest true "Phone number ID and WhatsApp account ID"
 // @Success 200 {object} map[string]interface{}
-// @Failure 400,403,409,502,503 {object} errorResponse
+// @Failure 400,403,409,422,502,503 {object} errorResponse
 // @Security bearerAuth
 // @Router /billing/whatsapp/managed-link [post]
 func (h *WhatsAppEmbeddedSignupHandler) ManagedLink(w http.ResponseWriter, r *http.Request) {
@@ -55,10 +62,14 @@ func (h *WhatsAppEmbeddedSignupHandler) ManagedLink(w http.ResponseWriter, r *ht
 	ctx, cancel := context.WithTimeout(context.WithoutCancel(r.Context()), signupTimeout)
 	defer cancel()
 	tenantID := resolveActingTenantID(r)
-	if tenantID == "" || tenantID == h.platformID {
+	if tenantID == "" {
+		tenantID = h.platformID
+	}
+	if tenantID == "" {
 		jsonError(w, http.StatusBadRequest, "choose the tenant to link the number to first")
 		return
 	}
+	toPlatform := tenantID == h.platformID
 
 	var req managedLinkRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -82,12 +93,19 @@ func (h *WhatsAppEmbeddedSignupHandler) ManagedLink(w http.ResponseWriter, r *ht
 			"the platform WhatsApp access token is not set: add it under Platform > Providers > WhatsApp (Meta Cloud)")
 		return
 	}
-	if req.WABAID == strings.TrimSpace(creds["waba_id"]) || req.PhoneNumberID == strings.TrimSpace(creds["phone_number_id"]) {
-		jsonError(w, http.StatusConflict, "this is the platform's own WhatsApp account or number, it cannot be linked to a tenant")
+	// The platform's own number belongs to the platform tenant only. Its WhatsApp account is the
+	// portfolio, where other tenants' numbers live too, so the account alone is no reason to refuse.
+	if !toPlatform && req.PhoneNumberID == strings.TrimSpace(creds["phone_number_id"]) {
+		jsonError(w, http.StatusConflict, "this is the platform's own WhatsApp number, it can only be linked to the platform (Codevertex)")
 		return
 	}
 	if h.linkedElsewhere != nil {
-		taken, err := h.linkedElsewhere(ctx, tenantID, req.PhoneNumberID, req.WABAID)
+		// A number in the platform's own account is checked by its phone number only.
+		wabaToCheck := req.WABAID
+		if req.WABAID == strings.TrimSpace(creds["waba_id"]) {
+			wabaToCheck = ""
+		}
+		taken, err := h.linkedElsewhere(ctx, tenantID, req.PhoneNumberID, wabaToCheck)
 		if err != nil {
 			h.log.Error("managed link: checking existing links failed", zap.Error(err))
 			jsonError(w, http.StatusInternalServerError, "could not check whether the number is already linked, try again")
@@ -106,9 +124,9 @@ func (h *WhatsAppEmbeddedSignupHandler) ManagedLink(w http.ResponseWriter, r *ht
 		PlatformType       string `json:"platform_type"`
 		Status             string `json:"status"`
 	}
-	if err := h.graphGetJSON(ctx, apiVersion, req.PhoneNumberID+"?fields=display_phone_number,verified_name,platform_type,status", token, &phone); err != nil {
+	if err := h.graphGetJSON(ctx, apiVersion, req.PhoneNumberID+"?fields=display_phone_number,verified_name,platform_type,status,code_verification_status", token, &phone); err != nil {
 		h.log.Warn("managed link: reading the number failed", zap.String("phone_number_id", req.PhoneNumberID), zap.Error(err))
-		jsonError(w, http.StatusBadGateway, "Meta refused to show the number: "+err.Error()+"; "+systemUserHint)
+		writeMetaRefusal(w, err, token, "Meta refused to show the number", systemUserHint)
 		return
 	}
 	var numbers struct {
@@ -118,7 +136,7 @@ func (h *WhatsAppEmbeddedSignupHandler) ManagedLink(w http.ResponseWriter, r *ht
 	}
 	if err := h.graphGetJSON(ctx, apiVersion, req.WABAID+"/phone_numbers?fields=id&limit=100", token, &numbers); err != nil {
 		h.log.Warn("managed link: listing the account's numbers failed", zap.String("waba_id", req.WABAID), zap.Error(err))
-		jsonError(w, http.StatusBadGateway, "Meta refused to list the WhatsApp account's numbers: "+err.Error()+"; "+systemUserHint)
+		writeMetaRefusal(w, err, token, "Meta refused to list the WhatsApp account's numbers", systemUserHint)
 		return
 	}
 	inAccount := false
@@ -135,24 +153,18 @@ func (h *WhatsAppEmbeddedSignupHandler) ManagedLink(w http.ResponseWriter, r *ht
 
 	if err := h.graphPost(ctx, apiVersion, req.WABAID+"/subscribed_apps", token, nil); err != nil {
 		h.log.Error("managed link: webhook subscription failed", zap.String("waba_id", req.WABAID), zap.Error(err))
-		jsonError(w, http.StatusBadGateway, "Meta refused to subscribe our webhook to the WhatsApp account: "+metaMessage(err)+"; "+systemUserHint)
+		writeMetaRefusal(w, err, token, "Meta refused to subscribe our webhook to the WhatsApp account", systemUserHint)
 		return
 	}
 
-	// A number already on Cloud API is not registered again: a new PIN would be refused against the
-	// one set earlier.
+	// A number connected on Cloud API is not registered again. The live status decides, not
+	// platform_type alone: a deregistered number (after a Disconnect) still reports CLOUD_API, and
+	// skipping register then left Urban Loft failing every send with 133010 (15 November 2026).
 	pin := ""
-	if phone.PlatformType != "CLOUD_API" {
-		if pin, err = h.newPIN(); err != nil {
-			jsonError(w, http.StatusInternalServerError, "could not create a registration PIN")
-			return
-		}
-		if err := h.graphPost(ctx, apiVersion, req.PhoneNumberID+"/register", token, map[string]any{
-			"messaging_product": "whatsapp",
-			"pin":               pin,
-		}); err != nil {
+	if !registeredOnCloudAPI(phone.PlatformType, phone.Status) {
+		if pin, err = h.registerNumber(ctx, tenantID, apiVersion, req.PhoneNumberID, token); err != nil {
 			h.log.Error("managed link: phone registration failed", zap.String("phone_number_id", req.PhoneNumberID), zap.Error(err))
-			jsonError(w, http.StatusBadGateway, "Meta refused to register the number for Cloud API: "+metaMessage(err))
+			writeMetaRefusal(w, err, token, "Meta refused to register the number for Cloud API", "")
 			return
 		}
 	}
@@ -177,8 +189,9 @@ func (h *WhatsAppEmbeddedSignupHandler) ManagedLink(w http.ResponseWriter, r *ht
 		return
 	}
 	// An old tenant token from an earlier Embedded Signup is no longer used (the marker wins) and
-	// is removed so nothing can pick it up later.
-	if h.removeKeys != nil {
+	// is removed so nothing can pick it up later. The platform tenant keeps its own: that row can
+	// be where the platform token itself is saved (LoadPlatformMetaCredentials merges it).
+	if h.removeKeys != nil && !toPlatform {
 		if err := h.removeKeys(ctx, tenantID, "access_token"); err != nil {
 			h.log.Warn("managed link: could not remove the old tenant access token", zap.String("tenant_id", tenantID), zap.Error(err))
 		}
@@ -271,8 +284,8 @@ func isGraphID(s string) bool {
 	return true
 }
 
-// graphGetJSON GETs a Graph path and decodes the answer into out. A refusal comes back as Meta's
-// own error message.
+// graphGetJSON GETs a Graph path and decodes the answer into out. A refusal comes back as a
+// *graphError carrying Meta's own error.
 func (h *WhatsAppEmbeddedSignupHandler) graphGetJSON(ctx context.Context, apiVersion, path, accessToken string, out any) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet,
 		fmt.Sprintf("%s/%s/%s", h.graphBase, apiVersion, path), nil)
@@ -287,7 +300,7 @@ func (h *WhatsAppEmbeddedSignupHandler) graphGetJSON(ctx context.Context, apiVer
 	defer resp.Body.Close()
 	body, _ := io.ReadAll(resp.Body)
 	if resp.StatusCode >= 300 {
-		return errors.New(graphErrorMessage(resp.Status, body))
+		return &graphError{status: resp.Status, detail: parseMetaError(body)}
 	}
 	if err := json.Unmarshal(body, out); err != nil {
 		return errors.New("Meta's answer could not be read")
@@ -295,32 +308,131 @@ func (h *WhatsAppEmbeddedSignupHandler) graphGetJSON(ctx context.Context, apiVer
 	return nil
 }
 
-// graphErrorMessage is the error.message of a Graph error body, else the HTTP status.
-func graphErrorMessage(status string, body []byte) string {
-	var e struct {
-		Error struct {
-			Message string `json:"message"`
-		} `json:"error"`
-	}
-	if json.Unmarshal(body, &e) == nil && strings.TrimSpace(e.Error.Message) != "" {
-		return e.Error.Message
-	}
-	return status
+// metaErrorDetail is the useful part of a Graph error body.
+type metaErrorDetail struct {
+	Message   string `json:"message"`
+	UserTitle string `json:"error_user_title"`
+	UserMsg   string `json:"error_user_msg"`
+	Code      int    `json:"code"`
+	Subcode   int    `json:"error_subcode"`
 }
 
-// metaMessage pulls Meta's own message out of a graphPost error ("meta graph api path: status:
-// body"), falling back to the whole error.
-func metaMessage(err error) string {
+// graphError is a refusal Meta answered with (as opposed to Meta not being reached).
+type graphError struct {
+	status string
+	detail metaErrorDetail
+}
+
+func (e *graphError) Error() string {
+	if m := strings.TrimSpace(e.detail.Message); m != "" {
+		return m
+	}
+	return e.status
+}
+
+// parseMetaError reads {"error":{...}} out of a Graph body; an unreadable body gives a zero value.
+func parseMetaError(body []byte) metaErrorDetail {
+	var e struct {
+		Error metaErrorDetail `json:"error"`
+	}
+	_ = json.Unmarshal(body, &e)
+	return e.Error
+}
+
+// metaRefusalOf says whether Meta answered err with a refusal and, when it did, Meta's details.
+// graphPost errors read "meta graph api <path>: <status>: <body>".
+func metaRefusalOf(err error) (metaErrorDetail, bool) {
+	var ge *graphError
+	if errors.As(err, &ge) {
+		return ge.detail, true
+	}
 	s := err.Error()
+	if !strings.HasPrefix(s, "meta graph api ") {
+		return metaErrorDetail{}, false
+	}
 	if i := strings.Index(s, "{"); i >= 0 {
-		var e struct {
-			Error struct {
-				Message string `json:"message"`
-			} `json:"error"`
+		return parseMetaError([]byte(s[i:])), true
+	}
+	return metaErrorDetail{}, true
+}
+
+// metaHints are what to do about Meta refusals we have met, by error subcode.
+var metaHints = map[int]string{
+	2593005: "Verify the number with its SMS or voice code in WhatsApp Manager, then link again",
+}
+
+// metaCodeHints are the same, by error code, for refusals Meta sends without a subcode.
+var metaCodeHints = map[int]string{
+	133005: "two-step verification on this number has a different PIN: reset two-step verification for the number in WhatsApp Manager, then link again",
+}
+
+// sanitizeMetaText keeps Meta's text readable and safe to show: the access token is never echoed,
+// control characters go and the length is capped.
+func sanitizeMetaText(s, token string) string {
+	if token != "" {
+		s = strings.ReplaceAll(s, token, "[redacted]")
+	}
+	s = strings.Map(func(r rune) rune {
+		if r < 0x20 || r == 0x7f {
+			return ' '
 		}
-		if json.Unmarshal([]byte(s[i:]), &e) == nil && e.Error.Message != "" {
-			return e.Error.Message
-		}
+		return r
+	}, s)
+	s = strings.TrimSpace(s)
+	if len(s) > 400 {
+		s = s[:400] + "..."
 	}
 	return s
+}
+
+// writeMetaRefusal answers a failed Meta call. A refusal Meta answered is 422 with Meta's own
+// title and message (error_user_title, error_user_msg) and a hint when one is known; the error
+// text carries them too, so a client that shows only "error" still says what Meta said. Meta not
+// answering is 502. hint is added when Meta has none of its own for the subcode.
+func writeMetaRefusal(w http.ResponseWriter, err error, token, what, hint string) {
+	if errors.Is(err, errNoPIN) {
+		jsonError(w, http.StatusInternalServerError, errNoPIN.Error())
+		return
+	}
+	d, answered := metaRefusalOf(err)
+	if !answered {
+		jsonResponse(w, http.StatusBadGateway, map[string]any{"error": what + ": " + sanitizeMetaText(err.Error(), token)})
+		return
+	}
+	title := sanitizeMetaText(d.UserTitle, token)
+	msg := sanitizeMetaText(d.UserMsg, token)
+	if msg == "" {
+		msg = sanitizeMetaText(d.Message, token)
+	}
+	if msg == "" {
+		msg = sanitizeMetaText(err.Error(), token)
+	}
+	if h, ok := metaCodeHints[d.Code]; ok {
+		hint = h
+	}
+	if h, ok := metaHints[d.Subcode]; ok {
+		hint = h
+	}
+	text := what + ": "
+	if title != "" {
+		text += title + ". "
+	}
+	text += msg
+	if hint != "" {
+		text += "; " + hint
+	}
+	body := map[string]any{"error": text, "meta_message": msg}
+	if title != "" {
+		body["meta_title"] = title
+	}
+	if d.Code != 0 {
+		body["meta_code"] = d.Code
+	}
+	if d.Subcode != 0 {
+		body["meta_subcode"] = d.Subcode
+	}
+	if hint != "" {
+		body["hint"] = hint
+	}
+	jsonResponse(w, http.StatusUnprocessableEntity, body)
 }

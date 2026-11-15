@@ -373,6 +373,9 @@ func (p *MetaCloudProvider) post(ctx context.Context, payload map[string]interfa
 
 	respBody, _ := io.ReadAll(resp.Body)
 	if resp.StatusCode >= 400 {
+		if bytes.Contains(respBody, []byte(`"code":133010`)) {
+			return nil, fmt.Errorf("meta_cloud error: status %d: %s: %s", resp.StatusCode, NotRegisteredHint, string(respBody))
+		}
 		return nil, fmt.Errorf("meta_cloud error: status %d: %s", resp.StatusCode, string(respBody))
 	}
 	return respBody, nil
@@ -406,3 +409,8 @@ func (p *MetaCloudProvider) SendTextMessage(ctx context.Context, to, body string
 	}
 	return "", nil
 }
+
+// NotRegisteredHint is added to a send refused with Meta's 133010 ("Account does not exist in
+// Cloud API"): the number was deregistered (for example by a Disconnect) and needs registering
+// again before anything can go out from it.
+const NotRegisteredHint = "the number is not registered on Cloud API: a platform owner can register it again with Re-register number under Settings > Providers > WhatsApp"

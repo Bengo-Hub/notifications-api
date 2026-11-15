@@ -69,13 +69,16 @@ func (m *Manager) tenantWhatsAppSettings(ctx context.Context, tenantID string) (
 	if strings.TrimSpace(s[TokenSourceKey]) != TokenSourcePlatform {
 		return s, nil
 	}
-	var platform pcfg.Settings
-	if m.platformMeta != nil {
-		platform, _ = m.platformMeta(ctx)
-	} else {
-		platform, _ = m.LoadPlatformMetaCredentials(ctx)
-	}
+	platform, _ := m.platformMetaCredentials(ctx)
 	return applyPlatformToken(s, platform), nil
+}
+
+// platformMetaCredentials is LoadPlatformMetaCredentials, or the test seam when one is set.
+func (m *Manager) platformMetaCredentials(ctx context.Context) (pcfg.Settings, error) {
+	if m.platformMeta != nil {
+		return m.platformMeta(ctx)
+	}
+	return m.LoadPlatformMetaCredentials(ctx)
 }
 
 // applyPlatformToken returns a copy of a managed-link tenant's settings using the platform's
@@ -155,12 +158,13 @@ func (m *Manager) EncryptSecret(v string) (string, error) {
 }
 
 // LoadWhatsAppTemplateCredentials resolves the WABA ID + access token used for template
-// management (create/list message_templates), read from the platform tenant's own whatsapp/
-// meta_cloud settings — the same tenant-only row GetWhatsAppProvider resolves for real sends (see
-// LoadTenantOnlyProviderSettings), not the separate literal-"platform" fallback tier. Returns a
-// clear error if either piece is missing rather than a confusing downstream Meta 400.
+// management (create/list message_templates) of the platform's own account: the platform
+// tenant's own whatsapp/meta_cloud values, with the platform tier (Platform > Providers) filling
+// what the tenant row lacks (LoadPlatformMetaCredentials). A platform tenant linked from the
+// portfolio keeps no token of its own (token_source=platform), so the tenant row alone is not
+// enough. Returns a clear error if either piece is missing rather than a confusing Meta 400.
 func (m *Manager) LoadWhatsAppTemplateCredentials(ctx context.Context) (wabaID, accessToken string, err error) {
-	s, loadErr := pcfg.LoadTenantOnlyProviderSettings(ctx, m.dbCfg, m.PlatformID, m.env, "whatsapp", "meta_cloud", m.decryptionKey)
+	s, loadErr := m.platformMetaCredentials(ctx)
 	if loadErr != nil {
 		return "", "", loadErr
 	}
@@ -314,6 +318,23 @@ func (m *Manager) GetWhatsAppProvider(ctx context.Context, tenantID string, pref
 					}
 					if phoneNumberID == "" {
 						phoneNumberID = fb["phone_number_id"]
+					}
+					if apiVersion == "" {
+						apiVersion = fb["api_version"]
+					}
+				}
+			}
+
+			// The platform tenant itself sends with the platform tier credentials when its own rows
+			// are missing (a Disconnect removed them on 15 November 2026 and every platform-scope
+			// send failed). This is the platform's own number, so no other tenant ever reaches here.
+			if (accessToken == "" || phoneNumberID == "") && m.PlatformID != "" && tenantID == m.PlatformID {
+				if fb, fbErr := m.platformMetaCredentials(ctx); fbErr == nil {
+					if accessToken == "" {
+						accessToken = strings.TrimSpace(fb["access_token"])
+					}
+					if phoneNumberID == "" {
+						phoneNumberID = strings.TrimSpace(fb["phone_number_id"])
 					}
 					if apiVersion == "" {
 						apiVersion = fb["api_version"]
@@ -606,4 +627,15 @@ func (a *africasTalkingAdapter) GetBalance(ctx context.Context) (float64, error)
 func (a *africasTalkingAdapter) AccountInfo(ctx context.Context) (map[string]interface{}, error) {
 	provider := sms.NewAfricasTalking(sms.AfricasTalkingConfig{Username: a.username, APIKey: a.apiKey, From: a.from})
 	return provider.AccountInfo(ctx)
+}
+
+// LoadTenantWhatsAppRegistrationPIN is the two-step verification PIN we set when the tenant's
+// number was last registered on Cloud API (its encrypted registration_pin row), "" when none is
+// stored. Registering the same number again must use that PIN or Meta refuses it.
+func (m *Manager) LoadTenantWhatsAppRegistrationPIN(ctx context.Context, tenantID string) string {
+	s, err := m.loadTenantOnlyWhatsApp(ctx, tenantID)
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(s["registration_pin"])
 }

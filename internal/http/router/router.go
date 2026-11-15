@@ -32,7 +32,7 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 	r.Use(httpware.BypassForStreaming(middleware.Timeout(30 * time.Second)))
 	// The platform's own apps (apex and every subdomain) are always allowed, on top of the configured origins.
 	r.Use(httpware.CORS(httpware.StandardCORS(
-		append(append([]string(nil), allowedOrigins...), "https://codevertexafrica.com", "https://*.codevertexafrica.com"))))
+		append(append([]string(nil), allowedOrigins...), handlers.PlatformOrigins...))))
 
 	// Swagger UI
 	r.Get("/v1/docs/*", swaggerHandler.SwaggerUI)
@@ -338,6 +338,11 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 						// Links a number from the Codevertex verified portfolio to the tenant named
 						// in X-Tenant-ID; the handler refuses anyone but a platform owner.
 						wa.Post("/managed-link", whatsappEmbeddedSignup.ManagedLink)
+						// Registers the tenant's linked number on Cloud API again (platform owners
+						// only), for a number Meta reports as not registered.
+						wa.Post("/reregister", whatsappEmbeddedSignup.Reregister)
+						// The number's live Cloud API state, for the settings page.
+						wa.Get("/registration", whatsappEmbeddedSignup.RegistrationStatus)
 						// Removes the tenant's own connection (and releases it on Meta when it exists).
 						wa.Delete("/connection", whatsappEmbeddedSignup.Disconnect)
 					})

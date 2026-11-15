@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/Bengo-Hub/pagination"
@@ -32,14 +33,14 @@ func NewWhatsAppInboxHandler(service *whatsappinbox.Service, hub *whatsappinbox.
 }
 
 type conversationResponse struct {
-	ID                  string  `json:"id"`
-	CustomerWaID        string  `json:"customer_wa_id"`
-	CustomerName        string  `json:"customer_name,omitempty"`
-	LastMessageAt       string  `json:"last_message_at"`
-	LastMessagePreview  string  `json:"last_message_preview,omitempty"`
-	UnreadCount         int     `json:"unread_count"`
-	WindowOpen          bool    `json:"window_open"`
-	WindowExpiresAt     *string `json:"window_expires_at,omitempty"`
+	ID                 string  `json:"id"`
+	CustomerWaID       string  `json:"customer_wa_id"`
+	CustomerName       string  `json:"customer_name,omitempty"`
+	LastMessageAt      string  `json:"last_message_at"`
+	LastMessagePreview string  `json:"last_message_preview,omitempty"`
+	UnreadCount        int     `json:"unread_count"`
+	WindowOpen         bool    `json:"window_open"`
+	WindowExpiresAt    *string `json:"window_expires_at,omitempty"`
 }
 
 type messageResponse struct {
@@ -235,11 +236,7 @@ func (h *WhatsAppInboxHandler) StreamInbox(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	origins := h.allowedOrigins
-	if len(origins) == 0 {
-		origins = []string{"*"}
-	}
-	conn, err := websocket.Accept(w, r, &websocket.AcceptOptions{OriginPatterns: origins})
+	conn, err := websocket.Accept(w, r, &websocket.AcceptOptions{OriginPatterns: wsOriginPatterns(h.allowedOrigins)})
 	if err != nil {
 		h.log.Warn("whatsapp inbox: websocket upgrade failed", zap.Error(err))
 		return
@@ -247,4 +244,30 @@ func (h *WhatsAppInboxHandler) StreamInbox(w http.ResponseWriter, r *http.Reques
 	defer conn.Close(websocket.StatusNormalClosure, "")
 
 	h.hub.ServeWS(r.Context(), conn, tenantID)
+}
+
+// PlatformOrigins are the platform's own apps (apex and every subdomain), allowed on top of the
+// configured HTTP origins by the router's CORS and by the inbox websocket alike.
+var PlatformOrigins = []string{"https://codevertexafrica.com", "https://*.codevertexafrica.com"}
+
+// wsOriginPatterns turns the HTTP allowed origins (full URLs such as
+// https://notifications.codevertexafrica.com) into the host patterns the websocket library
+// matches the Origin header's host against. Passing the URLs as they are matched nothing, so the
+// inbox socket refused the notifications UI (15 November 2026). No configured origins means any.
+func wsOriginPatterns(allowed []string) []string {
+	if len(allowed) == 0 {
+		return []string{"*"}
+	}
+	out := make([]string, 0, len(allowed)+len(PlatformOrigins))
+	for _, o := range append(append([]string(nil), allowed...), PlatformOrigins...) {
+		o = strings.TrimSpace(o)
+		if i := strings.Index(o, "://"); i >= 0 {
+			o = o[i+3:]
+		}
+		o = strings.TrimRight(o, "/")
+		if o != "" {
+			out = append(out, o)
+		}
+	}
+	return out
 }

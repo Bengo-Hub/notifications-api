@@ -192,35 +192,117 @@ func TestManagedLinkPlatformOwnerOnly(t *testing.T) {
 	}
 }
 
-func TestManagedLinkRefusesPlatformAccount(t *testing.T) {
-	for _, body := range []string{
-		`{"phone_number_id":"109","waba_id":"2633992870377940"}`,
-		`{"phone_number_id":"300","waba_id":"209"}`,
-	} {
-		g := numericLinkGraph()
-		srv := g.server(t)
-		h, rec := newLinkHandler(t, srv.URL)
-		w := postLink(h, true, body)
-		if w.Code != http.StatusConflict || !strings.Contains(w.Body.String(), "platform's own") {
-			t.Fatalf("%s: status %d: %s", body, w.Code, w.Body.String())
-		}
-		if len(g.calls) != 0 || rec.saved.tenant != "" {
-			t.Fatalf("%s: reached Meta (%v) or saved", body, g.calls)
-		}
+// The platform's own number belongs to the platform tenant only: linking it to any other tenant is
+// still refused, before anything reaches Meta.
+func TestManagedLinkRefusesPlatformNumberForOtherTenants(t *testing.T) {
+	g := numericLinkGraph()
+	srv := g.server(t)
+	h, rec := newLinkHandler(t, srv.URL)
+	w := postLink(h, true, `{"phone_number_id":"300","waba_id":"209"}`)
+	if w.Code != http.StatusConflict || !strings.Contains(w.Body.String(), "platform's own") {
+		t.Fatalf("status %d: %s", w.Code, w.Body.String())
+	}
+	if len(g.calls) != 0 || rec.saved.tenant != "" {
+		t.Fatalf("reached Meta (%v) or saved", g.calls)
 	}
 }
 
-func TestManagedLinkRefusesPlatformTenantAsTarget(t *testing.T) {
-	h, _ := newLinkHandler(t, "http://unused")
-	r := httptest.NewRequest(http.MethodPost, "/api/v1/billing/whatsapp/managed-link", bytes.NewBufferString(`{"phone_number_id":"109","waba_id":"209"}`))
+// portfolioGraph is Hadia's number 1448935951635721 inside the platform's own account
+// 2633992870377940, where the platform's number (300 in linkCreds) also lives.
+func portfolioGraph() *linkGraph {
+	return &linkGraph{answers: map[string]graphAnswer{
+		"GET /v26.0/1448935951635721":               {body: `{"display_phone_number":"+254 711 000000","verified_name":"Hadia","platform_type":"NOT_APPLICABLE","status":"PENDING"}`},
+		"GET /v26.0/2633992870377940/phone_numbers": {body: `{"data":[{"id":"300"},{"id":"1448935951635721"},{"id":"1342267082299342"}]}`},
+		"GET /v26.0/2633992870377940":               {body: `{"primary_funding_id":"card-1"}`},
+		"GET /v26.0/300":                            {body: `{"display_phone_number":"+254 700 111111","verified_name":"Codevertex","platform_type":"CLOUD_API","status":"DISCONNECTED"}`},
+	}}
+}
+
+// Other tenants' numbers live in the platform's own account (the portfolio): Hadia links her
+// number there while the platform tenant holds its own number in the same account. The account is
+// not checked against other tenants, only the number is.
+func TestManagedLinkPortfolioNumberInPlatformAccount(t *testing.T) {
+	g := portfolioGraph()
+	srv := g.server(t)
+	h, rec := newLinkHandler(t, srv.URL)
+	var asked [3]string
+	h.linkedElsewhere = func(_ context.Context, tenantID, phoneID, wabaID string) (bool, error) {
+		asked = [3]string{tenantID, phoneID, wabaID}
+		return false, nil
+	}
+	w := postLink(h, true, `{"phone_number_id":"1448935951635721","waba_id":"2633992870377940"}`)
+	if w.Code != http.StatusOK {
+		t.Fatalf("status %d: %s", w.Code, w.Body.String())
+	}
+	if asked != [3]string{"hadia", "1448935951635721", ""} {
+		t.Errorf("checked %v, want the number only", asked)
+	}
+	if rec.saved.tenant != "hadia" {
+		t.Fatalf("saved for %q", rec.saved.tenant)
+	}
+}
+
+// An account held only by managed links (the portfolio) is no conflict; an account another tenant
+// connected itself (Embedded Signup, no marker) is.
+func TestWABAHeldOutsidePortfolio(t *testing.T) {
+	if wabaHeldOutsidePortfolio([]string{"urbanloft", "platform-tenant"}, []string{"urbanloft", "platform-tenant"}) {
+		t.Fatal("portfolio links were treated as a conflict")
+	}
+	if !wabaHeldOutsidePortfolio([]string{"urbanloft", "shop"}, []string{"urbanloft"}) {
+		t.Fatal("a tenant's own account was not a conflict")
+	}
+	if wabaHeldOutsidePortfolio(nil, nil) {
+		t.Fatal("nobody holds it")
+	}
+}
+
+// postLinkAs posts a managed link with X-Tenant-ID set to target ("" sends none: All Tenants).
+func postLinkAs(h *WhatsAppEmbeddedSignupHandler, target, body string) *httptest.ResponseRecorder {
+	r := httptest.NewRequest(http.MethodPost, "/api/v1/billing/whatsapp/managed-link", bytes.NewBufferString(body))
+	if target != "" {
+		r.Header.Set("X-Tenant-ID", target)
+	}
 	ctx := context.WithValue(httpware.WithTenantID(r.Context(), "platform-tenant"), httpware.IsPlatformOwnerKey, true)
 	w := httptest.NewRecorder()
 	h.ManagedLink(w, r.WithContext(ctx))
-	if w.Code != http.StatusBadRequest {
-		t.Fatalf("status %d, want 400 when no tenant is named", w.Code)
-	}
+	return w
 }
 
+// The platform's own number can be linked to the platform tenant again (after a Disconnect), with
+// All Tenants selected or the platform tenant named. Its own access token row is kept.
+func TestManagedLinkToPlatformTenant(t *testing.T) {
+	for _, target := range []string{"", "platform-tenant"} {
+		g := portfolioGraph()
+		srv := g.server(t)
+		h, rec := newLinkHandler(t, srv.URL)
+		h.removeKeys = func(context.Context, string, ...string) error {
+			t.Error("the platform tenant's own token row must be kept")
+			return nil
+		}
+		w := postLinkAs(h, target, `{"phone_number_id":"300","waba_id":"2633992870377940"}`)
+		if w.Code != http.StatusOK {
+			t.Fatalf("target %q: status %d: %s", target, w.Code, w.Body.String())
+		}
+		if rec.saved.tenant != "platform-tenant" {
+			t.Fatalf("target %q: saved for %q, want the platform tenant", target, rec.saved.tenant)
+		}
+		got := map[string]string{}
+		for _, r := range rec.saved.rows {
+			got[r.key] = r.value
+		}
+		if got["phone_number_id"] != "300" || got["waba_id"] != "2633992870377940" || got["token_source"] != "platform" {
+			t.Errorf("target %q: rows = %v", target, got)
+		}
+		calls := strings.Join(g.calls, "|")
+		if !strings.Contains(calls, "POST /v26.0/2633992870377940/subscribed_apps") {
+			t.Errorf("target %q: webhook not subscribed: %v", target, g.calls)
+		}
+		// Meta still says CLOUD_API after a deregister; the live status DISCONNECTED decides.
+		if !strings.Contains(calls, "POST /v26.0/300/register") {
+			t.Errorf("target %q: a deregistered number was not registered again: %v", target, g.calls)
+		}
+	}
+}
 func TestManagedLinkNumberNotInAccount(t *testing.T) {
 	g := numericLinkGraph()
 	g.answers["GET /v26.0/209/phone_numbers"] = graphAnswer{body: `{"data":[{"id":"108"}]}`}
@@ -242,8 +324,8 @@ func TestManagedLinkMetaRefusesSystemUser(t *testing.T) {
 	srv := g.server(t)
 	h, rec := newLinkHandler(t, srv.URL)
 	w := postLink(h, true, `{"phone_number_id":"109","waba_id":"209"}`)
-	if w.Code != http.StatusBadGateway {
-		t.Fatalf("status %d, want 502", w.Code)
+	if w.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("status %d, want 422 for a refusal Meta answered", w.Code)
 	}
 	msg := w.Body.String()
 	if !strings.Contains(msg, "missing permissions") || !strings.Contains(msg, "system user") {
