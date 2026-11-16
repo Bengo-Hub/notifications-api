@@ -56,6 +56,12 @@ type ticketingNotificationMapping struct {
 	// not need to hear about, a comment that is not an agent reply).
 	Skip        func(payload map[string]any) bool
 	DataBuilder func(payload map[string]any, links ticketLinks) map[string]any
+	// SubjectBuilder, when set, writes a subject from the payload (it names the ticket); an empty
+	// result falls back to EmailSubject.
+	SubjectBuilder func(payload map[string]any) string
+	// Route, when set, replaces ticketRoute for an alert that may go to several people (a team's
+	// supervisors) or must not fall back to the tenant's support mailbox.
+	Route func(payload map[string]any, ti *tenantInfo) (to []string, target, replyTo string, ok bool)
 }
 
 // ticketText reads a string payload key.
@@ -207,6 +213,13 @@ var ticketingMappings = map[string]ticketingNotificationMapping{
 	// SLA breaches from ticketing-api's SLA worker (ticketing.sla.*), sent to the assigned agent.
 	"sla.first_response_breached": ticketSLABreachMapping("First response"),
 	"sla.resolution_breached":     ticketSLABreachMapping("Resolution"),
+	// Agent workspace and SLA follow-ups (ticketing_agent_alerts.go): a mention and an escalation
+	// go to the agent or team concerned, a breach warning before the SLA runs out, and a merge
+	// tells the requester which ticket now carries their request.
+	"ticket.mentioned":   ticketMentionedMapping,
+	"ticket.merged":      ticketMergedMapping,
+	"sla.breach_warning": ticketBreachWarningMapping,
+	"ticket.escalated":   ticketEscalatedMapping,
 }
 
 // ticketSLABreachMapping is the agent alert for one kind of SLA breach.
@@ -263,6 +276,28 @@ func ticketRoute(m ticketingNotificationMapping, payload map[string]any, ti *ten
 	return to, messaging.TargetStaff, "", to != ""
 }
 
+// ticketRecipients is a mapping's own Route when it has one, else ticketRoute.
+func ticketRecipients(m ticketingNotificationMapping, payload map[string]any, ti *tenantInfo) (to []string, target, replyTo string, ok bool) {
+	if m.Route != nil {
+		return m.Route(payload, ti)
+	}
+	one, target, replyTo, ok := ticketRoute(m, payload, ti)
+	if !ok {
+		return nil, target, replyTo, false
+	}
+	return []string{one}, target, replyTo, true
+}
+
+// ticketEmailSubject is the mapping's subject for this payload.
+func ticketEmailSubject(m ticketingNotificationMapping, payload map[string]any) string {
+	if m.SubjectBuilder != nil {
+		if s := m.SubjectBuilder(payload); s != "" {
+			return s
+		}
+	}
+	return m.EmailSubject
+}
+
 // ticketIdempotencyKey is one per event: a ticket has many comments and status changes, so the
 // ticket id alone would swallow every one after the first.
 func ticketIdempotencyKey(evt ticketingEvent) string {
@@ -275,8 +310,8 @@ func ticketIdempotencyKey(evt ticketingEvent) string {
 
 // startTicketingConsumer subscribes to ticketing.> events and dispatches ticket emails: the
 // requester hears about their ticket (received, agent replies, status changes that need them,
-// resolved) with the tenant's support address as Reply-To, and agents get assignments and SLA
-// breaches.
+// resolved, merged into another ticket) with the tenant's support address as Reply-To, and agents
+// get assignments, mentions, escalations, SLA warnings and SLA breaches.
 func startTicketingConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamContext, cfg *config.Config, tr *tenantResolver, logg *zap.Logger) {
 	if nc == nil || js == nil {
 		logg.Warn("skipping ticketing consumer: NATS not available")
@@ -316,7 +351,7 @@ func startTicketingConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStrea
 			return
 		}
 
-		to, target, replyTo, ok := ticketRoute(mapping, evt.Payload, ti)
+		to, target, replyTo, ok := ticketRecipients(mapping, evt.Payload, ti)
 		if !ok {
 			logg.Info("ticketing event: no recipient, skipping",
 				zap.String("type", evt.EventType), zap.String("tenant", ti.Slug))
@@ -334,11 +369,11 @@ func startTicketingConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStrea
 			TemplateID:  mapping.TemplateID,
 			SenderScope: messaging.SenderScopeTenant,
 			Target:      target,
-			To:          []string{to},
+			To:          to,
 			ReplyTo:     replyTo,
 			Data:        mapping.DataBuilder(evt.Payload, links),
 			Metadata: map[string]any{
-				"subject": mapping.EmailSubject,
+				"subject": ticketEmailSubject(mapping, evt.Payload),
 			},
 			RequestID:      uuid.New().String(),
 			IdempotencyKey: ticketIdempotencyKey(evt),

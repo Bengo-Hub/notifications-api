@@ -1,0 +1,17 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <h2>Ticket escalated</h2>
+  <p>Ticket <strong>#{{ .ticket_id }}</strong> has been escalated{{ if .team_name }} to {{ .team_name }}{{ end }}.</p>
+
+  <div style="background:#f3f4f6; padding:16px; border-radius:6px; margin:16px 0;">
+    <strong>Ticket ID:</strong> #{{ .ticket_id }}<br/>
+    <strong>Subject:</strong> {{ .subject }}<br/>
+    <strong>Priority:</strong> {{ .priority }}{{ if .old_priority }} (was {{ .old_priority }}){{ end }}
+    {{ if .escalation_level }}<br/><strong>Escalation level:</strong> {{ .escalation_level }}{{ end }}
+    {{ if .reason }}<br/><strong>Reason:</strong> {{ .reason }}{{ end }}
+  </div>
+
+  <p>
+    <a class="button" href="{{ .action_link }}">Open Ticket</a>
+  </p>
+{{ end }}

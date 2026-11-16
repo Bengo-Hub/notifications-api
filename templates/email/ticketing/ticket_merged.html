@@ -1,0 +1,18 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <h2>Your request has moved</h2>
+  <p>Your support ticket <strong>#{{ .ticket_id }}</strong> has been merged into ticket <strong>#{{ .merged_into_id }}</strong>. Your request is now handled under <strong>#{{ .merged_into_id }}</strong>, and everything you sent us is on it.</p>
+
+  <div style="background:#f3f4f6; padding:16px; border-radius:6px; margin:16px 0;">
+    <strong>Subject:</strong> {{ .subject }}<br/>
+    <strong>Now handled under:</strong> #{{ .merged_into_id }}
+  </div>
+
+  <p>To add anything, reply to this email.</p>
+
+  {{ if .action_link }}
+  <p>
+    <a class="button" href="{{ .action_link }}">Visit our support page</a>
+  </p>
+  {{ end }}
+{{ end }}

@@ -1,0 +1,18 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <h2>You were mentioned on a ticket</h2>
+  <p>A teammate mentioned you {{ if .internal_note }}in an internal note {{ end }}on ticket <strong>#{{ .ticket_id }}</strong>.</p>
+
+  <div style="background:#f3f4f6; padding:16px; border-radius:6px; margin:16px 0;">
+    <strong>Ticket ID:</strong> #{{ .ticket_id }}<br/>
+    <strong>Subject:</strong> {{ .subject }}
+  </div>
+
+  {{ if .comment }}
+  <div style="background:#f3f4f6; padding:16px; border-radius:6px; margin:16px 0; white-space:pre-line;">{{ .comment }}</div>
+  {{ end }}
+
+  <p>
+    <a class="button" href="{{ .action_link }}">Open Ticket</a>
+  </p>
+{{ end }}

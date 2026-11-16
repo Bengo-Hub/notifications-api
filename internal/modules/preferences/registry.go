@@ -243,6 +243,14 @@ var Registry = []Type{
 	{Key: "ticketing/ticket_reply", Label: "Reply on your support ticket", Group: "Support & Projects", Class: ClassEssential},
 	{Key: "ticketing/ticket_status_changed", Label: "Support ticket status update", Group: "Support & Projects", Class: ClassOptional},
 	{Key: "ticketing/ticket_sla_breached", Label: "Support ticket past its SLA", Group: "Support & Projects", Class: ClassOptional},
+	// A mention is direct work for one agent, so it defaults on like projects/task_mentioned. A
+	// merge tells the requester their ticket number changed and where replies now go, so it
+	// defaults on like the receipt. The SLA warning and the escalation are agent alerts in the
+	// same class as the breach and assignment alerts.
+	{Key: "ticketing/ticket_mentioned", Label: "Mentioned on a support ticket", Group: "Support & Projects", Class: ClassEssential},
+	{Key: "ticketing/ticket_merged", Label: "Support request merged into another ticket", Group: "Support & Projects", Class: ClassEssential},
+	{Key: "ticketing/sla_breach_warning", Label: "Support ticket close to its SLA", Group: "Support & Projects", Class: ClassOptional},
+	{Key: "ticketing/ticket_escalated", Label: "Support ticket escalated", Group: "Support & Projects", Class: ClassOptional},
 	{Key: "projects/project_milestone_reached", Label: "Project milestone reached", Group: "Support & Projects", Class: ClassOptional},
 	// Task notices to one teammate (projects-api project.task.mentioned and project.task.assigned).
 	// Essential: a mention or an assignment is direct work for that person, so it is on by default
