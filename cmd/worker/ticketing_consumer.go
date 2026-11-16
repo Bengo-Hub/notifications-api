@@ -232,10 +232,6 @@ func ticketSLABreachMapping(label string) ticketingNotificationMapping {
 	}
 }
 
-// platformSupportEmail answers the platform's own tickets (the codevertex tenant) when its
-// support contact is not set (support routing, owner decisions 12 November 2026).
-const platformSupportEmail = "support@codevertexafrica.com"
-
 // ticketSupportEmail is the tenant's support address: the Reply-To on requester mail and the
 // recipient of agent alerts on an unassigned ticket.
 func ticketSupportEmail(ti *tenantInfo) string {

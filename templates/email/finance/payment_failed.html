@@ -4,7 +4,7 @@
   <p>
     <a class="button" href="{{ .retry_link }}">Retry Payment</a>
   </p>
-  <p class="muted">If you need help, contact {{ or .brand_email "support@example.com" }}.</p>
+  {{ if .brand_email }}<p class="muted">If you need help, contact {{ .brand_email }}.</p>{{ end }}
 {{ end }}
 
 

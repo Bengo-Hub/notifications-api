@@ -784,12 +784,10 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 			}
 		}
 		replyTo := msg.ReplyTo
-		// Platform-scope transactional email with no explicit reply-to defaults to
-		// info@ — decided explicitly (AskUserQuestion, 2026-08-18) rather than left
-		// as a silent no-reply-to gap; tenant-scope messages are unaffected (each
-		// tenant's own provider config/brand determines their reply behavior).
+		// Platform-scope transactional email with no explicit reply-to replies to info@
+		// (platformInfoEmail). Tenant-scope messages use the tenant's own settings below.
 		if replyTo == "" && msg.EffectiveSenderScope() == messaging.SenderScopePlatform {
-			replyTo = "info@codevertexafrica.com"
+			replyTo = platformInfoEmail
 		}
 		// A tenant that sends from a no-reply address can name where replies go (its own email
 		// settings, reply_to), e.g. Hadia: no-reply@hadiafrica.com, replies to info@hadiafrica.com.

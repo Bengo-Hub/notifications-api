@@ -77,7 +77,7 @@ func TestBlockingAndDormancyEventsAreSent(t *testing.T) {
 		}
 	}
 	susp := renderSubscription(t, "dormancy.suspended", map[string]any{"notification": map[string]any{"message": "Contact support."}})
-	if !strings.Contains(susp, "mailto:support@codevertexafrica.com") || strings.Contains(susp, "Act by") {
+	if !strings.Contains(susp, "mailto:billing@codevertexafrica.com") || strings.Contains(susp, "Act by") {
 		t.Fatalf("dormancy.suspended:\n%s", susp)
 	}
 	if out := renderSubscription(t, "payment_required", map[string]any{}); !strings.Contains(out, "suspended") {

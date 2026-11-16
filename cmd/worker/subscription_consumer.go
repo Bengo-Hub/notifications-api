@@ -280,7 +280,7 @@ func upgradeTrialData(payload map[string]any, tenantWebsite string) map[string]a
 
 // dormancyData fills the account notice for a dormancy event. The message is the policy text
 // subscriptions-api sends in payload.notification; a warning adds its deadline and links to the
-// subscription page, a suspension points to platform support (support@codevertexafrica.com).
+// subscription page, a suspension points to platform billing (platformBillingEmail).
 func dormancyData(heading, actionText string) func(map[string]any, string) map[string]any {
 	return func(payload map[string]any, tenantWebsite string) map[string]any {
 		message := ""
@@ -289,7 +289,7 @@ func dormancyData(heading, actionText string) func(map[string]any, string) map[s
 		}
 		link := fmt.Sprintf("%s/settings/subscription", tenantWebsite)
 		if _, warning := payload["grace_ends_at"]; !warning {
-			link = "mailto:support@codevertexafrica.com"
+			link = "mailto:" + platformBillingEmail
 		}
 		return map[string]any{
 			"name":        "Admin",
