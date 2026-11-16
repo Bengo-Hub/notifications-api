@@ -367,5 +367,6 @@ func (h *WhatsAppTemplates) RegisterWhatsAppTemplateRoutes(r chi.Router) {
 	r.Route("/whatsapp/templates", func(wa chi.Router) {
 		wa.Post("/sync", h.Sync)
 		wa.Delete("/", h.Delete)
+		wa.Get("/categories", h.Categories)
 	})
 }

@@ -69,6 +69,21 @@ type TemplateStatus struct {
 	// MISSING when the template has not been submitted to this WABA.
 	Status string `json:"status"`
 	Reason string `json:"reason,omitempty"`
+	// MetaCategory is the category Meta approved the template under, the one it bills. When it
+	// differs from Category, Recategorized is true and Meta treats every send as that category
+	// (a MARKETING one is held back by Meta's per person marketing limit, error 131049).
+	MetaCategory     string `json:"meta_category,omitempty"`
+	PreviousCategory string `json:"previous_category,omitempty"`
+	Recategorized    bool   `json:"recategorized,omitempty"`
+}
+
+// withMeta fills the status fields Meta reports for a template already on the WABA.
+func (st *TemplateStatus) withMeta(mt templatesync.ExistingTemplate) {
+	st.Status = mt.Status
+	st.Reason = mt.RejectedReason
+	st.MetaCategory = mt.Category
+	st.PreviousCategory = mt.PreviousCategory
+	st.Recategorized = templatesync.Recategorized(st.Category, mt)
 }
 
 // StatusMissing marks a selected template not yet on the tenant's WABA.
@@ -159,10 +174,12 @@ func (s *Service) TenantTemplateStatus(ctx context.Context, tenantID string) (*S
 	for _, def := range defs {
 		st := TemplateStatus{Name: def.Name, Category: def.Category, Status: StatusMissing}
 		if mt, ok := existing[def.Name]; ok {
-			st.Status = mt.Status
-			st.Reason = mt.RejectedReason
+			st.withMeta(mt)
 		}
 		summary[st.Status]++
+		if st.Recategorized {
+			summary["recategorized"]++
+		}
 		out = append(out, st)
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].Name < out[j].Name })
@@ -197,8 +214,7 @@ func (s *Service) NamedStatus(ctx context.Context, tenantID string, names []stri
 		seen[name] = true
 		st := TemplateStatus{Name: name, Status: StatusMissing}
 		if mt, ok := existing[name]; ok {
-			st.Status = mt.Status
-			st.Reason = mt.RejectedReason
+			st.withMeta(mt)
 		}
 		out = append(out, st)
 	}

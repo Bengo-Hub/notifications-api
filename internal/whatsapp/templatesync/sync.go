@@ -124,8 +124,10 @@ type Result struct {
 
 // metaTemplate is one template as Meta reports it.
 type metaTemplate struct {
-	Status         string
-	RejectedReason string
+	Status           string
+	RejectedReason   string
+	Category         string
+	PreviousCategory string
 }
 
 // Syncer talks to one WhatsApp Business Account's Graph API template endpoints.
@@ -337,6 +339,24 @@ func (s *Syncer) delete(ctx context.Context, name string) error {
 type ExistingTemplate struct {
 	Status         string `json:"status"`
 	RejectedReason string `json:"rejected_reason,omitempty"`
+	// Category is the category Meta approved the template under, which is what Meta bills. It can
+	// differ from the category we submitted: Meta moves a template it reads as promotional to
+	// MARKETING, and PreviousCategory then holds the category it replaced.
+	Category         string `json:"category,omitempty"`
+	PreviousCategory string `json:"previous_category,omitempty"`
+}
+
+// Recategorized reports whether Meta holds the template under another category than declared
+// (the manifest's category), or, with no declared category, whether Meta says it moved it. A
+// template Meta has not categorised yet is not counted.
+func Recategorized(declared string, mt ExistingTemplate) bool {
+	if mt.Category == "" {
+		return false
+	}
+	if declared == "" {
+		return mt.PreviousCategory != "" && !strings.EqualFold(mt.PreviousCategory, mt.Category)
+	}
+	return !strings.EqualFold(declared, mt.Category)
 }
 
 // FetchExisting lists every template already on the WABA, keyed by name. Used by the tenant
@@ -352,7 +372,7 @@ func (s *Syncer) FetchExisting(ctx context.Context) (map[string]ExistingTemplate
 		if reason == "NONE" {
 			reason = ""
 		}
-		out[name] = ExistingTemplate{Status: mt.Status, RejectedReason: reason}
+		out[name] = ExistingTemplate{Status: mt.Status, RejectedReason: reason, Category: mt.Category, PreviousCategory: mt.PreviousCategory}
 	}
 	return out, nil
 }
@@ -360,7 +380,7 @@ func (s *Syncer) FetchExisting(ctx context.Context) (map[string]ExistingTemplate
 // fetchExisting paginates through every template already on the WABA, keyed by name.
 func (s *Syncer) fetchExisting(ctx context.Context) (map[string]metaTemplate, error) {
 	out := map[string]metaTemplate{}
-	url := fmt.Sprintf("%s/%s/%s/message_templates?fields=name,status,rejected_reason&limit=200", s.graph(), s.version(), s.WABAID)
+	url := fmt.Sprintf("%s/%s/%s/message_templates?fields=name,status,rejected_reason,category,previous_category&limit=200", s.graph(), s.version(), s.WABAID)
 
 	for url != "" {
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
@@ -381,9 +401,11 @@ func (s *Syncer) fetchExisting(ctx context.Context) (map[string]metaTemplate, er
 
 		var lr struct {
 			Data []struct {
-				Name           string `json:"name"`
-				Status         string `json:"status"`
-				RejectedReason string `json:"rejected_reason"`
+				Name             string `json:"name"`
+				Status           string `json:"status"`
+				RejectedReason   string `json:"rejected_reason"`
+				Category         string `json:"category"`
+				PreviousCategory string `json:"previous_category"`
 			} `json:"data"`
 			Paging struct {
 				Next string `json:"next"`
@@ -393,7 +415,7 @@ func (s *Syncer) fetchExisting(ctx context.Context) (map[string]metaTemplate, er
 			return nil, fmt.Errorf("unexpected response: %s", string(body))
 		}
 		for _, t := range lr.Data {
-			out[t.Name] = metaTemplate{Status: t.Status, RejectedReason: t.RejectedReason}
+			out[t.Name] = metaTemplate{Status: t.Status, RejectedReason: t.RejectedReason, Category: t.Category, PreviousCategory: t.PreviousCategory}
 		}
 		url = lr.Paging.Next
 	}
