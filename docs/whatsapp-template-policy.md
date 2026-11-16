@@ -143,19 +143,32 @@ Templates waiting for a Meta sync after their deploy:
 
 | Template | Sent for |
 |---|---|
-| `projects_task_mentioned_v1_btn` | `project.task.mentioned` with a comment excerpt |
-| `projects_task_mentioned_short_v1_btn` | `project.task.mentioned` without an excerpt |
-| `projects_task_assigned_v1_btn` | `project.task.assigned` |
-| `notifications_test_message_v2` | the provider Test button (falls back to v1 until approved) |
-| `credits_balance_low_v2_btn` | `billing.balance.low` to tenant admins (falls back to v1) |
-| `hadia_registry_published_v2_btn` | `registry.published` (falls back to v1) |
-| `hadia_change_requested_v2_btn` | `registry.change_requested` (falls back to v1) |
-| `hadia_legal_updated_v2_btn` | `legal.updated` (falls back to v1) |
-| `pos_loyalty_referral_v2` | `loyalty.referral_earned` (falls back to v1) |
-| `ispbilling_expiry_reminder_v2`, `ispbilling_subscription_expiring_v2` | not sent yet |
+| `ispbilling_expiry_reminder_v2`, `ispbilling_subscription_expiring_v2` | not sent yet (ISP notices go by SMS and email) |
 
-Until Meta approves them the task emails still go and WhatsApp is skipped. The `_v2` rewrites of 16 November
-2026 keep sending through their approved v1 until then (`superseded.go`).
+Approved as UTILITY on 16 November 2026 within the hour, with their `superseded.go` fallbacks removed:
+`notifications_test_message_v2`, `credits_balance_low_v2_btn`, `hadia_registry_published_v2_btn`,
+`hadia_change_requested_v2_btn`, `hadia_legal_updated_v2_btn`, `pos_loyalty_referral_v2` and the three
+`projects_task_*` templates.
+
+## 4b. What Meta tells us after a template is live
+
+Meta keeps judging a template after approval. Two webhook fields report it, and both must be ticked on the
+Meta app (WhatsApp, Configuration, Webhook fields) next to `messages`:
+
+- `template_category_update`: Meta moved a template to another category (or will). The new category is
+  recorded at once (`internal/whatsapp/templatecat`), credits bill sends by it from the next minute, and ops
+  get an alert. A move to Marketing goes by email and Slack with the cost, what Meta does to delivery
+  (131049) and the fix; a move to a cheaper category is Slack news only.
+- `message_template_status_update`: Meta approved, rejected, paused or disabled a template. Approvals are
+  Slack news only; the rest go by email and Slack with Meta's reason.
+
+Ops WhatsApp is never used for these alerts. A sweep re-reads every WABA's categories every 6 hours and
+alerts on moves the webhook missed (one replica per interval).
+
+Meta's later verdict on each send is recorded too: the delivery log row moves to delivered, read or failed
+with Meta's error code and reason (Monitoring no longer shows "sent" for a message Meta refused), the Test
+button waits up to six seconds and says what Meta did with its message, and a number Meta cannot deliver
+to (131026) is skipped on WhatsApp for that sender for a week, with its backup number used when there is one.
 
 ## 5. MarketFlow assistant templates (Sprint 17, for the owner to submit)
 

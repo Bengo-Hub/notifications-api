@@ -19,6 +19,7 @@ import (
 	"github.com/bengobox/notifications-api/internal/modules/engagement"
 	"github.com/bengobox/notifications-api/internal/modules/suppression"
 	"github.com/bengobox/notifications-api/internal/modules/whatsappinbox"
+	"github.com/bengobox/notifications-api/internal/whatsapp/templatecat"
 
 	"github.com/Bengo-Hub/httpware/pii"
 )
@@ -82,6 +83,9 @@ type WebhookHandler struct {
 	signature     *metaSignature
 	assistantNC   *nats.Conn // platform-number messages to MarketFlow (webhooks_assistant.go)
 	engagement    *engagement.Tracker
+	// Meta's template categories and send outcomes (webhooks_whatsapp_templates.go).
+	templateCats  *templatecat.Store
+	templateAlert templatecat.Alerter
 }
 
 // NewWebhookHandler creates the webhook handler. publicBaseURL is this service's own externally
@@ -163,6 +167,9 @@ type waWebhookPayload struct {
 		Changes []struct {
 			Field string `json:"field"`
 			Value struct {
+				// message_template_status_update and template_category_update (Meta's template
+				// webhooks; see webhooks_whatsapp_templates.go).
+				waTemplateEvent
 				Metadata struct {
 					PhoneNumberID string `json:"phone_number_id"`
 				} `json:"metadata"`
@@ -290,6 +297,11 @@ func (h *WebhookHandler) WhatsAppIncoming(w http.ResponseWriter, r *http.Request
 	ctx := r.Context()
 	for _, entry := range payload.Entry {
 		for _, change := range entry.Changes {
+			switch change.Field {
+			case "template_category_update", "message_template_status_update":
+				h.onTemplateEvent(ctx, change.Field, entry.ID, change.Value.waTemplateEvent)
+				continue
+			}
 			phoneNumberID := change.Value.Metadata.PhoneNumberID
 			tenantID := h.resolveTenantByPhoneNumberID(ctx, phoneNumberID)
 
@@ -332,6 +344,7 @@ func (h *WebhookHandler) WhatsAppIncoming(w http.ResponseWriter, r *http.Request
 				// "Recipient phone number not in allowed list" for a test/dev app, or a 24-hour
 				// session-window violation) -- previously discarded entirely, so a failed send
 				// showed only the fact of failure, never why.
+				outcome := templatecat.SendStatus{MessageID: status.ID, Status: status.Status}
 				for _, e := range status.Errors {
 					h.log.Warn("whatsapp message failed",
 						zap.String("message_id", status.ID),
@@ -341,7 +354,11 @@ func (h *WebhookHandler) WhatsAppIncoming(w http.ResponseWriter, r *http.Request
 						zap.String("error_message", e.Message),
 						zap.String("error_details", e.ErrorData.Details),
 					)
+					if outcome.Code == 0 {
+						outcome.Code, outcome.Title, outcome.Detail = e.Code, e.Title, e.ErrorData.Details
+					}
 				}
+				h.onSendOutcome(ctx, tenantID, status.RecipientID, outcome)
 				h.onWhatsAppStatus(ctx, status.ID, status.Status)
 				h.engagement.WhatsAppStatus(ctx, status.ID, status.Status)
 				if h.inbox != nil {

@@ -106,6 +106,20 @@ func (_c *SuppressionCreate) SetNillableCreatedAt(v *time.Time) *SuppressionCrea
 	return _c
 }
 
+// SetExpiresAt sets the "expires_at" field.
+func (_c *SuppressionCreate) SetExpiresAt(v time.Time) *SuppressionCreate {
+	_c.mutation.SetExpiresAt(v)
+	return _c
+}
+
+// SetNillableExpiresAt sets the "expires_at" field if the given value is not nil.
+func (_c *SuppressionCreate) SetNillableExpiresAt(v *time.Time) *SuppressionCreate {
+	if v != nil {
+		_c.SetExpiresAt(*v)
+	}
+	return _c
+}
+
 // SetID sets the "id" field.
 func (_c *SuppressionCreate) SetID(v uuid.UUID) *SuppressionCreate {
 	_c.mutation.SetID(v)
@@ -269,6 +283,10 @@ func (_c *SuppressionCreate) createSpec() (*Suppression, *sqlgraph.CreateSpec) {
 		_spec.SetField(suppression.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
 	}
+	if value, ok := _c.mutation.ExpiresAt(); ok {
+		_spec.SetField(suppression.FieldExpiresAt, field.TypeTime, value)
+		_node.ExpiresAt = &value
+	}
 	return _node, _spec
 }
 
@@ -348,6 +366,24 @@ func (u *SuppressionUpsert) UpdateSource() *SuppressionUpsert {
 // ClearSource clears the value of the "source" field.
 func (u *SuppressionUpsert) ClearSource() *SuppressionUpsert {
 	u.SetNull(suppression.FieldSource)
+	return u
+}
+
+// SetExpiresAt sets the "expires_at" field.
+func (u *SuppressionUpsert) SetExpiresAt(v time.Time) *SuppressionUpsert {
+	u.Set(suppression.FieldExpiresAt, v)
+	return u
+}
+
+// UpdateExpiresAt sets the "expires_at" field to the value that was provided on create.
+func (u *SuppressionUpsert) UpdateExpiresAt() *SuppressionUpsert {
+	u.SetExcluded(suppression.FieldExpiresAt)
+	return u
+}
+
+// ClearExpiresAt clears the value of the "expires_at" field.
+func (u *SuppressionUpsert) ClearExpiresAt() *SuppressionUpsert {
+	u.SetNull(suppression.FieldExpiresAt)
 	return u
 }
 
@@ -446,6 +482,27 @@ func (u *SuppressionUpsertOne) UpdateSource() *SuppressionUpsertOne {
 func (u *SuppressionUpsertOne) ClearSource() *SuppressionUpsertOne {
 	return u.Update(func(s *SuppressionUpsert) {
 		s.ClearSource()
+	})
+}
+
+// SetExpiresAt sets the "expires_at" field.
+func (u *SuppressionUpsertOne) SetExpiresAt(v time.Time) *SuppressionUpsertOne {
+	return u.Update(func(s *SuppressionUpsert) {
+		s.SetExpiresAt(v)
+	})
+}
+
+// UpdateExpiresAt sets the "expires_at" field to the value that was provided on create.
+func (u *SuppressionUpsertOne) UpdateExpiresAt() *SuppressionUpsertOne {
+	return u.Update(func(s *SuppressionUpsert) {
+		s.UpdateExpiresAt()
+	})
+}
+
+// ClearExpiresAt clears the value of the "expires_at" field.
+func (u *SuppressionUpsertOne) ClearExpiresAt() *SuppressionUpsertOne {
+	return u.Update(func(s *SuppressionUpsert) {
+		s.ClearExpiresAt()
 	})
 }
 
@@ -711,6 +768,27 @@ func (u *SuppressionUpsertBulk) UpdateSource() *SuppressionUpsertBulk {
 func (u *SuppressionUpsertBulk) ClearSource() *SuppressionUpsertBulk {
 	return u.Update(func(s *SuppressionUpsert) {
 		s.ClearSource()
+	})
+}
+
+// SetExpiresAt sets the "expires_at" field.
+func (u *SuppressionUpsertBulk) SetExpiresAt(v time.Time) *SuppressionUpsertBulk {
+	return u.Update(func(s *SuppressionUpsert) {
+		s.SetExpiresAt(v)
+	})
+}
+
+// UpdateExpiresAt sets the "expires_at" field to the value that was provided on create.
+func (u *SuppressionUpsertBulk) UpdateExpiresAt() *SuppressionUpsertBulk {
+	return u.Update(func(s *SuppressionUpsert) {
+		s.UpdateExpiresAt()
+	})
+}
+
+// ClearExpiresAt clears the value of the "expires_at" field.
+func (u *SuppressionUpsertBulk) ClearExpiresAt() *SuppressionUpsertBulk {
+	return u.Update(func(s *SuppressionUpsert) {
+		s.ClearExpiresAt()
 	})
 }
 

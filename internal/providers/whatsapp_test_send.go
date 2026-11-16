@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/bengobox/notifications-api/internal/messaging"
 )
 
 // WhatsAppTestTemplate is the approved utility template the Test button sends. It is in every
@@ -45,26 +47,31 @@ func whatsAppTestParams(now time.Time) []string {
 // Meta charges the tenant's account for it as a utility message; no Codevertex credits are used.
 // Until the template is approved on the tenant's account (a 1320xx template error) the free text
 // is sent instead, and any other error, such as a malformed number, is returned as it is.
-func whatsAppTestSend(ctx context.Context, prov WhatsAppProvider, to string) (string, error) {
-	err := prov.SendWhatsApp(ctx, "", []string{to}, whatsAppTestText, map[string]interface{}{
+//
+// messageID is Meta's id for the template send (empty for the free text), so the caller can wait
+// for Meta's later verdict on it: Meta accepting a message is not Meta delivering it.
+func whatsAppTestSend(ctx context.Context, prov WhatsAppProvider, to string) (sentAs, messageID string, err error) {
+	md := map[string]interface{}{
 		"template_name":   WhatsAppTestTemplate,
 		"template_params": whatsAppTestParams(time.Now()),
-	})
+	}
+	err = prov.SendWhatsApp(ctx, "", []string{to}, whatsAppTestText, md)
 	if err == nil {
-		return TestSentAsTemplate, nil
+		id, _ := md[messaging.MetaSentMessageID].(string)
+		return TestSentAsTemplate, id, nil
 	}
 	if !strings.Contains(err.Error(), "#1320") {
-		return "", err
+		return "", "", err
 	}
 	err = prov.SendWhatsApp(ctx, "", []string{to}, whatsAppTestText, map[string]interface{}{})
 	if err != nil && strings.Contains(err.Error(), "131047") {
-		return "", fmt.Errorf("your WhatsApp number is connected, but the test template %s is not approved on your WhatsApp account yet, "+
+		return "", "", fmt.Errorf("your WhatsApp number is connected, but the test template %s is not approved on your WhatsApp account yet, "+
 			"so the test went as a free reply, which Meta only allows within 24 hours of the person writing to the business: "+
 			"sync the templates under Settings > Providers > WhatsApp and wait for approval, or send any WhatsApp message to your business number from %s, then press Test again",
 			WhatsAppTestTemplate, to)
 	}
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
-	return TestSentAsText, nil
+	return TestSentAsText, "", nil
 }

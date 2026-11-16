@@ -11,6 +11,27 @@ import (
 	"github.com/bengobox/notifications-api/internal/whatsapp/templatesync"
 )
 
+// Meta's live category (the worker's templatecat cache) wins over the manifest: a template Meta
+// moved to MARKETING spends marketing credits from the moment the move is known.
+func TestWhatsAppServiceForUsesMetaLiveCategory(t *testing.T) {
+	SetLiveCategories(func(name string) (string, bool) {
+		if name == "ordering_order_placed_v3_btn" {
+			return "MARKETING", true
+		}
+		return "", false
+	})
+	defer SetLiveCategories(nil)
+	if got, ok := WhatsAppServiceFor("ordering_order_placed_v3_btn", "ordering/order_placed"); got != ServiceWhatsAppMarketing || !ok {
+		t.Fatalf("moved template: %q %v", got, ok)
+	}
+	if got, _ := WhatsAppServiceFor("hadia_gift_owner_alert_v1_btn", "hadia/gift_owner_alert"); got != ServiceWhatsAppUtility {
+		t.Fatalf("unknown to the live store, manifest answers: %q", got)
+	}
+	if got, _ := WhatsAppServiceFor("", "whatsapp/inbox_reply"); got != ServiceWhatsAppService {
+		t.Fatalf("free-form: %q", got)
+	}
+}
+
 func TestWhatsAppServiceForTemplate(t *testing.T) {
 	cases := []struct {
 		name, templateName, templateID string

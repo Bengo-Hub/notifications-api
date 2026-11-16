@@ -168,6 +168,9 @@ var (
 		{Name: "recipient", Type: field.TypeString},
 		{Name: "status", Type: field.TypeString, Default: "sent"},
 		{Name: "message_id", Type: field.TypeString, Nullable: true},
+		{Name: "provider_message_id", Type: field.TypeString, Nullable: true},
+		{Name: "error_code", Type: field.TypeString, Nullable: true},
+		{Name: "error_detail", Type: field.TypeString, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
 	}
 	// DeliveryLogsTable holds the schema information for the "delivery_logs" table.
@@ -179,17 +182,22 @@ var (
 			{
 				Name:    "deliverylog_created_at",
 				Unique:  false,
-				Columns: []*schema.Column{DeliveryLogsColumns[7]},
+				Columns: []*schema.Column{DeliveryLogsColumns[10]},
 			},
 			{
 				Name:    "deliverylog_tenant_id_created_at",
 				Unique:  false,
-				Columns: []*schema.Column{DeliveryLogsColumns[1], DeliveryLogsColumns[7]},
+				Columns: []*schema.Column{DeliveryLogsColumns[1], DeliveryLogsColumns[10]},
 			},
 			{
 				Name:    "deliverylog_message_id",
 				Unique:  false,
 				Columns: []*schema.Column{DeliveryLogsColumns[6]},
+			},
+			{
+				Name:    "deliverylog_provider_message_id",
+				Unique:  false,
+				Columns: []*schema.Column{DeliveryLogsColumns[7]},
 			},
 		},
 	}
@@ -660,6 +668,7 @@ var (
 		{Name: "reason", Type: field.TypeString, Default: "unsubscribe"},
 		{Name: "source", Type: field.TypeString, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
+		{Name: "expires_at", Type: field.TypeTime, Nullable: true},
 	}
 	// SuppressionsTable holds the schema information for the "suppressions" table.
 	SuppressionsTable = &schema.Table{

@@ -8,21 +8,15 @@ type supersededTemplate struct {
 	order []int
 }
 
-// superseded maps each rewritten template to the one it replaces (16 November 2026). Meta had
-// approved the old ones as MARKETING although we submitted them as UTILITY, so they were billed at
-// the marketing rate and held back by Meta's per person marketing limit (131049). The rewrites go
-// to Meta under new names; until Meta approves one, its sends fall back to the old template, which
-// is approved and still works (template_fallback_name). Drop an entry once its rewrite is approved
-// on every WhatsApp account we send from (GET /platform/whatsapp/templates/categories).
-var superseded = map[string]supersededTemplate{
-	"notifications_test_message_v2":   {old: "notifications_test_message_v1", order: []int{}},
-	"credits_balance_low_v2_btn":      {old: "credits_balance_low_v1_btn"},
-	"hadia_registry_published_v2_btn": {old: "hadia_registry_published_v1_btn"},
-	"hadia_legal_updated_v2_btn":      {old: "hadia_legal_updated_v1_btn"},
-	"pos_loyalty_referral_v2":         {old: "pos_loyalty_referral_v1"},
-	// v2 asks for (name, registry, co_owner, change); v1 took (name, co_owner, change, registry).
-	"hadia_change_requested_v2_btn": {old: "hadia_change_requested_v1_btn", order: []int{0, 2, 3, 1}},
-}
+// superseded maps a rewritten template to the approved one it replaces, while Meta reviews the
+// rewrite: its sends fall back to the old template (template_fallback_name), so a new wording can
+// ship before approval. Drop an entry once its rewrite is approved on every WhatsApp account we send
+// from (GET /platform/whatsapp/templates/categories).
+//
+// Empty since 17 November 2026: the six utility rewrites of templates Meta had billed as marketing
+// (test message, credit balance, Hadia registry published, change requested and legal notices, POS
+// referral points) were all approved as UTILITY within an hour, and their entries were removed.
+var superseded = map[string]supersededTemplate{}
 
 // addSupersededFallback sets the fallback for a rewritten template that has none of its own.
 func addSupersededFallback(metadata map[string]interface{}) {

@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"errors"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -110,6 +111,39 @@ func (s *Service) Add(ctx context.Context, tenantID *uuid.UUID, channel, address
 	return nil
 }
 
+// ReasonUnreachable marks a WhatsApp number Meta could not deliver to (131026: no WhatsApp account,
+// an old app, or Meta's terms not accepted). It lapses, since the person can fix it.
+const ReasonUnreachable = "unreachable"
+
+// AddUntil records a suppression of every message (scope all) that lapses at until. An existing
+// suppression with an expiry is pushed out to until; a permanent one is left as it is.
+func (s *Service) AddUntil(ctx context.Context, tenantID *uuid.UUID, channel, addressHash, reason, source string, until time.Time) error {
+	if channel == "" || addressHash == "" {
+		return errors.New("channel and address are required")
+	}
+	c := s.client.Suppression.Create().
+		SetChannel(channel).SetAddressHash(addressHash).
+		SetScope(entsuppression.ScopeAll).SetReason(reason).SetSource(source).SetExpiresAt(until)
+	if tenantID != nil {
+		c.SetTenantID(*tenantID)
+	}
+	err := c.Exec(ctx)
+	if err == nil || !ent.IsConstraintError(err) {
+		return err
+	}
+	u := s.client.Suppression.Update().Where(
+		entsuppression.Channel(channel), entsuppression.AddressHash(addressHash),
+		entsuppression.ScopeEQ(entsuppression.ScopeAll), entsuppression.ExpiresAtNotNil(),
+	)
+	if tenantID == nil {
+		u = u.Where(entsuppression.TenantIDIsNil())
+	} else {
+		u = u.Where(entsuppression.TenantID(*tenantID))
+	}
+	_, err = u.SetExpiresAt(until).SetReason(reason).Save(ctx)
+	return err
+}
+
 // Suppressed returns, for the given address hashes on one channel, those the sender must not
 // message. marketing=true also counts marketing-only suppressions. One query per batch.
 func (s *Service) Suppressed(ctx context.Context, tenantID *uuid.UUID, channel string, hashes []string, marketing bool) (map[string]bool, error) {
@@ -129,6 +163,8 @@ func (s *Service) Suppressed(ctx context.Context, tenantID *uuid.UUID, channel s
 	if !marketing {
 		q = q.Where(entsuppression.ScopeEQ(entsuppression.ScopeAll))
 	}
+	// A suppression with an expiry lapses then (a WhatsApp number Meta could not reach is retried).
+	q = q.Where(entsuppression.Or(entsuppression.ExpiresAtIsNil(), entsuppression.ExpiresAtGT(time.Now())))
 	rows, err := q.Select(entsuppression.FieldAddressHash).Strings(ctx)
 	if err != nil {
 		return nil, err

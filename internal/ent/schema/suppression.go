@@ -49,6 +49,10 @@ func (Suppression) Fields() []ent.Field {
 		field.Time("created_at").
 			Default(time.Now).
 			Immutable(),
+		field.Time("expires_at").
+			Optional().
+			Nillable().
+			Comment("When set, the suppression lapses then: a WhatsApp number Meta could not reach (131026) is retried after it"),
 	}
 }
 

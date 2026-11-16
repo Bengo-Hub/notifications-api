@@ -118,6 +118,66 @@ func (_u *DeliveryLogUpdate) ClearMessageID() *DeliveryLogUpdate {
 	return _u
 }
 
+// SetProviderMessageID sets the "provider_message_id" field.
+func (_u *DeliveryLogUpdate) SetProviderMessageID(v string) *DeliveryLogUpdate {
+	_u.mutation.SetProviderMessageID(v)
+	return _u
+}
+
+// SetNillableProviderMessageID sets the "provider_message_id" field if the given value is not nil.
+func (_u *DeliveryLogUpdate) SetNillableProviderMessageID(v *string) *DeliveryLogUpdate {
+	if v != nil {
+		_u.SetProviderMessageID(*v)
+	}
+	return _u
+}
+
+// ClearProviderMessageID clears the value of the "provider_message_id" field.
+func (_u *DeliveryLogUpdate) ClearProviderMessageID() *DeliveryLogUpdate {
+	_u.mutation.ClearProviderMessageID()
+	return _u
+}
+
+// SetErrorCode sets the "error_code" field.
+func (_u *DeliveryLogUpdate) SetErrorCode(v string) *DeliveryLogUpdate {
+	_u.mutation.SetErrorCode(v)
+	return _u
+}
+
+// SetNillableErrorCode sets the "error_code" field if the given value is not nil.
+func (_u *DeliveryLogUpdate) SetNillableErrorCode(v *string) *DeliveryLogUpdate {
+	if v != nil {
+		_u.SetErrorCode(*v)
+	}
+	return _u
+}
+
+// ClearErrorCode clears the value of the "error_code" field.
+func (_u *DeliveryLogUpdate) ClearErrorCode() *DeliveryLogUpdate {
+	_u.mutation.ClearErrorCode()
+	return _u
+}
+
+// SetErrorDetail sets the "error_detail" field.
+func (_u *DeliveryLogUpdate) SetErrorDetail(v string) *DeliveryLogUpdate {
+	_u.mutation.SetErrorDetail(v)
+	return _u
+}
+
+// SetNillableErrorDetail sets the "error_detail" field if the given value is not nil.
+func (_u *DeliveryLogUpdate) SetNillableErrorDetail(v *string) *DeliveryLogUpdate {
+	if v != nil {
+		_u.SetErrorDetail(*v)
+	}
+	return _u
+}
+
+// ClearErrorDetail clears the value of the "error_detail" field.
+func (_u *DeliveryLogUpdate) ClearErrorDetail() *DeliveryLogUpdate {
+	_u.mutation.ClearErrorDetail()
+	return _u
+}
+
 // Mutation returns the DeliveryLogMutation object of the builder.
 func (_u *DeliveryLogUpdate) Mutation() *DeliveryLogMutation {
 	return _u.mutation
@@ -213,6 +273,24 @@ func (_u *DeliveryLogUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	}
 	if _u.mutation.MessageIDCleared() {
 		_spec.ClearField(deliverylog.FieldMessageID, field.TypeString)
+	}
+	if value, ok := _u.mutation.ProviderMessageID(); ok {
+		_spec.SetField(deliverylog.FieldProviderMessageID, field.TypeString, value)
+	}
+	if _u.mutation.ProviderMessageIDCleared() {
+		_spec.ClearField(deliverylog.FieldProviderMessageID, field.TypeString)
+	}
+	if value, ok := _u.mutation.ErrorCode(); ok {
+		_spec.SetField(deliverylog.FieldErrorCode, field.TypeString, value)
+	}
+	if _u.mutation.ErrorCodeCleared() {
+		_spec.ClearField(deliverylog.FieldErrorCode, field.TypeString)
+	}
+	if value, ok := _u.mutation.ErrorDetail(); ok {
+		_spec.SetField(deliverylog.FieldErrorDetail, field.TypeString, value)
+	}
+	if _u.mutation.ErrorDetailCleared() {
+		_spec.ClearField(deliverylog.FieldErrorDetail, field.TypeString)
 	}
 	_spec.AddModifiers(_u.modifiers...)
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
@@ -323,6 +401,66 @@ func (_u *DeliveryLogUpdateOne) SetNillableMessageID(v *string) *DeliveryLogUpda
 // ClearMessageID clears the value of the "message_id" field.
 func (_u *DeliveryLogUpdateOne) ClearMessageID() *DeliveryLogUpdateOne {
 	_u.mutation.ClearMessageID()
+	return _u
+}
+
+// SetProviderMessageID sets the "provider_message_id" field.
+func (_u *DeliveryLogUpdateOne) SetProviderMessageID(v string) *DeliveryLogUpdateOne {
+	_u.mutation.SetProviderMessageID(v)
+	return _u
+}
+
+// SetNillableProviderMessageID sets the "provider_message_id" field if the given value is not nil.
+func (_u *DeliveryLogUpdateOne) SetNillableProviderMessageID(v *string) *DeliveryLogUpdateOne {
+	if v != nil {
+		_u.SetProviderMessageID(*v)
+	}
+	return _u
+}
+
+// ClearProviderMessageID clears the value of the "provider_message_id" field.
+func (_u *DeliveryLogUpdateOne) ClearProviderMessageID() *DeliveryLogUpdateOne {
+	_u.mutation.ClearProviderMessageID()
+	return _u
+}
+
+// SetErrorCode sets the "error_code" field.
+func (_u *DeliveryLogUpdateOne) SetErrorCode(v string) *DeliveryLogUpdateOne {
+	_u.mutation.SetErrorCode(v)
+	return _u
+}
+
+// SetNillableErrorCode sets the "error_code" field if the given value is not nil.
+func (_u *DeliveryLogUpdateOne) SetNillableErrorCode(v *string) *DeliveryLogUpdateOne {
+	if v != nil {
+		_u.SetErrorCode(*v)
+	}
+	return _u
+}
+
+// ClearErrorCode clears the value of the "error_code" field.
+func (_u *DeliveryLogUpdateOne) ClearErrorCode() *DeliveryLogUpdateOne {
+	_u.mutation.ClearErrorCode()
+	return _u
+}
+
+// SetErrorDetail sets the "error_detail" field.
+func (_u *DeliveryLogUpdateOne) SetErrorDetail(v string) *DeliveryLogUpdateOne {
+	_u.mutation.SetErrorDetail(v)
+	return _u
+}
+
+// SetNillableErrorDetail sets the "error_detail" field if the given value is not nil.
+func (_u *DeliveryLogUpdateOne) SetNillableErrorDetail(v *string) *DeliveryLogUpdateOne {
+	if v != nil {
+		_u.SetErrorDetail(*v)
+	}
+	return _u
+}
+
+// ClearErrorDetail clears the value of the "error_detail" field.
+func (_u *DeliveryLogUpdateOne) ClearErrorDetail() *DeliveryLogUpdateOne {
+	_u.mutation.ClearErrorDetail()
 	return _u
 }
 
@@ -451,6 +589,24 @@ func (_u *DeliveryLogUpdateOne) sqlSave(ctx context.Context) (_node *DeliveryLog
 	}
 	if _u.mutation.MessageIDCleared() {
 		_spec.ClearField(deliverylog.FieldMessageID, field.TypeString)
+	}
+	if value, ok := _u.mutation.ProviderMessageID(); ok {
+		_spec.SetField(deliverylog.FieldProviderMessageID, field.TypeString, value)
+	}
+	if _u.mutation.ProviderMessageIDCleared() {
+		_spec.ClearField(deliverylog.FieldProviderMessageID, field.TypeString)
+	}
+	if value, ok := _u.mutation.ErrorCode(); ok {
+		_spec.SetField(deliverylog.FieldErrorCode, field.TypeString, value)
+	}
+	if _u.mutation.ErrorCodeCleared() {
+		_spec.ClearField(deliverylog.FieldErrorCode, field.TypeString)
+	}
+	if value, ok := _u.mutation.ErrorDetail(); ok {
+		_spec.SetField(deliverylog.FieldErrorDetail, field.TypeString, value)
+	}
+	if _u.mutation.ErrorDetailCleared() {
+		_spec.ClearField(deliverylog.FieldErrorDetail, field.TypeString)
 	}
 	_spec.AddModifiers(_u.modifiers...)
 	_node = &DeliveryLog{config: _u.config}

@@ -5,6 +5,8 @@ import (
 	"errors"
 	"strings"
 	"testing"
+
+	"github.com/bengobox/notifications-api/internal/messaging"
 )
 
 // fakeWA answers each send with the next error in errs (nil once they run out).
@@ -30,7 +32,7 @@ func (f *fakeWA) Name() string { return "fake" }
 // the test goes out as the approved utility template, which reaches any number.
 func TestWhatsAppTestSendUsesTheTestTemplate(t *testing.T) {
 	f := &fakeWA{}
-	sentAs, err := whatsAppTestSend(context.Background(), f, "254700000000")
+	sentAs, _, err := whatsAppTestSend(context.Background(), f, "254700000000")
 	if err != nil || sentAs != TestSentAsTemplate {
 		t.Fatalf("sentAs = %q, err = %v", sentAs, err)
 	}
@@ -48,11 +50,27 @@ func TestWhatsAppTestSendUsesTheTestTemplate(t *testing.T) {
 	}
 }
 
+// idWA is a provider that, like Meta's, puts the sent message's id on the metadata.
+type idWA struct{ fakeWA }
+
+func (f *idWA) SendWhatsApp(ctx context.Context, from string, to []string, body string, md map[string]interface{}) error {
+	md[messaging.MetaSentMessageID] = "wamid.TEST"
+	return f.fakeWA.SendWhatsApp(ctx, from, to, body, md)
+}
+
+// The test send hands back Meta's message id, so the Test call can wait for Meta's verdict on it.
+func TestWhatsAppTestSendReturnsMetaMessageID(t *testing.T) {
+	_, id, err := whatsAppTestSend(context.Background(), &idWA{}, "254700000000")
+	if err != nil || id != "wamid.TEST" {
+		t.Fatalf("id = %q, err = %v", id, err)
+	}
+}
+
 // While the template is not approved on the tenant's account yet (#132001 and the other 1320xx
 // template errors), the test falls back to the free text.
 func TestWhatsAppTestSendFallsBackToText(t *testing.T) {
 	f := &fakeWA{errs: []error{errors.New(`meta_cloud error: status 404: {"error":{"message":"(#132001) Template name does not exist in the translation","code":132001}}`)}}
-	sentAs, err := whatsAppTestSend(context.Background(), f, "254700000000")
+	sentAs, _, err := whatsAppTestSend(context.Background(), f, "254700000000")
 	if err != nil || sentAs != TestSentAsText {
 		t.Fatalf("sentAs = %q, err = %v", sentAs, err)
 	}
@@ -67,7 +85,7 @@ func TestWhatsAppTestSendExplainsTheWindow(t *testing.T) {
 		errors.New(`(#132001) Template name does not exist in the translation`),
 		errors.New(`(#131047) Re-engagement message`),
 	}}
-	_, err := whatsAppTestSend(context.Background(), f, "254700000000")
+	_, _, err := whatsAppTestSend(context.Background(), f, "254700000000")
 	if err == nil || !strings.Contains(err.Error(), "24 hours") || !strings.Contains(err.Error(), "254700000000") ||
 		!strings.Contains(err.Error(), "not approved") {
 		t.Fatalf("got %v", err)
@@ -78,7 +96,7 @@ func TestWhatsAppTestSendExplainsTheWindow(t *testing.T) {
 // as it is, without a text retry that would hide it.
 func TestWhatsAppTestSendOtherErrorsPassThrough(t *testing.T) {
 	f := &fakeWA{errs: []error{errors.New("(#131009) Parameter value is not valid")}}
-	_, err := whatsAppTestSend(context.Background(), f, "254700000000")
+	_, _, err := whatsAppTestSend(context.Background(), f, "254700000000")
 	if err == nil || !strings.Contains(err.Error(), "#131009") || len(f.calls) != 1 {
 		t.Fatalf("got %v after %d calls", err, len(f.calls))
 	}

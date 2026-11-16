@@ -85,6 +85,21 @@ func MessageID(v string) predicate.DeliveryLog {
 	return predicate.DeliveryLog(sql.FieldEQ(FieldMessageID, v))
 }
 
+// ProviderMessageID applies equality check predicate on the "provider_message_id" field. It's identical to ProviderMessageIDEQ.
+func ProviderMessageID(v string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldEQ(FieldProviderMessageID, v))
+}
+
+// ErrorCode applies equality check predicate on the "error_code" field. It's identical to ErrorCodeEQ.
+func ErrorCode(v string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldEQ(FieldErrorCode, v))
+}
+
+// ErrorDetail applies equality check predicate on the "error_detail" field. It's identical to ErrorDetailEQ.
+func ErrorDetail(v string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldEQ(FieldErrorDetail, v))
+}
+
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
 func CreatedAt(v time.Time) predicate.DeliveryLog {
 	return predicate.DeliveryLog(sql.FieldEQ(FieldCreatedAt, v))
@@ -488,6 +503,231 @@ func MessageIDEqualFold(v string) predicate.DeliveryLog {
 // MessageIDContainsFold applies the ContainsFold predicate on the "message_id" field.
 func MessageIDContainsFold(v string) predicate.DeliveryLog {
 	return predicate.DeliveryLog(sql.FieldContainsFold(FieldMessageID, v))
+}
+
+// ProviderMessageIDEQ applies the EQ predicate on the "provider_message_id" field.
+func ProviderMessageIDEQ(v string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldEQ(FieldProviderMessageID, v))
+}
+
+// ProviderMessageIDNEQ applies the NEQ predicate on the "provider_message_id" field.
+func ProviderMessageIDNEQ(v string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldNEQ(FieldProviderMessageID, v))
+}
+
+// ProviderMessageIDIn applies the In predicate on the "provider_message_id" field.
+func ProviderMessageIDIn(vs ...string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldIn(FieldProviderMessageID, vs...))
+}
+
+// ProviderMessageIDNotIn applies the NotIn predicate on the "provider_message_id" field.
+func ProviderMessageIDNotIn(vs ...string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldNotIn(FieldProviderMessageID, vs...))
+}
+
+// ProviderMessageIDGT applies the GT predicate on the "provider_message_id" field.
+func ProviderMessageIDGT(v string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldGT(FieldProviderMessageID, v))
+}
+
+// ProviderMessageIDGTE applies the GTE predicate on the "provider_message_id" field.
+func ProviderMessageIDGTE(v string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldGTE(FieldProviderMessageID, v))
+}
+
+// ProviderMessageIDLT applies the LT predicate on the "provider_message_id" field.
+func ProviderMessageIDLT(v string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldLT(FieldProviderMessageID, v))
+}
+
+// ProviderMessageIDLTE applies the LTE predicate on the "provider_message_id" field.
+func ProviderMessageIDLTE(v string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldLTE(FieldProviderMessageID, v))
+}
+
+// ProviderMessageIDContains applies the Contains predicate on the "provider_message_id" field.
+func ProviderMessageIDContains(v string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldContains(FieldProviderMessageID, v))
+}
+
+// ProviderMessageIDHasPrefix applies the HasPrefix predicate on the "provider_message_id" field.
+func ProviderMessageIDHasPrefix(v string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldHasPrefix(FieldProviderMessageID, v))
+}
+
+// ProviderMessageIDHasSuffix applies the HasSuffix predicate on the "provider_message_id" field.
+func ProviderMessageIDHasSuffix(v string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldHasSuffix(FieldProviderMessageID, v))
+}
+
+// ProviderMessageIDIsNil applies the IsNil predicate on the "provider_message_id" field.
+func ProviderMessageIDIsNil() predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldIsNull(FieldProviderMessageID))
+}
+
+// ProviderMessageIDNotNil applies the NotNil predicate on the "provider_message_id" field.
+func ProviderMessageIDNotNil() predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldNotNull(FieldProviderMessageID))
+}
+
+// ProviderMessageIDEqualFold applies the EqualFold predicate on the "provider_message_id" field.
+func ProviderMessageIDEqualFold(v string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldEqualFold(FieldProviderMessageID, v))
+}
+
+// ProviderMessageIDContainsFold applies the ContainsFold predicate on the "provider_message_id" field.
+func ProviderMessageIDContainsFold(v string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldContainsFold(FieldProviderMessageID, v))
+}
+
+// ErrorCodeEQ applies the EQ predicate on the "error_code" field.
+func ErrorCodeEQ(v string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldEQ(FieldErrorCode, v))
+}
+
+// ErrorCodeNEQ applies the NEQ predicate on the "error_code" field.
+func ErrorCodeNEQ(v string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldNEQ(FieldErrorCode, v))
+}
+
+// ErrorCodeIn applies the In predicate on the "error_code" field.
+func ErrorCodeIn(vs ...string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldIn(FieldErrorCode, vs...))
+}
+
+// ErrorCodeNotIn applies the NotIn predicate on the "error_code" field.
+func ErrorCodeNotIn(vs ...string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldNotIn(FieldErrorCode, vs...))
+}
+
+// ErrorCodeGT applies the GT predicate on the "error_code" field.
+func ErrorCodeGT(v string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldGT(FieldErrorCode, v))
+}
+
+// ErrorCodeGTE applies the GTE predicate on the "error_code" field.
+func ErrorCodeGTE(v string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldGTE(FieldErrorCode, v))
+}
+
+// ErrorCodeLT applies the LT predicate on the "error_code" field.
+func ErrorCodeLT(v string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldLT(FieldErrorCode, v))
+}
+
+// ErrorCodeLTE applies the LTE predicate on the "error_code" field.
+func ErrorCodeLTE(v string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldLTE(FieldErrorCode, v))
+}
+
+// ErrorCodeContains applies the Contains predicate on the "error_code" field.
+func ErrorCodeContains(v string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldContains(FieldErrorCode, v))
+}
+
+// ErrorCodeHasPrefix applies the HasPrefix predicate on the "error_code" field.
+func ErrorCodeHasPrefix(v string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldHasPrefix(FieldErrorCode, v))
+}
+
+// ErrorCodeHasSuffix applies the HasSuffix predicate on the "error_code" field.
+func ErrorCodeHasSuffix(v string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldHasSuffix(FieldErrorCode, v))
+}
+
+// ErrorCodeIsNil applies the IsNil predicate on the "error_code" field.
+func ErrorCodeIsNil() predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldIsNull(FieldErrorCode))
+}
+
+// ErrorCodeNotNil applies the NotNil predicate on the "error_code" field.
+func ErrorCodeNotNil() predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldNotNull(FieldErrorCode))
+}
+
+// ErrorCodeEqualFold applies the EqualFold predicate on the "error_code" field.
+func ErrorCodeEqualFold(v string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldEqualFold(FieldErrorCode, v))
+}
+
+// ErrorCodeContainsFold applies the ContainsFold predicate on the "error_code" field.
+func ErrorCodeContainsFold(v string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldContainsFold(FieldErrorCode, v))
+}
+
+// ErrorDetailEQ applies the EQ predicate on the "error_detail" field.
+func ErrorDetailEQ(v string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldEQ(FieldErrorDetail, v))
+}
+
+// ErrorDetailNEQ applies the NEQ predicate on the "error_detail" field.
+func ErrorDetailNEQ(v string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldNEQ(FieldErrorDetail, v))
+}
+
+// ErrorDetailIn applies the In predicate on the "error_detail" field.
+func ErrorDetailIn(vs ...string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldIn(FieldErrorDetail, vs...))
+}
+
+// ErrorDetailNotIn applies the NotIn predicate on the "error_detail" field.
+func ErrorDetailNotIn(vs ...string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldNotIn(FieldErrorDetail, vs...))
+}
+
+// ErrorDetailGT applies the GT predicate on the "error_detail" field.
+func ErrorDetailGT(v string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldGT(FieldErrorDetail, v))
+}
+
+// ErrorDetailGTE applies the GTE predicate on the "error_detail" field.
+func ErrorDetailGTE(v string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldGTE(FieldErrorDetail, v))
+}
+
+// ErrorDetailLT applies the LT predicate on the "error_detail" field.
+func ErrorDetailLT(v string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldLT(FieldErrorDetail, v))
+}
+
+// ErrorDetailLTE applies the LTE predicate on the "error_detail" field.
+func ErrorDetailLTE(v string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldLTE(FieldErrorDetail, v))
+}
+
+// ErrorDetailContains applies the Contains predicate on the "error_detail" field.
+func ErrorDetailContains(v string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldContains(FieldErrorDetail, v))
+}
+
+// ErrorDetailHasPrefix applies the HasPrefix predicate on the "error_detail" field.
+func ErrorDetailHasPrefix(v string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldHasPrefix(FieldErrorDetail, v))
+}
+
+// ErrorDetailHasSuffix applies the HasSuffix predicate on the "error_detail" field.
+func ErrorDetailHasSuffix(v string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldHasSuffix(FieldErrorDetail, v))
+}
+
+// ErrorDetailIsNil applies the IsNil predicate on the "error_detail" field.
+func ErrorDetailIsNil() predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldIsNull(FieldErrorDetail))
+}
+
+// ErrorDetailNotNil applies the NotNil predicate on the "error_detail" field.
+func ErrorDetailNotNil() predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldNotNull(FieldErrorDetail))
+}
+
+// ErrorDetailEqualFold applies the EqualFold predicate on the "error_detail" field.
+func ErrorDetailEqualFold(v string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldEqualFold(FieldErrorDetail, v))
+}
+
+// ErrorDetailContainsFold applies the ContainsFold predicate on the "error_detail" field.
+func ErrorDetailContainsFold(v string) predicate.DeliveryLog {
+	return predicate.DeliveryLog(sql.FieldContainsFold(FieldErrorDetail, v))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.

@@ -287,6 +287,12 @@ func normalizeWhatsAppNumber(raw string) string {
 	return b.String()
 }
 
+// InternationalNumber is the number a send to raw actually goes to (country code and digits only),
+// the form Meta reports back in its status webhooks. dialCode may be empty (Kenya).
+func InternationalNumber(raw, dialCode string) string {
+	return internationalWhatsAppNumber(raw, dialCode)
+}
+
 // defaultDialCode is used when a local number arrives without a country code and the sender did
 // not pass the tenant's own (most tenants are in Kenya).
 const defaultDialCode = "254"

@@ -76,6 +76,48 @@ func (_c *DeliveryLogCreate) SetNillableMessageID(v *string) *DeliveryLogCreate 
 	return _c
 }
 
+// SetProviderMessageID sets the "provider_message_id" field.
+func (_c *DeliveryLogCreate) SetProviderMessageID(v string) *DeliveryLogCreate {
+	_c.mutation.SetProviderMessageID(v)
+	return _c
+}
+
+// SetNillableProviderMessageID sets the "provider_message_id" field if the given value is not nil.
+func (_c *DeliveryLogCreate) SetNillableProviderMessageID(v *string) *DeliveryLogCreate {
+	if v != nil {
+		_c.SetProviderMessageID(*v)
+	}
+	return _c
+}
+
+// SetErrorCode sets the "error_code" field.
+func (_c *DeliveryLogCreate) SetErrorCode(v string) *DeliveryLogCreate {
+	_c.mutation.SetErrorCode(v)
+	return _c
+}
+
+// SetNillableErrorCode sets the "error_code" field if the given value is not nil.
+func (_c *DeliveryLogCreate) SetNillableErrorCode(v *string) *DeliveryLogCreate {
+	if v != nil {
+		_c.SetErrorCode(*v)
+	}
+	return _c
+}
+
+// SetErrorDetail sets the "error_detail" field.
+func (_c *DeliveryLogCreate) SetErrorDetail(v string) *DeliveryLogCreate {
+	_c.mutation.SetErrorDetail(v)
+	return _c
+}
+
+// SetNillableErrorDetail sets the "error_detail" field if the given value is not nil.
+func (_c *DeliveryLogCreate) SetNillableErrorDetail(v *string) *DeliveryLogCreate {
+	if v != nil {
+		_c.SetErrorDetail(*v)
+	}
+	return _c
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (_c *DeliveryLogCreate) SetCreatedAt(v time.Time) *DeliveryLogCreate {
 	_c.mutation.SetCreatedAt(v)
@@ -253,6 +295,18 @@ func (_c *DeliveryLogCreate) createSpec() (*DeliveryLog, *sqlgraph.CreateSpec) {
 		_spec.SetField(deliverylog.FieldMessageID, field.TypeString, value)
 		_node.MessageID = value
 	}
+	if value, ok := _c.mutation.ProviderMessageID(); ok {
+		_spec.SetField(deliverylog.FieldProviderMessageID, field.TypeString, value)
+		_node.ProviderMessageID = value
+	}
+	if value, ok := _c.mutation.ErrorCode(); ok {
+		_spec.SetField(deliverylog.FieldErrorCode, field.TypeString, value)
+		_node.ErrorCode = value
+	}
+	if value, ok := _c.mutation.ErrorDetail(); ok {
+		_spec.SetField(deliverylog.FieldErrorDetail, field.TypeString, value)
+		_node.ErrorDetail = value
+	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(deliverylog.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
@@ -384,6 +438,60 @@ func (u *DeliveryLogUpsert) UpdateMessageID() *DeliveryLogUpsert {
 // ClearMessageID clears the value of the "message_id" field.
 func (u *DeliveryLogUpsert) ClearMessageID() *DeliveryLogUpsert {
 	u.SetNull(deliverylog.FieldMessageID)
+	return u
+}
+
+// SetProviderMessageID sets the "provider_message_id" field.
+func (u *DeliveryLogUpsert) SetProviderMessageID(v string) *DeliveryLogUpsert {
+	u.Set(deliverylog.FieldProviderMessageID, v)
+	return u
+}
+
+// UpdateProviderMessageID sets the "provider_message_id" field to the value that was provided on create.
+func (u *DeliveryLogUpsert) UpdateProviderMessageID() *DeliveryLogUpsert {
+	u.SetExcluded(deliverylog.FieldProviderMessageID)
+	return u
+}
+
+// ClearProviderMessageID clears the value of the "provider_message_id" field.
+func (u *DeliveryLogUpsert) ClearProviderMessageID() *DeliveryLogUpsert {
+	u.SetNull(deliverylog.FieldProviderMessageID)
+	return u
+}
+
+// SetErrorCode sets the "error_code" field.
+func (u *DeliveryLogUpsert) SetErrorCode(v string) *DeliveryLogUpsert {
+	u.Set(deliverylog.FieldErrorCode, v)
+	return u
+}
+
+// UpdateErrorCode sets the "error_code" field to the value that was provided on create.
+func (u *DeliveryLogUpsert) UpdateErrorCode() *DeliveryLogUpsert {
+	u.SetExcluded(deliverylog.FieldErrorCode)
+	return u
+}
+
+// ClearErrorCode clears the value of the "error_code" field.
+func (u *DeliveryLogUpsert) ClearErrorCode() *DeliveryLogUpsert {
+	u.SetNull(deliverylog.FieldErrorCode)
+	return u
+}
+
+// SetErrorDetail sets the "error_detail" field.
+func (u *DeliveryLogUpsert) SetErrorDetail(v string) *DeliveryLogUpsert {
+	u.Set(deliverylog.FieldErrorDetail, v)
+	return u
+}
+
+// UpdateErrorDetail sets the "error_detail" field to the value that was provided on create.
+func (u *DeliveryLogUpsert) UpdateErrorDetail() *DeliveryLogUpsert {
+	u.SetExcluded(deliverylog.FieldErrorDetail)
+	return u
+}
+
+// ClearErrorDetail clears the value of the "error_detail" field.
+func (u *DeliveryLogUpsert) ClearErrorDetail() *DeliveryLogUpsert {
+	u.SetNull(deliverylog.FieldErrorDetail)
 	return u
 }
 
@@ -526,6 +634,69 @@ func (u *DeliveryLogUpsertOne) UpdateMessageID() *DeliveryLogUpsertOne {
 func (u *DeliveryLogUpsertOne) ClearMessageID() *DeliveryLogUpsertOne {
 	return u.Update(func(s *DeliveryLogUpsert) {
 		s.ClearMessageID()
+	})
+}
+
+// SetProviderMessageID sets the "provider_message_id" field.
+func (u *DeliveryLogUpsertOne) SetProviderMessageID(v string) *DeliveryLogUpsertOne {
+	return u.Update(func(s *DeliveryLogUpsert) {
+		s.SetProviderMessageID(v)
+	})
+}
+
+// UpdateProviderMessageID sets the "provider_message_id" field to the value that was provided on create.
+func (u *DeliveryLogUpsertOne) UpdateProviderMessageID() *DeliveryLogUpsertOne {
+	return u.Update(func(s *DeliveryLogUpsert) {
+		s.UpdateProviderMessageID()
+	})
+}
+
+// ClearProviderMessageID clears the value of the "provider_message_id" field.
+func (u *DeliveryLogUpsertOne) ClearProviderMessageID() *DeliveryLogUpsertOne {
+	return u.Update(func(s *DeliveryLogUpsert) {
+		s.ClearProviderMessageID()
+	})
+}
+
+// SetErrorCode sets the "error_code" field.
+func (u *DeliveryLogUpsertOne) SetErrorCode(v string) *DeliveryLogUpsertOne {
+	return u.Update(func(s *DeliveryLogUpsert) {
+		s.SetErrorCode(v)
+	})
+}
+
+// UpdateErrorCode sets the "error_code" field to the value that was provided on create.
+func (u *DeliveryLogUpsertOne) UpdateErrorCode() *DeliveryLogUpsertOne {
+	return u.Update(func(s *DeliveryLogUpsert) {
+		s.UpdateErrorCode()
+	})
+}
+
+// ClearErrorCode clears the value of the "error_code" field.
+func (u *DeliveryLogUpsertOne) ClearErrorCode() *DeliveryLogUpsertOne {
+	return u.Update(func(s *DeliveryLogUpsert) {
+		s.ClearErrorCode()
+	})
+}
+
+// SetErrorDetail sets the "error_detail" field.
+func (u *DeliveryLogUpsertOne) SetErrorDetail(v string) *DeliveryLogUpsertOne {
+	return u.Update(func(s *DeliveryLogUpsert) {
+		s.SetErrorDetail(v)
+	})
+}
+
+// UpdateErrorDetail sets the "error_detail" field to the value that was provided on create.
+func (u *DeliveryLogUpsertOne) UpdateErrorDetail() *DeliveryLogUpsertOne {
+	return u.Update(func(s *DeliveryLogUpsert) {
+		s.UpdateErrorDetail()
+	})
+}
+
+// ClearErrorDetail clears the value of the "error_detail" field.
+func (u *DeliveryLogUpsertOne) ClearErrorDetail() *DeliveryLogUpsertOne {
+	return u.Update(func(s *DeliveryLogUpsert) {
+		s.ClearErrorDetail()
 	})
 }
 
@@ -835,6 +1006,69 @@ func (u *DeliveryLogUpsertBulk) UpdateMessageID() *DeliveryLogUpsertBulk {
 func (u *DeliveryLogUpsertBulk) ClearMessageID() *DeliveryLogUpsertBulk {
 	return u.Update(func(s *DeliveryLogUpsert) {
 		s.ClearMessageID()
+	})
+}
+
+// SetProviderMessageID sets the "provider_message_id" field.
+func (u *DeliveryLogUpsertBulk) SetProviderMessageID(v string) *DeliveryLogUpsertBulk {
+	return u.Update(func(s *DeliveryLogUpsert) {
+		s.SetProviderMessageID(v)
+	})
+}
+
+// UpdateProviderMessageID sets the "provider_message_id" field to the value that was provided on create.
+func (u *DeliveryLogUpsertBulk) UpdateProviderMessageID() *DeliveryLogUpsertBulk {
+	return u.Update(func(s *DeliveryLogUpsert) {
+		s.UpdateProviderMessageID()
+	})
+}
+
+// ClearProviderMessageID clears the value of the "provider_message_id" field.
+func (u *DeliveryLogUpsertBulk) ClearProviderMessageID() *DeliveryLogUpsertBulk {
+	return u.Update(func(s *DeliveryLogUpsert) {
+		s.ClearProviderMessageID()
+	})
+}
+
+// SetErrorCode sets the "error_code" field.
+func (u *DeliveryLogUpsertBulk) SetErrorCode(v string) *DeliveryLogUpsertBulk {
+	return u.Update(func(s *DeliveryLogUpsert) {
+		s.SetErrorCode(v)
+	})
+}
+
+// UpdateErrorCode sets the "error_code" field to the value that was provided on create.
+func (u *DeliveryLogUpsertBulk) UpdateErrorCode() *DeliveryLogUpsertBulk {
+	return u.Update(func(s *DeliveryLogUpsert) {
+		s.UpdateErrorCode()
+	})
+}
+
+// ClearErrorCode clears the value of the "error_code" field.
+func (u *DeliveryLogUpsertBulk) ClearErrorCode() *DeliveryLogUpsertBulk {
+	return u.Update(func(s *DeliveryLogUpsert) {
+		s.ClearErrorCode()
+	})
+}
+
+// SetErrorDetail sets the "error_detail" field.
+func (u *DeliveryLogUpsertBulk) SetErrorDetail(v string) *DeliveryLogUpsertBulk {
+	return u.Update(func(s *DeliveryLogUpsert) {
+		s.SetErrorDetail(v)
+	})
+}
+
+// UpdateErrorDetail sets the "error_detail" field to the value that was provided on create.
+func (u *DeliveryLogUpsertBulk) UpdateErrorDetail() *DeliveryLogUpsertBulk {
+	return u.Update(func(s *DeliveryLogUpsert) {
+		s.UpdateErrorDetail()
+	})
+}
+
+// ClearErrorDetail clears the value of the "error_detail" field.
+func (u *DeliveryLogUpsertBulk) ClearErrorDetail() *DeliveryLogUpsertBulk {
+	return u.Update(func(s *DeliveryLogUpsert) {
+		s.ClearErrorDetail()
 	})
 }
 

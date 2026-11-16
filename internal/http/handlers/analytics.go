@@ -174,7 +174,7 @@ func (h *AnalyticsHandler) Delivery(w http.ResponseWriter, r *http.Request) {
 	accepted := 0
 	for _, row := range byStatus {
 		switch row.Status {
-		case "sent", "delivered":
+		case "sent", "delivered", "read": // read: Meta's webhook moved a WhatsApp row on (2026-11-17)
 			accepted += row.Count
 			resp.ChannelBreakdown[row.Channel] += row.Count
 		case "failed":
@@ -201,7 +201,7 @@ func (h *AnalyticsHandler) Delivery(w http.ResponseWriter, r *http.Request) {
 		s.Select(
 			sql.As(day, "day"),
 			sql.As("count(*) FILTER (WHERE "+status+" <> 'skipped')", "attempted"),
-			sql.As("count(*) FILTER (WHERE "+status+" IN ('sent','delivered'))", "accepted"),
+			sql.As("count(*) FILTER (WHERE "+status+" IN ('sent','delivered','read'))", "accepted"),
 		).GroupBy(day).OrderBy(day)
 	}).Scan(ctx, &series)
 	if err != nil {
@@ -224,6 +224,10 @@ type ActivityLogEntry struct {
 	Recipient    string `json:"recipient"`
 	Status       string `json:"status"`
 	Timestamp    string `json:"timestamp"`
+	// ErrorCode and ErrorDetail are the provider's reason for a send it accepted and later refused
+	// (Meta 131049, 131026 ...), from its status webhook.
+	ErrorCode   string `json:"errorCode,omitempty"`
+	ErrorDetail string `json:"errorDetail,omitempty"`
 }
 
 // ActivityLogsResponse wraps a page of log entries with the total matching count, so the UI's
@@ -312,6 +316,8 @@ func (h *AnalyticsHandler) Logs(w http.ResponseWriter, r *http.Request) {
 			Recipient:    displayRecipient(l.Channel, l.Recipient),
 			Status:       l.Status,
 			Timestamp:    l.CreatedAt.Format(time.RFC3339),
+			ErrorCode:    l.ErrorCode,
+			ErrorDetail:  l.ErrorDetail,
 		})
 	}
 	writeAnalyticsJSON(w, resp)

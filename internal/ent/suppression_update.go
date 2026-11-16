@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -59,6 +60,26 @@ func (_u *SuppressionUpdate) SetNillableSource(v *string) *SuppressionUpdate {
 // ClearSource clears the value of the "source" field.
 func (_u *SuppressionUpdate) ClearSource() *SuppressionUpdate {
 	_u.mutation.ClearSource()
+	return _u
+}
+
+// SetExpiresAt sets the "expires_at" field.
+func (_u *SuppressionUpdate) SetExpiresAt(v time.Time) *SuppressionUpdate {
+	_u.mutation.SetExpiresAt(v)
+	return _u
+}
+
+// SetNillableExpiresAt sets the "expires_at" field if the given value is not nil.
+func (_u *SuppressionUpdate) SetNillableExpiresAt(v *time.Time) *SuppressionUpdate {
+	if v != nil {
+		_u.SetExpiresAt(*v)
+	}
+	return _u
+}
+
+// ClearExpiresAt clears the value of the "expires_at" field.
+func (_u *SuppressionUpdate) ClearExpiresAt() *SuppressionUpdate {
+	_u.mutation.ClearExpiresAt()
 	return _u
 }
 
@@ -121,6 +142,12 @@ func (_u *SuppressionUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	if _u.mutation.SourceCleared() {
 		_spec.ClearField(suppression.FieldSource, field.TypeString)
 	}
+	if value, ok := _u.mutation.ExpiresAt(); ok {
+		_spec.SetField(suppression.FieldExpiresAt, field.TypeTime, value)
+	}
+	if _u.mutation.ExpiresAtCleared() {
+		_spec.ClearField(suppression.FieldExpiresAt, field.TypeTime)
+	}
 	_spec.AddModifiers(_u.modifiers...)
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -174,6 +201,26 @@ func (_u *SuppressionUpdateOne) SetNillableSource(v *string) *SuppressionUpdateO
 // ClearSource clears the value of the "source" field.
 func (_u *SuppressionUpdateOne) ClearSource() *SuppressionUpdateOne {
 	_u.mutation.ClearSource()
+	return _u
+}
+
+// SetExpiresAt sets the "expires_at" field.
+func (_u *SuppressionUpdateOne) SetExpiresAt(v time.Time) *SuppressionUpdateOne {
+	_u.mutation.SetExpiresAt(v)
+	return _u
+}
+
+// SetNillableExpiresAt sets the "expires_at" field if the given value is not nil.
+func (_u *SuppressionUpdateOne) SetNillableExpiresAt(v *time.Time) *SuppressionUpdateOne {
+	if v != nil {
+		_u.SetExpiresAt(*v)
+	}
+	return _u
+}
+
+// ClearExpiresAt clears the value of the "expires_at" field.
+func (_u *SuppressionUpdateOne) ClearExpiresAt() *SuppressionUpdateOne {
+	_u.mutation.ClearExpiresAt()
 	return _u
 }
 
@@ -265,6 +312,12 @@ func (_u *SuppressionUpdateOne) sqlSave(ctx context.Context) (_node *Suppression
 	}
 	if _u.mutation.SourceCleared() {
 		_spec.ClearField(suppression.FieldSource, field.TypeString)
+	}
+	if value, ok := _u.mutation.ExpiresAt(); ok {
+		_spec.SetField(suppression.FieldExpiresAt, field.TypeTime, value)
+	}
+	if _u.mutation.ExpiresAtCleared() {
+		_spec.ClearField(suppression.FieldExpiresAt, field.TypeTime)
 	}
 	_spec.AddModifiers(_u.modifiers...)
 	_node = &Suppression{config: _u.config}

@@ -39,15 +39,22 @@
        APPROVED as UTILITY; credit balance, registry published, change requested, POS referral v2 and the three
        `projects_task_*` templates PENDING. `projects` added to `selection.json` (it was missing); the platform sync
        takes `tenant_id`. The ISP `_v2` pair is not submitted (nothing sends it).
-     - [ ] Recheck the audit; drop each `superseded.go` entry once its rewrite shows APPROVED as UTILITY.
-     - [ ] Monitoring and the Test result still say "accepted by Meta" for a send Meta later refuses; show the webhook outcome.
-     - [ ] Handle Meta's `template_category_update` webhook so a later move alerts the owner instead of waiting for the audit.
-     - [ ] Bill each send from Meta's live category (the audit), not only the manifest, so a move costs nothing before we notice it.
-     - [ ] Record Meta's final delivery status and error code on the delivery log: today `delivery_logs` keeps our request
-       id, not Meta's message id, so a send Meta later refuses (131049, 131026) still reads `sent` in Monitoring, and the
-       reason only lives in pod logs, which are lost on every deploy (no central log store).
-     - [ ] 131026 (recipient cannot receive WhatsApp: no account, old app or Meta's terms not accepted) on
-       `subscription_payment_due_v1_btn` and others: suppress the number for WhatsApp after a 131026 and rely on the email copy.
+     - [x] All nine APPROVED as UTILITY (rechecked 2026-11-16 21:54 UTC); every `superseded.go` entry removed.
+     - [x] Test result waits up to 6 s for Meta's webhook verdict and names the error (131049, 131026, other).
+     - [x] `template_category_update` and `message_template_status_update` webhooks: categories into Redis
+       (`internal/whatsapp/templatecat`), ops alert by email and Slack (never WhatsApp), plus a 6-hourly sweep of
+       every WABA that alerts on moves the webhook missed.
+     - [x] Credits bill each send by Meta's live category (worker cache refreshed every minute), manifest as fallback.
+     - [x] `delivery_logs` keeps Meta's message id (`provider_message_id`) and the webhook writes delivered, read
+       or failed with `error_code` and `error_detail` (migration `20261116221317`).
+     - [x] 131026: the number is suppressed on WhatsApp for that sender for 7 days (`suppressions.expires_at`,
+       reason `unreachable`); the worker skips it before charging and uses the backup number when there is one.
+     - [ ] Owner: tick `template_category_update` and `message_template_status_update` under the Meta app's
+       WhatsApp webhook fields, or only the 6-hourly sweep catches moves.
+     - [x] Database tests on the local Postgres (`internal/testdb`: an isolated schema per test, `TEST_POSTGRES_URL`,
+       skipped when unreachable): suppression expiry and renewal, delivery-log status order, and the worker's
+       unreachable lookup across number forms and senders. The migration was generated with the documented workflow.
+     - [x] notifications-ui Monitoring shows Meta's reason on a failed WhatsApp row (`errorCode`, `errorDetail`).
    - This service charges each send through `internal/modules/credits`: consume before sending, refund when the provider
      rejects, early 402 from the HTTP API. Exempt tenants and platform scope sends are never charged.
    - Tenant Admin: balances, plans and bundles are shown in notifications-ui from subscriptions-api.

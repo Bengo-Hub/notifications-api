@@ -520,6 +520,7 @@ func (h *PlatformProviders) TestProvider(w http.ResponseWriter, r *http.Request)
 		})
 		return
 	}
+	awaitWhatsAppTestOutcome(ctx, setting.ProviderType, info)
 
 	jsonResponse(w, http.StatusOK, map[string]any{
 		"success":       true,

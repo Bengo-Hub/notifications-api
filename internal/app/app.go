@@ -61,6 +61,7 @@ import (
 	sandboxmod "github.com/bengobox/notifications-api/internal/sandbox"
 	"github.com/bengobox/notifications-api/internal/shared/logger"
 	waprofile "github.com/bengobox/notifications-api/internal/whatsapp/profile"
+	"github.com/bengobox/notifications-api/internal/whatsapp/templatecat"
 	"github.com/bengobox/notifications-api/internal/whatsapp/tenanttemplates"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
@@ -77,6 +78,25 @@ type App struct {
 	outboxPublisher        *eventslib.Publisher
 	crossServiceSubscriber *eventsmod.Subscriber
 	whatsappInboxHub       *whatsappinbox.Hub
+	// Meta's WhatsApp template categories: a sweep re-reads them every few hours (Run).
+	templateCats     *templatecat.Store
+	templateAccounts func(context.Context) ([]templatecat.Account, error)
+	templateAlert    templatecat.Alerter
+}
+
+// whatsappTemplateAccounts lists every WABA we send from with a token that can read it.
+func whatsappTemplateAccounts(m *providers.Manager) func(context.Context) ([]templatecat.Account, error) {
+	return func(ctx context.Context) ([]templatecat.Account, error) {
+		in, err := m.WhatsAppCostAccounts(ctx)
+		if err != nil {
+			return nil, err
+		}
+		out := make([]templatecat.Account, 0, len(in))
+		for _, a := range in {
+			out = append(out, templatecat.Account{WABAID: a.WABAID, Token: a.AccessToken, APIVersion: a.APIVersion})
+		}
+		return out, nil
+	}
 }
 
 // tenantExportHandler serves auth-api's SSO tenant backups (httpware/tenantexport). Nil without an
@@ -378,6 +398,14 @@ func New(ctx context.Context) (*App, error) {
 	// Staff replies spend "Replies to customers" WhatsApp credits (owner, 12 November 2026).
 	whatsappInboxService := whatsappinbox.NewService(entClient, providerManager, whatsappInboxHub, natsConn, cfg.Events, log).WithCharger(creditsClient)
 	whatsappInboxHandler := handlers.NewWhatsAppInboxHandler(whatsappInboxService, whatsappInboxHub, cfg.HTTP.AllowedOrigins, log)
+	// Meta's live template categories and recent send outcomes, shared with the worker (Redis).
+	var templateRedis redis.UniversalClient
+	if redisClient != nil {
+		templateRedis = redisClient
+	}
+	templateCats := templatecat.NewStore(templateRedis)
+	// The Test button waits a few seconds for Meta's verdict on its message.
+	handlers.SetWhatsAppTestOutcomes(templateCats)
 	webhookHandler := handlers.NewWebhookHandler(entClient, log, cfg.HTTP.PublicBaseURL, whatsappInboxService).WithOptOut(suppressionSvc).
 		WithMetaAppSecret(func(ctx context.Context) string {
 			s, err := providerManager.LoadPlatformMetaCredentials(ctx)
@@ -470,6 +498,13 @@ func New(ctx context.Context) (*App, error) {
 			// Receipt requests for CRM-linked customers carry only crm_contact_id.
 			WithContacts(contacts.New(crm.New(cfg.Services.MarketflowServiceURL, cfg.Security.APIKey, log.Named("crm")), log.Named("contacts")))
 	}
+	// Meta's template webhooks and send outcomes: categories and statuses into Redis, template
+	// moves and review outcomes to ops by email and Slack (never WhatsApp).
+	var templateAlert templatecat.Alerter
+	if crossServiceSubscriber != nil {
+		templateAlert = crossServiceSubscriber
+	}
+	webhookHandler.WithTemplateCategories(templateCats, templateAlert)
 
 	return &App{
 		cfg:                    cfg,
@@ -483,6 +518,9 @@ func New(ctx context.Context) (*App, error) {
 		outboxPublisher:        outboxPublisher,
 		crossServiceSubscriber: crossServiceSubscriber,
 		whatsappInboxHub:       whatsappInboxHub,
+		templateCats:           templateCats,
+		templateAccounts:       whatsappTemplateAccounts(providerManager),
+		templateAlert:          templateAlert,
 	}, nil
 }
 
@@ -510,6 +548,9 @@ func (a *App) Run(ctx context.Context) error {
 		}()
 		a.log.Info("cross-service NATS event subscriber started")
 	}
+
+	// Re-read Meta's template categories every few hours, alerting on moves the webhook missed.
+	a.templateCats.RunSweeps(ctx, a.templateAccounts, templatecat.GraphFetcher, a.templateAlert, a.log.Named("whatsapp-template-sweep"))
 
 	errCh := make(chan error, 1)
 	if a.cfg.HTTP.TLSCertFile != "" && a.cfg.HTTP.TLSKeyFile != "" {

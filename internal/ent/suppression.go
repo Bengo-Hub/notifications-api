@@ -31,7 +31,9 @@ type Suppression struct {
 	// email_link, one_click, sms_inbound, whatsapp_button, admin
 	Source string `json:"source,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
-	CreatedAt    time.Time `json:"created_at,omitempty"`
+	CreatedAt time.Time `json:"created_at,omitempty"`
+	// When set, the suppression lapses then: a WhatsApp number Meta could not reach (131026) is retried after it
+	ExpiresAt    *time.Time `json:"expires_at,omitempty"`
 	selectValues sql.SelectValues
 }
 
@@ -44,7 +46,7 @@ func (*Suppression) scanValues(columns []string) ([]any, error) {
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		case suppression.FieldChannel, suppression.FieldAddressHash, suppression.FieldScope, suppression.FieldReason, suppression.FieldSource:
 			values[i] = new(sql.NullString)
-		case suppression.FieldCreatedAt:
+		case suppression.FieldCreatedAt, suppression.FieldExpiresAt:
 			values[i] = new(sql.NullTime)
 		case suppression.FieldID:
 			values[i] = new(uuid.UUID)
@@ -112,6 +114,13 @@ func (_m *Suppression) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.CreatedAt = value.Time
 			}
+		case suppression.FieldExpiresAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field expires_at", values[i])
+			} else if value.Valid {
+				_m.ExpiresAt = new(time.Time)
+				*_m.ExpiresAt = value.Time
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -170,6 +179,11 @@ func (_m *Suppression) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	if v := _m.ExpiresAt; v != nil {
+		builder.WriteString("expires_at=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
 	builder.WriteByte(')')
 	return builder.String()
 }

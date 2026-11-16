@@ -4,6 +4,7 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	"github.com/bengobox/notifications-api/internal/messaging"
 	"github.com/bengobox/notifications-api/internal/whatsapp/templatesync"
@@ -168,6 +169,14 @@ func WhatsAppServiceFor(templateName, templateID string) (service string, resolv
 	if strings.TrimSpace(templateName) == "" {
 		return ServiceWhatsAppService, true
 	}
+	// Meta's own category for the template, as last seen (webhook or sweep), is what Meta bills.
+	if live := liveCategories.Load(); live != nil && *live != nil {
+		if cat, ok := (*live)(templateName); ok {
+			if svc, ok := ServiceForMetaCategory(cat); ok {
+				return svc, true
+			}
+		}
+	}
 	if cat, ok := metaCategoryForTemplateName(templateName); ok {
 		if svc, ok := ServiceForMetaCategory(cat); ok {
 			return svc, true
@@ -179,6 +188,21 @@ func WhatsAppServiceFor(templateName, templateID string) (service string, resolv
 		}
 	}
 	return ServiceWhatsAppUtility, false
+}
+
+// LiveCategoryFunc answers the category Meta currently holds a template under, by name.
+type LiveCategoryFunc func(templateName string) (category string, ok bool)
+
+var liveCategories atomic.Pointer[LiveCategoryFunc]
+
+// SetLiveCategories installs Meta's live categories (the worker's templatecat cache), which take
+// precedence over the manifest; nil removes them.
+func SetLiveCategories(f LiveCategoryFunc) {
+	if f == nil {
+		liveCategories.Store(nil)
+		return
+	}
+	liveCategories.Store(&f)
 }
 
 // WhatsAppServiceForMessage is WhatsAppServiceFor for a queued message.

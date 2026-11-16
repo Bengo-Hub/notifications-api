@@ -53,6 +53,7 @@ import (
 	"github.com/bengobox/notifications-api/internal/modules/preferences"
 	"github.com/bengobox/notifications-api/internal/modules/suppression"
 	"github.com/bengobox/notifications-api/internal/modules/tenant"
+	"github.com/bengobox/notifications-api/internal/whatsapp/templatecat"
 )
 
 // maskedTo is the log field for a message's recipients: masked addresses, or a device count for
@@ -105,6 +106,10 @@ func recordDeliveryLog(ctx context.Context, client *ent.Client, msg *messaging.M
 			SetStatus(status)
 		if msg.RequestID != "" {
 			b.SetMessageID(msg.RequestID)
+		}
+		// Meta's message id, so its status webhook can move the row to delivered, read or failed.
+		if id, _ := msg.Metadata[messaging.MetaSentMessageID].(string); id != "" {
+			b.SetProviderMessageID(id)
 		}
 		builders = append(builders, b)
 	}
@@ -249,6 +254,12 @@ func main() {
 		logg.Warn("redis not reachable at startup", zap.Error(redisErr))
 	}
 	emailGuardian := newEmailGuard(redisClient, cfg.Providers.EmailMaxPerHour, cfg.Providers.EmailBurst, cfg.Providers.EmailValidateMX, logg)
+
+	// WhatsApp sends spend the credits of the category Meta actually bills (its live category,
+	// kept by the API's webhook and sweep), not only the one we submitted (16 November 2026).
+	liveCategories := templatecat.NewCache(templatecat.NewStore(nilIfTyped(redisClient)))
+	liveCategories.Run(ctx, time.Minute)
+	credits.SetLiveCategories(liveCategories.Lookup)
 
 	// Shared cache-aside helper for tenant branding (auto-fetches from auth-api on miss)
 	tenantCache := sharedcache.New(redisClient, logg)
@@ -988,6 +999,17 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 		}
 		if err != nil {
 			return err
+		}
+		// A number Meta reported it cannot deliver to (131026) is skipped for a week for this
+		// sender, before anything is charged; its backup number, when there is one, goes instead.
+		for len(msg.To) > 0 && whatsAppUnreachable(ctx, dbPool, providerTenantID, pm.PlatformID, msg.To[0], msg.Metadata) {
+			next, ok := messaging.NextFallback(*msg)
+			if !ok {
+				return skipped("Meta reported this number cannot receive WhatsApp messages (no WhatsApp account, an old app, " +
+					"or Meta's terms not accepted); it is tried again a week after that report. The email copy still goes.")
+			}
+			logg.Info("whatsapp: number Meta could not reach is skipped, trying the backup number")
+			*msg = next
 		}
 		if msg.EffectiveSenderScope() != messaging.SenderScopePlatform {
 			if !tenantResolved || tenantID == uuid.Nil {

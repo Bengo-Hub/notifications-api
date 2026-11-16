@@ -1,0 +1,15 @@
+{{ define "content" }}
+  <h2>{{ .headline }}</h2>
+  <p>{{ .impact }}</p>
+  <table role="presentation" style="width:100%;border-collapse:collapse;margin:16px 0">
+    <tbody>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Template</strong></td><td style="padding:6px 0">{{ .template }}{{ if .language }} ({{ .language }}){{ end }}</td></tr>
+      {{ if .status }}<tr><td style="padding:6px 12px 6px 0"><strong>Meta's decision</strong></td><td style="padding:6px 0">{{ .status }}</td></tr>{{ else }}<tr><td style="padding:6px 12px 6px 0"><strong>Category</strong></td><td style="padding:6px 0">{{ .previous_category }} to {{ .new_category }}</td></tr>{{ end }}
+      {{ if .reason }}{{ if ne .reason "NONE" }}<tr><td style="padding:6px 12px 6px 0"><strong>Meta's reason</strong></td><td style="padding:6px 0">{{ .reason }}</td></tr>{{ end }}{{ end }}
+      <tr><td style="padding:6px 12px 6px 0"><strong>WhatsApp account</strong></td><td style="padding:6px 0">{{ .waba_id }}</td></tr>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Found by</strong></td><td style="padding:6px 0">{{ if eq .source "sweep" }}the daily template check{{ else }}Meta's notification{{ end }}</td></tr>
+    </tbody>
+  </table>
+  <p><strong>What to do:</strong> {{ .action }}</p>
+  <p>Every template whose Meta category differs from ours: Notifications API, <code>GET /api/v1/platform/whatsapp/templates/categories?recategorized=true</code>.</p>
+{{ end }}

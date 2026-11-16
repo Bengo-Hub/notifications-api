@@ -4870,20 +4870,23 @@ func (m *BroadcastRecipientMutation) ResetEdge(name string) error {
 // DeliveryLogMutation represents an operation that mutates the DeliveryLog nodes in the graph.
 type DeliveryLogMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *uuid.UUID
-	tenant_id     *string
-	template_id   *string
-	channel       *string
-	recipient     *string
-	status        *string
-	message_id    *string
-	created_at    *time.Time
-	clearedFields map[string]struct{}
-	done          bool
-	oldValue      func(context.Context) (*DeliveryLog, error)
-	predicates    []predicate.DeliveryLog
+	op                  Op
+	typ                 string
+	id                  *uuid.UUID
+	tenant_id           *string
+	template_id         *string
+	channel             *string
+	recipient           *string
+	status              *string
+	message_id          *string
+	provider_message_id *string
+	error_code          *string
+	error_detail        *string
+	created_at          *time.Time
+	clearedFields       map[string]struct{}
+	done                bool
+	oldValue            func(context.Context) (*DeliveryLog, error)
+	predicates          []predicate.DeliveryLog
 }
 
 var _ ent.Mutation = (*DeliveryLogMutation)(nil)
@@ -5219,6 +5222,153 @@ func (m *DeliveryLogMutation) ResetMessageID() {
 	delete(m.clearedFields, deliverylog.FieldMessageID)
 }
 
+// SetProviderMessageID sets the "provider_message_id" field.
+func (m *DeliveryLogMutation) SetProviderMessageID(s string) {
+	m.provider_message_id = &s
+}
+
+// ProviderMessageID returns the value of the "provider_message_id" field in the mutation.
+func (m *DeliveryLogMutation) ProviderMessageID() (r string, exists bool) {
+	v := m.provider_message_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldProviderMessageID returns the old "provider_message_id" field's value of the DeliveryLog entity.
+// If the DeliveryLog object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DeliveryLogMutation) OldProviderMessageID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldProviderMessageID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldProviderMessageID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldProviderMessageID: %w", err)
+	}
+	return oldValue.ProviderMessageID, nil
+}
+
+// ClearProviderMessageID clears the value of the "provider_message_id" field.
+func (m *DeliveryLogMutation) ClearProviderMessageID() {
+	m.provider_message_id = nil
+	m.clearedFields[deliverylog.FieldProviderMessageID] = struct{}{}
+}
+
+// ProviderMessageIDCleared returns if the "provider_message_id" field was cleared in this mutation.
+func (m *DeliveryLogMutation) ProviderMessageIDCleared() bool {
+	_, ok := m.clearedFields[deliverylog.FieldProviderMessageID]
+	return ok
+}
+
+// ResetProviderMessageID resets all changes to the "provider_message_id" field.
+func (m *DeliveryLogMutation) ResetProviderMessageID() {
+	m.provider_message_id = nil
+	delete(m.clearedFields, deliverylog.FieldProviderMessageID)
+}
+
+// SetErrorCode sets the "error_code" field.
+func (m *DeliveryLogMutation) SetErrorCode(s string) {
+	m.error_code = &s
+}
+
+// ErrorCode returns the value of the "error_code" field in the mutation.
+func (m *DeliveryLogMutation) ErrorCode() (r string, exists bool) {
+	v := m.error_code
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldErrorCode returns the old "error_code" field's value of the DeliveryLog entity.
+// If the DeliveryLog object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DeliveryLogMutation) OldErrorCode(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldErrorCode is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldErrorCode requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldErrorCode: %w", err)
+	}
+	return oldValue.ErrorCode, nil
+}
+
+// ClearErrorCode clears the value of the "error_code" field.
+func (m *DeliveryLogMutation) ClearErrorCode() {
+	m.error_code = nil
+	m.clearedFields[deliverylog.FieldErrorCode] = struct{}{}
+}
+
+// ErrorCodeCleared returns if the "error_code" field was cleared in this mutation.
+func (m *DeliveryLogMutation) ErrorCodeCleared() bool {
+	_, ok := m.clearedFields[deliverylog.FieldErrorCode]
+	return ok
+}
+
+// ResetErrorCode resets all changes to the "error_code" field.
+func (m *DeliveryLogMutation) ResetErrorCode() {
+	m.error_code = nil
+	delete(m.clearedFields, deliverylog.FieldErrorCode)
+}
+
+// SetErrorDetail sets the "error_detail" field.
+func (m *DeliveryLogMutation) SetErrorDetail(s string) {
+	m.error_detail = &s
+}
+
+// ErrorDetail returns the value of the "error_detail" field in the mutation.
+func (m *DeliveryLogMutation) ErrorDetail() (r string, exists bool) {
+	v := m.error_detail
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldErrorDetail returns the old "error_detail" field's value of the DeliveryLog entity.
+// If the DeliveryLog object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DeliveryLogMutation) OldErrorDetail(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldErrorDetail is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldErrorDetail requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldErrorDetail: %w", err)
+	}
+	return oldValue.ErrorDetail, nil
+}
+
+// ClearErrorDetail clears the value of the "error_detail" field.
+func (m *DeliveryLogMutation) ClearErrorDetail() {
+	m.error_detail = nil
+	m.clearedFields[deliverylog.FieldErrorDetail] = struct{}{}
+}
+
+// ErrorDetailCleared returns if the "error_detail" field was cleared in this mutation.
+func (m *DeliveryLogMutation) ErrorDetailCleared() bool {
+	_, ok := m.clearedFields[deliverylog.FieldErrorDetail]
+	return ok
+}
+
+// ResetErrorDetail resets all changes to the "error_detail" field.
+func (m *DeliveryLogMutation) ResetErrorDetail() {
+	m.error_detail = nil
+	delete(m.clearedFields, deliverylog.FieldErrorDetail)
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (m *DeliveryLogMutation) SetCreatedAt(t time.Time) {
 	m.created_at = &t
@@ -5289,7 +5439,7 @@ func (m *DeliveryLogMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *DeliveryLogMutation) Fields() []string {
-	fields := make([]string, 0, 7)
+	fields := make([]string, 0, 10)
 	if m.tenant_id != nil {
 		fields = append(fields, deliverylog.FieldTenantID)
 	}
@@ -5307,6 +5457,15 @@ func (m *DeliveryLogMutation) Fields() []string {
 	}
 	if m.message_id != nil {
 		fields = append(fields, deliverylog.FieldMessageID)
+	}
+	if m.provider_message_id != nil {
+		fields = append(fields, deliverylog.FieldProviderMessageID)
+	}
+	if m.error_code != nil {
+		fields = append(fields, deliverylog.FieldErrorCode)
+	}
+	if m.error_detail != nil {
+		fields = append(fields, deliverylog.FieldErrorDetail)
 	}
 	if m.created_at != nil {
 		fields = append(fields, deliverylog.FieldCreatedAt)
@@ -5331,6 +5490,12 @@ func (m *DeliveryLogMutation) Field(name string) (ent.Value, bool) {
 		return m.Status()
 	case deliverylog.FieldMessageID:
 		return m.MessageID()
+	case deliverylog.FieldProviderMessageID:
+		return m.ProviderMessageID()
+	case deliverylog.FieldErrorCode:
+		return m.ErrorCode()
+	case deliverylog.FieldErrorDetail:
+		return m.ErrorDetail()
 	case deliverylog.FieldCreatedAt:
 		return m.CreatedAt()
 	}
@@ -5354,6 +5519,12 @@ func (m *DeliveryLogMutation) OldField(ctx context.Context, name string) (ent.Va
 		return m.OldStatus(ctx)
 	case deliverylog.FieldMessageID:
 		return m.OldMessageID(ctx)
+	case deliverylog.FieldProviderMessageID:
+		return m.OldProviderMessageID(ctx)
+	case deliverylog.FieldErrorCode:
+		return m.OldErrorCode(ctx)
+	case deliverylog.FieldErrorDetail:
+		return m.OldErrorDetail(ctx)
 	case deliverylog.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	}
@@ -5407,6 +5578,27 @@ func (m *DeliveryLogMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetMessageID(v)
 		return nil
+	case deliverylog.FieldProviderMessageID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetProviderMessageID(v)
+		return nil
+	case deliverylog.FieldErrorCode:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetErrorCode(v)
+		return nil
+	case deliverylog.FieldErrorDetail:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetErrorDetail(v)
+		return nil
 	case deliverylog.FieldCreatedAt:
 		v, ok := value.(time.Time)
 		if !ok {
@@ -5447,6 +5639,15 @@ func (m *DeliveryLogMutation) ClearedFields() []string {
 	if m.FieldCleared(deliverylog.FieldMessageID) {
 		fields = append(fields, deliverylog.FieldMessageID)
 	}
+	if m.FieldCleared(deliverylog.FieldProviderMessageID) {
+		fields = append(fields, deliverylog.FieldProviderMessageID)
+	}
+	if m.FieldCleared(deliverylog.FieldErrorCode) {
+		fields = append(fields, deliverylog.FieldErrorCode)
+	}
+	if m.FieldCleared(deliverylog.FieldErrorDetail) {
+		fields = append(fields, deliverylog.FieldErrorDetail)
+	}
 	return fields
 }
 
@@ -5463,6 +5664,15 @@ func (m *DeliveryLogMutation) ClearField(name string) error {
 	switch name {
 	case deliverylog.FieldMessageID:
 		m.ClearMessageID()
+		return nil
+	case deliverylog.FieldProviderMessageID:
+		m.ClearProviderMessageID()
+		return nil
+	case deliverylog.FieldErrorCode:
+		m.ClearErrorCode()
+		return nil
+	case deliverylog.FieldErrorDetail:
+		m.ClearErrorDetail()
 		return nil
 	}
 	return fmt.Errorf("unknown DeliveryLog nullable field %s", name)
@@ -5489,6 +5699,15 @@ func (m *DeliveryLogMutation) ResetField(name string) error {
 		return nil
 	case deliverylog.FieldMessageID:
 		m.ResetMessageID()
+		return nil
+	case deliverylog.FieldProviderMessageID:
+		m.ResetProviderMessageID()
+		return nil
+	case deliverylog.FieldErrorCode:
+		m.ResetErrorCode()
+		return nil
+	case deliverylog.FieldErrorDetail:
+		m.ResetErrorDetail()
 		return nil
 	case deliverylog.FieldCreatedAt:
 		m.ResetCreatedAt()
@@ -16890,6 +17109,7 @@ type SuppressionMutation struct {
 	reason        *string
 	source        *string
 	created_at    *time.Time
+	expires_at    *time.Time
 	clearedFields map[string]struct{}
 	done          bool
 	oldValue      func(context.Context) (*Suppression, error)
@@ -17278,6 +17498,55 @@ func (m *SuppressionMutation) ResetCreatedAt() {
 	m.created_at = nil
 }
 
+// SetExpiresAt sets the "expires_at" field.
+func (m *SuppressionMutation) SetExpiresAt(t time.Time) {
+	m.expires_at = &t
+}
+
+// ExpiresAt returns the value of the "expires_at" field in the mutation.
+func (m *SuppressionMutation) ExpiresAt() (r time.Time, exists bool) {
+	v := m.expires_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldExpiresAt returns the old "expires_at" field's value of the Suppression entity.
+// If the Suppression object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SuppressionMutation) OldExpiresAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldExpiresAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldExpiresAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldExpiresAt: %w", err)
+	}
+	return oldValue.ExpiresAt, nil
+}
+
+// ClearExpiresAt clears the value of the "expires_at" field.
+func (m *SuppressionMutation) ClearExpiresAt() {
+	m.expires_at = nil
+	m.clearedFields[suppression.FieldExpiresAt] = struct{}{}
+}
+
+// ExpiresAtCleared returns if the "expires_at" field was cleared in this mutation.
+func (m *SuppressionMutation) ExpiresAtCleared() bool {
+	_, ok := m.clearedFields[suppression.FieldExpiresAt]
+	return ok
+}
+
+// ResetExpiresAt resets all changes to the "expires_at" field.
+func (m *SuppressionMutation) ResetExpiresAt() {
+	m.expires_at = nil
+	delete(m.clearedFields, suppression.FieldExpiresAt)
+}
+
 // Where appends a list predicates to the SuppressionMutation builder.
 func (m *SuppressionMutation) Where(ps ...predicate.Suppression) {
 	m.predicates = append(m.predicates, ps...)
@@ -17312,7 +17581,7 @@ func (m *SuppressionMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *SuppressionMutation) Fields() []string {
-	fields := make([]string, 0, 7)
+	fields := make([]string, 0, 8)
 	if m.tenant_id != nil {
 		fields = append(fields, suppression.FieldTenantID)
 	}
@@ -17333,6 +17602,9 @@ func (m *SuppressionMutation) Fields() []string {
 	}
 	if m.created_at != nil {
 		fields = append(fields, suppression.FieldCreatedAt)
+	}
+	if m.expires_at != nil {
+		fields = append(fields, suppression.FieldExpiresAt)
 	}
 	return fields
 }
@@ -17356,6 +17628,8 @@ func (m *SuppressionMutation) Field(name string) (ent.Value, bool) {
 		return m.Source()
 	case suppression.FieldCreatedAt:
 		return m.CreatedAt()
+	case suppression.FieldExpiresAt:
+		return m.ExpiresAt()
 	}
 	return nil, false
 }
@@ -17379,6 +17653,8 @@ func (m *SuppressionMutation) OldField(ctx context.Context, name string) (ent.Va
 		return m.OldSource(ctx)
 	case suppression.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
+	case suppression.FieldExpiresAt:
+		return m.OldExpiresAt(ctx)
 	}
 	return nil, fmt.Errorf("unknown Suppression field %s", name)
 }
@@ -17437,6 +17713,13 @@ func (m *SuppressionMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetCreatedAt(v)
 		return nil
+	case suppression.FieldExpiresAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetExpiresAt(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Suppression field %s", name)
 }
@@ -17473,6 +17756,9 @@ func (m *SuppressionMutation) ClearedFields() []string {
 	if m.FieldCleared(suppression.FieldSource) {
 		fields = append(fields, suppression.FieldSource)
 	}
+	if m.FieldCleared(suppression.FieldExpiresAt) {
+		fields = append(fields, suppression.FieldExpiresAt)
+	}
 	return fields
 }
 
@@ -17492,6 +17778,9 @@ func (m *SuppressionMutation) ClearField(name string) error {
 		return nil
 	case suppression.FieldSource:
 		m.ClearSource()
+		return nil
+	case suppression.FieldExpiresAt:
+		m.ClearExpiresAt()
 		return nil
 	}
 	return fmt.Errorf("unknown Suppression nullable field %s", name)
@@ -17521,6 +17810,9 @@ func (m *SuppressionMutation) ResetField(name string) error {
 		return nil
 	case suppression.FieldCreatedAt:
 		m.ResetCreatedAt()
+		return nil
+	case suppression.FieldExpiresAt:
+		m.ResetExpiresAt()
 		return nil
 	}
 	return fmt.Errorf("unknown Suppression field %s", name)

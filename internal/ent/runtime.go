@@ -199,7 +199,7 @@ func init() {
 	// deliverylog.DefaultStatus holds the default value on creation for the status field.
 	deliverylog.DefaultStatus = deliverylogDescStatus.Default.(string)
 	// deliverylogDescCreatedAt is the schema descriptor for created_at field.
-	deliverylogDescCreatedAt := deliverylogFields[7].Descriptor()
+	deliverylogDescCreatedAt := deliverylogFields[10].Descriptor()
 	// deliverylog.DefaultCreatedAt holds the default value on creation for the created_at field.
 	deliverylog.DefaultCreatedAt = deliverylogDescCreatedAt.Default.(func() time.Time)
 	// deliverylogDescID is the schema descriptor for id field.

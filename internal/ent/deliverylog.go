@@ -30,6 +30,12 @@ type DeliveryLog struct {
 	Status string `json:"status,omitempty"`
 	// The queued message's request id, so provider callbacks can find the row
 	MessageID string `json:"message_id,omitempty"`
+	// The provider's own id for the send (Meta's wamid), so its status webhook can update the row
+	ProviderMessageID string `json:"provider_message_id,omitempty"`
+	// Provider error code of a send the provider later refused (Meta 131049, 131026 ...)
+	ErrorCode string `json:"error_code,omitempty"`
+	// Provider's reason for that refusal, in its words
+	ErrorDetail string `json:"error_detail,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt    time.Time `json:"created_at,omitempty"`
 	selectValues sql.SelectValues
@@ -40,7 +46,7 @@ func (*DeliveryLog) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case deliverylog.FieldTenantID, deliverylog.FieldTemplateID, deliverylog.FieldChannel, deliverylog.FieldRecipient, deliverylog.FieldStatus, deliverylog.FieldMessageID:
+		case deliverylog.FieldTenantID, deliverylog.FieldTemplateID, deliverylog.FieldChannel, deliverylog.FieldRecipient, deliverylog.FieldStatus, deliverylog.FieldMessageID, deliverylog.FieldProviderMessageID, deliverylog.FieldErrorCode, deliverylog.FieldErrorDetail:
 			values[i] = new(sql.NullString)
 		case deliverylog.FieldCreatedAt:
 			values[i] = new(sql.NullTime)
@@ -103,6 +109,24 @@ func (_m *DeliveryLog) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.MessageID = value.String
 			}
+		case deliverylog.FieldProviderMessageID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field provider_message_id", values[i])
+			} else if value.Valid {
+				_m.ProviderMessageID = value.String
+			}
+		case deliverylog.FieldErrorCode:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field error_code", values[i])
+			} else if value.Valid {
+				_m.ErrorCode = value.String
+			}
+		case deliverylog.FieldErrorDetail:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field error_detail", values[i])
+			} else if value.Valid {
+				_m.ErrorDetail = value.String
+			}
 		case deliverylog.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
@@ -162,6 +186,15 @@ func (_m *DeliveryLog) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("message_id=")
 	builder.WriteString(_m.MessageID)
+	builder.WriteString(", ")
+	builder.WriteString("provider_message_id=")
+	builder.WriteString(_m.ProviderMessageID)
+	builder.WriteString(", ")
+	builder.WriteString("error_code=")
+	builder.WriteString(_m.ErrorCode)
+	builder.WriteString(", ")
+	builder.WriteString("error_detail=")
+	builder.WriteString(_m.ErrorDetail)
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))

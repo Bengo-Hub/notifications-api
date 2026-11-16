@@ -26,6 +26,12 @@ const (
 	FieldStatus = "status"
 	// FieldMessageID holds the string denoting the message_id field in the database.
 	FieldMessageID = "message_id"
+	// FieldProviderMessageID holds the string denoting the provider_message_id field in the database.
+	FieldProviderMessageID = "provider_message_id"
+	// FieldErrorCode holds the string denoting the error_code field in the database.
+	FieldErrorCode = "error_code"
+	// FieldErrorDetail holds the string denoting the error_detail field in the database.
+	FieldErrorDetail = "error_detail"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// Table holds the table name of the deliverylog in the database.
@@ -41,6 +47,9 @@ var Columns = []string{
 	FieldRecipient,
 	FieldStatus,
 	FieldMessageID,
+	FieldProviderMessageID,
+	FieldErrorCode,
+	FieldErrorDetail,
 	FieldCreatedAt,
 }
 
@@ -107,6 +116,21 @@ func ByStatus(opts ...sql.OrderTermOption) OrderOption {
 // ByMessageID orders the results by the message_id field.
 func ByMessageID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldMessageID, opts...).ToFunc()
+}
+
+// ByProviderMessageID orders the results by the provider_message_id field.
+func ByProviderMessageID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldProviderMessageID, opts...).ToFunc()
+}
+
+// ByErrorCode orders the results by the error_code field.
+func ByErrorCode(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldErrorCode, opts...).ToFunc()
+}
+
+// ByErrorDetail orders the results by the error_detail field.
+func ByErrorDetail(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldErrorDetail, opts...).ToFunc()
 }
 
 // ByCreatedAt orders the results by the created_at field.

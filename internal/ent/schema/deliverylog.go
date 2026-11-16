@@ -36,6 +36,15 @@ func (DeliveryLog) Fields() []ent.Field {
 		field.String("message_id").
 			Optional().
 			Comment("The queued message's request id, so provider callbacks can find the row"),
+		field.String("provider_message_id").
+			Optional().
+			Comment("The provider's own id for the send (Meta's wamid), so its status webhook can update the row"),
+		field.String("error_code").
+			Optional().
+			Comment("Provider error code of a send the provider later refused (Meta 131049, 131026 ...)"),
+		field.String("error_detail").
+			Optional().
+			Comment("Provider's reason for that refusal, in its words"),
 		field.Time("created_at").
 			Default(time.Now).
 			Immutable(),
@@ -49,5 +58,6 @@ func (DeliveryLog) Indexes() []ent.Index {
 		index.Fields("created_at"),
 		index.Fields("tenant_id", "created_at"),
 		index.Fields("message_id"),
+		index.Fields("provider_message_id"),
 	}
 }

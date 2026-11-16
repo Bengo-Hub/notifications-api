@@ -1,9 +1,11 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -16,7 +18,44 @@ import (
 	"github.com/bengobox/notifications-api/internal/ent/tenant"
 	"github.com/bengobox/notifications-api/internal/modules/credits"
 	"github.com/bengobox/notifications-api/internal/providers"
+	"github.com/bengobox/notifications-api/internal/whatsapp/templatecat"
 )
+
+// whatsappTestOutcomes holds Meta's webhook verdicts, so a WhatsApp Test can wait a few seconds for
+// its own (SetWhatsAppTestOutcomes). Nil: the answer only says Meta accepted the message.
+var whatsappTestOutcomes *templatecat.Store
+
+// SetWhatsAppTestOutcomes lets the Test button report Meta's later verdict on its message.
+func SetWhatsAppTestOutcomes(s *templatecat.Store) { whatsappTestOutcomes = s }
+
+// testOutcomeWait bounds how long a WhatsApp Test waits for Meta's webhook: it usually arrives
+// within a second or two of the send.
+const testOutcomeWait = 6 * time.Second
+
+// awaitWhatsAppTestOutcome adds Meta's verdict on the test message to info["delivery"] when it
+// arrives within testOutcomeWait: delivered, read or failed (with Meta's code). "sent" is not a
+// verdict, so it keeps waiting for one.
+func awaitWhatsAppTestOutcome(ctx context.Context, providerType string, info map[string]interface{}) {
+	id, _ := info["message_id"].(string)
+	if providerType != "whatsapp" || id == "" || whatsappTestOutcomes == nil {
+		return
+	}
+	deadline := time.Now().Add(testOutcomeWait)
+	for {
+		if st, ok := whatsappTestOutcomes.SendStatus(ctx, id); ok && st.Status != "sent" {
+			info["delivery"] = st
+			return
+		}
+		if time.Now().After(deadline) {
+			return
+		}
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(400 * time.Millisecond):
+		}
+	}
+}
 
 // TenantProviders handles tenant-level notification provider selection.
 type TenantProviders struct {
@@ -519,6 +558,7 @@ func (h *TenantProviders) TestProvider(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
+	awaitWhatsAppTestOutcome(ctx, req.ProviderType, info)
 
 	jsonResponse(w, http.StatusOK, map[string]any{
 		"success":       true,
@@ -533,6 +573,20 @@ func (h *TenantProviders) TestProvider(w http.ResponseWriter, r *http.Request) {
 // Meta accepts it at once and reports delivery seconds later, and only the free text fallback is
 // limited to the 24 hour window (#131047).
 func providerTestMessage(providerType, to string, info map[string]interface{}) string {
+	if st, ok := info["delivery"].(templatecat.SendStatus); ok && providerType == "whatsapp" && to != "" {
+		switch {
+		case st.Status == "delivered" || st.Status == "read":
+			return fmt.Sprintf("test message delivered to %s (template %v)", to, info["template"])
+		case st.Status == "failed" && st.Code == 131049:
+			return "Meta accepted the test but did not deliver it: error 131049, Meta's limit on marketing messages per person. " +
+				"Meta bills this template as marketing on this WhatsApp account; check its category under Message templates"
+		case st.Status == "failed" && st.Code == 131026:
+			return "Meta accepted the test but did not deliver it: error 131026, " + to + " cannot receive WhatsApp messages " +
+				"(no WhatsApp account, an old app, or Meta's terms not accepted on that phone)"
+		case st.Status == "failed":
+			return fmt.Sprintf("Meta accepted the test but did not deliver it: error %d, %s", st.Code, firstNonBlank(st.Detail, st.Title, "no reason given"))
+		}
+	}
 	if providerType == "whatsapp" && to != "" {
 		if info["sent_as"] == providers.TestSentAsTemplate {
 			return fmt.Sprintf("test message accepted by Meta as the approved template %v; delivery shows in Monitoring", info["template"])

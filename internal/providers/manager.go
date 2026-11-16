@@ -518,11 +518,15 @@ func (m *Manager) TestConnection(ctx context.Context, tenantID, channel, provide
 		}
 		// The approved test template, else a free text (see whatsAppTestSend).
 		if to != "" {
-			sentAs, err := whatsAppTestSend(ctx, prov, to)
+			sentAs, messageID, err := whatsAppTestSend(ctx, prov, to)
 			if err != nil {
 				return nil, err
 			}
-			return map[string]interface{}{"sent_as": sentAs, "template": WhatsAppTestTemplate}, nil
+			info := map[string]interface{}{"sent_as": sentAs, "template": WhatsAppTestTemplate}
+			if messageID != "" {
+				info["message_id"] = messageID
+			}
+			return info, nil
 		}
 		if infoProv, ok := prov.(AccountInfoProvider); ok {
 			return infoProv.AccountInfo(ctx)
