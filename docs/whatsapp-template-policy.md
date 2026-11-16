@@ -35,6 +35,7 @@ Meta fixes a button's domain when the template is approved; only the suffix vari
 | Rider app (a rider's own screens) | `https://riderapp.codevertexafrica.com/{{1}}` | `<tenant-slug>/profile` |
 | Logistics app (the business's dispatch console) | `https://logistics.codevertexafrica.com/{{1}}` | `<tenant-slug>/vehicles` |
 | Digitika and the company website (enrollment page, student and parent portal, certificate check, enquiry reply) | `https://codevertexafrica.com/{{1}}` | `digitika/success?reference=<ref>`, `student`, `digitika/parent`, `certificates/<token>`, `services` (website enquiry reply) |
+| Projects app (task mentions and assignments) | `https://projects.codevertexafrica.com/{{1}}` | the event's `action_path` without its leading slash, `<org-slug>/projects/<id>/tasks?task=<task id>` |
 
 ## 2b. One notice, several parties
 
@@ -96,6 +97,16 @@ working button: the suffix is the path of its link (`buttonURLSuffix`, `posButto
    admin), then submit. The results show Meta's review status (`meta_status`).
 4. Switch the code to the new name only once it shows `APPROVED`, or accept that WhatsApp is
    skipped for that message until it is.
+
+Templates waiting for a Meta sync after their deploy:
+
+| Template | Sent for |
+|---|---|
+| `projects_task_mentioned_v1_btn` | `project.task.mentioned` with a comment excerpt |
+| `projects_task_mentioned_short_v1_btn` | `project.task.mentioned` without an excerpt |
+| `projects_task_assigned_v1_btn` | `project.task.assigned` |
+
+Until Meta approves them the task emails still go and WhatsApp is skipped.
 
 ## 5. MarketFlow assistant templates (Sprint 17, for the owner to submit)
 

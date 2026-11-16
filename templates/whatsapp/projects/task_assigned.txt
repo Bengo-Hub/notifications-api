@@ -1,0 +1,5 @@
+Hello {{ .name }},
+
+{{ .actor_name }} assigned you the task *{{ .task_title }}* in {{ if .project_name }}{{ .project_name }}{{ else }}your project{{ end }}.
+
+Open the task in Projects to see the details and get started.

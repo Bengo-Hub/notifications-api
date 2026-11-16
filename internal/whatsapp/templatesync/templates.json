@@ -1380,5 +1380,38 @@
         ]
       }
     ]
+  },
+  {
+    "name": "projects_task_mentioned_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/projects/task_mentioned.txt with a comment excerpt (params: name, actor, task, project, excerpt; button: action_path on the projects app)",
+    "body": "Hello {{1}},\n\n{{2}} mentioned you on the task *{{3}}* in {{4}}:\n\n\"{{5}}\"\n\nOpen the task in Projects to read the full comment and reply.",
+    "example": ["Amina", "Brian Otieno", "Update the pricing page", "Website relaunch", "Can you check the new totals before Friday?"],
+    "buttons": [
+      {"type": "URL", "text": "Open Task", "url": "https://projects.codevertexafrica.com/{{1}}", "example": ["urban-loft/projects/0b6c2b8e/tasks?task=7d1f3a2c"]}
+    ]
+  },
+  {
+    "name": "projects_task_mentioned_short_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/projects/task_mentioned.txt without an excerpt (params: name, actor, task, project; button: action_path on the projects app)",
+    "body": "Hello {{1}},\n\n{{2}} mentioned you on the task *{{3}}* in {{4}}.\n\nOpen the task in Projects to see the comment and reply.",
+    "example": ["Amina", "Brian Otieno", "Update the pricing page", "Website relaunch"],
+    "buttons": [
+      {"type": "URL", "text": "Open Task", "url": "https://projects.codevertexafrica.com/{{1}}", "example": ["urban-loft/projects/0b6c2b8e/tasks?task=7d1f3a2c"]}
+    ]
+  },
+  {
+    "name": "projects_task_assigned_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/projects/task_assigned.txt (params: name, actor, task, project; button: action_path on the projects app)",
+    "body": "Hello {{1}},\n\n{{2}} assigned you the task *{{3}}* in {{4}}.\n\nOpen the task in Projects to see the details and get started.",
+    "example": ["Amina", "Brian Otieno", "Update the pricing page", "Website relaunch"],
+    "buttons": [
+      {"type": "URL", "text": "Open Task", "url": "https://projects.codevertexafrica.com/{{1}}", "example": ["urban-loft/projects/0b6c2b8e/tasks?task=7d1f3a2c"]}
+    ]
   }
 ]

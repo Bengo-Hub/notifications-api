@@ -1,0 +1,17 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <h2>A task is assigned to you</h2>
+  <p>{{ .actor_name }} assigned you <strong>{{ .task_title }}</strong>{{ if .project_name }} in {{ .project_name }}{{ end }}.</p>
+  <table role="presentation" style="width:100%;border-collapse:collapse;margin:16px 0">
+    <tbody>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Task</strong></td><td style="padding:6px 0">{{ .task_title }}</td></tr>
+      {{ if .project_name }}<tr><td style="padding:6px 12px 6px 0"><strong>Project</strong></td><td style="padding:6px 0">{{ .project_name }}</td></tr>{{ end }}
+      <tr><td style="padding:6px 12px 6px 0"><strong>Assigned by</strong></td><td style="padding:6px 0">{{ .actor_name }}</td></tr>
+    </tbody>
+  </table>
+  {{ if .action_link }}
+  <p>
+    <a class="button" href="{{ .action_link }}">Open the task</a>
+  </p>
+  {{ end }}
+{{ end }}

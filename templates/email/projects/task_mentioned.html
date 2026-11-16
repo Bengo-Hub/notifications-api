@@ -1,0 +1,20 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <h2>{{ .actor_name }} mentioned you</h2>
+  <p>{{ .actor_name }} mentioned you in a comment on <strong>{{ .task_title }}</strong>{{ if .project_name }} in {{ .project_name }}{{ end }}.</p>
+  {{ if .comment_excerpt }}
+  <blockquote style="margin:16px 0;padding:12px 16px;border-left:4px solid #d1d5db;background:#f9fafb;color:#374151">{{ .comment_excerpt }}</blockquote>
+  {{ end }}
+  <table role="presentation" style="width:100%;border-collapse:collapse;margin:16px 0">
+    <tbody>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Task</strong></td><td style="padding:6px 0">{{ .task_title }}</td></tr>
+      {{ if .project_name }}<tr><td style="padding:6px 12px 6px 0"><strong>Project</strong></td><td style="padding:6px 0">{{ .project_name }}</td></tr>{{ end }}
+      <tr><td style="padding:6px 12px 6px 0"><strong>Mentioned by</strong></td><td style="padding:6px 0">{{ .actor_name }}</td></tr>
+    </tbody>
+  </table>
+  {{ if .action_link }}
+  <p>
+    <a class="button" href="{{ .action_link }}">Open the task</a>
+  </p>
+  {{ end }}
+{{ end }}

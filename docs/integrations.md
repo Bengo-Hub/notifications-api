@@ -311,9 +311,9 @@ riders still come from `logistics.fleet.*` events (`cmd/worker/fleet_consumer.go
 - Meeting reminders
 
 **Events Consumed**:
-- `projects.task.assigned` - Notify team member
+- `project.milestone.reached` - `projects/project_milestone_reached` to the tenant's contact email
+- `project.task.mentioned`, `project.task.assigned` - task notices to one teammate (see below)
 - `projects.task.due` - Send deadline reminder
-- `projects.comment.created` - Notify mentioned users
 - `projects.meeting.scheduled` - Send meeting invitation
 - `project.qa.invite.created`, `project.qa.result.failed`, `project.qa.session.closed`,
   `project.qa.session.accepted`, `project.qa.session.rejected` - QA acceptance (see below)
@@ -343,12 +343,35 @@ email, never in a log. `qa/invite`, `qa/result_failed`, `qa/session_closed` and
 claimed once in Redis (7 days; in the process without Redis) before anything is sent, and every
 email carries the idempotency key `project-qa-<event id>`.
 
+**Task mentions and assignments (sprint 12)**: projects-api publishes `project.task.mentioned` and
+`project.task.assigned` through its shared-events outbox on the `projects` stream, one event per
+recipient and never to the author. The worker's `notifications-projects` durable
+(`cmd/worker/projects_consumer.go`) sends each through `sendToParties`:
+
+| Event | Email | WhatsApp |
+|---|---|---|
+| `task.mentioned` | `projects/task_mentioned` with the comment excerpt | `projects_task_mentioned_v1_btn`, or `projects_task_mentioned_short_v1_btn` when there is no excerpt |
+| `task.assigned` | `projects/task_assigned` | `projects_task_assigned_v1_btn` |
+
+Payload: `project_id`, `project_name`, `task_id`, `task_title`, `actor_name`, `recipient_user_id`,
+`recipient_email`, `recipient_name`, `comment_excerpt` (mentions only, plain text up to 200
+characters) and `action_path` (for example `/{orgSlug}/projects/{id}/tasks?task={taskId}`). The
+email goes to `recipient_email`, else the email of the local user for `recipient_user_id`. The
+phone comes from the local user table (synced from auth-api) by `recipient_user_id`; with no
+phone only the email goes. Links open `action_path` on the projects app: the tenant's `projects`
+service URL from auth-api, else `NOTIFICATIONS_PROJECTS_APP_URL`, else
+`https://projects.codevertexafrica.com`. The WhatsApp button is fixed to
+`https://projects.codevertexafrica.com/{{1}}` with the path as its suffix. Both types are essential
+in the preferences registry (group Support & Projects): they are on by default, and a tenant can
+mute either one or its WhatsApp channel in settings. Idempotency keys are
+`projects-<event type>-<event id>-<channel>`, so a redelivered event is not sent twice.
+
 **Events Published**: None
 
 **Template Mapping**:
-- `task_assigned` → `task_assignment_email` template
+- `task.mentioned` → `projects/task_mentioned` (email, WhatsApp)
+- `task.assigned` → `projects/task_assigned` (email, WhatsApp)
 - `task_due` → `deadline_reminder_push` template
-- `comment_mention` → `comment_mention_email` template
 
 ### ERP Service
 

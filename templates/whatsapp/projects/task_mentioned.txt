@@ -1,0 +1,9 @@
+Hello {{ .name }},
+
+{{ .actor_name }} mentioned you on the task *{{ .task_title }}* in {{ if .project_name }}{{ .project_name }}{{ else }}your project{{ end }}{{ if .comment_excerpt }}:
+
+"{{ .comment_excerpt }}"
+
+Open the task in Projects to read the full comment and reply.{{ else }}.
+
+Open the task in Projects to see the comment and reply.{{ end }}

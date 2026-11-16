@@ -244,6 +244,11 @@ var Registry = []Type{
 	{Key: "ticketing/ticket_status_changed", Label: "Support ticket status update", Group: "Support & Projects", Class: ClassOptional},
 	{Key: "ticketing/ticket_sla_breached", Label: "Support ticket past its SLA", Group: "Support & Projects", Class: ClassOptional},
 	{Key: "projects/project_milestone_reached", Label: "Project milestone reached", Group: "Support & Projects", Class: ClassOptional},
+	// Task notices to one teammate (projects-api project.task.mentioned and project.task.assigned).
+	// Essential: a mention or an assignment is direct work for that person, so it is on by default
+	// (as in other work tools); a tenant or the user can still turn it off.
+	{Key: "projects/task_mentioned", Label: "Mentioned in a task comment", Group: "Support & Projects", Class: ClassEssential},
+	{Key: "projects/task_assigned", Label: "Task assigned to you", Group: "Support & Projects", Class: ClassEssential},
 	// QA acceptance (projects-api project.qa.*): the invite is the only way in, and a blocking failure
 	// or a decision stops or settles the work, so all four default on.
 	{Key: "qa/invite", Label: "QA session invitation", Group: "Support & Projects", Class: ClassEssential},

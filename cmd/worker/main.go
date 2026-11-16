@@ -475,8 +475,8 @@ func main() {
 	// Start ticketing event consumer (ticketing-service → ticket notifications)
 	startTicketingConsumer(ctx, nc, js, cfg, tr, logg)
 
-	// Start projects event consumer (projects-service → milestone notifications)
-	startProjectsConsumer(ctx, nc, js, cfg, tr, logg)
+	// Start projects event consumer (projects-service milestones, task mentions and assignments)
+	startProjectsConsumer(ctx, nc, js, cfg, tr, client, prefGate, templateChannels, logg)
 
 	// Start maskani event consumer (property platform: bills, receipts, visitor passes, gate alerts)
 	startMaskaniConsumer(ctx, nc, js, cfg, tr, client, logg)
