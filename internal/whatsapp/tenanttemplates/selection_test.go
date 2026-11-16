@@ -16,7 +16,7 @@ import (
 var testDefs = []templatesync.TemplateDef{
 	{Name: "auth_otp", Category: "AUTHENTICATION"},
 	{Name: "subscription_invoice_ready_v1_btn", Category: "UTILITY"},
-	{Name: "credits_balance_low_v1_btn", Category: "UTILITY"},
+	{Name: "credits_balance_low_v2_btn", Category: "UTILITY"},
 	{Name: "broadcast_update_v1", Category: "MARKETING"},
 	{Name: "occasion_new_year_v2", Category: "MARKETING"},
 	{Name: "ordering_order_placed_v3_btn", Category: "UTILITY"},
@@ -24,13 +24,13 @@ var testDefs = []templatesync.TemplateDef{
 	{Name: "finance_invoice_sent", Category: "UTILITY"},
 	{Name: "hrm_leave_approved", Category: "UTILITY"},
 	{Name: "payroll_payslip_ready", Category: "UTILITY"},
-	{Name: "hadia_registry_published_v1_btn", Category: "UTILITY"},
+	{Name: "hadia_registry_published_v2_btn", Category: "UTILITY"},
 	{Name: "maskani_bill_issued_v1_btn", Category: "UTILITY"},
 	{Name: "codevertex_enquiry_received_v1_btn", Category: "UTILITY"},
 	{Name: "provider_balance_low_v1_btn", Category: "UTILITY"},
 }
 
-var shared = []string{"auth_otp", "broadcast_update_v1", "credits_balance_low_v1_btn", "occasion_new_year_v2", "subscription_invoice_ready_v1_btn"}
+var shared = []string{"auth_otp", "broadcast_update_v1", "credits_balance_low_v2_btn", "occasion_new_year_v2", "subscription_invoice_ready_v1_btn"}
 
 func names(defs []templatesync.TemplateDef) []string {
 	out := []string{}
@@ -76,7 +76,7 @@ func TestSelectByService(t *testing.T) {
 		{name: "treasury maps to finance", services: []string{"treasury"}, want: with("finance_invoice_sent"), matched: []string{"treasury"}},
 		{name: "erp", services: []string{"erp"}, want: with("finance_invoice_sent", "hrm_leave_approved", "payroll_payslip_ready"), matched: []string{"erp"}},
 		{name: "erp and finance do not duplicate", services: []string{"erp", "finance", "erp"}, want: with("finance_invoice_sent", "hrm_leave_approved", "payroll_payslip_ready"), matched: []string{"erp", "finance"}},
-		{name: "hadia from its delivery logs", services: []string{"hadia"}, want: with("hadia_registry_published_v1_btn"), matched: []string{"hadia"}},
+		{name: "hadia from its delivery logs", services: []string{"hadia"}, want: with("hadia_registry_published_v2_btn"), matched: []string{"hadia"}},
 		{name: "unknown services ignored", services: []string{"marketflow", "platform", "codevertex"}, want: with(), matched: nil},
 	}
 	for _, tc := range cases {
@@ -182,26 +182,26 @@ func TestClaimsServicesOnlyForOwnTenant(t *testing.T) {
 	}
 }
 
-// The provider Test button sends notifications_test_message_v1 (owner, 14 November 2026), so every
+// The provider Test button sends notifications_test_message_v2 (v1 since 14 November 2026, v2 since 16 November), so every
 // tenant gets it with the shared set, whatever services it uses.
 func TestTestMessageTemplateIsShared(t *testing.T) {
 	sel, err := ParseSelection(defaultSelectionJSON)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defs := append([]templatesync.TemplateDef{{Name: "notifications_test_message_v1", Category: "UTILITY"}}, testDefs...)
+	defs := append([]templatesync.TemplateDef{{Name: "notifications_test_message_v2", Category: "UTILITY"}}, testDefs...)
 	for _, services := range [][]string{nil, {"hadia"}, {"ordering", "pos"}} {
 		got, _ := sel.Select(defs, services)
 		found := false
 		for _, n := range names(got) {
-			found = found || n == "notifications_test_message_v1"
+			found = found || n == "notifications_test_message_v2"
 		}
 		if !found {
 			t.Fatalf("services %v: test template not selected", services)
 		}
 	}
 	raw, err := os.ReadFile(filepath.Join("..", "templatesync", "templates.json"))
-	if err != nil || !strings.Contains(string(raw), `"name": "notifications_test_message_v1"`) {
-		t.Fatalf("notifications_test_message_v1 is not declared in templates.json: %v", err)
+	if err != nil || !strings.Contains(string(raw), `"name": "notifications_test_message_v2"`) {
+		t.Fatalf("notifications_test_message_v2 is not declared in templates.json: %v", err)
 	}
 }

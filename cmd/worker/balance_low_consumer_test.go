@@ -39,7 +39,7 @@ func TestBalanceLowTenantNotice(t *testing.T) {
 		t.Fatalf("notice = %+v", n)
 	}
 	p := n.Parties[0]
-	if p.Target != messaging.TargetTenantAdmin || p.WhatsApp.Name != "credits_balance_low_v1_btn" || p.WhatsApp.Button != "billing" {
+	if p.Target != messaging.TargetTenantAdmin || p.WhatsApp.Name != "credits_balance_low_v2_btn" || p.WhatsApp.Button != "billing" {
 		t.Fatalf("party = %+v", p)
 	}
 	if got := strings.Join(p.WhatsApp.Params, "|"); got != "Alpha|AI credits|is low|19 credits" {
@@ -103,7 +103,7 @@ func TestBalanceLowTemplatesAreConsistent(t *testing.T) {
 		params int
 		base   string
 	}{
-		"credits_balance_low_v1_btn":  {4, pricingAppBase},
+		"credits_balance_low_v2_btn":  {4, pricingAppBase},
 		"provider_balance_low_v1_btn": {3, marketflowAppBase},
 	}
 	for _, d := range defs {

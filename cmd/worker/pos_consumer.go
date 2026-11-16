@@ -105,7 +105,7 @@ var posNotices = map[string]posNotice{
 	"loyalty.referral_earned": {
 		TemplateID: "pos/loyalty_referral_earned",
 		Subject:    "You earned a referral bonus",
-		WAName:     "pos_loyalty_referral_v1",
+		WAName:     "pos_loyalty_referral_v2",
 		EmailKey:   "referrer_email",
 		PhoneKey:   "referrer_phone",
 		NameKey:    "referrer_name",

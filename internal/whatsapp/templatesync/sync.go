@@ -39,6 +39,19 @@ type TemplateDef struct {
 	// send, so a URL button only makes sense for a domain that's the same for every send using
 	// this template (see order_consumer.go's shared-vs-custom-domain template selection).
 	Buttons []ButtonDef `json:"buttons,omitempty"`
+	// MetaCategory, when set, is the category Meta approved the template under where it differs
+	// from Category (what we submitted). Meta bills that category, so credits do too (Billed).
+	// Never sent to Meta.
+	MetaCategory string `json:"meta_category,omitempty"`
+}
+
+// Billed is the category a send of this template is billed under: Meta's, when the manifest
+// records that Meta approved it under another category, else the submitted one.
+func (d TemplateDef) Billed() string {
+	if d.MetaCategory != "" {
+		return d.MetaCategory
+	}
+	return d.Category
 }
 
 // ButtonDef is one BUTTONS-component button. Only Type "URL" is used today.

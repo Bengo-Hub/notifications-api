@@ -214,11 +214,11 @@
     "example": ["Jane", "Urban Loft Cafe", "Gold"]
   },
   {
-    "name": "pos_loyalty_referral_v1",
+    "name": "pos_loyalty_referral_v2",
     "category": "UTILITY",
     "language": "en_US",
-    "source": "whatsapp/pos/loyalty_referral_earned.txt (params: name, business, bonus points, balance)",
-    "body": "Hi {{1}},\n\nA friend you referred made a purchase at {{2}}, so you earned *{{3}} bonus points*.\n\nYour points balance is now {{4}}. Use them on your next visit.",
+    "source": "whatsapp/pos/loyalty_referral_earned.txt (params: name, business, bonus points, balance). Replaces v1, which Meta approved as MARKETING (\"use them on your next visit\" read as a promotion)",
+    "body": "Hi {{1}},\n\nYour loyalty account at {{2}} was credited with *{{3}} points* for a completed referral.\n\nPoints balance: {{4}}. This is a record of your account activity.",
     "example": ["Jane", "Urban Loft Cafe", "50", "390"]
   },
   {
@@ -320,11 +320,11 @@
     ]
   },
   {
-    "name": "ispbilling_expiry_reminder",
+    "name": "ispbilling_expiry_reminder_v2",
     "category": "UTILITY",
     "language": "en_US",
-    "source": "whatsapp/ispbilling/expiry_reminder.txt",
-    "body": "Hi {{1}}, this is a reminder that your {{2}} subscription is expiring on {{3}}, with only {{4}} day(s) remaining. To renew and stay connected, please pay via Paybill {{5}}, Account Number {{6}}. Thank you for staying with us!",
+    "source": "whatsapp/ispbilling/expiry_reminder.txt. Replaces ispbilling_expiry_reminder, which Meta approved as MARKETING. Not sent yet: ISP notices go by SMS and email",
+    "body": "Hi {{1}}, your {{2}} subscription ends on {{3}} ({{4}} day(s) left). The payment for the next period goes to Paybill {{5}}, account number {{6}}, before that date.",
     "example": ["Peter", "Home 20Mbps", "12 Sep", "2", "400200", "0712345678"]
   },
   {
@@ -344,11 +344,11 @@
     "example": ["Mary", "Family 30Mbps", "PPPoE", "30 Oct 2026"]
   },
   {
-    "name": "ispbilling_subscription_expiring",
+    "name": "ispbilling_subscription_expiring_v2",
     "category": "UTILITY",
     "language": "en_US",
-    "source": "whatsapp/ispbilling/isp_subscription_expiring.txt",
-    "body": "Hi {{1}}, your {{2}} subscription is about to expire on {{3}}, with {{4}} remaining. Renew now to stay connected without interruption.",
+    "source": "whatsapp/ispbilling/isp_subscription_expiring.txt. Replaces ispbilling_subscription_expiring, which Meta approved as MARKETING. Not sent yet: ISP notices go by SMS and email",
+    "body": "Hi {{1}}, your {{2}} subscription ends on {{3}}, {{4}} from now. Access on this account stops at that time unless the next period is paid.",
     "example": ["Grace", "Daily 5GB", "07 Sep, 18:00", "3 hour(s)"]
   },
   {
@@ -508,14 +508,14 @@
     ]
   },
   {
-    "name": "credits_balance_low_v1_btn",
+    "name": "credits_balance_low_v2_btn",
     "category": "UTILITY",
     "language": "en_US",
-    "source": "whatsapp/billing/balance_low.txt (params: name, service, level words, remaining; button: billing page)",
-    "body": "Hi {{1}},\n\nYour {{2}} balance {{3}}: {{4}} left.\n\nBuy more on your billing page so nothing pauses.",
+    "source": "whatsapp/billing/balance_low.txt (params: name, service, level words, remaining; button: billing page). Replaces v1, which Meta approved as MARKETING (\"Buy more\" and a Buy credits button read as an upsell)",
+    "body": "Hi {{1}},\n\nAccount balance update: your {{2}} balance {{3}}, with {{4}} left.\n\nSends that use this balance pause when it reaches zero. Your billing page shows the balance and recent usage.",
     "example": ["Alpha China Market", "AI credits", "is low", "19 credits"],
     "buttons": [
-      {"type": "URL", "text": "Buy credits", "url": "https://pricing.codevertexafrica.com/{{1}}", "example": ["billing"]}
+      {"type": "URL", "text": "View balance", "url": "https://pricing.codevertexafrica.com/{{1}}", "example": ["billing"]}
     ]
   },
   {
@@ -604,17 +604,19 @@
   {
     "name": "broadcast_service_notice_v1",
     "category": "UTILITY",
+    "meta_category": "MARKETING",
     "language": "en_US",
-    "source": "broadcasts: service notices such as planned maintenance (params: first_name, sender_name, message)",
+    "source": "broadcasts: service notices such as planned maintenance (params: first_name, sender_name, message). Submitted as UTILITY; Meta approved it as MARKETING (a free text notice to many people), so credits bill it as MARKETING",
     "body": "Hello {{1}},\n\nA service notice from {{2}}:\n\n{{3}}\n\nReply to this message if you need help.",
     "example": ["Titus", "Codevertex Africa", "Our systems will be down for planned maintenance on Sunday from 1am to 3am."]
   },
   {
-    "name": "notifications_test_message_v1",
+    "name": "notifications_test_message_v2",
     "category": "UTILITY",
     "language": "en_US",
-    "source": "Settings > Providers > WhatsApp > Test (no params): the provider test send",
-    "body": "This is a test message from the Test button in Codevertex Notifications. Messages from this business to its customers will come from this WhatsApp number. No reply is needed."
+    "source": "Settings > Providers > WhatsApp > Test (params: request time, test reference): the reply to the test the person asked for. Replaces v1, which Meta approved as MARKETING",
+    "body": "Hello,\n\nThis confirms the WhatsApp test you requested on {{1}}, reference {{2}}. This number is connected and will send your account and order updates.\n\nNo reply is needed.",
+    "example": ["16 Nov 2026, 22:15 EAT", "T-4F2A9C"]
   },
   {
     "name": "maskani_bill_issued_v1_btn",
@@ -935,11 +937,11 @@
     ]
   },
   {
-    "name": "hadia_registry_published_v1_btn",
+    "name": "hadia_registry_published_v2_btn",
     "category": "UTILITY",
     "language": "en_US",
-    "source": "whatsapp/hadia/registry_published.txt (params: name, registry; button: r/<code>)",
-    "body": "Hello {{1}},\n\nYour registry *{{2}}* is live on Hadia. Share it with family and friends so they can reserve gifts or send a contribution.",
+    "source": "whatsapp/hadia/registry_published.txt (params: name, registry; button: r/<code>). Replaces v1, which Meta approved as MARKETING (\"Share it with family and friends\" read as promotion)",
+    "body": "Hello {{1}},\n\nYour registry *{{2}}* has been published and its link is now active. Guests who open the link can reserve a gift or send a contribution.\n\nOpen the registry to check its details.",
     "example": ["Amina", "Amina and Brian's wedding"],
     "buttons": [
       {"type": "URL", "text": "Open registry", "url": "https://hadiafrica.com/{{1}}", "example": ["r/AB12CD34"]}
@@ -957,11 +959,11 @@
     ]
   },
   {
-    "name": "hadia_legal_updated_v1_btn",
+    "name": "hadia_legal_updated_v2_btn",
     "category": "UTILITY",
     "language": "en_US",
-    "source": "whatsapp/hadia/legal_updated.txt (params: name, title; button: legal/<slug>)",
-    "body": "Hello {{1}},\n\nWe have updated Hadia's {{2}}. Please take a moment to read what changed.",
+    "source": "whatsapp/hadia/legal_updated.txt (params: name, title; button: legal/<slug>). Replaces v1, which Meta approved as MARKETING",
+    "body": "Hello {{1}},\n\nAccount notice: the {{2}} that apply to your Hadia account have changed. Open the notice to read the changes and the date they take effect.",
     "example": [
       "Amina",
       "Terms of service"
@@ -1000,12 +1002,12 @@
     ]
   },
   {
-    "name": "hadia_change_requested_v1_btn",
+    "name": "hadia_change_requested_v2_btn",
     "category": "UTILITY",
     "language": "en_US",
-    "source": "whatsapp/hadia/change_requested.txt (params: name, co_owner, change, registry; button: app/registries/<id>)",
-    "body": "Hello {{1}},\n\n{{2}} would like to {{3}} on *{{4}}*. Nothing changes until you approve it. Open your registry to approve or decline.",
-    "example": ["Amina", "Tom", "publish the registry", "Amina and Tom's wedding"],
+    "source": "whatsapp/hadia/change_requested.txt (params: name, registry, co_owner, change; button: app/registries/<id>). Replaces v1, which Meta approved as MARKETING",
+    "body": "Hello {{1}},\n\nApproval needed on your registry *{{2}}*: your co-owner {{3}} asked to {{4}}. Nothing changes on the registry until you approve or decline the request.",
+    "example": ["Amina", "Amina and Tom's wedding", "Tom", "publish the registry"],
     "buttons": [
       {"type": "URL", "text": "Review request", "url": "https://hadiafrica.com/{{1}}", "example": ["app/registries/0b6c2b8e"]}
     ]

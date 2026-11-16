@@ -153,7 +153,7 @@ func balanceLowNotice(evt balanceLowEvent, ti *tenantInfo, email string, phones 
 		n.Subject = headline + ": buy more to keep it going"
 		party.Target = messaging.TargetTenantAdmin
 		party.WhatsApp = &partyWhatsApp{
-			Name:   "credits_balance_low_v1_btn",
+			Name:   "credits_balance_low_v2_btn",
 			Params: []string{name, label, levelWord, remaining},
 			Button: "billing",
 		}

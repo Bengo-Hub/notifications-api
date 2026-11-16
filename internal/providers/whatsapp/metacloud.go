@@ -84,6 +84,7 @@ func (p *MetaCloudProvider) SendWhatsApp(ctx context.Context, from string, to []
 		return fmt.Errorf("meta_cloud not configured")
 	}
 	templateName, _ := metadata["template_name"].(string)
+	addSupersededFallback(metadata)
 	dialCode, _ := metadata["default_dial_code"].(string)
 	for _, raw := range to {
 		recipient := internationalWhatsAppNumber(raw, dialCode)

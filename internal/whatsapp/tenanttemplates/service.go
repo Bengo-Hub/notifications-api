@@ -172,7 +172,7 @@ func (s *Service) TenantTemplateStatus(ctx context.Context, tenantID string) (*S
 	out := make([]TemplateStatus, 0, len(defs))
 	summary := map[string]int{}
 	for _, def := range defs {
-		st := TemplateStatus{Name: def.Name, Category: def.Category, Status: StatusMissing}
+		st := TemplateStatus{Name: def.Name, Category: def.Billed(), Status: StatusMissing}
 		if mt, ok := existing[def.Name]; ok {
 			st.withMeta(mt)
 		}

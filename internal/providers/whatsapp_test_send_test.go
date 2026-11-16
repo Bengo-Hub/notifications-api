@@ -37,6 +37,15 @@ func TestWhatsAppTestSendUsesTheTestTemplate(t *testing.T) {
 	if len(f.calls) != 1 || f.calls[0]["template_name"] != WhatsAppTestTemplate {
 		t.Fatalf("calls = %v", f.calls)
 	}
+	// Meta billed v1 (a generic notice) as MARKETING and then held tests back with 131049; v2
+	// names the request (time and reference) so it reads as the reply to it.
+	if WhatsAppTestTemplate != "notifications_test_message_v2" {
+		t.Fatalf("test template = %s", WhatsAppTestTemplate)
+	}
+	params, _ := f.calls[0]["template_params"].([]string)
+	if len(params) != 2 || !strings.Contains(params[0], "EAT") || !strings.HasPrefix(params[1], "T-") {
+		t.Fatalf("template_params = %v", f.calls[0]["template_params"])
+	}
 }
 
 // While the template is not approved on the tenant's account yet (#132001 and the other 1320xx

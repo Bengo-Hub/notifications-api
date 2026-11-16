@@ -23,6 +23,10 @@ func TestWhatsAppServiceForTemplate(t *testing.T) {
 		{"occasion greeting", "occasion_christmas_v2", "broadcast/message", ServiceWhatsAppMarketing, true},
 		{"old occasion version resolves by its stem", "occasion_christmas_v1", "broadcast/message", ServiceWhatsAppMarketing, true},
 		{"broadcast offer", "broadcast_update_v1", "broadcast/message", ServiceWhatsAppMarketing, true},
+		// Submitted as UTILITY, approved by Meta as MARKETING (meta_category): billed as Meta bills it.
+		{"service notice Meta holds as marketing", "broadcast_service_notice_v1", "broadcast/message", ServiceWhatsAppMarketing, true},
+		// A rewrite's fallback to its old version spends the rewrite's category (by stem).
+		{"old balance notice resolves by stem", "credits_balance_low_v1_btn", "billing/balance_low", ServiceWhatsAppUtility, true},
 		// No template means a free-form message, which Meta only delivers inside the 24 hour window.
 		{"free-form reply", "", "whatsapp/inbox_reply", ServiceWhatsAppService, true},
 		{"free-form notification", "", "hadia/gift_owner_alert", ServiceWhatsAppService, true},

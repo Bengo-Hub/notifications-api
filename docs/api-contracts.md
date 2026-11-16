@@ -18,9 +18,11 @@
     from the message's `metadata.template_name` through `internal/whatsapp/templatesync/templates.json`; no template means
     a reply. The monthly WhatsApp plans were retired on 2026-11-12. The API answers `402` with an `error` of
     `no_subscription`, `service_not_activated`, `insufficient_credits` or `overage_cap` and the `service` it checked.
-    The provider Test button consumes no credits. Since 2026-11-14 it sends the approved UTILITY template
-    `notifications_test_message_v1` (no params, in every tenant's shared template set), which reaches any number and
-    which Meta bills to the tenant's own account; until that template is approved on the account it falls back to a
+    The provider Test button consumes no credits. Since 2026-11-16 it sends the UTILITY template
+    `notifications_test_message_v2` (params: request time in EAT and a `T-` reference, in every tenant's shared
+    template set), which reaches any number and which Meta bills to the tenant's own account. It replaces
+    `notifications_test_message_v1`, which Meta approved as MARKETING: billed at the marketing rate, and every test after
+    the first to the same person failed with 131049 (Meta's per person marketing limit). Until that template is approved on the account it falls back to a
     free text, which only arrives inside the 24 hour window, and the answer says which one went. The platform tenant, the demo tenant and exempt tenants are
     never charged. `GET /api/v1/settings/whatsapp/credit-categories` lists the categories in plain words with
     the tenant's own messages of the last 90 days in each.

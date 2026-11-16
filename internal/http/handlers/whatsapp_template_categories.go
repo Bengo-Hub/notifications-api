@@ -67,7 +67,7 @@ func (h *WhatsAppTemplates) Categories(w http.ResponseWriter, r *http.Request) {
 	}
 	declared := make(map[string]string, len(defs))
 	for _, d := range defs {
-		declared[d.Name] = d.Category
+		declared[d.Name] = d.Billed()
 	}
 	onlyMoved := r.URL.Query().Get("recategorized") == "true"
 

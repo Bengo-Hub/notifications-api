@@ -31,6 +31,18 @@
      the delivery log's notification id, not the Meta template sent; regenerate Swagger; the rest are listed in
      subscriptions-api `docs/plan.md`. The worker picks the category from
      the message's template (`credits.WhatsAppServiceFor`) and inbox replies spend "Replies to customers" credits.
+   - Category audit (2026-11-16): Meta held 9 of our UTILITY templates as MARKETING (billed about five times
+     utility; sends after the first to a person fail with 131049). Done: Meta's category is read and audited
+     (`GET /platform/whatsapp/templates/categories`), `_v2` utility rewrites with fallback to v1, `meta_category`
+     bills the service notice as marketing. Open:
+     - [ ] Submit the `_v2` templates to Meta and recheck the audit; drop each `superseded.go` entry once approved as UTILITY.
+     - [ ] Handle Meta's `template_category_update` webhook so a later move alerts the owner instead of waiting for the audit.
+     - [ ] Bill each send from Meta's live category (the audit), not only the manifest, so a move costs nothing before we notice it.
+     - [ ] Record Meta's final delivery status and error code on the delivery log: today `delivery_logs` keeps our request
+       id, not Meta's message id, so a send Meta later refuses (131049, 131026) still reads `sent` in Monitoring, and the
+       reason only lives in pod logs, which are lost on every deploy (no central log store).
+     - [ ] 131026 (recipient cannot receive WhatsApp: no account, old app or Meta's terms not accepted) on
+       `subscription_payment_due_v1_btn` and others: suppress the number for WhatsApp after a 131026 and rely on the email copy.
    - This service charges each send through `internal/modules/credits`: consume before sending, refund when the provider
      rejects, early 402 from the HTTP API. Exempt tenants and platform scope sends are never charged.
    - Tenant Admin: balances, plans and bundles are shown in notifications-ui from subscriptions-api.

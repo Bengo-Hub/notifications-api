@@ -240,7 +240,7 @@ var hadiaMappings = map[string][]hadiaMessage{
 		Data: func(p map[string]any, _ *tenantInfo) map[string]any {
 			return map[string]any{"name": waParam(p["owner_name"], "there"), "registry": mStr(p, "title")}
 		},
-		WATemplate: "hadia_registry_published_v1_btn",
+		WATemplate: "hadia_registry_published_v2_btn",
 		WAParams:   func(d map[string]any) []string { return mParams(d, "name", "registry") },
 	}}},
 	// A guest reserved a gift: their manage link, and an alert to the owner.
@@ -358,8 +358,8 @@ var hadiaMappings = map[string][]hadiaMessage{
 			return map[string]any{"name": waParam(p["owner_name"], "there"), "co_owner": waParam(p["co_owner_name"], "A co-owner"),
 				"registry": mStr(p, "registry_title"), "change": hadiaChangeWords(mStr(p, "kind"))}
 		},
-		WATemplate: "hadia_change_requested_v1_btn",
-		WAParams:   func(d map[string]any) []string { return mParams(d, "name", "co_owner", "change", "registry") },
+		WATemplate: "hadia_change_requested_v2_btn",
+		WAParams:   func(d map[string]any) []string { return mParams(d, "name", "registry", "co_owner", "change") },
 		Skip:       func(p map[string]any) bool { return mStr(p, "owner_phone") == "" && mStr(p, "owner_email") == "" },
 	}}},
 	"item.link_changed": {{PathKey: "owner_url", maskaniMapping: maskaniMapping{
@@ -395,7 +395,7 @@ var hadiaMappings = map[string][]hadiaMessage{
 			return map[string]any{"name": waParam(p["owner_name"], "there"), "title": waParam(p["title"], "terms"),
 				"summary": mStr(p, "summary"), "effective": mStr(p, "effective_at")}
 		},
-		WATemplate: "hadia_legal_updated_v1_btn",
+		WATemplate: "hadia_legal_updated_v2_btn",
 		WAParams:   func(d map[string]any) []string { return mParams(d, "name", "title") },
 		Skip:       func(p map[string]any) bool { return mStr(p, "owner_phone") == "" && mStr(p, "owner_email") == "" },
 	}}},

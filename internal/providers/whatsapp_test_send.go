@@ -2,14 +2,21 @@ package providers
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
 	"strings"
+	"time"
 )
 
-// WhatsAppTestTemplate is the approved utility template the Test button sends. It has no params and
-// is in every tenant's shared template set (tenanttemplates selection.json), so the template sync
-// puts it on each tenant's own WhatsApp account.
-const WhatsAppTestTemplate = "notifications_test_message_v1"
+// WhatsAppTestTemplate is the approved utility template the Test button sends. It is in every
+// tenant's shared template set (tenanttemplates selection.json), so the template sync puts it on
+// each tenant's own WhatsApp account.
+//
+// v2 replaces notifications_test_message_v1 (16 November 2026). v1 was a generic notice tied to
+// nothing the reader did, so Meta approved it as MARKETING: it was billed at the marketing rate and
+// after the first test every later one to the same person failed with 131049, Meta's per person
+// marketing limit. v2 is the reply to the test the person asked for, with its time and reference.
+const WhatsAppTestTemplate = "notifications_test_message_v2"
 
 // How the test went out, reported back as info["sent_as"].
 const (
@@ -19,16 +26,29 @@ const (
 
 const whatsAppTestText = "Test message from Codevertex Notifications: your WhatsApp number is connected."
 
+// nairobi is East Africa Time; a fixed zone so the test time never depends on the pod's tzdata.
+var nairobi = time.FixedZone("EAT", 3*60*60)
+
+// whatsAppTestParams are the template's {{1}} request time and {{2}} reference.
+func whatsAppTestParams(now time.Time) []string {
+	b := make([]byte, 3)
+	_, _ = rand.Read(b)
+	return []string{
+		now.In(nairobi).Format("2 Jan 2006, 15:04 MST"),
+		fmt.Sprintf("T-%X", b),
+	}
+}
+
 // whatsAppTestSend sends the Test button's message. The free text it used to send was refused
 // with #131047 unless the person had written to the business in the last 24 hours, so the test
-// now goes out as the approved utility template, which reaches any number (owner, 14 November
-// 2026; this replaces the 12 November rule that tests are only ever free text). Meta charges the
-// tenant's account for it as a utility message; no Codevertex credits are used. Until the template
-// is approved on the tenant's account (a 1320xx template error) the free text is sent instead, and
-// any other error, such as a malformed number, is returned as it is.
+// goes out as the approved utility template, which reaches any number (owner, 14 November 2026).
+// Meta charges the tenant's account for it as a utility message; no Codevertex credits are used.
+// Until the template is approved on the tenant's account (a 1320xx template error) the free text
+// is sent instead, and any other error, such as a malformed number, is returned as it is.
 func whatsAppTestSend(ctx context.Context, prov WhatsAppProvider, to string) (string, error) {
 	err := prov.SendWhatsApp(ctx, "", []string{to}, whatsAppTestText, map[string]interface{}{
-		"template_name": WhatsAppTestTemplate,
+		"template_name":   WhatsAppTestTemplate,
+		"template_params": whatsAppTestParams(time.Now()),
 	})
 	if err == nil {
 		return TestSentAsTemplate, nil

@@ -88,6 +88,45 @@ working button: the suffix is the path of its link (`buttonURLSuffix`, `posButto
   "pass number" was refused, so give a reference an example like `VIS-482915` and word it as a confirmation.
 - Category `UTILITY` for transactional messages; `AUTHENTICATION` uses Meta's fixed format.
 
+## 3b. Category: what Meta bills, not what we submit
+
+Meta can approve a UTILITY template as MARKETING, and from then on bills every send at the marketing
+rate (about five times utility) and holds it to its per person marketing limit: after one or two
+marketing messages a person stops receiving them, and each later send fails in the status webhook with
+**131049** ("not delivered to maintain healthy ecosystem engagement") although the send call returned
+an id. Meta can also move a template that was approved as utility later.
+
+On 16 November 2026 Meta held 9 of our UTILITY templates as MARKETING on the shared WABA. The Test
+button's template was one of them, so every test after the first to the same phone failed on Hadia's and
+Urban Loft's numbers. What tipped each one, and what the rewrite does:
+
+| Moved template | Why Meta read it as marketing | Replacement |
+|---|---|---|
+| `notifications_test_message_v1` | a generic notice tied to nothing the reader did | `notifications_test_message_v2`: confirms the test the person asked for, with its time and reference |
+| `credits_balance_low_v1_btn` | "Buy more" and a "Buy credits" button (upsell) | `credits_balance_low_v2_btn`: a balance statement, "View balance" |
+| `hadia_registry_published_v1_btn` | "Share it with family and friends" | `hadia_registry_published_v2_btn`: the registry is published and its link is active |
+| `hadia_change_requested_v1_btn` | "would like to" with the change as a bare variable | `hadia_change_requested_v2_btn`: "Approval needed on your registry" |
+| `hadia_legal_updated_v1_btn` | a policy notice that reads as a newsletter | `hadia_legal_updated_v2_btn`: an account notice about the terms of the reader's account |
+| `pos_loyalty_referral_v1` | "Use them on your next visit" | `pos_loyalty_referral_v2`: an account credit with the balance |
+| `ispbilling_expiry_reminder` | "renew and stay connected", "thank you for staying with us" | `ispbilling_expiry_reminder_v2` (not sent yet: ISP notices go by SMS and email) |
+| `ispbilling_subscription_expiring` | "Renew now to stay connected" | `ispbilling_subscription_expiring_v2` (same) |
+| `broadcast_service_notice_v1` | the whole body is a free text variable sent to many people | kept, recorded as `"meta_category": "MARKETING"` so credits bill it as marketing |
+
+Rules that follow:
+
+- A utility body states a fact about the reader's own account, order, payment or request, with its
+  specific detail (number, amount, date, reference). No invitations to buy, renew, visit, share, review
+  or "stay connected", no thanks for loyalty, and no button that sells.
+- A body that is mostly one free text variable is marketing to Meta whatever its wording.
+- `category` in `templates.json` is what we submit. When Meta holds a template under another category,
+  record it as `meta_category`: credits bill that (`TemplateDef.Billed`) and the audits stop flagging it.
+- Check Meta's verdict after every sync and once a month: `GET /api/v1/platform/whatsapp/templates/categories?recategorized=true`
+  (platform owner) lists every template on every WABA we send from whose Meta category differs from ours.
+  The tenant's own view (`GET /api/v1/settings/whatsapp/templates`) shows `meta_category` and `recategorized` too.
+- A rewrite under a new name can ship before Meta approves it if `internal/providers/whatsapp/superseded.go`
+  maps it to the approved template it replaces (with the parameter order of the old one): until approval
+  every send falls back to the old template. Drop the entry once the rewrite shows APPROVED as UTILITY.
+
 ## 4. Publishing
 
 1. Add the template to `templates.json` (button variant for anything with a link).
@@ -105,8 +144,16 @@ Templates waiting for a Meta sync after their deploy:
 | `projects_task_mentioned_v1_btn` | `project.task.mentioned` with a comment excerpt |
 | `projects_task_mentioned_short_v1_btn` | `project.task.mentioned` without an excerpt |
 | `projects_task_assigned_v1_btn` | `project.task.assigned` |
+| `notifications_test_message_v2` | the provider Test button (falls back to v1 until approved) |
+| `credits_balance_low_v2_btn` | `billing.balance.low` to tenant admins (falls back to v1) |
+| `hadia_registry_published_v2_btn` | `registry.published` (falls back to v1) |
+| `hadia_change_requested_v2_btn` | `registry.change_requested` (falls back to v1) |
+| `hadia_legal_updated_v2_btn` | `legal.updated` (falls back to v1) |
+| `pos_loyalty_referral_v2` | `loyalty.referral_earned` (falls back to v1) |
+| `ispbilling_expiry_reminder_v2`, `ispbilling_subscription_expiring_v2` | not sent yet |
 
-Until Meta approves them the task emails still go and WhatsApp is skipped.
+Until Meta approves them the task emails still go and WhatsApp is skipped. The `_v2` rewrites of 16 November
+2026 keep sending through their approved v1 until then (`superseded.go`).
 
 ## 5. MarketFlow assistant templates (Sprint 17, for the owner to submit)
 

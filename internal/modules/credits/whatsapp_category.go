@@ -122,7 +122,7 @@ func loadIndex() templateIndex {
 			}
 		}
 		for _, d := range defs {
-			cat := strings.ToUpper(d.Category)
+			cat := strings.ToUpper(d.Billed())
 			index.byName[d.Name] = cat
 			ambiguous(index.byStem, templateStem(d.Name), cat)
 			if m := sourceID.FindStringSubmatch(d.Source); m != nil {
