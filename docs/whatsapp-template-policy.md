@@ -133,7 +133,9 @@ Rules that follow:
 2. `go test ./internal/whatsapp/... ./cmd/worker/` (manifest lint, parameter counts, link policy).
 3. After deploy: notifications-ui Templates > WhatsApp sync, dry run first (or
    `POST /api/v1/platform/whatsapp/templates/sync {"dry_run":true,"only":[...]}` as a platform
-   admin), then submit. The results show Meta's review status (`meta_status`).
+   admin), then submit. The results show Meta's review status (`meta_status`). Add `"tenant_id"` to submit
+   to the WABA of that tenant's number instead of the platform's (the shared portfolio WABA, while the
+   platform number has no WABA of its own); `names` then picks templates whatever that tenant's usage selects.
 4. Switch the code to the new name only once it shows `APPROVED`, or accept that WhatsApp is
    skipped for that message until it is.
 

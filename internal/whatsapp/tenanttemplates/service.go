@@ -103,6 +103,17 @@ func (s *Service) syncer(wabaID, token string) *templatesync.Syncer {
 	return sy
 }
 
+// WABACredentials resolves the WhatsApp Business Account a tenant's number is on and the token for
+// it. The platform sync uses it to submit named templates to a tenant's WABA, such as the shared
+// portfolio WABA while the platform number has none of its own.
+func (s *Service) WABACredentials(ctx context.Context, tenantID string) (string, string, error) {
+	wabaID, token, err := s.creds(ctx, tenantID)
+	if err != nil {
+		return "", "", fmt.Errorf("%w: %w", ErrCredentials, err)
+	}
+	return wabaID, token, nil
+}
+
 // selected resolves the tenant's credentials and the templates it uses.
 func (s *Service) selected(ctx context.Context, tenantID string) (string, string, []templatesync.TemplateDef, []string, error) {
 	wabaID, token, err := s.creds(ctx, tenantID)

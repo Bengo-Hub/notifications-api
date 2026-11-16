@@ -15,6 +15,7 @@
     "library": ["library_"],
     "maskani": ["maskani_"],
     "digitika": ["digitika_"],
-    "hadia": ["hadia_"]
+    "hadia": ["hadia_"],
+    "projects": ["projects_"]
   }
 }

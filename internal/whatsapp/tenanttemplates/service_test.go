@@ -188,6 +188,24 @@ func TestSyncTenantTemplatesCredentialError(t *testing.T) {
 	}
 }
 
+// The platform sync can target a tenant's WABA (the shared portfolio WABA while the platform number
+// has none): WABACredentials hands back that tenant's WABA and token, or ErrCredentials.
+func TestWABACredentials(t *testing.T) {
+	sel, _ := ParseSelection(defaultSelectionJSON)
+	s := New(func(_ context.Context, tid string) (string, string, error) {
+		if tid != "t1" {
+			return "", "", errors.New("no WABA")
+		}
+		return "W1", "T1", nil
+	}, sel, nil)
+	if w, tok, err := s.WABACredentials(context.Background(), "t1"); err != nil || w != "W1" || tok != "T1" {
+		t.Fatalf("got %q %q %v", w, tok, err)
+	}
+	if _, _, err := s.WABACredentials(context.Background(), "t2"); !errors.Is(err, ErrCredentials) {
+		t.Fatalf("err = %v", err)
+	}
+}
+
 // A usage source that fails is skipped: the tenant still gets the shared set and the other sources.
 func TestUsageSourceErrorIsSkipped(t *testing.T) {
 	f := &fakeMeta{}

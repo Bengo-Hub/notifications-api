@@ -47,6 +47,10 @@ type syncTemplatesRequest struct {
 	// BatchSize caps how many templates one call submits (default 5, at most 10); the rest come
 	// back queued and the caller calls again until remaining is 0.
 	BatchSize int `json:"batch_size,omitempty"`
+	// TenantID, when set, submits to the WhatsApp Business Account of that tenant's number instead
+	// of the platform's: the way to put named templates on the shared portfolio WABA while the
+	// platform number has no WABA of its own, whatever that tenant's usage selects.
+	TenantID string `json:"tenant_id,omitempty"`
 }
 
 type syncTemplatesResponse struct {
@@ -84,7 +88,17 @@ func (h *WhatsAppTemplates) Sync(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewDecoder(r.Body).Decode(&req) // empty body is valid — defaults to a live full sync
 
 	ctx := r.Context()
-	wabaID, token, err := h.manager.LoadWhatsAppTemplateCredentials(ctx)
+	var wabaID, token string
+	var err error
+	if req.TenantID != "" {
+		if h.tenant == nil {
+			jsonError(w, http.StatusServiceUnavailable, "tenant whatsapp templates are not configured")
+			return
+		}
+		wabaID, token, err = h.tenant.WABACredentials(ctx, req.TenantID)
+	} else {
+		wabaID, token, err = h.manager.LoadWhatsAppTemplateCredentials(ctx)
+	}
 	if err != nil {
 		jsonError(w, http.StatusBadRequest, "cannot resolve WhatsApp template credentials: "+err.Error())
 		return
