@@ -35,7 +35,12 @@
      utility; sends after the first to a person fail with 131049). Done: Meta's category is read and audited
      (`GET /platform/whatsapp/templates/categories`), `_v2` utility rewrites with fallback to v1, `meta_category`
      bills the service notice as marketing. Open:
-     - [ ] Submit the `_v2` templates to Meta and recheck the audit; drop each `superseded.go` entry once approved as UTILITY.
+     - [x] Submitted 2026-11-16 to the shared WABA: `notifications_test_message_v2` and `hadia_legal_updated_v2_btn`
+       APPROVED as UTILITY; credit balance, registry published, change requested, POS referral v2 and the three
+       `projects_task_*` templates PENDING. `projects` added to `selection.json` (it was missing); the platform sync
+       takes `tenant_id`. The ISP `_v2` pair is not submitted (nothing sends it).
+     - [ ] Recheck the audit; drop each `superseded.go` entry once its rewrite shows APPROVED as UTILITY.
+     - [ ] Monitoring and the Test result still say "accepted by Meta" for a send Meta later refuses; show the webhook outcome.
      - [ ] Handle Meta's `template_category_update` webhook so a later move alerts the owner instead of waiting for the audit.
      - [ ] Bill each send from Meta's live category (the audit), not only the manifest, so a move costs nothing before we notice it.
      - [ ] Record Meta's final delivery status and error code on the delivery log: today `delivery_logs` keeps our request
