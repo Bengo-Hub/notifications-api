@@ -206,6 +206,16 @@ var treasuryMappings = map[string]treasuryNotificationMapping{
 			}
 		},
 	},
+	// Tax advisor: treasury's weekly tax source watch found rate or guidance changes waiting for
+	// the platform owner's approval (2026-11-17). Platform-facing: sent to PLATFORM_ALERT_EMAILS,
+	// never to a tenant contact (handled before the customer email logic below).
+	taxProposalsPendingEvent: {
+		TemplateID:   "finance/tax_proposals_pending",
+		EmailSubject: "Tax rate changes waiting for your approval",
+		DataBuilder: func(payload map[string]any, _ string) map[string]any {
+			return taxProposalsData(payload)
+		},
+	},
 	// AR dunning: treasury's dunning worker emits one reminder per invoice per overdue tier.
 	// Reuses the existing invoice_overdue template (same fields). Recipient is the invoice's
 	// customer_email (carried in the event payload). pay_url/pdf_url are the same durable public
@@ -304,6 +314,16 @@ func startTreasuryConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStream
 		mapping, ok := treasuryMappings[eventType]
 		if !ok {
 			logg.Debug("treasury event: unhandled type, skipping", zap.String("type", eventType))
+			_ = m.Ack()
+			return
+		}
+
+		if eventType == taxProposalsPendingEvent {
+			if err := sendTaxProposalsNotice(ctx, nc, cfg, mapping, payload, tenantID, aggregateID, logg); err != nil {
+				logg.Error("tax proposals notice failed", zap.Error(err))
+				_ = m.Nak()
+				return
+			}
 			_ = m.Ack()
 			return
 		}

@@ -1,0 +1,9 @@
+{{ define "content" }}
+  <p>Hello,</p>
+  <p>The weekly tax source watch found {{ .count }} proposed change(s) to statutory rates or tax guidance{{ if .codes }}: <strong>{{ .codes }}</strong>{{ end }}.</p>
+  <p>Each proposal quotes the published source it came from. Nothing changes until you approve it.</p>
+  <p>
+    <a class="button" href="{{ .review_link }}">Review the proposals</a>
+  </p>
+  <p class="muted">Sources are limited to KRA, Kenya Law, the National Treasury, ICPAK and the Big Four Kenya tax alerts.</p>
+{{ end }}
