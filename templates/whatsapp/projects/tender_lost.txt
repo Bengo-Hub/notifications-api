@@ -1,0 +1,5 @@
+Hello {{ .name }},
+
+The tender *{{ .tender }}* for {{ .client_name }} was recorded as lost by the bid team.
+
+Open the tender in Projects to see the reason and the lessons noted for the next bid.

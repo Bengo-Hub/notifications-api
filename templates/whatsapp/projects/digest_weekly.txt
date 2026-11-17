@@ -1,0 +1,5 @@
+Hello {{ .name }},
+
+Your projects at {{ .organisation }} this week: {{ .overdue_count }} overdue tasks, {{ .due_count }} tasks due this week, {{ .milestone_count }} milestones due, {{ .risk_count }} rising risks and {{ .approval_count }} items waiting for your approval.
+
+Open My Work in Projects to see each item.

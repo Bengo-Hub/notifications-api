@@ -1,0 +1,5 @@
+Hello {{ .name }},
+
+The bid decision on the tender *{{ .tender }}* is {{ .decision_word }}, recorded by {{ .actor_name }} for the tender committee.
+
+Open the tender in Projects to see the scores and the next steps.

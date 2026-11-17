@@ -1,0 +1,5 @@
+Hello {{ .name }},
+
+The won tender *{{ .tender }}* is now the project {{ .project_name }}, and the bid committee is on its team.
+
+Open the project in Projects to see the plan and the linked documents.

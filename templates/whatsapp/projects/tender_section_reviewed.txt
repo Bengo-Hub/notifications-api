@@ -1,0 +1,5 @@
+Hello {{ .name }},
+
+Your section *{{ .section }}* of the tender {{ .tender }} was {{ .verdict }} by its reviewer.
+
+Open the section in Projects to see the comment and continue the work.

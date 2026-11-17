@@ -408,6 +408,24 @@ party, so the idempotency keys are `projects-task.automation_notice-<event id>-e
 and `...-whatsapp-<user id>`, per event, channel and recipient. All five are essential (Support &
 Projects); see the registry for why the automation notice is not optional.
 
+**Status reports, tenders and the weekly digest (projects-api sprint 7, 2026-11-17)**: the same
+durable sends eight more notices by email and WhatsApp (`cmd/worker/projects_reports.go`). The
+WhatsApp templates wait for the Meta sync; until Meta approves one only the email goes.
+
+| Event | To | Email | WhatsApp (UTILITY, button on the projects app) |
+|---|---|---|---|
+| `status_report.shared` | one client of the project (customer): signed in, or invited with the CRM address and phone | `projects/status_report_shared` with the title, period and overall rating | `projects_status_report_shared_v1_btn` (name, organisation, report title, project), "View Report" into the portal |
+| `tender.notice.go_decision` | a committee member or the tender's owner (staff) | `projects/tender_go_decision` with the decision and the recommendation | `projects_tender_decision_v1_btn` (name, tender, go or no go, recorded by), "View Tender" |
+| `tender.notice.section_review` | the section's reviewer, else the owner | `projects/tender_section_review` | `projects_tender_section_review_v1_btn` (name, sender, section, tender), "Open Section" |
+| `tender.notice.section_reviewed` | the section's assignee | `projects/tender_section_reviewed` with the reviewer's comment | `projects_tender_section_reviewed_v1_btn` (name, section, tender, verdict), "Open Section" |
+| `tender.notice.won`, `tender.notice.lost` | committee and owner | `projects/tender_won`, `projects/tender_lost` (with the loss reason) | `projects_tender_won_v1_btn`, `projects_tender_lost_v1_btn` (name, tender, client), "View Tender" |
+| `tender.notice.converted` | committee and owner | `projects/tender_converted` | `projects_tender_converted_v1_btn` (name, tender, project), "Open Project" |
+| `digest.weekly` | one staff member, at most once per ISO week, only with something in it | `projects/digest_weekly` with the five counts and up to five lines of each list | `projects_digest_weekly_v1_btn` (name, organisation, five counts), "Open My Work" (`/{slug}/my-work`) |
+
+All eight are essential (Support & Projects). The digest is essential rather than optional because
+projects-api already sends it only to people with something to act on and holds the tenant's own
+switch; optional here would default it off and drop every digest silently.
+
 **Events Published**: None
 
 **Template Mapping**:
@@ -422,6 +440,14 @@ Projects); see the registry for why the automation notice is not optional.
 - `change_request.review_requested` → `projects/change_request_review_requested` (email, WhatsApp)
 - `change_request.decided` → `projects/change_request_decided` (email, WhatsApp)
 - `task.automation_notice` → `projects/task_automation_notice` (email, WhatsApp, one party per recipient id)
+- `status_report.shared` → `projects/status_report_shared` (email, WhatsApp)
+- `tender.notice.go_decision` → `projects/tender_go_decision` (email, WhatsApp)
+- `tender.notice.section_review` → `projects/tender_section_review` (email, WhatsApp)
+- `tender.notice.section_reviewed` → `projects/tender_section_reviewed` (email, WhatsApp)
+- `tender.notice.won` → `projects/tender_won` (email, WhatsApp)
+- `tender.notice.lost` → `projects/tender_lost` (email, WhatsApp)
+- `tender.notice.converted` → `projects/tender_converted` (email, WhatsApp)
+- `digest.weekly` → `projects/digest_weekly` (email, WhatsApp)
 - `task_due` → `deadline_reminder_push` template
 
 ### ERP Service

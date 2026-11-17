@@ -1,0 +1,39 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <h2>Your projects this week{{ if .week_start }} (from {{ .week_start }}){{ end }}</h2>
+  <p>Here is what needs you across your open projects at {{ .organisation }}.</p>
+  <table role="presentation" style="width:100%;border-collapse:collapse;margin:16px 0">
+    <tbody>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Overdue tasks</strong></td><td style="padding:6px 0">{{ .overdue_count }}</td></tr>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Tasks due this week</strong></td><td style="padding:6px 0">{{ .due_count }}</td></tr>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Milestones due</strong></td><td style="padding:6px 0">{{ .milestone_count }}</td></tr>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Rising risks</strong></td><td style="padding:6px 0">{{ .risk_count }}</td></tr>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Waiting for your approval</strong></td><td style="padding:6px 0">{{ .approval_count }}</td></tr>
+    </tbody>
+  </table>
+  {{ if .overdue }}
+  <h3>Overdue</h3>
+  <ul>{{ range .overdue }}<li>{{ .Title }} ({{ .Project }}{{ if .Due }}, due {{ .Due }}{{ end }})</li>{{ end }}</ul>
+  {{ end }}
+  {{ if .due_this_week }}
+  <h3>Due this week</h3>
+  <ul>{{ range .due_this_week }}<li>{{ .Title }} ({{ .Project }}{{ if .Due }}, due {{ .Due }}{{ end }})</li>{{ end }}</ul>
+  {{ end }}
+  {{ if .milestones }}
+  <h3>Milestones</h3>
+  <ul>{{ range .milestones }}<li>{{ .Title }} ({{ .Project }}{{ if .Due }}, due {{ .Due }}{{ end }})</li>{{ end }}</ul>
+  {{ end }}
+  {{ if .rising_risks }}
+  <h3>Rising risks</h3>
+  <ul>{{ range .rising_risks }}<li>{{ .Title }} ({{ .Project }})</li>{{ end }}</ul>
+  {{ end }}
+  {{ if .pending_approvals }}
+  <h3>Waiting for your approval</h3>
+  <ul>{{ range .pending_approvals }}<li>{{ .Title }} ({{ .Project }})</li>{{ end }}</ul>
+  {{ end }}
+  {{ if .action_link }}
+  <p>
+    <a class="button" href="{{ .action_link }}">Open My Work</a>
+  </p>
+  {{ end }}
+{{ end }}

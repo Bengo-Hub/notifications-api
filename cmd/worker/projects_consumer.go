@@ -254,7 +254,8 @@ func startProjectsConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStream
 		portalNotice, isPortal := projectPortalNotices[kind]
 		moreNotice, isMore := projectNotices[kind]
 		isAutomation := kind == "task.automation_notice"
-		if !ok && !isTask && !isPortal && !isMore && !isAutomation {
+		isDigest := kind == "digest.weekly"
+		if !ok && !isTask && !isPortal && !isMore && !isAutomation && !isDigest {
 			// qa.* (QA acceptance) is sent by the events subscriber's own durable,
 			// notifications-projects-qa (internal/modules/events/project_qa.go), so it lands here.
 			logg.Debug("projects event: unhandled type, skipping", zap.String("type", evt.EventType))
@@ -328,6 +329,24 @@ func startProjectsConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStream
 			}
 			logg.Info("projects notice dispatched", zap.String("type", evt.EventType), zap.String("template", moreNotice.TemplateID),
 				zap.Bool("whatsapp", notice.Parties[0].Phone != ""))
+			_ = m.Ack()
+			return
+		}
+
+		if isDigest {
+			userEmail, userPhone := projectTaskRecipient(ctx, client, mStr(evt.Payload, "recipient_user_id"))
+			notice, reachable := buildProjectDigestNotice(evt, ti, userEmail, userPhone, gate, templateChannels)
+			if !reachable {
+				logg.Info("projects event: digest recipient unreachable or digest empty, skipping")
+				_ = m.Ack()
+				return
+			}
+			if err := sendToParties(ctx, nc, cfg, notice); err != nil {
+				logg.Error("projects event: failed to dispatch digest", zap.Error(err))
+				_ = m.Nak()
+				return
+			}
+			logg.Info("projects digest dispatched", zap.Bool("whatsapp", notice.Parties[0].Phone != ""))
 			_ = m.Ack()
 			return
 		}

@@ -1,0 +1,19 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <h2>A status report on {{ .project_name }} is ready for you</h2>
+  <p>{{ .organisation }} shared the status report <strong>{{ .report_title }}</strong> with you in the client portal. It covers the progress, the milestones coming up and the risks the team is managing.</p>
+  <table role="presentation" style="width:100%;border-collapse:collapse;margin:16px 0">
+    <tbody>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Project</strong></td><td style="padding:6px 0">{{ .project_name }}</td></tr>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Report</strong></td><td style="padding:6px 0">{{ .report_title }}</td></tr>
+      {{ if .period }}<tr><td style="padding:6px 12px 6px 0"><strong>Period</strong></td><td style="padding:6px 0">{{ .period }}</td></tr>{{ end }}
+      {{ if .rag_overall }}<tr><td style="padding:6px 12px 6px 0"><strong>Overall status</strong></td><td style="padding:6px 0">{{ .rag_overall }}</td></tr>{{ end }}
+      <tr><td style="padding:6px 12px 6px 0"><strong>Shared by</strong></td><td style="padding:6px 0">{{ .actor_name }}</td></tr>
+    </tbody>
+  </table>
+  {{ if .action_link }}
+  <p>
+    <a class="button" href="{{ .action_link }}">Read the report</a>
+  </p>
+  {{ end }}
+{{ end }}

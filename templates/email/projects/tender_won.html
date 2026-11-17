@@ -1,0 +1,17 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <h2>Tender won: {{ .tender }}</h2>
+  <p>{{ .actor_name }} recorded the tender {{ .tender }} for {{ .client_name }} as won. The next step is to turn it into a project with its team, documents and budget.</p>
+  <table role="presentation" style="width:100%;border-collapse:collapse;margin:16px 0">
+    <tbody>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Tender</strong></td><td style="padding:6px 0">{{ .tender }}</td></tr>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Client</strong></td><td style="padding:6px 0">{{ .client_name }}</td></tr>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Recorded by</strong></td><td style="padding:6px 0">{{ .actor_name }}</td></tr>
+    </tbody>
+  </table>
+  {{ if .action_link }}
+  <p>
+    <a class="button" href="{{ .action_link }}">Open the tender</a>
+  </p>
+  {{ end }}
+{{ end }}

@@ -1,0 +1,5 @@
+Hello {{ .name }},
+
+{{ .actor_name }} sent the section *{{ .section }}* of the tender {{ .tender }} for your review.
+
+Open the section in Projects to approve it or ask for changes.

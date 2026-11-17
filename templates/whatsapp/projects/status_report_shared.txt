@@ -1,0 +1,5 @@
+Hello {{ .name }},
+
+{{ .organisation }} shared the status report *{{ .report_title }}* for {{ .project_name }} with you in the client portal.
+
+Open the report to see the progress, the milestones coming up and the next steps.

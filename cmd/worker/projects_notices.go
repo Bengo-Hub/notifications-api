@@ -49,6 +49,17 @@ type projectNoticePayload struct {
 	Title    string
 	Kind     string
 	Decision string
+	// Status reports (projects_reports.go).
+	ReportTitle string
+	PeriodStart string
+	PeriodEnd   string
+	RAGOverall  string
+	// Tender notices (projects_reports.go).
+	TenderNumber   string
+	TenderTitle    string
+	ClientName     string
+	Section        string
+	Recommendation string
 }
 
 func readProjectNoticePayload(p map[string]any) projectNoticePayload {
@@ -65,6 +76,15 @@ func readProjectNoticePayload(p map[string]any) projectNoticePayload {
 		Title:           oneLine(mStr(p, "title")),
 		Kind:            mStr(p, "kind"),
 		Decision:        mStr(p, "decision"),
+		ReportTitle:     oneLine(mStr(p, "report_title")),
+		PeriodStart:     mStr(p, "period_start"),
+		PeriodEnd:       mStr(p, "period_end"),
+		RAGOverall:      mStr(p, "rag_overall"),
+		TenderNumber:    oneLine(mStr(p, "tender_number")),
+		TenderTitle:     oneLine(mStr(p, "tender_title")),
+		ClientName:      oneLine(mStr(p, "client_name")),
+		Section:         oneLine(mStr(p, "section")),
+		Recommendation:  mStr(p, "recommendation"),
 	}
 }
 
@@ -189,6 +209,9 @@ func buildProjectNotice(evt projectsEvent, kind string, en projectNotice, ti *te
 			data["decision"] = changeDecisionWord(p.Decision)
 			data["approved"] = p.Decision == "approved"
 		}
+	default:
+		// Status report and tender notices (projects_reports.go).
+		reportAndTenderData(kind, p, data)
 	}
 	if p.CommentExcerpt != "" {
 		data["comment_excerpt"] = p.CommentExcerpt

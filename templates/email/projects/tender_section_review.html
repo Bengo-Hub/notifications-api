@@ -1,0 +1,18 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <h2>A tender section waits for your review</h2>
+  <p>{{ .actor_name }} sent the section <strong>{{ .section }}</strong> of the tender {{ .tender }} for review. Approve it or ask for changes with a comment.</p>
+  <table role="presentation" style="width:100%;border-collapse:collapse;margin:16px 0">
+    <tbody>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Section</strong></td><td style="padding:6px 0">{{ .section }}</td></tr>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Tender</strong></td><td style="padding:6px 0">{{ .tender }}</td></tr>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Client</strong></td><td style="padding:6px 0">{{ .client_name }}</td></tr>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Sent by</strong></td><td style="padding:6px 0">{{ .actor_name }}</td></tr>
+    </tbody>
+  </table>
+  {{ if .action_link }}
+  <p>
+    <a class="button" href="{{ .action_link }}">Review the section</a>
+  </p>
+  {{ end }}
+{{ end }}

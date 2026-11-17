@@ -1513,6 +1513,94 @@
     ]
   },
   {
+    "name": "projects_status_report_shared_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/projects/status_report_shared.txt (params: client name, organisation, report title, project; button: the report in the client portal). Sent to a client of the project when a published status report is shared with them; the narrative and figures stay in the portal",
+    "body": "Hello {{1}},\n\n{{2}} shared the status report *{{3}}* for {{4}} with you in the client portal.\n\nOpen the report to see the progress, the milestones coming up and the next steps.",
+    "example": ["Joan", "Urban Loft Builders", "Status report 9 Nov 2026 to 15 Nov 2026", "Westlands office fit-out"],
+    "buttons": [
+      {"type": "URL", "text": "View Report", "url": "https://projects.codevertexafrica.com/{{1}}", "example": ["urban-loft/portal/projects/0b6c2b8e?tab=reports&report=4f2a9c1e"]}
+    ]
+  },
+  {
+    "name": "projects_tender_decision_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/projects/tender_go_decision.txt (params: name, tender number and title, decision go or no go, who recorded it; button: the tender in Projects). Sent to the tender committee and the tender's owner",
+    "body": "Hello {{1}},\n\nThe bid decision on the tender *{{2}}* is {{3}}, recorded by {{4}} for the tender committee.\n\nOpen the tender in Projects to see the scores and the next steps.",
+    "example": ["Brian", "TND-2026-0007 County roads", "go", "Amina"],
+    "buttons": [
+      {"type": "URL", "text": "View Tender", "url": "https://projects.codevertexafrica.com/{{1}}", "example": ["urban-loft/tenders/5d8e2a1b"]}
+    ]
+  },
+  {
+    "name": "projects_tender_section_review_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/projects/tender_section_review.txt (params: reviewer name, who sent it, section, tender number and title; button: the section in Projects). Sent to the section's reviewer, else the tender's owner",
+    "body": "Hello {{1}},\n\n{{2}} sent the section *{{3}}* of the tender {{4}} for your review.\n\nOpen the section in Projects to approve it or ask for changes.",
+    "example": ["Brian", "Amina", "Technical proposal", "TND-2026-0007 County roads"],
+    "buttons": [
+      {"type": "URL", "text": "Open Section", "url": "https://projects.codevertexafrica.com/{{1}}", "example": ["urban-loft/tenders/5d8e2a1b/sections?section=9c3e7f2d"]}
+    ]
+  },
+  {
+    "name": "projects_tender_section_reviewed_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/projects/tender_section_reviewed.txt (params: assignee name, section, tender number and title, verdict approved or sent back for changes; button: the section in Projects). The reviewer's comment stays in the email",
+    "body": "Hello {{1}},\n\nYour section *{{2}}* of the tender {{3}} was {{4}} by its reviewer.\n\nOpen the section in Projects to see the comment and continue the work.",
+    "example": ["Amina", "Technical proposal", "TND-2026-0007 County roads", "sent back for changes"],
+    "buttons": [
+      {"type": "URL", "text": "Open Section", "url": "https://projects.codevertexafrica.com/{{1}}", "example": ["urban-loft/tenders/5d8e2a1b/sections?section=9c3e7f2d"]}
+    ]
+  },
+  {
+    "name": "projects_tender_won_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/projects/tender_won.txt (params: name, tender number and title, client; button: the tender in Projects). Sent to the tender committee and the tender's owner",
+    "body": "Hello {{1}},\n\nThe tender *{{2}}* for {{3}} was recorded as won by the bid team.\n\nOpen the tender in Projects to see the award and turn it into a project.",
+    "example": ["Brian", "TND-2026-0007 County roads", "Kisumu County"],
+    "buttons": [
+      {"type": "URL", "text": "View Tender", "url": "https://projects.codevertexafrica.com/{{1}}", "example": ["urban-loft/tenders/5d8e2a1b"]}
+    ]
+  },
+  {
+    "name": "projects_tender_lost_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/projects/tender_lost.txt (params: name, tender number and title, client; button: the tender in Projects). The loss reason stays in the email",
+    "body": "Hello {{1}},\n\nThe tender *{{2}}* for {{3}} was recorded as lost by the bid team.\n\nOpen the tender in Projects to see the reason and the lessons noted for the next bid.",
+    "example": ["Brian", "TND-2026-0007 County roads", "Kisumu County"],
+    "buttons": [
+      {"type": "URL", "text": "View Tender", "url": "https://projects.codevertexafrica.com/{{1}}", "example": ["urban-loft/tenders/5d8e2a1b"]}
+    ]
+  },
+  {
+    "name": "projects_tender_converted_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/projects/tender_converted.txt (params: name, tender number and title, new project; button: the project in Projects). Sent to the tender committee and the tender's owner",
+    "body": "Hello {{1}},\n\nThe won tender *{{2}}* is now the project {{3}}, and the bid committee is on its team.\n\nOpen the project in Projects to see the plan and the linked documents.",
+    "example": ["Brian", "TND-2026-0007 County roads", "County roads rehabilitation"],
+    "buttons": [
+      {"type": "URL", "text": "Open Project", "url": "https://projects.codevertexafrica.com/{{1}}", "example": ["urban-loft/projects/0b6c2b8e"]}
+    ]
+  },
+  {
+    "name": "projects_digest_weekly_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/projects/digest_weekly.txt (params: name, organisation, then the counts of overdue tasks, tasks due this week, milestones due, rising risks and items waiting for approval; button: My Work in Projects). A weekly summary of the reader's own work, sent only when one count is above zero; the item lists stay in the email",
+    "body": "Hello {{1}},\n\nYour projects at {{2}} this week: {{3}} overdue tasks, {{4}} tasks due this week, {{5}} milestones due, {{6}} rising risks and {{7}} items waiting for your approval.\n\nOpen My Work in Projects to see each item.",
+    "example": ["Amina", "Urban Loft Builders", "2", "3", "1", "0", "1"],
+    "buttons": [
+      {"type": "URL", "text": "Open My Work", "url": "https://projects.codevertexafrica.com/{{1}}", "example": ["urban-loft/my-work"]}
+    ]
+  },
+  {
     "name": "ticketing_ticket_reply_v1_btn",
     "category": "UTILITY",
     "language": "en_US",

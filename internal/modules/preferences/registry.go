@@ -279,6 +279,22 @@ var Registry = []Type{
 	// assignment; optional here means a broadcast alert that defaults off (milestone reached,
 	// ticket status), and a default off would make a configured rule silently send nothing.
 	{Key: "projects/task_automation_notice", Label: "Task automation notice", Group: "Support & Projects", Class: ClassEssential},
+	// Status report and tender notices (projects-api sprint 7, 2026-11-17). A shared report is
+	// addressed to the firm's client, and each tender notice goes to the people who must act on it
+	// (the reviewer, the assignee, the committee), so all default on like the change request notices.
+	{Key: "projects/status_report_shared", Label: "Status report shared with you", Group: "Support & Projects", Class: ClassEssential},
+	{Key: "projects/tender_go_decision", Label: "Bid decision on a tender", Group: "Support & Projects", Class: ClassEssential},
+	{Key: "projects/tender_section_review", Label: "Tender section waiting for your review", Group: "Support & Projects", Class: ClassEssential},
+	{Key: "projects/tender_section_reviewed", Label: "Your tender section was reviewed", Group: "Support & Projects", Class: ClassEssential},
+	{Key: "projects/tender_won", Label: "Tender won", Group: "Support & Projects", Class: ClassEssential},
+	{Key: "projects/tender_lost", Label: "Tender lost", Group: "Support & Projects", Class: ClassEssential},
+	{Key: "projects/tender_converted", Label: "Won tender turned into a project", Group: "Support & Projects", Class: ClassEssential},
+	// The weekly digest is essential, not optional, by the registry's own rule for a notice the
+	// source service already switches (hadia/owner_gift_digest, task_automation_notice): projects-api
+	// sends it only to people with something to act on, and a tenant turns it off in Projects settings
+	// (tenant_settings "digest"). As optional it would default off here while on in Projects, and
+	// every digest would be dropped silently, the Hadia gift alert failure of 8 November 2026.
+	{Key: "projects/digest_weekly", Label: "Weekly projects digest", Group: "Support & Projects", Class: ClassEssential},
 	// QA acceptance (projects-api project.qa.*): the invite is the only way in, and a blocking failure
 	// or a decision stops or settles the work, so all four default on.
 	{Key: "qa/invite", Label: "QA session invitation", Group: "Support & Projects", Class: ClassEssential},
