@@ -186,7 +186,7 @@ templates with a banned word, each kept to the same parameters and buttons:
 |---|---|---|---|
 | `ordering_order_delivered_v3_btn`, `ordering_order_delivered_v4_btn` | "We hope you enjoy it", "Thank you for choosing us" | `ordering_order_delivered_v7_btn`, `ordering_order_delivered_v8_btn`: "Your order *X* has been delivered and is now closed. The order page shows its full details." (v5 and v6 were the first names, see below) | sent now, falling back to v3 and v4 (`superseded.go`) |
 | `ordering_order_completed_v1_btn`, `ordering_order_completed_v2_btn` | the same | `ordering_order_completed_v5_btn`, `ordering_order_completed_v6_btn` (v3 and v4 were the first names) | sent now, falling back to v1 and v2 |
-| `projects_client_invited_v1_btn` | "Sign in", and "has invited you" (the wording Meta refused for Hadia's member invite) | `projects_client_invited_v2_btn`: "X has given you access to the project *Y* in its client portal" | `superseded.go` entry ready; `cmd/worker/projects_portal.go` still sends v1, which stays in the manifest until it switches (`bannedWordsWaitingForSwitch`) |
+| `projects_client_invited_v1_btn` | "Sign in", and "has invited you" (the wording Meta refused for Hadia's member invite) | `projects_client_invited_v2_btn`: "X has given you access to the project *Y* in its client portal" | `cmd/worker/projects_portal.go` sends v2; approved at Meta on 17 November 2026, so its `superseded.go` fallback to v1 is gone |
 | `logistics_delivery_completed_btn` | "Thank you for choosing us" | `logistics_delivery_completed_v4_btn` (v2 and v3 were earlier names) | no code sends either |
 | `hrm_leave_approved` | "Enjoy your time off", and under four words per variable | `hrm_leave_approved_v2` | no code sends either |
 
@@ -232,13 +232,15 @@ Templates waiting for a Meta sync after their deploy:
 | `ordering_order_delivered_v7_btn`, `ordering_order_delivered_v8_btn`, `ordering_order_completed_v5_btn`, `ordering_order_completed_v6_btn` | delivered and completed orders (sent now through the `superseded.go` fallback); platform WABA and each ordering tenant's WABA |
 | `codevertex_enquiry_received_v2_btn` | the reply to a website enquiry (sent now through the fallback to v1); platform WABA |
 | `provider_balance_low_v2_btn` | a MarketFlow provider balance alert to the platform owner (sent now through the fallback to v1); platform WABA |
-| `projects_client_invited_v2_btn` | a client given access to a project's portal, once `projects_portal.go` sends it |
 | `logistics_delivery_completed_v4_btn`, `hrm_leave_approved_v2` | nothing yet (no code sends them) |
 
 Approved as UTILITY on 16 November 2026 within the hour, with their `superseded.go` fallbacks removed:
 `notifications_test_message_v2`, `credits_balance_low_v2_btn`, `hadia_registry_published_v2_btn`,
 `hadia_change_requested_v2_btn`, `hadia_legal_updated_v2_btn`, `pos_loyalty_referral_v2` and the three
 `projects_task_*` templates.
+
+Approved on 17 November 2026, with its `superseded.go` fallback removed: `projects_client_invited_v2_btn`
+(a client given access to a project's portal, sent by `cmd/worker/projects_portal.go`).
 
 ## 4b. What Meta tells us after a template is live
 

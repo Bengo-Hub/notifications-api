@@ -91,6 +91,23 @@ func TestSupersededFallback(t *testing.T) {
 	}
 }
 
+// projects_client_invited_v2_btn is approved at Meta (17 November 2026), so a client invite goes out
+// as v2 with no fallback to v1, which has left the manifest.
+func TestApprovedProjectsInviteHasNoFallback(t *testing.T) {
+	if s, ok := superseded["projects_client_invited_v2_btn"]; ok {
+		t.Fatalf("projects_client_invited_v2_btn still falls back to %s", s.old)
+	}
+	md := map[string]interface{}{
+		"template_name":         "projects_client_invited_v2_btn",
+		"template_params":       []string{"Jane", "Acme Works", "Riverside clinic"},
+		"template_button_param": "acme/portal/projects/x",
+	}
+	addSupersededFallback(md)
+	if _, ok := md["template_fallback_name"]; ok {
+		t.Fatalf("unexpected fallback: %v", md)
+	}
+}
+
 // The button rewrites of 17 November 2026 fall back to the approved templates, never to the first
 // round's order names (delivered v5/v6, completed v3/v4) that Meta did not approve. The two-button
 // order template's caller fallback (the new one-button template) gives way to the approved

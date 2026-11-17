@@ -15,8 +15,7 @@ type supersededTemplate struct {
 //
 // The entries of 17 November 2026 are the policy audit's rewrites of approved templates with words
 // Meta reads as marketing or a login ("enjoy", "thank you for choosing", "sign in"); same parameters,
-// same buttons. cmd/worker/projects_portal.go sends projects_client_invited_v2_btn, falling back to
-// v1 until Meta approves v2.
+// same buttons.
 //
 // The second round of 17 November 2026 (owner decision) rewrites the buttons Meta may read as an
 // invitation: "Leave Feedback" and "Review us on Google" on the order templates, "Visit our
@@ -30,7 +29,6 @@ var superseded = map[string]supersededTemplate{
 	"ordering_order_completed_v6_btn":    {old: "ordering_order_completed_v2_btn"},
 	"codevertex_enquiry_received_v2_btn": {old: "codevertex_enquiry_received_v1_btn"},
 	"provider_balance_low_v2_btn":        {old: "provider_balance_low_v1_btn"},
-	"projects_client_invited_v2_btn":     {old: "projects_client_invited_v1_btn"},
 }
 
 // addSupersededFallback sets the fallback for a rewritten template. A fallback the caller set is

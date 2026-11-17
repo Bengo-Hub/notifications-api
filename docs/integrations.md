@@ -371,7 +371,7 @@ mute either one or its WhatsApp channel in settings. Idempotency keys are
 
 | Event | To | Email | WhatsApp |
 |---|---|---|---|
-| `client.invited` | the firm's client (target customer), by the payload's `recipient_email` and `recipient_phone` (read from the CRM by projects-api; the person has no account yet) | `projects/client_invited` | `projects_client_invited_v1_btn` (name, organisation, project) |
+| `client.invited` | the firm's client (target customer), by the payload's `recipient_email` and `recipient_phone` (read from the CRM by projects-api; the person has no account yet) | `projects/client_invited` | `projects_client_invited_v2_btn` (name, organisation, project) |
 | `milestone.ready_for_review` | one client (customer): a signed-in one by `recipient_user_id`, or one still at the invite stage by the payload's `recipient_email` and `recipient_phone` (read from the CRM by projects-api at send time, `recipient_user_id` empty) | `projects/milestone_ready_for_review` | `projects_milestone_review_v1_btn` (name, milestone, project) |
 | `milestone.approved` | the project owner or an owner or manager member (staff) | `projects/milestone_approved` | `projects_milestone_approved_v1_btn` with the comment, `projects_milestone_approved_short_v1_btn` without |
 | `milestone.changes_requested` | as for approved | `projects/milestone_changes_requested` | `projects_milestone_changes_v1_btn` (with the comment) |
