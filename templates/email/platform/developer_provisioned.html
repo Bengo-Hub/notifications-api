@@ -2,35 +2,39 @@
   <h2>Your developer access is ready</h2>
   <p>Hi {{ or .requester_name "there" }},</p>
   <p>
-    Your request for developer access has been approved. We've set up a sandbox
-    environment for you — no real data, no real messages sent, no charges — so you can
-    start testing right away.
+    Your request for developer access has been approved. We've set up a sandbox app for you.
+    Sandbox calls use no real data, send nothing for real and cost nothing, so you can start
+    testing right away.
   </p>
 
   <table role="presentation" style="width:100%;border-collapse:collapse;margin:16px 0">
     <tbody>
       <tr><td style="padding:6px 12px 6px 0"><strong>Tenant</strong></td><td style="padding:6px 0"><code>{{ .tenant_slug }}</code></td></tr>
-      <tr><td style="padding:6px 12px 6px 0"><strong>Sandbox App key</strong></td><td style="padding:6px 0"><code style="word-break:break-all">{{ .sandbox_key }}</code></td></tr>
+      {{ if .client_id }}<tr><td style="padding:6px 12px 6px 0"><strong>Consumer key (client ID)</strong></td><td style="padding:6px 0"><code style="word-break:break-all">{{ .client_id }}</code></td></tr>{{ end }}
     </tbody>
   </table>
 
-  <p style="color:#6b7280;">
-    Keep this key secret — it's shown only once and can't be retrieved again (you can
-    always issue a new one from the developer portal). Send it as the
-    <code>X-API-Key</code> header on your requests. Anything you send in sandbox mode is
-    simulated: it's never delivered for real and never touches production data.
+  <p>
+    For your security we never send secrets by email. Sign in to the developer console, open
+    your sandbox app and choose <strong>Generate consumer secret</strong>. The secret is shown
+    once. Exchange your consumer key and secret at <code>POST /api/v1/token</code> with
+    <code>grant_type=client_credentials</code> for a 15 minute access token, and send it as
+    <code>Authorization: Bearer &lt;token&gt;</code>.
   </p>
 
-  {{ if .docs_url }}
+  {{ if .console_url }}
   <p>
-    <a class="button" href="{{ .docs_url }}">Read the API docs</a>
+    <a class="button" href="{{ .console_url }}">Open the developer console</a>
   </p>
   {{ end }}
 
+  {{ if .docs_url }}
+  <p><a href="{{ .docs_url }}">Read the API docs</a></p>
+  {{ end }}
+
   <p style="color:#6b7280;">
-    Look out for a separate password-reset email — that one sets up your login to the
-    developer portal itself, where you can manage this app, rotate its key, and see what's
-    approved for you.
+    Look out for a separate email that sets the password for your developer console login,
+    if you don't already have one.
   </p>
 
   <p style="color:#6b7280;">Questions? Just reply to this email.</p>

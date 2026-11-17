@@ -88,6 +88,8 @@ var Registry = []Type{
 	{Key: "finance/payments_restored", Label: "Payments back to normal", Group: "Billing & Payments", Class: ClassEssential},
 	// Platform-ops alert: a visitor sent the codevertexafrica.com contact form.
 	{Key: "platform/website_enquiry", Label: "New website enquiry (platform ops)", Group: "Account & Security", Class: ClassLocked},
+	// Platform-ops alert: auth-api saved an integration request (website, Vera or tenant portal).
+	{Key: "platform/etims_integration_request", Label: "New integration request (platform ops)", Group: "Account & Security", Class: ClassLocked},
 	// Platform-ops reports: Hadia's daily and weekly health (hadia.ops.health_daily and _weekly).
 	{Key: "platform/hadia_health_daily", Label: "Hadia daily health report (platform ops)", Group: "Account & Security", Class: ClassLocked},
 	{Key: "platform/hadia_health_weekly", Label: "Hadia weekly health report (platform ops)", Group: "Account & Security", Class: ClassLocked},

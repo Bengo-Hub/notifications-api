@@ -1,0 +1,30 @@
+{{ define "content" }}
+  <h2>New integration request: {{ if .request_label }}{{ .request_label }}{{ else }}{{ .request_type }}{{ end }}</h2>
+  <p>
+    {{ if .requester_name }}{{ .requester_name }}{{ else }}Someone{{ end }} asked to connect a system to
+    Codevertex. Please reply within one business day.
+  </p>
+
+  <table role="presentation" style="width:100%;border-collapse:collapse;margin:16px 0">
+    <tbody>
+      <tr><td style="padding:6px 12px 6px 0"><strong>What they want</strong></td><td style="padding:6px 0">{{ if .request_label }}{{ .request_label }} ({{ .request_type }}){{ else }}{{ .request_type }}{{ end }}</td></tr>
+      {{ if .integration_mode }}<tr><td style="padding:6px 12px 6px 0"><strong>Who does the work</strong></td><td style="padding:6px 0">{{ if eq .integration_mode "assisted" }}Our team (assisted){{ else if eq .integration_mode "self_serve" }}Their own developers (self-serve){{ else }}{{ .integration_mode }}{{ end }}</td></tr>{{ end }}
+      {{ if .requester_name }}<tr><td style="padding:6px 12px 6px 0"><strong>Name</strong></td><td style="padding:6px 0">{{ .requester_name }}</td></tr>{{ end }}
+      {{ if .requester_email }}<tr><td style="padding:6px 12px 6px 0"><strong>Email</strong></td><td style="padding:6px 0"><a href="mailto:{{ .requester_email }}">{{ .requester_email }}</a></td></tr>{{ end }}
+      {{ if .requester_phone }}<tr><td style="padding:6px 12px 6px 0"><strong>Phone</strong></td><td style="padding:6px 0"><a href="tel:{{ .requester_phone }}">{{ .requester_phone }}</a></td></tr>{{ end }}
+      {{ if .company_name }}<tr><td style="padding:6px 12px 6px 0"><strong>Company</strong></td><td style="padding:6px 0">{{ .company_name }}</td></tr>{{ end }}
+      {{ if .source }}<tr><td style="padding:6px 12px 6px 0"><strong>Sent from</strong></td><td style="padding:6px 0">{{ .source }}</td></tr>{{ end }}
+      {{ if .tenant_id }}<tr><td style="padding:6px 12px 6px 0"><strong>Tenant</strong></td><td style="padding:6px 0"><code>{{ .tenant_id }}</code></td></tr>{{ end }}
+    </tbody>
+  </table>
+
+  {{ if .notes }}
+  <div style="background:#f5f4f7;padding:16px;border-radius:8px;border-left:4px solid #9B2C6B;margin:16px 0">
+    <p style="margin:0;color:#1d1a22;white-space:pre-wrap">{{ .notes }}</p>
+  </div>
+  {{ end }}
+
+  <p>
+    <a class="button" href="https://accounts.codevertexafrica.com/dashboard/platform/integration-requests">Open integration requests</a>
+  </p>
+{{ end }}
