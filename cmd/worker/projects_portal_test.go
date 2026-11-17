@@ -45,7 +45,7 @@ func TestProjectPortalNotices(t *testing.T) {
 		emailHas                           []string
 	}{
 		{
-			event: "project.client.invited", wa: "projects_client_invited_v1_btn", target: messaging.TargetCustomer,
+			event: "project.client.invited", wa: "projects_client_invited_v2_btn", target: messaging.TargetCustomer,
 			button: "urban-loft/portal/projects/0b6c2b8e", subject: "Urban Loft Builders invited you to follow Westlands fit-out",
 			payload: map[string]any{"recipient_name": "Joan", "recipient_email": "joan@example.com", "recipient_phone": "0711000222",
 				"action_path": "/urban-loft/portal/projects/0b6c2b8e", "portal_path": "/urban-loft/portal"},

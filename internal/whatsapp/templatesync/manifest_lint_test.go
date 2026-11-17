@@ -140,11 +140,7 @@ var bannedUtilityWords = regexp.MustCompile(`(?i)\b(password|login|username|sign
 // bannedWordsWaitingForSwitch are approved templates with a banned word whose rewrite is in the
 // manifest but whose sender still uses the old name. Remove a name once its code sends the rewrite;
 // the template itself then leaves the manifest, as earlier rewrites did.
-var bannedWordsWaitingForSwitch = map[string]string{
-	// "Sign in" and "has invited you". Rewritten as projects_client_invited_v2_btn (superseded.go
-	// falls back to v1); cmd/worker/projects_portal.go still sends v1.
-	"projects_client_invited_v1_btn": "projects_client_invited_v2_btn",
-}
+var bannedWordsWaitingForSwitch = map[string]string{}
 
 // shortRatioApproved are templates Meta approved before the four words per variable rule was
 // enforced here. Meta accepted their ratio, so a rewrite would only put a working template back into

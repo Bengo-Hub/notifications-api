@@ -71,7 +71,7 @@ var projectPortalNotices = map[string]projectPortalNotice{
 			return org + " invited you to follow " + portalProject(p)
 		},
 		WhatsApp: func(p projectPortalPayload, org string) (string, []string) {
-			return "projects_client_invited_v1_btn", []string{waParam(p.RecipientName, "there"), org, portalProject(p)}
+			return "projects_client_invited_v2_btn", []string{waParam(p.RecipientName, "there"), org, portalProject(p)}
 		},
 	},
 	"milestone.ready_for_review": {

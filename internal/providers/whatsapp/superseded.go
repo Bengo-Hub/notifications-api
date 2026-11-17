@@ -15,7 +15,8 @@ type supersededTemplate struct {
 //
 // The entries of 17 November 2026 are the policy audit's rewrites of approved templates with words
 // Meta reads as marketing or a login ("enjoy", "thank you for choosing", "sign in"); same parameters,
-// same buttons. projects_client_invited_v2_btn applies once cmd/worker/projects_portal.go sends it.
+// same buttons. cmd/worker/projects_portal.go sends projects_client_invited_v2_btn, falling back to
+// v1 until Meta approves v2.
 var superseded = map[string]supersededTemplate{
 	"ordering_order_delivered_v5_btn": {old: "ordering_order_delivered_v3_btn"},
 	"ordering_order_delivered_v6_btn": {old: "ordering_order_delivered_v4_btn"},
