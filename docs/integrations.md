@@ -385,24 +385,28 @@ notifications-ui, `POST /platform/whatsapp/templates/sync`); until Meta approves
 emails go. The `projects_` prefix in `tenanttemplates/selection.json` already covers them.
 
 **Client thread, change requests and automations (2026-11-17)**: the same durable sends five more
-notices, email only (`cmd/worker/projects_notices.go`). I have not drafted WhatsApp templates for
-them yet: each needs Meta's approval, so they carry no WhatsApp template and no `.txt` file, and
-the template channels offer email alone.
+notices by email and WhatsApp (`cmd/worker/projects_notices.go`). They started email only; the
+WhatsApp templates came on 2026-11-17 and wait for the Meta sync like the portal ones. Until Meta
+approves a template on the sending WABA its send fails and only the email lands.
 
-| Event | To | Email |
-|---|---|---|
-| `client_thread.posted` | the project owner or an owner or manager member (staff), never a client | `projects/client_thread_posted` with the post as `comment_excerpt` |
-| `client_thread.replied` | one signed-in client (customer) | `projects/client_thread_replied`, button the portal project's Messages tab |
-| `change_request.review_requested` | an approver candidate holding change approvals (staff), never the requester | `projects/change_request_review_requested` with the title, kind and description excerpt |
-| `change_request.decided` | the requester (staff) | `projects/change_request_decided` with the decision and the decider's comment |
-| `task.automation_notice` | every id in `recipient_ids` found in the local user table with a sendable email; unknown ids are skipped | `projects/task_automation_notice` with the rule, the new status and the rule's message |
+| Event | To | Email | WhatsApp (UTILITY, button on the projects app) |
+|---|---|---|---|
+| `client_thread.posted` | the project owner or an owner or manager member (staff), never a client | `projects/client_thread_posted` with the post as `comment_excerpt` | `projects_client_thread_posted_v1_btn` (name, client, project), "Open Thread" |
+| `client_thread.replied` | one signed-in client (customer) | `projects/client_thread_replied`, button the portal project's Messages tab | `projects_client_thread_replied_v1_btn` (name, organisation, project), "Read Reply" |
+| `change_request.review_requested` | an approver candidate holding change approvals (staff), never the requester | `projects/change_request_review_requested` with the title, kind and description excerpt | `projects_change_request_review_v1_btn` (name, requester, title, project), "Review Request" |
+| `change_request.decided` | the requester (staff) | `projects/change_request_decided` with the decision and the decider's comment | `projects_change_request_decided_v1_btn` (name, title, project, `approved` or `rejected`), "Open Request" |
+| `task.automation_notice` | every id in `recipient_ids` found in the local user table with a sendable email or a phone; unknown ids are skipped | `projects/task_automation_notice` with the rule, the new status and the rule's message | `projects_task_automation_v1_btn` (name, task, project, new status), "Open Task" |
 
-The first four have one recipient per event and read it as the task notices do. The automation
-notice is one event per rule run: the ids are looked up in one query (the row of the event's
-tenant first) and each recipient is its own party, so the idempotency key is
-`projects-task.automation_notice-<event id>-email-<user id>`, per event and recipient. All five
-are essential (Support & Projects); see the registry for why the automation notice is not
-optional.
+The WhatsApp bodies carry facts only. The post, the reply, the comment and the rule's message stay
+in the email, because a body that is mostly free text is billed as marketing.
+
+The first four have one recipient per event and read it as the task notices do: the email at
+`recipient_email`, else the local user's, and the phone at `recipient_phone`, else the local
+user's; with no phone only the email goes. The automation notice is one event per rule run: the
+ids are looked up in one query (the row of the event's tenant first) and each recipient is its own
+party, so the idempotency keys are `projects-task.automation_notice-<event id>-email-<user id>`
+and `...-whatsapp-<user id>`, per event, channel and recipient. All five are essential (Support &
+Projects); see the registry for why the automation notice is not optional.
 
 **Events Published**: None
 
@@ -413,11 +417,11 @@ optional.
 - `milestone.ready_for_review` → `projects/milestone_ready_for_review` (email, WhatsApp)
 - `milestone.approved` → `projects/milestone_approved` (email, WhatsApp)
 - `milestone.changes_requested` → `projects/milestone_changes_requested` (email, WhatsApp)
-- `client_thread.posted` → `projects/client_thread_posted` (email)
-- `client_thread.replied` → `projects/client_thread_replied` (email)
-- `change_request.review_requested` → `projects/change_request_review_requested` (email)
-- `change_request.decided` → `projects/change_request_decided` (email)
-- `task.automation_notice` → `projects/task_automation_notice` (email, one per recipient id)
+- `client_thread.posted` → `projects/client_thread_posted` (email, WhatsApp)
+- `client_thread.replied` → `projects/client_thread_replied` (email, WhatsApp)
+- `change_request.review_requested` → `projects/change_request_review_requested` (email, WhatsApp)
+- `change_request.decided` → `projects/change_request_decided` (email, WhatsApp)
+- `task.automation_notice` → `projects/task_automation_notice` (email, WhatsApp, one party per recipient id)
 - `task_due` → `deadline_reminder_push` template
 
 ### ERP Service

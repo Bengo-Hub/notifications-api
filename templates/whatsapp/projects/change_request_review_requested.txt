@@ -1,0 +1,5 @@
+Hello {{ .name }},
+
+{{ .actor_name }} raised the change request *{{ .title }}* on {{ .project_name }}, and it waits for your decision.
+
+Open the request in Projects to approve or reject it.

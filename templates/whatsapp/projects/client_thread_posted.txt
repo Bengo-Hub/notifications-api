@@ -1,0 +1,5 @@
+Hello {{ .name }},
+
+{{ .actor_name }} posted a new message on the client thread of the project *{{ .project_name }}*.
+
+Open the thread in Projects to read it and reply to your client.

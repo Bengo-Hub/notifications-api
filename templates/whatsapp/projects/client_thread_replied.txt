@@ -1,0 +1,5 @@
+Hello {{ .name }},
+
+The team at {{ .organisation }} replied to you on the client thread of the project *{{ .project_name }}*.
+
+Open the portal to read the reply and answer them.

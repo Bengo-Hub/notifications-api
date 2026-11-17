@@ -12,10 +12,11 @@ import (
 	"github.com/bengobox/notifications-api/internal/modules/preferences"
 )
 
-// Client thread, change request and automation notices (projects-api, 2026-11-17). Email only:
-// each WhatsApp template needs Meta's approval first, which I submit separately, so these notices
-// carry no WhatsApp template and no .txt file exists for them (templateChannels then offers email
-// alone).
+// Client thread, change request and automation notices (projects-api, 2026-11-17). Each goes by
+// email and, since 2026-11-17, by WhatsApp too: one UTILITY _btn template per notice in
+// internal/whatsapp/templatesync/templates.json with its text in templates/whatsapp/projects. Until
+// Meta approves a template on the sending WABA the WhatsApp send fails and only the email lands, as
+// for every other _btn template.
 //
 //   - project.client_thread.posted: a client wrote on the client thread; one event per project
 //     owner or owner or manager member, never a client.
@@ -26,18 +27,21 @@ import (
 //   - project.change_request.decided: the requester's change request was approved or rejected.
 //   - project.task.automation_notice: a status automation's notify action. One event per rule run
 //     carries every recipient id; each id is looked up in the local user table here and gets its
-//     own email, keyed per event and recipient, and an unknown id is skipped.
+//     own email and WhatsApp message, keyed per event and recipient, and an unknown id is skipped.
 //
 // The one-recipient notices read the recipient like the task notices: recipient_email, else the
-// local user's email for recipient_user_id.
+// local user's email for recipient_user_id; recipient_phone, else the local user's phone. The
+// WhatsApp bodies carry facts only (names, the project, the request title, the new status), never
+// the free text of a post or comment: a body that is mostly free text is billed as marketing.
 
-// projectNoticePayload is the payload of an email-only projects notice.
+// projectNoticePayload is the payload of a client thread, change request or automation notice.
 type projectNoticePayload struct {
 	ProjectID       string
 	ProjectName     string
 	ActorName       string
 	RecipientUserID string
 	RecipientEmail  string
+	RecipientPhone  string
 	RecipientName   string
 	CommentExcerpt  string
 	ActionPath      string
@@ -54,6 +58,7 @@ func readProjectNoticePayload(p map[string]any) projectNoticePayload {
 		ActorName:       oneLine(mStr(p, "actor_name")),
 		RecipientUserID: mStr(p, "recipient_user_id"),
 		RecipientEmail:  mStr(p, "recipient_email"),
+		RecipientPhone:  strings.TrimSpace(mStr(p, "recipient_phone")),
 		RecipientName:   oneLine(mStr(p, "recipient_name")),
 		CommentExcerpt:  capRunes(oneLine(mStr(p, "comment_excerpt")), projectTaskExcerptMax),
 		ActionPath:      mStr(p, "action_path"),
@@ -63,25 +68,40 @@ func readProjectNoticePayload(p map[string]any) projectNoticePayload {
 	}
 }
 
-// projectEmailNotice is how one email-only notice is worded.
-type projectEmailNotice struct {
+// projectNotice is how one client thread or change request notice is worded.
+type projectNotice struct {
 	TemplateID string
 	Target     string // messaging.Target*
 	Subject    func(p projectNoticePayload, org string) string
+	// WhatsApp picks the template and its body parameters.
+	WhatsApp func(p projectNoticePayload, org string) (string, []string)
 }
 
 func noticeProject(p projectNoticePayload) string { return waParam(p.ProjectName, "your project") }
 func noticeRequest(p projectNoticePayload) string { return waParam(p.Title, "a change request") }
+func noticeName(p projectNoticePayload) string    { return waParam(p.RecipientName, "there") }
 
 // changeKindLabels name a change request's kind in a sentence.
 var changeKindLabels = map[string]string{"scope": "scope", "cost": "cost", "schedule": "schedule"}
 
-var projectEmailNotices = map[string]projectEmailNotice{
+// WhatsApp templates of these notices.
+const (
+	waClientThreadPosted  = "projects_client_thread_posted_v1_btn"
+	waClientThreadReplied = "projects_client_thread_replied_v1_btn"
+	waChangeReview        = "projects_change_request_review_v1_btn"
+	waChangeDecided       = "projects_change_request_decided_v1_btn"
+	waTaskAutomation      = "projects_task_automation_v1_btn"
+)
+
+var projectNotices = map[string]projectNotice{
 	"client_thread.posted": {
 		TemplateID: "projects/client_thread_posted",
 		Target:     messaging.TargetStaff,
 		Subject: func(p projectNoticePayload, _ string) string {
 			return waParam(p.ActorName, "Your client") + " wrote on the " + noticeProject(p) + " client thread"
+		},
+		WhatsApp: func(p projectNoticePayload, _ string) (string, []string) {
+			return waClientThreadPosted, []string{noticeName(p), waParam(p.ActorName, "Your client"), noticeProject(p)}
 		},
 	},
 	"client_thread.replied": {
@@ -90,6 +110,9 @@ var projectEmailNotices = map[string]projectEmailNotice{
 		Subject: func(p projectNoticePayload, org string) string {
 			return org + " replied on " + noticeProject(p)
 		},
+		WhatsApp: func(p projectNoticePayload, org string) (string, []string) {
+			return waClientThreadReplied, []string{noticeName(p), org, noticeProject(p)}
+		},
 	},
 	"change_request.review_requested": {
 		TemplateID: "projects/change_request_review_requested",
@@ -97,12 +120,18 @@ var projectEmailNotices = map[string]projectEmailNotice{
 		Subject: func(p projectNoticePayload, _ string) string {
 			return "Change request to approve: " + noticeRequest(p)
 		},
+		WhatsApp: func(p projectNoticePayload, _ string) (string, []string) {
+			return waChangeReview, []string{noticeName(p), waParam(p.ActorName, "A teammate"), noticeRequest(p), noticeProject(p)}
+		},
 	},
 	"change_request.decided": {
 		TemplateID: "projects/change_request_decided",
 		Target:     messaging.TargetStaff,
 		Subject: func(p projectNoticePayload, _ string) string {
 			return "Your change request was " + changeDecisionWord(p.Decision) + ": " + noticeRequest(p)
+		},
+		WhatsApp: func(p projectNoticePayload, _ string) (string, []string) {
+			return waChangeDecided, []string{noticeName(p), noticeRequest(p), noticeProject(p), changeDecisionWord(p.Decision)}
 		},
 	},
 }
@@ -115,10 +144,11 @@ func changeDecisionWord(decision string) string {
 	return "rejected"
 }
 
-// buildProjectEmailNotice turns an email-only notice into a notice for its one recipient: the
-// email goes to recipient_email, else userEmail (the local user table). ok is false when there is
-// no address to send to.
-func buildProjectEmailNotice(evt projectsEvent, kind string, en projectEmailNotice, ti *tenantInfo, userEmail string,
+// buildProjectNotice turns a client thread or change request notice into a notice for its one
+// recipient: the email goes to recipient_email, else userEmail, and WhatsApp to recipient_phone,
+// else userPhone (both from the local user table). ok is false when the recipient can be reached
+// neither way.
+func buildProjectNotice(evt projectsEvent, kind string, en projectNotice, ti *tenantInfo, userEmail, userPhone string,
 	gate *preferences.Gate, templateChannels map[string][]string) (partyNotice, bool) {
 	p := readProjectNoticePayload(evt.Payload)
 	email := p.RecipientEmail
@@ -126,16 +156,24 @@ func buildProjectEmailNotice(evt projectsEvent, kind string, en projectEmailNoti
 		email = userEmail
 	}
 	if !sendableEmail(email) {
+		email = ""
+	}
+	phone := p.RecipientPhone
+	if phone == "" {
+		phone = strings.TrimSpace(userPhone)
+	}
+	if email == "" && phone == "" {
 		return partyNotice{}, false
 	}
 	org := waParam(ti.Name, "Your project team")
+	link := projectTaskLink(ti, p.ActionPath)
 	data := map[string]any{
-		"name":         waParam(p.RecipientName, "there"),
+		"name":         noticeName(p),
 		"organisation": org,
 		"actor_name":   waParam(p.ActorName, "A teammate"),
 		"project_name": noticeProject(p),
 		"project_id":   p.ProjectID,
-		"action_link":  projectTaskLink(ti, p.ActionPath),
+		"action_link":  link,
 	}
 	switch kind {
 	case "client_thread.posted":
@@ -155,6 +193,7 @@ func buildProjectEmailNotice(evt projectsEvent, kind string, en projectEmailNoti
 	if p.CommentExcerpt != "" {
 		data["comment_excerpt"] = p.CommentExcerpt
 	}
+	waName, waParams := en.WhatsApp(p, org)
 	return partyNotice{
 		ServiceID:  "projects",
 		TenantID:   evt.TenantID,
@@ -167,7 +206,8 @@ func buildProjectEmailNotice(evt projectsEvent, kind string, en projectEmailNoti
 		Parties: []noticeParty{{
 			Target:   en.Target,
 			Email:    email,
-			Channels: []string{"email"},
+			Phone:    phone,
+			WhatsApp: &partyWhatsApp{Name: waName, Params: waParams, Button: buttonURLSuffix(link)},
 		}},
 		Gate:             gate,
 		TemplateChannels: templateChannels,
@@ -176,7 +216,7 @@ func buildProjectEmailNotice(evt projectsEvent, kind string, en projectEmailNoti
 
 // Automation notices.
 
-// projectAutomationTemplate is the automation notice's email template.
+// projectAutomationTemplate is the automation notice's email and WhatsApp text template.
 const projectAutomationTemplate = "projects/task_automation_notice"
 
 // projectAutomationMaxRecipients caps one rule run's fan-out (projects-api allows far fewer).
@@ -186,6 +226,7 @@ const projectAutomationMaxRecipients = 50
 type automationRecipient struct {
 	ID    string
 	Email string
+	Phone string
 	Name  string
 }
 
@@ -210,9 +251,9 @@ func projectAutomationRecipientIDs(p map[string]any) []uuid.UUID {
 	return out
 }
 
-// lookupAutomationRecipients reads the recipients' email and name from the local user table in one
-// query, preferring the row of the event's tenant when a person has several. An id with no row or
-// no sendable email is left out.
+// lookupAutomationRecipients reads the recipients' email, phone and name from the local user table
+// in one query, preferring the row of the event's tenant when a person has several. An id with no
+// row, or with neither a sendable email nor a phone, is left out.
 func lookupAutomationRecipients(ctx context.Context, client *ent.Client, tenantID string, ids []uuid.UUID) ([]automationRecipient, error) {
 	if client == nil || len(ids) == 0 {
 		return nil, nil
@@ -225,7 +266,7 @@ func lookupAutomationRecipients(ctx context.Context, client *ent.Client, tenantI
 }
 
 // pickAutomationRecipients picks, for each id in order, its user row (the event tenant's first)
-// and keeps those with a sendable email.
+// and keeps those with a sendable email or a phone.
 func pickAutomationRecipients(rows []*ent.User, tenantID string, ids []uuid.UUID) []automationRecipient {
 	tenant, _ := uuid.Parse(tenantID)
 	best := map[uuid.UUID]*ent.User{}
@@ -237,17 +278,25 @@ func pickAutomationRecipients(rows []*ent.User, tenantID string, ids []uuid.UUID
 	out := make([]automationRecipient, 0, len(ids))
 	for _, id := range ids {
 		u, ok := best[id]
-		if !ok || !sendableEmail(strings.TrimSpace(u.Email)) {
+		if !ok {
 			continue
 		}
-		out = append(out, automationRecipient{ID: id.String(), Email: strings.TrimSpace(u.Email), Name: oneLine(u.FullName)})
+		email, phone := strings.TrimSpace(u.Email), strings.TrimSpace(u.Phone)
+		if !sendableEmail(email) {
+			email = ""
+		}
+		if email == "" && phone == "" {
+			continue
+		}
+		out = append(out, automationRecipient{ID: id.String(), Email: email, Phone: phone, Name: oneLine(u.FullName)})
 	}
 	return out
 }
 
-// buildProjectAutomationNotice turns one automation notice into one email party per recipient.
-// Each party's Key is its user id, so the idempotency key is per event and recipient
-// (projects-task.automation_notice-<event id>-email-<user id>). ok is false with no recipient.
+// buildProjectAutomationNotice turns one automation notice into one party per recipient, by email
+// and WhatsApp. Each party's Key is its user id, so the idempotency key is per event, channel and
+// recipient (projects-task.automation_notice-<event id>-email-<user id>). The rule's own message
+// goes in the email only. ok is false with no recipient.
 func buildProjectAutomationNotice(evt projectsEvent, ti *tenantInfo, recipients []automationRecipient,
 	gate *preferences.Gate, templateChannels map[string][]string) (partyNotice, bool) {
 	if len(recipients) == 0 {
@@ -256,26 +305,32 @@ func buildProjectAutomationNotice(evt projectsEvent, ti *tenantInfo, recipients 
 	p := evt.Payload
 	task := waParam(oneLine(mStr(p, "task_title")), "A task")
 	status := waParam(oneLine(mStr(p, "to_status_label")), waParam(mStr(p, "to_status"), "a new status"))
+	project := waParam(oneLine(mStr(p, "project_name")), "your project")
+	link := projectTaskLink(ti, mStr(p, "action_path"))
 	data := map[string]any{
-		"project_name": waParam(oneLine(mStr(p, "project_name")), "your project"),
+		"project_name": project,
 		"project_id":   mStr(p, "project_id"),
 		"task_id":      mStr(p, "task_id"),
 		"task_title":   task,
 		"status_label": status,
 		"rule_name":    oneLine(mStr(p, "rule_name")),
-		"action_link":  projectTaskLink(ti, mStr(p, "action_path")),
+		"action_link":  link,
 	}
 	if msg := capRunes(oneLine(mStr(p, "message")), 500); msg != "" {
 		data["message"] = msg
 	}
+	button := buttonURLSuffix(link)
 	parties := make([]noticeParty, 0, len(recipients))
 	for _, r := range recipients {
+		name := waParam(r.Name, "there")
 		parties = append(parties, noticeParty{
-			Key:      r.ID,
-			Target:   messaging.TargetStaff,
-			Email:    r.Email,
-			Channels: []string{"email"},
-			Data:     map[string]any{"name": waParam(r.Name, "there")},
+			Key:    r.ID,
+			Target: messaging.TargetStaff,
+			Email:  r.Email,
+			Phone:  r.Phone,
+			Data:   map[string]any{"name": name},
+			WhatsApp: &partyWhatsApp{Name: waTaskAutomation, Params: []string{name, task, project, status},
+				Button: button},
 		})
 	}
 	return partyNotice{

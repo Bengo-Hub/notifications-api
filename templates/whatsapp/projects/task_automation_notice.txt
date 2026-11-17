@@ -1,0 +1,5 @@
+Hello {{ .name }},
+
+The task *{{ .task_title }}* in {{ .project_name }} moved to the status {{ .status_label }}, and a project rule asked us to let you know.
+
+Open the task in Projects to see the details.

@@ -232,7 +232,7 @@ func projectTaskRecipient(ctx context.Context, client *ent.Client, userID string
 // startProjectsConsumer subscribes to project.> events and dispatches project notifications: the
 // milestone email to the tenant's contact, task mentions and assignments to their recipient, the
 // client portal notices (projects_portal.go) to theirs, and the client thread, change request and
-// automation notices (projects_notices.go, email only) to theirs.
+// automation notices (projects_notices.go, email and WhatsApp) to theirs.
 func startProjectsConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamContext, cfg *config.Config, tr *tenantResolver,
 	client *ent.Client, gate *preferences.Gate, templateChannels map[string][]string, logg *zap.Logger) {
 	if nc == nil || js == nil {
@@ -252,9 +252,9 @@ func startProjectsConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStream
 		mapping, ok := projectsMappings[kind]
 		taskNotice, isTask := projectTaskNotices[kind]
 		portalNotice, isPortal := projectPortalNotices[kind]
-		emailNotice, isEmail := projectEmailNotices[kind]
+		moreNotice, isMore := projectNotices[kind]
 		isAutomation := kind == "task.automation_notice"
-		if !ok && !isTask && !isPortal && !isEmail && !isAutomation {
+		if !ok && !isTask && !isPortal && !isMore && !isAutomation {
 			// qa.* (QA acceptance) is sent by the events subscriber's own durable,
 			// notifications-projects-qa (internal/modules/events/project_qa.go), so it lands here.
 			logg.Debug("projects event: unhandled type, skipping", zap.String("type", evt.EventType))
@@ -313,11 +313,11 @@ func startProjectsConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStream
 			return
 		}
 
-		if isEmail {
-			userEmail, _ := projectTaskRecipient(ctx, client, mStr(evt.Payload, "recipient_user_id"))
-			notice, reachable := buildProjectEmailNotice(evt, kind, emailNotice, ti, userEmail, gate, templateChannels)
+		if isMore {
+			userEmail, userPhone := projectTaskRecipient(ctx, client, mStr(evt.Payload, "recipient_user_id"))
+			notice, reachable := buildProjectNotice(evt, kind, moreNotice, ti, userEmail, userPhone, gate, templateChannels)
 			if !reachable {
-				logg.Info("projects event: notice recipient has no email, skipping", zap.String("type", evt.EventType))
+				logg.Info("projects event: notice recipient has no email or phone, skipping", zap.String("type", evt.EventType))
 				_ = m.Ack()
 				return
 			}
@@ -326,7 +326,8 @@ func startProjectsConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStream
 				_ = m.Nak()
 				return
 			}
-			logg.Info("projects notice dispatched", zap.String("type", evt.EventType), zap.String("template", emailNotice.TemplateID))
+			logg.Info("projects notice dispatched", zap.String("type", evt.EventType), zap.String("template", moreNotice.TemplateID),
+				zap.Bool("whatsapp", notice.Parties[0].Phone != ""))
 			_ = m.Ack()
 			return
 		}
@@ -341,7 +342,7 @@ func startProjectsConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStream
 			}
 			notice, reachable := buildProjectAutomationNotice(evt, ti, recipients, gate, templateChannels)
 			if !reachable {
-				logg.Info("projects event: no automation recipient has an email, skipping", zap.Int("recipient_ids", len(ids)))
+				logg.Info("projects event: no automation recipient has an email or phone, skipping", zap.Int("recipient_ids", len(ids)))
 				_ = m.Ack()
 				return
 			}

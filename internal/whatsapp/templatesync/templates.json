@@ -1472,6 +1472,61 @@
     ]
   },
   {
+    "name": "projects_client_thread_posted_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/projects/client_thread_posted.txt (params: name, client, project; button: the project's client thread in Projects). The post itself stays in the email: a body that is mostly free text is marketing to Meta",
+    "body": "Hello {{1}},\n\n{{2}} posted a new message on the client thread of the project *{{3}}*.\n\nOpen the thread in Projects to read it and reply to your client.",
+    "example": ["Amina", "Joan Client", "Westlands office fit-out"],
+    "buttons": [
+      {"type": "URL", "text": "Open Thread", "url": "https://projects.codevertexafrica.com/{{1}}", "example": ["urban-loft/projects/0b6c2b8e/client-thread"]}
+    ]
+  },
+  {
+    "name": "projects_client_thread_replied_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/projects/client_thread_replied.txt (params: name, organisation, project; button: the project's Messages tab in the client portal). The reply itself stays in the email",
+    "body": "Hello {{1}},\n\nThe team at {{2}} replied to you on the client thread of the project *{{3}}*.\n\nOpen the portal to read the reply and answer them.",
+    "example": ["Joan", "Urban Loft Builders", "Westlands office fit-out"],
+    "buttons": [
+      {"type": "URL", "text": "Read Reply", "url": "https://projects.codevertexafrica.com/{{1}}", "example": ["urban-loft/portal/projects/0b6c2b8e?tab=messages"]}
+    ]
+  },
+  {
+    "name": "projects_change_request_review_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/projects/change_request_review_requested.txt (params: name, requester, request title, project; button: the request in Projects)",
+    "body": "Hello {{1}},\n\n{{2}} raised the change request *{{3}}* on {{4}}, and it waits for your decision.\n\nOpen the request in Projects to approve or reject it.",
+    "example": ["Brian", "Ana Wanjiru", "Add a site visit", "Westlands office fit-out"],
+    "buttons": [
+      {"type": "URL", "text": "Review Request", "url": "https://projects.codevertexafrica.com/{{1}}", "example": ["urban-loft/projects/0b6c2b8e/change-requests?request=3c9d1e7a"]}
+    ]
+  },
+  {
+    "name": "projects_change_request_decided_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/projects/change_request_decided.txt (params: name, request title, project, decision word approved or rejected; button: the request in Projects). The approver's comment stays in the email",
+    "body": "Hello {{1}},\n\nYour change request *{{2}}* on {{3}} was {{4}} by the approver.\n\nOpen the request in Projects to see the decision and any comment.",
+    "example": ["Ana", "Add a site visit", "Westlands office fit-out", "approved"],
+    "buttons": [
+      {"type": "URL", "text": "Open Request", "url": "https://projects.codevertexafrica.com/{{1}}", "example": ["urban-loft/projects/0b6c2b8e/change-requests?request=3c9d1e7a"]}
+    ]
+  },
+  {
+    "name": "projects_task_automation_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/projects/task_automation_notice.txt (params: name, task, project, new status; button: the task in Projects). The rule's own message stays in the email",
+    "body": "Hello {{1}},\n\nThe task *{{2}}* in {{3}} moved to the status {{4}}, and a project rule asked us to let you know.\n\nOpen the task in Projects to see the details.",
+    "example": ["Amina", "Wire the lights", "Westlands office fit-out", "In review"],
+    "buttons": [
+      {"type": "URL", "text": "Open Task", "url": "https://projects.codevertexafrica.com/{{1}}", "example": ["urban-loft/projects/0b6c2b8e/tasks?task=7d1f3a2c"]}
+    ]
+  },
+  {
     "name": "ticketing_ticket_reply_v1_btn",
     "category": "UTILITY",
     "language": "en_US",

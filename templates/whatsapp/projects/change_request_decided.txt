@@ -1,0 +1,5 @@
+Hello {{ .name }},
+
+Your change request *{{ .title }}* on {{ .project_name }} was {{ .decision }} by the approver.
+
+Open the request in Projects to see the decision and any comment.
