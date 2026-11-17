@@ -251,6 +251,9 @@ var Registry = []Type{
 	{Key: "ticketing/ticket_merged", Label: "Support request merged into another ticket", Group: "Support & Projects", Class: ClassEssential},
 	{Key: "ticketing/sla_breach_warning", Label: "Support ticket close to its SLA", Group: "Support & Projects", Class: ClassOptional},
 	{Key: "ticketing/ticket_escalated", Label: "Support ticket escalated", Group: "Support & Projects", Class: ClassOptional},
+	// The satisfaction survey after a resolve. On by default so a tenant gets ratings without a
+	// setup step, and toggleable (essential, not locked) so a tenant can stop sending surveys.
+	{Key: "ticketing/ticket_csat_survey", Label: "Support satisfaction survey", Group: "Support & Projects", Class: ClassEssential},
 	{Key: "projects/project_milestone_reached", Label: "Project milestone reached", Group: "Support & Projects", Class: ClassOptional},
 	// Task notices to one teammate (projects-api project.task.mentioned and project.task.assigned).
 	// Essential: a mention or an assignment is direct work for that person, so it is on by default

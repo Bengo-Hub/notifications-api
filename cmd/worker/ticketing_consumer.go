@@ -225,6 +225,8 @@ var ticketingMappings = map[string]ticketingNotificationMapping{
 	"ticket.merged":      ticketMergedMapping,
 	"sla.breach_warning": ticketBreachWarningMapping,
 	"ticket.escalated":   ticketEscalatedMapping,
+	// The satisfaction survey after a resolve (ticketing_csat.go), to the requester by email.
+	"ticket.csat_requested": ticketCSATMapping,
 }
 
 // ticketSLABreachMapping is the agent alert for one kind of SLA breach.
@@ -414,7 +416,7 @@ func ticketIdempotencyKey(evt ticketingEvent) string {
 
 // startTicketingConsumer subscribes to ticketing.> events and dispatches ticket emails: the
 // requester hears about their ticket (received, agent replies, status changes that need them,
-// resolved, merged into another ticket) with the tenant's support address as Reply-To, and agents
+// resolved, merged into another ticket, the satisfaction survey after a resolve) with the tenant's support address as Reply-To, and agents
 // get assignments, mentions, escalations, SLA warnings and SLA breaches.
 func startTicketingConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamContext, cfg *config.Config, tr *tenantResolver, logg *zap.Logger) {
 	if nc == nil || js == nil {

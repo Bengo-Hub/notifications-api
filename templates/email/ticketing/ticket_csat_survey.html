@@ -1,0 +1,32 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <h2>How did we do?</h2>
+  <p>We resolved your support ticket <strong>#{{ .ticket_id }}</strong>. How did your request go? Your answer takes a moment and helps us improve.</p>
+
+  <div style="background:#f3f4f6; padding:16px; border-radius:6px; margin:16px 0;">
+    <strong>Ticket ID:</strong> #{{ .ticket_id }}<br/>
+    <strong>Subject:</strong> {{ .subject }}
+  </div>
+
+  <p><strong>Pick a score from 1 (very poor) to 5 (excellent):</strong></p>
+  <table role="presentation" cellpadding="0" cellspacing="0" style="margin:8px 0 16px 0;">
+    <tr>
+      {{ range .score_links }}
+      <td style="padding:0 6px 0 0; text-align:center;">
+        <a href="{{ .URL }}" title="{{ .Label }}" style="display:inline-block; min-width:40px; padding:10px 0; border:1px solid #d1d5db; border-radius:6px; color:#111827; font-weight:bold; text-decoration:none;">{{ .Score }}</a>
+        <div style="font-size:11px; color:#6b7280; margin-top:4px;">{{ .Label }}</div>
+      </td>
+      {{ end }}
+    </tr>
+  </table>
+
+  {{ if .csat_url }}
+  <p>
+    <a class="button" href="{{ .csat_url }}">Rate your experience</a>
+  </p>
+  {{ end }}
+
+  {{ if .expires_at }}<p style="color:#6b7280; font-size:13px;">This survey link works until {{ .expires_at }}.</p>{{ end }}
+
+  <p>If the issue is not fully resolved, reply to this email and we will reopen the ticket.</p>
+{{ end }}
