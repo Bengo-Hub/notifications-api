@@ -41,6 +41,12 @@ type ServicesConfig struct {
 	// too: the reply as text inside the 24-hour window, the ticketing_ticket_reply_v1_btn notice
 	// after it. Off by owner decision of 2026-11-17: ticket replies go by email only for now.
 	TicketingWhatsAppReplies bool `envconfig:"TICKETING_WHATSAPP_REPLIES" default:"false"`
+	// TicketingAPI is where the WhatsApp inbox's Convert to ticket opens tickets (S2S internal
+	// create). In-cluster; same env name and default as projects-api.
+	TicketingAPI string `envconfig:"TICKETING_SERVICE_URL" default:"http://ticketing-api.ticketing.svc.cluster.local:4009"`
+	// TicketingConsoleURL is the ticketing console a converted ticket links to
+	// (<console>/<tenant slug>/tickets/<id>).
+	TicketingConsoleURL string `envconfig:"TICKETING_CONSOLE_URL" default:"https://ticketing.codevertexafrica.com"`
 	// EmailProvisioner is the only service holding the mail server's admin login; the delivery
 	// webhook key is pushed to Stalwart through it. In-cluster.
 	EmailProvisioner string `envconfig:"EMAIL_PROVISIONER_URL" default:"http://email-provisioner.email.svc.cluster.local:8080"`

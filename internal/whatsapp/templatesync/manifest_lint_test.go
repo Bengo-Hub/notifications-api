@@ -137,6 +137,16 @@ var buttonDomains = map[string]bool{
 // word ("enjoyed", "logins") counts.
 var bannedUtilityWords = regexp.MustCompile(`(?i)\b(password|login|username|sign[ -]in|one-time code|gate code|welcome|enjoy|thank you for choosing)`)
 
+// sellingButtonText are button texts Meta reads as an invitation to buy, review or visit, which moves a
+// UTILITY template to MARKETING (docs/whatsapp-template-policy.md section 3b). A button states what its
+// page shows instead: "View balance", "View Order", "Service details". Case does not matter.
+var sellingButtonText = regexp.MustCompile(`(?i)\b(top[ -]?up|buy|review us|rate us|leave feedback|visit our website|shop now)\b`)
+
+// sellingButtonAllowed lists UTILITY templates allowed a selling button text. It is empty on purpose:
+// every approved template with such a button was rewritten on 17 November 2026, and a template that
+// needs one is a MARKETING template, which the rule does not check.
+var sellingButtonAllowed = map[string]bool{}
+
 // bannedWordsWaitingForSwitch are approved templates with a banned word whose rewrite is in the
 // manifest but whose sender still uses the old name. Remove a name once its code sends the rewrite;
 // the template itself then leaves the manifest, as earlier rewrites did.
@@ -203,6 +213,8 @@ func bodyWords(body string) int {
 // sections 3 and 3b that can be checked without Meta:
 //   - a UTILITY template has none of the banned words in its body, its examples or its button text
 //     (an example value counts too: Meta reads them);
+//   - a UTILITY template has no button that sells ("Top up", "Buy", "Review us", "Leave Feedback",
+//     "Visit our website");
 //   - a body has at least four words of its own per variable (Meta error 2388293, "parameters words
 //     ratio");
 //   - a body that is mostly one free text variable is billed as MARKETING (meta_category), since
@@ -241,6 +253,14 @@ func TestManifestFollowsWordingPolicy(t *testing.T) {
 			for _, s := range texts {
 				if w := bannedUtilityWords.FindString(s); w != "" {
 					t.Errorf("%s: %q reads as a login or a promotion to Meta (policy section 3); write a _v2 without it", d.Name, w)
+				}
+			}
+		}
+		if d.Category == "UTILITY" && !sellingButtonAllowed[d.Name] {
+			for _, b := range d.Buttons {
+				if w := sellingButtonText.FindString(b.Text); w != "" {
+					t.Errorf("%s: button %q invites the reader (%q), which Meta bills as marketing (policy section 3b); "+
+						"name what the page shows, as in \"View Order\", in a _v2", d.Name, b.Text, w)
 				}
 			}
 		}

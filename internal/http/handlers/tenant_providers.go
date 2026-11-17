@@ -59,12 +59,12 @@ func awaitWhatsAppTestOutcome(ctx context.Context, providerType string, info map
 
 // TenantProviders handles tenant-level notification provider selection.
 type TenantProviders struct {
-	client         *ent.Client
-	logger         *zap.Logger
-	PlatformID     string
-	keyProvider    *encryption.KeyProvider
-	manager        *providers.Manager
-	credits        *credits.Client
+	client      *ent.Client
+	logger      *zap.Logger
+	PlatformID  string
+	keyProvider *encryption.KeyProvider
+	manager     *providers.Manager
+	credits     *credits.Client
 }
 
 // NewTenantProviders creates a new TenantProviders handler.
@@ -282,6 +282,10 @@ func (h *TenantProviders) UpdateBranding(w http.ResponseWriter, r *http.Request)
 }
 
 // GetProviderSettings returns the tenant's settings for a specific provider (non-secret values only).
+// settings holds only what the tenant saved itself. When the tenant has no account of its own and
+// sends with the platform's, the answer adds inherited_from "platform", effective (the non-secret
+// values in force; the platform account's host and username only for a platform owner) and
+// inherited_keys (the keys of effective that come from the platform).
 func (h *TenantProviders) GetProviderSettings(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	tenantID := resolveActingTenantID(r)
@@ -330,11 +334,35 @@ func (h *TenantProviders) GetProviderSettings(w http.ResponseWriter, r *http.Req
 		}
 	}
 
-	jsonResponse(w, http.StatusOK, map[string]any{
+	resp := map[string]any{
 		"provider_type": providerType,
 		"provider_name": providerName,
 		"settings":      result,
-	})
+	}
+	// A tenant without its own account sends with the platform's (Platform > Providers). Say so,
+	// with the values in force, so the page shows them instead of an empty form with sample values.
+	if _, ok := inheritableAccounts[providerType+"/"+providerName]; ok {
+		platformRows, perr := h.client.ProviderSetting.Query().
+			Where(
+				providersetting.TenantID(platformTenantID),
+				providersetting.IsPlatform(true),
+				providersetting.ProviderType(providerType),
+				providersetting.ProviderName(providerName),
+				providersetting.EnvironmentEQ("production"),
+				providersetting.IsActive(true),
+				providersetting.KeyNEQ("_config"),
+			).
+			All(ctx)
+		if perr != nil {
+			h.logger.Warn("failed to load platform provider settings", zap.String("provider", providerName), zap.Error(perr))
+		} else if inh := inheritedProviderSettings(providerType, providerName, settingRows(settings), settingRows(platformRows), httpware.IsPlatformOwner(ctx)); inh.From != "" {
+			resp["inherited_from"] = inh.From
+			resp["effective"] = inh.Effective
+			resp["inherited_keys"] = inh.Keys
+		}
+	}
+
+	jsonResponse(w, http.StatusOK, resp)
 }
 
 type saveTenantSettingsRequest struct {

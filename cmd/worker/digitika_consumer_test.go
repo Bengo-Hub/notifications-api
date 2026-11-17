@@ -46,7 +46,7 @@ func TestEnquiryRepliesToTheVisitorAndAlertsTheTeamByEmail(t *testing.T) {
 		t.Fatalf("one visitor party: ok=%v parties=%d", ok, len(n.Parties))
 	}
 	wa := n.Parties[0].WhatsApp
-	if wa == nil || wa.Name != "codevertex_enquiry_received_v1_btn" || wa.Button != "services" {
+	if wa == nil || wa.Name != "codevertex_enquiry_received_v2_btn" || wa.Button != "services" {
 		t.Fatalf("visitor WhatsApp = %+v", wa)
 	}
 	if wa.Params[1] != "POS and inventory" {
@@ -294,7 +294,7 @@ func TestDigitikaWhatsAppTemplatesMatchTheManifest(t *testing.T) {
 			t.Errorf("%s: missing email template for %s", name, n.TemplateID)
 		}
 	}
-	for _, name := range []string{"digitika_portal_account_v2_btn", "codevertex_enquiry_received_v1_btn"} {
+	for _, name := range []string{"digitika_portal_account_v2_btn", "codevertex_enquiry_received_v2_btn"} {
 		if _, ok := declared[name]; !ok {
 			t.Errorf("%q is not in templates.json", name)
 		}

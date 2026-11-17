@@ -24,17 +24,18 @@ import (
 //
 //   - tenant scope, from subscriptions-api: AI credits, eTIMS API tokens, SMS, WhatsApp and any
 //     credit service it adds later. The tenant's admin gets an email and a WhatsApp message with
-//     a Buy credits button to the subscriptions billing page.
+//     a View balance button to the subscriptions billing page.
 //   - platform scope, from marketflow-ai: the platform owner's provider balances (fal,
 //     Higgsfield, ElevenLabs and later providers). The platform owner gets the same two
-//     channels with a Top up button to MarketFlow's providers page.
+//     channels with a View balance button to MarketFlow's providers page.
 //
 // The event carries the label, the numbers and the link, so a new credit service or provider
 // needs no change here.
 
 const balanceLowConsumer = "notifications-billing-balance-low"
 
-// marketflowAppBase is the domain the provider_balance_low_v1_btn button was approved against.
+// marketflowAppBase is the domain the provider_balance_low_v1_btn button was approved against
+// (and its rewrite provider_balance_low_v2_btn keeps).
 const marketflowAppBase = "https://marketflow.codevertexafrica.com"
 
 // platformOwnerSlug is the platform owner's tenant slug.
@@ -143,7 +144,7 @@ func balanceLowNotice(evt balanceLowEvent, ti *tenantInfo, email string, phones 
 		n.Subject = headline
 		party.Target = messaging.TargetPlatformAdmin
 		party.WhatsApp = &partyWhatsApp{
-			Name:   "provider_balance_low_v1_btn",
+			Name:   "provider_balance_low_v2_btn",
 			Params: []string{label, levelWord, remaining},
 			Button: "platform/providers",
 		}

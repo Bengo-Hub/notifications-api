@@ -58,7 +58,7 @@ func TestBalanceLowPlatformNotice(t *testing.T) {
 		Level: "empty", Remaining: 0, Unit: "usd", Threshold: 5, Period: "2026-11-03", Estimate: true, BuyURL: "https://console.higgsfield.ai"})
 	n := balanceLowNotice(evt, &tenantInfo{ID: uuid.New(), Name: "Codevertex"}, "owner@codevertex.example", nil)
 	p := n.Parties[0]
-	if n.TemplateID != "billing/provider_balance_low" || p.Target != messaging.TargetPlatformAdmin || p.WhatsApp.Name != "provider_balance_low_v1_btn" {
+	if n.TemplateID != "billing/provider_balance_low" || p.Target != messaging.TargetPlatformAdmin || p.WhatsApp.Name != "provider_balance_low_v2_btn" {
 		t.Fatalf("notice = %+v", n)
 	}
 	if got := strings.Join(p.WhatsApp.Params, "|"); got != "Higgsfield|has run out|about USD 0.00" {
@@ -104,7 +104,7 @@ func TestBalanceLowTemplatesAreConsistent(t *testing.T) {
 		base   string
 	}{
 		"credits_balance_low_v2_btn":  {4, pricingAppBase},
-		"provider_balance_low_v1_btn": {3, marketflowAppBase},
+		"provider_balance_low_v2_btn": {3, marketflowAppBase},
 	}
 	for _, d := range defs {
 		w, ok := want[d.Name]

@@ -60,6 +60,7 @@ import (
 	providerconfig "github.com/bengobox/notifications-api/internal/providers/config"
 	sandboxmod "github.com/bengobox/notifications-api/internal/sandbox"
 	"github.com/bengobox/notifications-api/internal/shared/logger"
+	"github.com/bengobox/notifications-api/internal/ticketing"
 	waprofile "github.com/bengobox/notifications-api/internal/whatsapp/profile"
 	"github.com/bengobox/notifications-api/internal/whatsapp/templatecat"
 	"github.com/bengobox/notifications-api/internal/whatsapp/tenanttemplates"
@@ -397,7 +398,16 @@ func New(ctx context.Context) (*App, error) {
 	}
 	// Staff replies spend "Replies to customers" WhatsApp credits (owner, 12 November 2026).
 	whatsappInboxService := whatsappinbox.NewService(entClient, providerManager, whatsappInboxHub, natsConn, cfg.Events, log).WithCharger(creditsClient)
-	whatsappInboxHandler := handlers.NewWhatsAppInboxHandler(whatsappInboxService, whatsappInboxHub, cfg.HTTP.AllowedOrigins, log)
+	// Convert to ticket: ticketing-api owns tickets; the action shows only to tenants whose plan
+	// includes ticketing (subscriptions-api entitlement, cached, fail-open like every service).
+	if cfg.Services.TicketingAPI != "" {
+		whatsappInboxService.WithTickets(ticketing.New(serviceclient.New(serviceclient.DefaultConfig(cfg.Services.TicketingAPI, "ticketing-api", log.Named("ticketing.client"))), cfg.Security.APIKey))
+	}
+	entitlements := authclient.NewEntitlementClient(cfg.Services.SubscriptionsAPI, cfg.Security.APIKey)
+	whatsappInboxHandler := handlers.NewWhatsAppInboxHandler(whatsappInboxService, whatsappInboxHub, cfg.HTTP.AllowedOrigins, log).
+		WithTicketing(func(ctx context.Context, tenantID string) bool {
+			return cfg.Services.TicketingAPI != "" && entitlements.UsesService(ctx, tenantID, "ticketing")
+		}, cfg.Services.TicketingConsoleURL)
 	// Meta's live template categories and recent send outcomes, shared with the worker (Redis).
 	var templateRedis redis.UniversalClient
 	if redisClient != nil {

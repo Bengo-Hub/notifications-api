@@ -60,6 +60,7 @@ type Service struct {
 	eventsCfg   config.EventsConfig
 	log         *zap.Logger
 	charger     ReplyCharger
+	tickets     TicketCreator
 }
 
 // WithCharger charges each staff reply one "Replies to customers" credit (owner, 12 November

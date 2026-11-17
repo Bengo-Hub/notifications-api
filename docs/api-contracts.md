@@ -97,6 +97,39 @@
   - Ended announcements are hard deleted on start and hourly (once fleet-wide via the shared
     `RunOnce`); one with no end runs until switched off or deleted.
 
+- `GET /api/v1/whatsapp/conversations/ticketing` (inbox read permission)
+  - Whether the WhatsApp inbox offers Convert to ticket for this tenant: `{ "available": true }` when
+    a ticketing-api URL is configured and the tenant's plan includes the `ticketing` service. The plan
+    is read from subscriptions-api through the shared entitlement client (cached for a minute, and
+    open when subscriptions-api cannot answer, as on every other service). The platform tenant and
+    other exempt tenants always have it.
+
+- `POST /api/v1/whatsapp/conversations/{conversationId}/ticket` (inbox reply permission,
+  added 17 November 2026, ticketing Sprint 11)
+  - Opens a support ticket in ticketing-api for one customer message, or answers with the ticket it
+    already has. Body (optional): `{ "message_id": "<inbox message uuid>" }`. Without a body the
+    conversation's latest customer message is used.
+  - notifications-api calls ticketing-api's `POST /api/v1/internal/tickets` with `X-API-Key`
+    (`INTERNAL_SERVICE_KEY`) and `X-Tenant-ID`: subject from the first line of the message (at most
+    120 characters), the message as the description, channel `whatsapp`, the conversation's customer
+    name and phone as requester, the tenant number (`phone_number_id`) and the time the message came
+    in (`received_at`), `source: "notifications.whatsapp"` and
+    `source_ref: { "type": "wa_message", "id": "<WhatsApp message id>" }`.
+  - Idempotency: the key is the WhatsApp message id, the same source and ref ticketing-api's own
+    WhatsApp ingest gives a ticket opened from that message. Converting twice, converting a message
+    the ingest already opened a ticket for, or one the ingest threaded onto an open ticket, all answer
+    with that ticket. Nothing about the ticket is stored in notifications-api.
+  - Response: `201` for a new ticket, `200` for an existing one:
+    `{ "ticket_id", "ticket_number", "status", "created", "url" }`, where `url` is
+    `<TICKETING_CONSOLE_URL>/<tenant slug>/tickets/<ticket id>` (omitted when the tenant slug is not
+    known here).
+  - Errors: `403 ticketing_unavailable` when the tenant's plan has no ticketing, `404` for a message
+    outside the conversation, `422` for a staff reply, a conversation with no customer message or a
+    message stored without its WhatsApp id, `503` when ticketing-api is not configured, `502` when
+    ticketing-api fails.
+  - Config: `TICKETING_SERVICE_URL` (default `http://ticketing-api.ticketing.svc.cluster.local:4009`)
+    and `TICKETING_CONSOLE_URL` (default `https://ticketing.codevertexafrica.com`).
+
 All responses include `X-Request-ID` header for traceability. Error responses follow RFC 7807.
 
 ## Webhooks

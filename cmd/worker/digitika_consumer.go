@@ -285,7 +285,8 @@ func buildAccessCode(p map[string]any) (digitikaNotice, bool) {
 	return n, code != "" && (email != "" || phone != "")
 }
 
-// contactReplyButton is the URL suffix of the enquiry reply's "Visit our website" button.
+// contactReplyButton is the URL suffix of the enquiry reply's "Service details" button (the
+// services page).
 const contactReplyButton = "services"
 
 // buildContactReceived acknowledges a website enquiry to the visitor (email and WhatsApp) and
@@ -310,7 +311,7 @@ func buildContactReceived(p map[string]any) (digitikaNotice, bool) {
 	}
 	n.Parties = []noticeParty{partyOf(messaging.TargetCustomer, email, phone, nil,
 		&partyWhatsApp{
-			Name:   "codevertex_enquiry_received_v1_btn",
+			Name:   "codevertex_enquiry_received_v2_btn",
 			Params: []string{waParam(name, "there"), waParam(service, "our services")},
 			Button: contactReplyButton,
 		})}

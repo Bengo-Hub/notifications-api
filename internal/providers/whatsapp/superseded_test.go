@@ -90,3 +90,44 @@ func TestSupersededFallback(t *testing.T) {
 		t.Fatalf("unexpected fallback: %v", md)
 	}
 }
+
+// The button rewrites of 17 November 2026 fall back to the approved templates, never to the first
+// round's order names (delivered v5/v6, completed v3/v4) that Meta did not approve. The two-button
+// order template's caller fallback (the new one-button template) gives way to the approved
+// two-button template, with both buttons.
+func TestButtonRewritesFallBackToApprovedTemplates(t *testing.T) {
+	for rewrite, approved := range map[string]string{
+		"ordering_order_delivered_v7_btn":    "ordering_order_delivered_v3_btn",
+		"ordering_order_delivered_v8_btn":    "ordering_order_delivered_v4_btn",
+		"ordering_order_completed_v5_btn":    "ordering_order_completed_v1_btn",
+		"ordering_order_completed_v6_btn":    "ordering_order_completed_v2_btn",
+		"codevertex_enquiry_received_v2_btn": "codevertex_enquiry_received_v1_btn",
+		"provider_balance_low_v2_btn":        "provider_balance_low_v1_btn",
+	} {
+		if got := superseded[rewrite]; got.old != approved || got.order != nil {
+			t.Errorf("%s: falls back to %+v, want %s with the same parameters", rewrite, got, approved)
+		}
+	}
+	for _, unapproved := range []string{"ordering_order_delivered_v5_btn", "ordering_order_delivered_v6_btn",
+		"ordering_order_completed_v3_btn", "ordering_order_completed_v4_btn"} {
+		if _, ok := superseded[unapproved]; ok {
+			t.Errorf("%s was never approved and nothing sends it; drop its entry", unapproved)
+		}
+	}
+
+	buttons := []string{"shop/orders/guest/x?rate=1", "shop/review/google"}
+	md := map[string]interface{}{
+		"template_name":                  "ordering_order_delivered_v8_btn",
+		"template_params":                []string{"Amina", "#9"},
+		"template_button_param":          buttons[0],
+		"template_button_params":         buttons,
+		"template_fallback_name":         "ordering_order_delivered_v7_btn",
+		"template_fallback_params":       []string{"Amina", "#9"},
+		"template_fallback_button_param": buttons[0],
+	}
+	addSupersededFallback(md)
+	if md["template_fallback_name"] != "ordering_order_delivered_v4_btn" ||
+		!reflect.DeepEqual(md["template_fallback_button_params"], buttons) {
+		t.Fatalf("got %v", md)
+	}
+}

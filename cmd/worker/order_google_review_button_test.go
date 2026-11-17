@@ -13,20 +13,20 @@ func TestCompletedOrderGetsGoogleReviewButtonWhenLinkSet(t *testing.T) {
 		"google_review_url": "https://search.google.com/local/writereview?placeid=X",
 	}
 	out := whatsAppTemplateMetadata(m, data)
-	if out["template_name"] != "ordering_order_completed_v4_btn" {
+	if out["template_name"] != "ordering_order_completed_v6_btn" {
 		t.Fatalf("template = %v, want the two-button variant", out["template_name"])
 	}
 	want := []string{"codevertex-demo/orders/guest/abc?rate=1", "codevertex-demo/review/google"}
 	if got := out["template_button_params"]; !reflect.DeepEqual(got, want) {
 		t.Fatalf("button params = %v, want %v", got, want)
 	}
-	if out["template_fallback_name"] != "ordering_order_completed_v3_btn" || out["template_fallback_button_param"] != want[0] {
+	if out["template_fallback_name"] != "ordering_order_completed_v5_btn" || out["template_fallback_button_param"] != want[0] {
 		t.Fatalf("fallback = %v / %v", out["template_fallback_name"], out["template_fallback_button_param"])
 	}
 
 	delete(data, "google_review_url")
 	out = whatsAppTemplateMetadata(m, data)
-	if out["template_name"] != "ordering_order_completed_v3_btn" || out["template_button_params"] != nil {
+	if out["template_name"] != "ordering_order_completed_v5_btn" || out["template_button_params"] != nil {
 		t.Fatalf("without a review link the one-button template is sent: %v", out)
 	}
 }

@@ -945,6 +945,28 @@ I decided on 2026-11-12 to build a platform cost report: for every WhatsApp Busi
 - Tenant admin UI
 - Tenant-scoped access control
 
+**Inherited settings (added 2026-11-17)**: a tenant without its own email or SMS account sends with
+the platform's (Platform > Providers), as `internal/providers/provider_scope.go` resolves it: an SMTP
+account belongs to the tenant once it saves its own host, a Brevo or Africa's Talking account once it
+saves its own API key. `GET /api/v1/providers/settings?provider_type=&provider_name=` still returns the
+tenant's own values in `settings`, and for such a tenant adds:
+
+```json
+{
+  "inherited_from": "platform",
+  "effective": {"host": "...", "port": "465", "username": "...", "from": "...", "reply_to": "..."},
+  "inherited_keys": ["from", "host", "port", "reply_to", "username"]
+}
+```
+
+`effective` never holds a password or API key. The platform account's host, port and username are
+only returned to a platform owner; any other tenant gets the sender values (from, reply-to, sender
+name), with its own on top of the platform's. Settings > Providers shows these read only, marked
+"Inherited from Platform > Providers", until the user picks "Use custom settings for this tenant".
+Saving the tenant form writes only the tenant's own rows and skips empty values, so the platform's
+values are never changed or blanked by it. WhatsApp never inherits (a tenant without a number of its
+own is never sent through the platform's).
+
 ---
 
 ## Integration Security

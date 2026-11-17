@@ -295,6 +295,7 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 						}
 						wa.Get("/", whatsappInbox.ListConversations)
 						wa.Get("/stream", whatsappInbox.StreamInbox)
+						wa.Get("/ticketing", whatsappInbox.TicketingStatus)
 						wa.Get("/{conversationId}/messages", whatsappInbox.ListMessages)
 						wa.Post("/{conversationId}/read", whatsappInbox.MarkRead)
 						wa.Group(func(reply chi.Router) {
@@ -302,6 +303,9 @@ func New(log *zap.Logger, health *handlers.HealthHandler, notifications *handler
 								reply.Use(authenticator.RequirePermissions(identity.PermWhatsAppInboxReply))
 							}
 							reply.Post("/{conversationId}/messages", whatsappInbox.Reply)
+							// Convert to ticket: opens (or finds) the support ticket for a
+							// customer message in ticketing-api, keyed on its WhatsApp id.
+							reply.Post("/{conversationId}/ticket", whatsappInbox.ConvertToTicket)
 						})
 					})
 				}

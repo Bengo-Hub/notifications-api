@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -16,6 +17,7 @@ import (
 
 	"github.com/bengobox/notifications-api/internal/ent"
 	"github.com/bengobox/notifications-api/internal/modules/whatsappinbox"
+	"github.com/bengobox/notifications-api/internal/ticketing"
 )
 
 // WhatsAppInboxHandler exposes the tenant-scoped WhatsApp conversation inbox — list conversations,
@@ -26,6 +28,19 @@ type WhatsAppInboxHandler struct {
 	hub            *whatsappinbox.Hub
 	allowedOrigins []string
 	log            *zap.Logger
+
+	// usesTicketing reports whether the tenant's plan includes the ticketing service; nil means
+	// Convert to ticket is not wired. ticketingConsole is the ticketing console's base URL.
+	usesTicketing    func(ctx context.Context, tenantID string) bool
+	ticketingConsole string
+}
+
+// WithTicketing enables Convert to ticket. usesTicketing answers whether a tenant has the
+// ticketing service; consoleURL is where a ticket link points.
+func (h *WhatsAppInboxHandler) WithTicketing(usesTicketing func(ctx context.Context, tenantID string) bool, consoleURL string) *WhatsAppInboxHandler {
+	h.usesTicketing = usesTicketing
+	h.ticketingConsole = consoleURL
+	return h
 }
 
 func NewWhatsAppInboxHandler(service *whatsappinbox.Service, hub *whatsappinbox.Hub, allowedOrigins []string, log *zap.Logger) *WhatsAppInboxHandler {
@@ -270,4 +285,100 @@ func wsOriginPatterns(allowed []string) []string {
 		}
 	}
 	return out
+}
+
+// ticketingServiceTag is the ticketing service's tag in a tenant's subscription.
+const ticketingServiceTag = "ticketing"
+
+// ticketingAvailable reports whether Convert to ticket is wired and the tenant has the service.
+func (h *WhatsAppInboxHandler) ticketingAvailable(r *http.Request, tenantID uuid.UUID) bool {
+	return h.usesTicketing != nil && h.usesTicketing(r.Context(), tenantID.String())
+}
+
+// TicketingStatus tells the inbox whether to offer Convert to ticket for the calling tenant.
+func (h *WhatsAppInboxHandler) TicketingStatus(w http.ResponseWriter, r *http.Request) {
+	tenantID, ok := tenantUUID(r)
+	if !ok {
+		jsonError(w, http.StatusBadRequest, "tenant ID required")
+		return
+	}
+	jsonResponse(w, http.StatusOK, map[string]bool{"available": h.ticketingAvailable(r, tenantID)})
+}
+
+type convertToTicketRequest struct {
+	// MessageID is the inbound message to convert; empty takes the latest customer message.
+	MessageID string `json:"message_id"`
+}
+
+type convertToTicketResponse struct {
+	TicketID     string `json:"ticket_id"`
+	TicketNumber string `json:"ticket_number"`
+	Status       string `json:"status"`
+	Created      bool   `json:"created"`
+	URL          string `json:"url,omitempty"`
+}
+
+// ConvertToTicket opens a support ticket in ticketing-api for one customer message (or the
+// conversation's latest one) and answers with its number and console link. Converting the same
+// message again answers 200 with the same ticket; a new ticket answers 201.
+func (h *WhatsAppInboxHandler) ConvertToTicket(w http.ResponseWriter, r *http.Request) {
+	tenantID, ok := tenantUUID(r)
+	if !ok {
+		jsonError(w, http.StatusBadRequest, "tenant ID required")
+		return
+	}
+	convID, err := uuid.Parse(chi.URLParam(r, "conversationId"))
+	if err != nil {
+		jsonError(w, http.StatusBadRequest, "invalid conversation id")
+		return
+	}
+	var req convertToTicketRequest
+	if r.ContentLength != 0 {
+		if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4<<10)).Decode(&req); err != nil {
+			jsonError(w, http.StatusBadRequest, "invalid request body")
+			return
+		}
+	}
+	messageID := uuid.Nil
+	if s := strings.TrimSpace(req.MessageID); s != "" {
+		if messageID, err = uuid.Parse(s); err != nil {
+			jsonError(w, http.StatusBadRequest, "invalid message id")
+			return
+		}
+	}
+	if !h.ticketingAvailable(r, tenantID) {
+		jsonResponse(w, http.StatusForbidden, map[string]string{
+			"error":   "ticketing_unavailable",
+			"message": "Support tickets are not part of this workspace's plan.",
+		})
+		return
+	}
+
+	ticket, err := h.service.ConvertToTicket(r.Context(), tenantID, convID, messageID)
+	if err != nil {
+		switch {
+		case errors.Is(err, whatsappinbox.ErrNotFound):
+			jsonError(w, http.StatusNotFound, "message not found")
+		case errors.Is(err, whatsappinbox.ErrNotConvertible):
+			jsonError(w, http.StatusUnprocessableEntity, err.Error())
+		case errors.Is(err, ticketing.ErrDisabled):
+			jsonError(w, http.StatusServiceUnavailable, "ticketing is not configured")
+		default:
+			h.log.Error("convert whatsapp message to ticket", zap.String("tenant_id", tenantID.String()),
+				zap.String("conversation_id", convID.String()), zap.Error(err))
+			jsonError(w, http.StatusBadGateway, "the ticket could not be opened, try again")
+		}
+		return
+	}
+	status := http.StatusOK
+	if ticket.Created {
+		status = http.StatusCreated
+	}
+	jsonResponse(w, status, convertToTicketResponse{
+		TicketID:     ticket.ID,
+		TicketNumber: ticket.TicketNumber,
+		Status:       ticket.Status,
+		Created:      ticket.Created,
+		URL:          ticketing.TicketURL(h.ticketingConsole, h.service.TenantSlug(r.Context(), tenantID), ticket.ID),
+	})
 }

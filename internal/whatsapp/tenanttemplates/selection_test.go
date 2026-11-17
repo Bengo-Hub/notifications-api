@@ -26,8 +26,8 @@ var testDefs = []templatesync.TemplateDef{
 	{Name: "payroll_payslip_ready", Category: "UTILITY"},
 	{Name: "hadia_registry_published_v2_btn", Category: "UTILITY"},
 	{Name: "maskani_bill_issued_v1_btn", Category: "UTILITY"},
-	{Name: "codevertex_enquiry_received_v1_btn", Category: "UTILITY"},
-	{Name: "provider_balance_low_v1_btn", Category: "UTILITY"},
+	{Name: "codevertex_enquiry_received_v2_btn", Category: "UTILITY"},
+	{Name: "provider_balance_low_v2_btn", Category: "UTILITY"},
 	{Name: "projects_task_assigned_v1_btn", Category: "UTILITY"},
 	{Name: "ticketing_ticket_reply_v1_btn", Category: "UTILITY"},
 }

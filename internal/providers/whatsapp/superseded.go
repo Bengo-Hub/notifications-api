@@ -17,12 +17,20 @@ type supersededTemplate struct {
 // Meta reads as marketing or a login ("enjoy", "thank you for choosing", "sign in"); same parameters,
 // same buttons. cmd/worker/projects_portal.go sends projects_client_invited_v2_btn, falling back to
 // v1 until Meta approves v2.
+//
+// The second round of 17 November 2026 (owner decision) rewrites the buttons Meta may read as an
+// invitation: "Leave Feedback" and "Review us on Google" on the order templates, "Visit our
+// website" on the enquiry reply and "Top up" on the provider balance alert. The order rewrites
+// replace both the approved templates and the first round's names (delivered v5/v6, completed
+// v3/v4), which Meta never approved, so they fall back straight to the approved ones.
 var superseded = map[string]supersededTemplate{
-	"ordering_order_delivered_v5_btn": {old: "ordering_order_delivered_v3_btn"},
-	"ordering_order_delivered_v6_btn": {old: "ordering_order_delivered_v4_btn"},
-	"ordering_order_completed_v3_btn": {old: "ordering_order_completed_v1_btn"},
-	"ordering_order_completed_v4_btn": {old: "ordering_order_completed_v2_btn"},
-	"projects_client_invited_v2_btn":  {old: "projects_client_invited_v1_btn"},
+	"ordering_order_delivered_v7_btn":    {old: "ordering_order_delivered_v3_btn"},
+	"ordering_order_delivered_v8_btn":    {old: "ordering_order_delivered_v4_btn"},
+	"ordering_order_completed_v5_btn":    {old: "ordering_order_completed_v1_btn"},
+	"ordering_order_completed_v6_btn":    {old: "ordering_order_completed_v2_btn"},
+	"codevertex_enquiry_received_v2_btn": {old: "codevertex_enquiry_received_v1_btn"},
+	"provider_balance_low_v2_btn":        {old: "provider_balance_low_v1_btn"},
+	"projects_client_invited_v2_btn":     {old: "projects_client_invited_v1_btn"},
 }
 
 // addSupersededFallback sets the fallback for a rewritten template. A fallback the caller set is

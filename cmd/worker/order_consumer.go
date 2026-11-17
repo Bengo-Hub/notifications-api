@@ -99,8 +99,8 @@ type orderNotificationMapping struct {
 	// URL whose path becomes the button's dynamic suffix.
 	WhatsAppLinkKey string
 	// WhatsAppReviewTemplate is the two-button variant of WhatsAppButtonTemplate (order link and
-	// "Review us on Google"), sent when the business set a Google review link. Until Meta approves
-	// it the one-button template is sent instead (template fallback).
+	// the business's Google page, "View on Google"), sent when the business set a Google review
+	// link. Until Meta approves it the approved two-button template is sent instead (superseded.go).
 	WhatsAppReviewTemplate string
 }
 
@@ -108,7 +108,7 @@ type orderNotificationMapping struct {
 // URL button at approval (templates.json); only the part after it varies per send.
 const sharedOrderingButtonPrefix = "https://ordering.codevertexafrica.com/"
 
-// googleReviewButtonSuffix is the "Review us on Google" button's path for a mapping that has a
+// googleReviewButtonSuffix is the Google button's path for a mapping that has a
 // review template, when the business set a Google review link: "{business}/review/google", which
 // the storefront forwards to that link (a template button can only open the store's domain).
 // orderSuffix is the order button's path, which starts with the business slug.
@@ -397,16 +397,17 @@ var orderMappings = map[string]orderNotificationMapping{
 	},
 	// Pickup/dine-in orders terminate at "completed" and get the review/rating email. Worded as
 	// complete, not delivered: the customer collected it or ate in. The WhatsApp templates are the
-	// 17 November 2026 rewrites without "enjoy" and "thank you for choosing" (policy section 3);
-	// until Meta approves them each send falls back to completed v1/v2 and delivered v3/v4
-	// (internal/providers/whatsapp/superseded.go).
+	// 17 November 2026 rewrites without "enjoy" and "thank you for choosing" (policy section 3)
+	// and with factual buttons ("View Order", "View on Google") in place of "Leave Feedback" and
+	// "Review us on Google" (section 3b); until Meta approves them each send falls back to
+	// completed v1/v2 and delivered v3/v4 (internal/providers/whatsapp/superseded.go).
 	"ordering.order.completed": {
 		TemplateID:             "ordering/order_completed",
 		EmailSubject:           "Your order is complete",
 		DataBuilder:            reviewEmailDataBuilder,
 		IdempotencyScope:       "review",
-		WhatsAppButtonTemplate: "ordering_order_completed_v3_btn",
-		WhatsAppReviewTemplate: "ordering_order_completed_v4_btn",
+		WhatsAppButtonTemplate: "ordering_order_completed_v5_btn",
+		WhatsAppReviewTemplate: "ordering_order_completed_v6_btn",
 		WhatsAppLinkKey:        "review_link",
 		WhatsAppParams: func(d map[string]interface{}) []string {
 			return []string{
@@ -426,8 +427,8 @@ var orderMappings = map[string]orderNotificationMapping{
 		EmailSubject:           "Your order has been delivered",
 		DataBuilder:            reviewEmailDataBuilder,
 		IdempotencyScope:       "review",
-		WhatsAppButtonTemplate: "ordering_order_delivered_v5_btn",
-		WhatsAppReviewTemplate: "ordering_order_delivered_v6_btn",
+		WhatsAppButtonTemplate: "ordering_order_delivered_v7_btn",
+		WhatsAppReviewTemplate: "ordering_order_delivered_v8_btn",
 		WhatsAppLinkKey:        "review_link",
 		WhatsAppParams: func(d map[string]interface{}) []string {
 			return []string{

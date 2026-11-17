@@ -23,63 +23,49 @@
     ]
   },
   {
-    "name": "ordering_order_delivered_v5_btn",
+    "name": "ordering_order_delivered_v7_btn",
     "category": "UTILITY",
     "language": "en_US",
-    "source": "whatsapp/ordering/order_delivered.txt (link as a URL button). Replaces ordering_order_delivered_v3_btn, whose \"We hope you enjoy it\" and \"Thank you for choosing us\" are words Meta reads as marketing (policy section 3); sends fall back to v3 until Meta approves this one (superseded.go)",
+    "source": "whatsapp/ordering/order_delivered.txt (link as a URL button). Replaces ordering_order_delivered_v3_btn (\"We hope you enjoy it\", \"Thank you for choosing us\") and its unapproved rewrite v5 (a \"Leave Feedback\" button, which Meta reads as an invitation); sends fall back to v3 until Meta approves this one (superseded.go)",
     "body": "Hi {{1}},\n\nYour order *{{2}}* has been delivered and is now closed.\n\nThe order page shows its full details.",
     "example": ["Amina", "#ULC-2291"],
     "buttons": [
-      {"type": "URL", "text": "Leave Feedback", "url": "https://ordering.codevertexafrica.com/{{1}}", "example": ["codevertex-demo/orders/guest/f2e6121d-bead-41ad-95ed-b74655a3d45c?rate=1"]}
+      {"type": "URL", "text": "View Order", "url": "https://ordering.codevertexafrica.com/{{1}}", "example": ["codevertex-demo/orders/guest/f2e6121d-bead-41ad-95ed-b74655a3d45c?rate=1"]}
     ]
   },
   {
-    "name": "ordering_order_completed_v3_btn",
+    "name": "ordering_order_completed_v5_btn",
     "category": "UTILITY",
     "language": "en_US",
-    "source": "whatsapp/ordering/order_completed.txt (link as a URL button). Replaces ordering_order_completed_v1_btn (\"We hope you enjoy it\", \"Thank you for choosing us\"); sends fall back to v1 until Meta approves this one (superseded.go)",
+    "source": "whatsapp/ordering/order_completed.txt (link as a URL button). Replaces ordering_order_completed_v1_btn (\"We hope you enjoy it\", \"Thank you for choosing us\") and its unapproved rewrite v3 (a \"Leave Feedback\" button); sends fall back to v1 until Meta approves this one (superseded.go)",
     "body": "Hi {{1}},\n\nYour order *{{2}}* is now complete and has been closed.\n\nThe order page shows its full details.",
     "example": ["Amina", "#ULC-2291"],
     "buttons": [
-      {"type": "URL", "text": "Leave Feedback", "url": "https://ordering.codevertexafrica.com/{{1}}", "example": ["codevertex-demo/orders/guest/f2e6121d-bead-41ad-95ed-b74655a3d45c?rate=1"]}
+      {"type": "URL", "text": "View Order", "url": "https://ordering.codevertexafrica.com/{{1}}", "example": ["codevertex-demo/orders/guest/f2e6121d-bead-41ad-95ed-b74655a3d45c?rate=1"]}
     ]
   },
   {
-    "name": "ordering_order_completed_v4_btn",
+    "name": "ordering_order_completed_v6_btn",
     "category": "UTILITY",
     "language": "en_US",
-    "source": "whatsapp/ordering/order_completed.txt (order link and Google review as URL buttons). Replaces ordering_order_completed_v2_btn (\"We hope you enjoy it\", \"Thank you for choosing us\"); sends fall back to v2 until Meta approves this one (superseded.go)",
+    "source": "whatsapp/ordering/order_completed.txt (order link and the business's Google page as URL buttons). Replaces ordering_order_completed_v2_btn (\"We hope you enjoy it\", \"Thank you for choosing us\") and its unapproved rewrite v4 (\"Leave Feedback\" and \"Review us on Google\" buttons); sends fall back to v2 until Meta approves this one (superseded.go)",
     "body": "Hi {{1}},\n\nYour order *{{2}}* is now complete and has been closed.\n\nThe order page shows its full details.",
     "example": ["Amina", "#ULC-2291"],
     "buttons": [
-      {"type": "URL", "text": "Leave Feedback", "url": "https://ordering.codevertexafrica.com/{{1}}", "example": ["codevertex-demo/orders/guest/f2e6121d-bead-41ad-95ed-b74655a3d45c?rate=1"]},
-      {
-        "type": "URL",
-        "text": "Review us on Google",
-        "url": "https://ordering.codevertexafrica.com/{{1}}",
-        "example": [
-          "codevertex-demo/review/google"
-        ]
-      }
+      {"type": "URL", "text": "View Order", "url": "https://ordering.codevertexafrica.com/{{1}}", "example": ["codevertex-demo/orders/guest/f2e6121d-bead-41ad-95ed-b74655a3d45c?rate=1"]},
+      {"type": "URL", "text": "View on Google", "url": "https://ordering.codevertexafrica.com/{{1}}", "example": ["codevertex-demo/review/google"]}
     ]
   },
   {
-    "name": "ordering_order_delivered_v6_btn",
+    "name": "ordering_order_delivered_v8_btn",
     "category": "UTILITY",
     "language": "en_US",
-    "source": "whatsapp/ordering/order_delivered.txt (order link and Google review as URL buttons). Replaces ordering_order_delivered_v4_btn (\"We hope you enjoy it\", \"Thank you for choosing us\"); sends fall back to v4 until Meta approves this one (superseded.go)",
+    "source": "whatsapp/ordering/order_delivered.txt (order link and the business's Google page as URL buttons). Replaces ordering_order_delivered_v4_btn (\"We hope you enjoy it\", \"Thank you for choosing us\") and its unapproved rewrite v6 (\"Leave Feedback\" and \"Review us on Google\" buttons); sends fall back to v4 until Meta approves this one (superseded.go)",
     "body": "Hi {{1}},\n\nYour order *{{2}}* has been delivered and is now closed.\n\nThe order page shows its full details.",
     "example": ["Amina", "#ULC-2291"],
     "buttons": [
-      {"type": "URL", "text": "Leave Feedback", "url": "https://ordering.codevertexafrica.com/{{1}}", "example": ["codevertex-demo/orders/guest/f2e6121d-bead-41ad-95ed-b74655a3d45c?rate=1"]},
-      {
-        "type": "URL",
-        "text": "Review us on Google",
-        "url": "https://ordering.codevertexafrica.com/{{1}}",
-        "example": [
-          "codevertex-demo/review/google"
-        ]
-      }
+      {"type": "URL", "text": "View Order", "url": "https://ordering.codevertexafrica.com/{{1}}", "example": ["codevertex-demo/orders/guest/f2e6121d-bead-41ad-95ed-b74655a3d45c?rate=1"]},
+      {"type": "URL", "text": "View on Google", "url": "https://ordering.codevertexafrica.com/{{1}}", "example": ["codevertex-demo/review/google"]}
     ]
   },
   {
@@ -265,14 +251,14 @@
     ]
   },
   {
-    "name": "logistics_delivery_completed_v3_btn",
+    "name": "logistics_delivery_completed_v4_btn",
     "category": "UTILITY",
     "language": "en_US",
-    "source": "whatsapp/logistics/delivery_completed.txt (feedback link as a button). Replaces logistics_delivery_completed_btn (\"Thank you for choosing us\"; v2 was an earlier name). No code sends either yet",
+    "source": "whatsapp/logistics/delivery_completed.txt (order link as a button). Replaces logistics_delivery_completed_btn (\"Thank you for choosing us\"; v2 was an earlier name) and v3 (a \"Leave Feedback\" button). No code sends any of them yet",
     "body": "Your order *{{1}}* has been delivered.\n\nThe order page shows its full details.",
     "example": ["TL-40217"],
     "buttons": [
-      {"type": "URL", "text": "Leave Feedback", "url": "https://ordering.codevertexafrica.com/{{1}}", "example": ["codevertex-demo/orders/guest/f2e6121d-bead-41ad-95ed-b74655a3d45c?rate=1"]}
+      {"type": "URL", "text": "View Order", "url": "https://ordering.codevertexafrica.com/{{1}}", "example": ["codevertex-demo/orders/guest/f2e6121d-bead-41ad-95ed-b74655a3d45c?rate=1"]}
     ]
   },
   {
@@ -519,14 +505,14 @@
     ]
   },
   {
-    "name": "provider_balance_low_v1_btn",
+    "name": "provider_balance_low_v2_btn",
     "category": "UTILITY",
     "language": "en_US",
-    "source": "whatsapp/billing/provider_balance_low.txt (params: provider, level words, remaining; button: MarketFlow providers page)",
-    "body": "The {{1}} balance {{2}}: {{3}} left.\n\nMarketFlow skips this provider for outputs that cost more than what is left. Top it up from the providers page.",
+    "source": "whatsapp/billing/provider_balance_low.txt (params: provider, level words, remaining; button: MarketFlow providers page). Replaces provider_balance_low_v1_btn, whose \"Top it up\" and \"Top up\" button read as a sale to Meta; sends fall back to v1 until Meta approves this one (superseded.go)",
+    "body": "The {{1}} balance {{2}}: {{3}} left.\n\nMarketFlow skips this provider for outputs that cost more than what is left. The providers page shows each provider's balance.",
     "example": ["Higgsfield", "is low", "about USD 4.20"],
     "buttons": [
-      {"type": "URL", "text": "Top up", "url": "https://marketflow.codevertexafrica.com/{{1}}", "example": ["platform/providers"]}
+      {"type": "URL", "text": "View balance", "url": "https://marketflow.codevertexafrica.com/{{1}}", "example": ["platform/providers"]}
     ]
   },
   {
@@ -926,14 +912,14 @@
     "example": ["Jane"]
   },
   {
-    "name": "codevertex_enquiry_received_v1_btn",
+    "name": "codevertex_enquiry_received_v2_btn",
     "category": "UTILITY",
     "language": "en_US",
-    "source": "whatsapp/digitika/contact_form_reply.txt (params: name, service; button: services)",
+    "source": "whatsapp/digitika/contact_form_reply.txt (params: name, service; button: services). Replaces codevertex_enquiry_received_v1_btn, whose \"Visit our website\" button reads as an invitation to Meta; sends fall back to v1 until Meta approves this one (superseded.go)",
     "body": "Hello {{1}},\n\nWe have received your enquiry about {{2}} at Codevertex Africa Limited. A member of our team will reply within 1 business day.\n\nFor anything urgent, call +254 743 793 901.",
     "example": ["Jane", "POS and inventory"],
     "buttons": [
-      {"type": "URL", "text": "Visit our website", "url": "https://codevertexafrica.com/{{1}}", "example": ["services"]}
+      {"type": "URL", "text": "Service details", "url": "https://codevertexafrica.com/{{1}}", "example": ["services"]}
     ]
   },
   {

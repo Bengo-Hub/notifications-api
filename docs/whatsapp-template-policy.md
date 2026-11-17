@@ -9,7 +9,7 @@ WhatsApp text body).
 ## 1. Links are buttons, never text
 
 A WhatsApp message never shows a raw URL. A link always goes out as a tappable button, like
-"Track Order" or "Leave Feedback" under the message.
+"Track Order" or "View Order" under the message.
 
 | Send type | How the link is attached |
 |---|---|
@@ -48,7 +48,8 @@ Meta fixes a button's domain when the template is approved; only the suffix vari
 A button on any other domain fails the manifest lint: a new domain is a policy decision, so its row
 goes here first and into `buttonDomains` in `manifest_lint_test.go`. The pricing and MarketFlow rows
 were missing from this table until the lint was added on 17 November 2026; their templates
-(`credits_*_btn`, `provider_balance_low_v1_btn`) were already approved on those domains.
+(`credits_*_btn`, `provider_balance_low_v1_btn`) were already approved on those domains, and
+`provider_balance_low_v2_btn` keeps the MarketFlow one.
 
 ## 2b. One notice, several parties
 
@@ -157,7 +158,11 @@ Rules that follow:
 
 - A utility body states a fact about the reader's own account, order, payment or request, with its
   specific detail (number, amount, date, reference). No invitations to buy, renew, visit, share, review
-  or "stay connected", no thanks for loyalty, and no button that sells.
+  or "stay connected", no thanks for loyalty, and no button that sells. A button names what its page
+  shows ("View Order", "View balance", "Service details"), never what we would like the reader to do
+  there. The lint fails a UTILITY button whose text has "Top up", "Buy", "Review us", "Rate us",
+  "Leave Feedback", "Visit our website" or "Shop now" (`sellingButtonText`); its allowlist
+  (`sellingButtonAllowed`) is empty, since a template that needs such a button is a MARKETING one.
 - A body that is mostly one free text variable is marketing to Meta whatever its wording. The lint fails
   a template whose longest example has at least as many words as the rest of its body, unless it is
   billed as MARKETING (`category` or `meta_category`). `broadcast_update_v1` (MARKETING) and
@@ -179,11 +184,29 @@ templates with a banned word, each kept to the same parameters and buttons:
 
 | Old template | Problem | Replacement | Code |
 |---|---|---|---|
-| `ordering_order_delivered_v3_btn`, `ordering_order_delivered_v4_btn` | "We hope you enjoy it", "Thank you for choosing us" | `ordering_order_delivered_v5_btn`, `ordering_order_delivered_v6_btn`: "Your order *X* has been delivered and is now closed. The order page shows its full details." | sent now, falling back to v3 and v4 (`superseded.go`) |
-| `ordering_order_completed_v1_btn`, `ordering_order_completed_v2_btn` | the same | `ordering_order_completed_v3_btn`, `ordering_order_completed_v4_btn` | sent now, falling back to v1 and v2 |
+| `ordering_order_delivered_v3_btn`, `ordering_order_delivered_v4_btn` | "We hope you enjoy it", "Thank you for choosing us" | `ordering_order_delivered_v7_btn`, `ordering_order_delivered_v8_btn`: "Your order *X* has been delivered and is now closed. The order page shows its full details." (v5 and v6 were the first names, see below) | sent now, falling back to v3 and v4 (`superseded.go`) |
+| `ordering_order_completed_v1_btn`, `ordering_order_completed_v2_btn` | the same | `ordering_order_completed_v5_btn`, `ordering_order_completed_v6_btn` (v3 and v4 were the first names) | sent now, falling back to v1 and v2 |
 | `projects_client_invited_v1_btn` | "Sign in", and "has invited you" (the wording Meta refused for Hadia's member invite) | `projects_client_invited_v2_btn`: "X has given you access to the project *Y* in its client portal" | `superseded.go` entry ready; `cmd/worker/projects_portal.go` still sends v1, which stays in the manifest until it switches (`bannedWordsWaitingForSwitch`) |
-| `logistics_delivery_completed_btn` | "Thank you for choosing us" | `logistics_delivery_completed_v3_btn` (v2 was an earlier name) | no code sends either |
+| `logistics_delivery_completed_btn` | "Thank you for choosing us" | `logistics_delivery_completed_v4_btn` (v2 and v3 were earlier names) | no code sends either |
 | `hrm_leave_approved` | "Enjoy your time off", and under four words per variable | `hrm_leave_approved_v2` | no code sends either |
+
+The same day the owner decided that a button inviting the reader to review, visit or buy goes the same
+way (section 3b). Each rewrite keeps the body, the parameters and the button URL with its suffix, and
+only the button text changes to say what the page shows:
+
+| Old template | Problem | Replacement | Code |
+|---|---|---|---|
+| `ordering_order_delivered_v3_btn` (and its first rewrite `ordering_order_delivered_v5_btn`, never approved) | "Leave Feedback" button | `ordering_order_delivered_v7_btn`: "View Order" | `cmd/worker/order_consumer.go` sends it, falling back to v3 |
+| `ordering_order_delivered_v4_btn` (and `ordering_order_delivered_v6_btn`) | "Leave Feedback" and "Review us on Google" buttons | `ordering_order_delivered_v8_btn`: "View Order" and "View on Google" (the storefront's `<slug>/review/google`, which forwards to the business's Google page) | sent when the business set a Google review link, falling back to v4 with both buttons |
+| `ordering_order_completed_v1_btn` (and `ordering_order_completed_v3_btn`) | "Leave Feedback" button | `ordering_order_completed_v5_btn`: "View Order" | sent, falling back to v1 |
+| `ordering_order_completed_v2_btn` (and `ordering_order_completed_v4_btn`) | "Leave Feedback" and "Review us on Google" buttons | `ordering_order_completed_v6_btn`: "View Order" and "View on Google" | sent with a Google review link, falling back to v2 |
+| `codevertex_enquiry_received_v1_btn` | "Visit our website" button | `codevertex_enquiry_received_v2_btn`: "Service details" (the `services` page) | `cmd/worker/digitika_consumer.go` sends it, falling back to v1 |
+| `provider_balance_low_v1_btn` | "Top up" button, and "Top it up from the providers page" in the body | `provider_balance_low_v2_btn`: "View balance"; the body ends "The providers page shows each provider's balance." | `cmd/worker/balance_low_consumer.go` sends it, falling back to v1 |
+| `logistics_delivery_completed_v3_btn` | "Leave Feedback" button | `logistics_delivery_completed_v4_btn`: "View Order" | no code sends either |
+
+The first order rewrites (delivered v5 and v6, completed v3 and v4) left the manifest without being
+approved, so their rewrites fall back straight to the approved names. If they were already submitted,
+they stay on the WABAs unused; deleting them in WhatsApp Manager is optional.
 
 `ispbilling_expiry_reminder_v2` had three and a half words per variable. It has not been submitted yet
 (section 4), so its body was lengthened in place.
@@ -206,9 +229,11 @@ Templates waiting for a Meta sync after their deploy:
 |---|---|
 | `ispbilling_expiry_reminder_v2`, `ispbilling_subscription_expiring_v2` | not sent yet (ISP notices go by SMS and email) |
 | `ticketing_ticket_reply_v1_btn` | an agent reply after the customer's WhatsApp window, only with `TICKETING_WHATSAPP_REPLIES` on (section 2c); sync it to each ticketing tenant's WABA |
-| `ordering_order_delivered_v5_btn`, `ordering_order_delivered_v6_btn`, `ordering_order_completed_v3_btn`, `ordering_order_completed_v4_btn` | delivered and completed orders (sent now through the `superseded.go` fallback); platform WABA and each ordering tenant's WABA |
+| `ordering_order_delivered_v7_btn`, `ordering_order_delivered_v8_btn`, `ordering_order_completed_v5_btn`, `ordering_order_completed_v6_btn` | delivered and completed orders (sent now through the `superseded.go` fallback); platform WABA and each ordering tenant's WABA |
+| `codevertex_enquiry_received_v2_btn` | the reply to a website enquiry (sent now through the fallback to v1); platform WABA |
+| `provider_balance_low_v2_btn` | a MarketFlow provider balance alert to the platform owner (sent now through the fallback to v1); platform WABA |
 | `projects_client_invited_v2_btn` | a client given access to a project's portal, once `projects_portal.go` sends it |
-| `logistics_delivery_completed_v3_btn`, `hrm_leave_approved_v2` | nothing yet (no code sends them) |
+| `logistics_delivery_completed_v4_btn`, `hrm_leave_approved_v2` | nothing yet (no code sends them) |
 
 Approved as UTILITY on 16 November 2026 within the hour, with their `superseded.go` fallbacks removed:
 `notifications_test_message_v2`, `credits_balance_low_v2_btn`, `hadia_registry_published_v2_btn`,
@@ -264,7 +289,7 @@ Every template: category `UTILITY`, language `en_US` (English), one `URL` button
 Notes for the owner when submitting:
 
 - `mf_low_credits_btn` is not needed. Low AI credit alerts already go through the central
-  `credits_balance_low_v1_btn` template (`billing.balance.low`, one consumer for every credit), so a
+  `credits_balance_low_v2_btn` template (`billing.balance.low`, one consumer for every credit), so a
   second template would send two alerts for the same balance.
 - `mf_new_lead_v1_btn` and `mf_weekly_summary_v1_btn` are written for completeness. No code sends them
   yet: new-lead alerts are email only by the owner's decision of 2026-11-11, and there is no weekly
