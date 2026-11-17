@@ -103,6 +103,7 @@ func (l *Loader) Get(ctx context.Context, templateID string) (string, error) {
 		if overrides, oerr := l.store.Overrides(ctx, rels); oerr == nil {
 			for _, rel := range rels {
 				if content, ok := overrides[rel]; ok {
+					content = normalizeNewlines(content)
 					l.cache.Set(templateID, content)
 					return content, nil
 				}
@@ -119,10 +120,18 @@ func (l *Loader) Get(ctx context.Context, templateID string) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("read template: %w", err)
 		}
-		l.cache.Set(templateID, string(content))
-		return string(content), nil
+		text := normalizeNewlines(string(content))
+		l.cache.Set(templateID, text)
+		return text, nil
 	}
 	return "", fmt.Errorf("template not found: %s", templateID)
+}
+
+// normalizeNewlines turns CRLF into LF. A checkout on Windows (core.autocrlf) or an edit pasted
+// from a Windows editor gives template files CRLF, and a stray \r would reach SMS and WhatsApp
+// bodies, which are plain text.
+func normalizeNewlines(s string) string {
+	return strings.ReplaceAll(s, "\r\n", "\n")
 }
 
 // Summary describes a template available for rendering.

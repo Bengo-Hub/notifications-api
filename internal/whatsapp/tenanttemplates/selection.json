@@ -16,6 +16,7 @@
     "maskani": ["maskani_"],
     "digitika": ["digitika_"],
     "hadia": ["hadia_"],
-    "projects": ["projects_"]
+    "projects": ["projects_"],
+    "ticketing": ["ticketing_"]
   }
 }

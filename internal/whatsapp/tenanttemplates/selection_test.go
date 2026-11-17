@@ -29,6 +29,7 @@ var testDefs = []templatesync.TemplateDef{
 	{Name: "codevertex_enquiry_received_v1_btn", Category: "UTILITY"},
 	{Name: "provider_balance_low_v1_btn", Category: "UTILITY"},
 	{Name: "projects_task_assigned_v1_btn", Category: "UTILITY"},
+	{Name: "ticketing_ticket_reply_v1_btn", Category: "UTILITY"},
 }
 
 var shared = []string{"auth_otp", "broadcast_update_v1", "credits_balance_low_v2_btn", "occasion_new_year_v2", "subscription_invoice_ready_v1_btn"}
@@ -79,6 +80,8 @@ func TestSelectByService(t *testing.T) {
 		{name: "erp and finance do not duplicate", services: []string{"erp", "finance", "erp"}, want: with("finance_invoice_sent", "hrm_leave_approved", "payroll_payslip_ready"), matched: []string{"erp", "finance"}},
 		// projects-api task notices (Sprint 12): the prefix had no service, so no tenant ever got them.
 		{name: "projects", services: []string{"projects"}, want: with("projects_task_assigned_v1_btn"), matched: []string{"projects"}},
+		// The ticket reply template goes from the tenant's own number, so it must reach the tenant's WABA.
+		{name: "ticketing", services: []string{"ticketing"}, want: with("ticketing_ticket_reply_v1_btn"), matched: []string{"ticketing"}},
 		{name: "hadia from its delivery logs", services: []string{"hadia"}, want: with("hadia_registry_published_v2_btn"), matched: []string{"hadia"}},
 		{name: "unknown services ignored", services: []string{"marketflow", "platform", "codevertex"}, want: with(), matched: nil},
 	}

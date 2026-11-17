@@ -74,3 +74,22 @@ func TestLoaderStoredEditsWinOverFiles(t *testing.T) {
 		t.Fatalf("edit-only template: %q %v", got, err)
 	}
 }
+
+// A template file or stored edit with Windows line endings (a Windows checkout, a pasted edit)
+// reaches the senders with plain LF, so no \r lands in an SMS or WhatsApp body.
+func TestLoaderNormalisesCRLF(t *testing.T) {
+	root := t.TempDir()
+	_ = os.MkdirAll(filepath.Join(root, "whatsapp", "ticketing"), 0o755)
+	_ = os.WriteFile(filepath.Join(root, "whatsapp", "ticketing", "reply.txt"), []byte("Line one\r\n\r\nLine two\r\n"), 0o644)
+	l := New(config.TemplateConfig{Directory: root, CacheTTL: time.Minute})
+	if got, err := l.Get(context.Background(), "whatsapp/ticketing/reply"); err != nil || got != "Line one\n\nLine two\n" {
+		t.Fatalf("file template: %q %v", got, err)
+	}
+
+	store := &fakeStore{edits: map[string]string{"whatsapp/ticketing/edited.txt": "Edited\r\nbody"}}
+	ls := New(config.TemplateConfig{Directory: root, CacheTTL: time.Minute})
+	ls.SetStore(store)
+	if got, err := ls.Get(context.Background(), "whatsapp/ticketing/edited"); err != nil || got != "Edited\nbody" {
+		t.Fatalf("stored edit: %q %v", got, err)
+	}
+}

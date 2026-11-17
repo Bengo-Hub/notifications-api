@@ -396,14 +396,17 @@ var orderMappings = map[string]orderNotificationMapping{
 		},
 	},
 	// Pickup/dine-in orders terminate at "completed" and get the review/rating email. Worded as
-	// complete, not delivered: the customer collected it or ate in.
+	// complete, not delivered: the customer collected it or ate in. The WhatsApp templates are the
+	// 17 November 2026 rewrites without "enjoy" and "thank you for choosing" (policy section 3);
+	// until Meta approves them each send falls back to completed v1/v2 and delivered v3/v4
+	// (internal/providers/whatsapp/superseded.go).
 	"ordering.order.completed": {
 		TemplateID:             "ordering/order_completed",
 		EmailSubject:           "Your order is complete",
 		DataBuilder:            reviewEmailDataBuilder,
 		IdempotencyScope:       "review",
-		WhatsAppButtonTemplate: "ordering_order_completed_v1_btn",
-		WhatsAppReviewTemplate: "ordering_order_completed_v2_btn",
+		WhatsAppButtonTemplate: "ordering_order_completed_v3_btn",
+		WhatsAppReviewTemplate: "ordering_order_completed_v4_btn",
 		WhatsAppLinkKey:        "review_link",
 		WhatsAppParams: func(d map[string]interface{}) []string {
 			return []string{
@@ -423,8 +426,8 @@ var orderMappings = map[string]orderNotificationMapping{
 		EmailSubject:           "Your order has been delivered",
 		DataBuilder:            reviewEmailDataBuilder,
 		IdempotencyScope:       "review",
-		WhatsAppButtonTemplate: "ordering_order_delivered_v3_btn",
-		WhatsAppReviewTemplate: "ordering_order_delivered_v4_btn",
+		WhatsAppButtonTemplate: "ordering_order_delivered_v5_btn",
+		WhatsAppReviewTemplate: "ordering_order_delivered_v6_btn",
 		WhatsAppLinkKey:        "review_link",
 		WhatsAppParams: func(d map[string]interface{}) []string {
 			return []string{

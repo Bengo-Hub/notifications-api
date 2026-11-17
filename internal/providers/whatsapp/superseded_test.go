@@ -50,6 +50,32 @@ func TestSupersededFallback(t *testing.T) {
 		t.Fatalf("caller fallback replaced: %v", md)
 	}
 
+	// A caller fallback that is itself a rewrite in review gives way to the primary's approved
+	// predecessor, with every button value (the order review template has two URL buttons).
+	withSuperseded(t, map[string]supersededTemplate{
+		"review_v4_btn": {old: "review_v2_btn"},
+		"order_v3_btn":  {old: "order_v1_btn"},
+	})
+	md = map[string]interface{}{
+		"template_name":                  "review_v4_btn",
+		"template_params":                []string{"Amina", "#9"},
+		"template_button_param":          "shop/orders/guest/x?rate=1",
+		"template_button_params":         []string{"shop/orders/guest/x?rate=1", "shop/review/google"},
+		"template_fallback_name":         "order_v3_btn",
+		"template_fallback_params":       []string{"Amina", "#9"},
+		"template_fallback_button_param": "shop/orders/guest/x?rate=1",
+	}
+	addSupersededFallback(md)
+	if md["template_fallback_name"] != "review_v2_btn" || !reflect.DeepEqual(md["template_fallback_params"], []string{"Amina", "#9"}) ||
+		!reflect.DeepEqual(md["template_fallback_button_params"], []string{"shop/orders/guest/x?rate=1", "shop/review/google"}) {
+		t.Fatalf("got %v", md)
+	}
+	withSuperseded(t, map[string]supersededTemplate{
+		"change_v2_btn": {old: "change_v1_btn", order: []int{0, 2, 3, 1}},
+		"balance_v2":    {old: "balance_v1"},
+		"test_v2":       {old: "test_v1", order: []int{}},
+	})
+
 	// An empty order sends the old template no parameters.
 	md = map[string]interface{}{"template_name": "test_v2", "template_params": []string{"16 Nov", "T-1"}}
 	addSupersededFallback(md)

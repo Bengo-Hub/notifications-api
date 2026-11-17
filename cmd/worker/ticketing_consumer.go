@@ -455,10 +455,11 @@ func startTicketingConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStrea
 			return
 		}
 
-		// An agent reply on a WhatsApp ticket also goes to the customer on WhatsApp, from the
-		// tenant's own number, while their 24-hour window is open. The email below still goes
-		// when the requester has an address.
-		if evt.EventType == "ticket.comment_added" {
+		// With TICKETING_WHATSAPP_REPLIES on, an agent reply on a WhatsApp ticket also goes to the
+		// customer on WhatsApp, from the tenant's own number: the reply itself while their 24-hour
+		// window is open, the ticketing_ticket_reply_v1_btn notice after it. It is off for now
+		// (owner decision 2026-11-17): replies go by email only, below.
+		if ticketWhatsAppOn(cfg, evt) {
 			if err := dispatchTicketWhatsApp(ctx, nc, cfg, evt, ti, logg); err != nil {
 				logg.Error("ticketing event: failed to dispatch whatsapp reply", zap.Error(err))
 				_ = m.Nak()

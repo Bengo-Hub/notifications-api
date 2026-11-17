@@ -37,6 +37,10 @@ type ServicesConfig struct {
 	// MarketflowServiceURL is the CRM base URL for the shared crm client: customer name, email
 	// and phone are looked up there at send time. Same env name as the other services. In-cluster.
 	MarketflowServiceURL string `envconfig:"MARKETFLOW_SERVICE_URL" default:"http://marketflow-api.marketflow.svc.cluster.local:4000"`
+	// TicketingWhatsAppReplies sends agent replies on WhatsApp tickets to the customer on WhatsApp
+	// too: the reply as text inside the 24-hour window, the ticketing_ticket_reply_v1_btn notice
+	// after it. Off by owner decision of 2026-11-17: ticket replies go by email only for now.
+	TicketingWhatsAppReplies bool `envconfig:"TICKETING_WHATSAPP_REPLIES" default:"false"`
 	// EmailProvisioner is the only service holding the mail server's admin login; the delivery
 	// webhook key is pushed to Stalwart through it. In-cluster.
 	EmailProvisioner string `envconfig:"EMAIL_PROVISIONER_URL" default:"http://email-provisioner.email.svc.cluster.local:8080"`

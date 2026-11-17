@@ -13,12 +13,21 @@ type supersededTemplate struct {
 // ship before approval. Drop an entry once its rewrite is approved on every WhatsApp account we send
 // from (GET /platform/whatsapp/templates/categories).
 //
-// Empty since 17 November 2026: the six utility rewrites of templates Meta had billed as marketing
-// (test message, credit balance, Hadia registry published, change requested and legal notices, POS
-// referral points) were all approved as UTILITY within an hour, and their entries were removed.
-var superseded = map[string]supersededTemplate{}
+// The entries of 17 November 2026 are the policy audit's rewrites of approved templates with words
+// Meta reads as marketing or a login ("enjoy", "thank you for choosing", "sign in"); same parameters,
+// same buttons. projects_client_invited_v2_btn applies once cmd/worker/projects_portal.go sends it.
+var superseded = map[string]supersededTemplate{
+	"ordering_order_delivered_v5_btn": {old: "ordering_order_delivered_v3_btn"},
+	"ordering_order_delivered_v6_btn": {old: "ordering_order_delivered_v4_btn"},
+	"ordering_order_completed_v3_btn": {old: "ordering_order_completed_v1_btn"},
+	"ordering_order_completed_v4_btn": {old: "ordering_order_completed_v2_btn"},
+	"projects_client_invited_v2_btn":  {old: "projects_client_invited_v1_btn"},
+}
 
-// addSupersededFallback sets the fallback for a rewritten template that has none of its own.
+// addSupersededFallback sets the fallback for a rewritten template. A fallback the caller set is
+// kept, unless it is itself a rewrite still in review: then the approved template the primary
+// replaces is the safer fallback (an order's two-button review template falls back to its own
+// approved predecessor, with both buttons, rather than to the new one-button template).
 func addSupersededFallback(metadata map[string]interface{}) {
 	if metadata == nil {
 		return
@@ -29,7 +38,11 @@ func addSupersededFallback(metadata map[string]interface{}) {
 		return
 	}
 	if fb, _ := metadata["template_fallback_name"].(string); fb != "" {
-		return
+		if _, inReview := superseded[fb]; !inReview {
+			return
+		}
+		delete(metadata, "template_fallback_button_param")
+		delete(metadata, "template_fallback_button_params")
 	}
 	params := stringSliceParam(metadata["template_params"])
 	var fbParams []string
@@ -48,5 +61,8 @@ func addSupersededFallback(metadata map[string]interface{}) {
 	metadata["template_fallback_params"] = fbParams
 	if b, _ := metadata["template_button_param"].(string); b != "" {
 		metadata["template_fallback_button_param"] = b
+	}
+	if bs := stringSliceParam(metadata["template_button_params"]); len(bs) > 0 {
+		metadata["template_fallback_button_params"] = append([]string(nil), bs...)
 	}
 }

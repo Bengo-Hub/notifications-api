@@ -1,0 +1,5 @@
+Hi {{ .name }},
+
+The support team at {{ .business_name }} has posted a new reply on your support request *{{ .ticket_id }}*.
+
+Open the request to read the reply.

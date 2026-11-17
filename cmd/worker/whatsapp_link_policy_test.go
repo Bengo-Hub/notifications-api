@@ -1,9 +1,11 @@
 package main
 
 import (
+	"io/fs"
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"testing"
 )
 
@@ -33,10 +35,18 @@ func TestApplyWhatsAppLinkButton(t *testing.T) {
 	}
 }
 
-// Link policy lint: no WhatsApp text body may show a link; links go out as buttons.
+// Link policy lint: no WhatsApp text body may show a link; links go out as buttons. A link is a
+// link variable, a URL with its scheme, or a bare domain ("www.x", "ordering.codevertexafrica.com/..."),
+// in any body under templates/whatsapp, however deep.
 func TestWhatsAppBodiesCarryNoRawLinks(t *testing.T) {
-	linkVar := regexp.MustCompile(`\{\{[^}]*(_link|_url|link)\b[^}]*\}\}|https?://`)
-	files, err := filepath.Glob("../../templates/whatsapp/*/*.txt")
+	linkVar := regexp.MustCompile(`\{\{[^}]*(_link|_url|link)\b[^}]*\}\}|https?://|\bwww\.|\b[a-z0-9-]+\.(com|co|ke|africa|org|net|io)(/|\b)`)
+	var files []string
+	err := filepath.WalkDir("../../templates/whatsapp", func(path string, d fs.DirEntry, err error) error {
+		if err == nil && !d.IsDir() && strings.HasSuffix(path, ".txt") {
+			files = append(files, path)
+		}
+		return err
+	})
 	if err != nil || len(files) == 0 {
 		t.Fatalf("no WhatsApp templates found: %v", err)
 	}

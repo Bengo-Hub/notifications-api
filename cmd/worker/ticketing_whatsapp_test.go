@@ -2,10 +2,13 @@ package main
 
 import (
 	"os"
+	"reflect"
 	"strings"
 	"testing"
 	"text/template"
 	"time"
+
+	"github.com/bengobox/notifications-api/internal/config"
 )
 
 var waNow = time.Date(2026, 11, 17, 9, 0, 0, 0, time.UTC)
@@ -56,17 +59,114 @@ func TestTicketWhatsAppReplyInsideWindow(t *testing.T) {
 	}
 }
 
-// Outside the window nothing goes on WhatsApp: no approved template carries a ticket reply.
+// Outside the window the reply goes as the ticketing_ticket_reply_v1_btn template: the requester's
+// name, the business and the ticket number, never the reply text, and the public ticket page as
+// the button suffix.
 func TestTicketWhatsAppReplyOutsideWindow(t *testing.T) {
-	cases := map[string]map[string]any{
-		"closed by ticketing":  replyPayload(false, "2026-11-16T20:00:00Z"),
-		"expired while queued": replyPayload(true, "2026-11-17T08:59:00Z"),
-		"no window flag":       {"channel": "whatsapp", "author_type": "agent", "requester_phone": "+254712345678", "comment": "Hi"},
+	ti := &tenantInfo{Name: "Urban Loft Cafe", Slug: "urban-loft", Country: "KE"}
+	withName := replyPayload(false, "2026-11-16T20:00:00Z")
+	withName["requester_name"] = "Amina"
+	cases := map[string]struct {
+		p    map[string]any
+		name string
+	}{
+		"closed by ticketing":  {withName, "Amina"},
+		"expired while queued": {replyPayload(true, "2026-11-17T08:59:00Z"), "there"},
+		"no window flag": {map[string]any{"channel": "whatsapp", "author_type": "agent", "requester_phone": "+254712345678",
+			"comment": "Hi", "ticket_number": "TKT-000042"}, "there"},
 	}
-	for name, p := range cases {
-		if _, skip := ticketWhatsAppReply(replyEvent(p), nil, waNow); skip != ticketWhatsAppWindowClosed {
-			t.Errorf("%s: skip = %q", name, skip)
+	for label, c := range cases {
+		msg, skip := ticketWhatsAppReply(replyEvent(c.p), ti, waNow)
+		if skip != "" {
+			t.Fatalf("%s: skipped: %s", label, skip)
 		}
+		if msg.Channel != "whatsapp" || msg.TemplateID != ticketReplyNoticeText || msg.SenderScope != "tenant" ||
+			len(msg.To) != 1 || msg.To[0] != "+254712345678" {
+			t.Fatalf("%s: msg = %+v", label, msg)
+		}
+		md := msg.Metadata
+		if md["template_name"] != "ticketing_ticket_reply_v1_btn" || md["template_language"] != "en_US" {
+			t.Fatalf("%s: metadata = %v", label, md)
+		}
+		if got, want := md["template_params"], []string{c.name, "Urban Loft Cafe", "TKT-000042"}; !reflect.DeepEqual(got, want) {
+			t.Errorf("%s: params = %v, want %v", label, got, want)
+		}
+		if md["template_button_param"] != "support/track?org=urban-loft&ticket=TKT-000042" {
+			t.Errorf("%s: button suffix = %v", label, md["template_button_param"])
+		}
+		if _, ok := md["template_fallback_name"]; ok {
+			t.Errorf("%s: no fallback: an unapproved template skips WhatsApp, the email still goes", label)
+		}
+		if md["default_dial_code"] == nil || md["service_id"] != "ticketing" {
+			t.Errorf("%s: metadata = %v", label, md)
+		}
+		for _, v := range msg.Data {
+			if s, _ := v.(string); strings.Contains(s, "sent it again") || strings.Contains(s, "://") {
+				t.Errorf("%s: the reply text and links stay out of the template: %v", label, msg.Data)
+			}
+		}
+		if msg.IdempotencyKey != "ticketing-ticket.comment_added-e1" {
+			t.Errorf("%s: idempotency key %q", label, msg.IdempotencyKey)
+		}
+	}
+}
+
+// Without the tenant's slug or the ticket number there is no button, and a _btn template never
+// goes without it: nothing is sent on WhatsApp.
+func TestTicketWhatsAppReplyOutsideWindowNeedsLink(t *testing.T) {
+	closed := replyPayload(false, "")
+	if _, skip := ticketWhatsAppReply(replyEvent(closed), nil, waNow); skip != ticketWhatsAppNoLink {
+		t.Errorf("no tenant: %q", skip)
+	}
+	if _, skip := ticketWhatsAppReply(replyEvent(closed), &tenantInfo{Name: "Urban Loft Cafe"}, waNow); skip != ticketWhatsAppNoLink {
+		t.Errorf("no slug: %q", skip)
+	}
+	closed["ticket_number"] = ""
+	if _, skip := ticketWhatsAppReply(replyEvent(closed), &tenantInfo{Slug: "urban-loft"}, waNow); skip != ticketWhatsAppNoLink {
+		t.Errorf("no ticket number: %q", skip)
+	}
+	// A tenant with no name is named by its slug.
+	closed["ticket_number"] = "TKT-7"
+	msg, _ := ticketWhatsAppReply(replyEvent(closed), &tenantInfo{Slug: "urban-loft"}, waNow)
+	if got := msg.Metadata["template_params"]; !reflect.DeepEqual(got, []string{"there", "urban-loft", "TKT-7"}) {
+		t.Errorf("params = %v", got)
+	}
+}
+
+// The switch: only an agent reply with TICKETING_WHATSAPP_REPLIES on goes to WhatsApp at all.
+func TestTicketWhatsAppSwitch(t *testing.T) {
+	off := &config.Config{}
+	on := &config.Config{}
+	on.Services.TicketingWhatsAppReplies = true
+	reply := replyEvent(replyPayload(false, ""))
+	if ticketWhatsAppOn(off, reply) {
+		t.Error("switch off: ticket replies go by email only")
+	}
+	if !ticketWhatsAppOn(on, reply) {
+		t.Error("switch on: an agent reply goes on WhatsApp too")
+	}
+	if ticketWhatsAppOn(on, ticketingEvent{EventType: "ticket.status_changed"}) {
+		t.Error("only ticket.comment_added has a WhatsApp copy")
+	}
+	if ticketWhatsAppOn(nil, reply) {
+		t.Error("no config: off")
+	}
+}
+
+// The template's text body for the delivery log has the same words and no link.
+func TestTicketReplyNoticeText(t *testing.T) {
+	raw, err := os.ReadFile("../../templates/whatsapp/" + ticketReplyNoticeText + ".txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	tpl := template.Must(template.New("msg").Parse(string(raw)))
+	var b strings.Builder
+	if err := tpl.Execute(&b, map[string]any{"name": "Amina", "business_name": "Urban Loft Cafe", "ticket_id": "TKT-000042"}); err != nil {
+		t.Fatal(err)
+	}
+	want := "Hi Amina,\n\nThe support team at Urban Loft Cafe has posted a new reply on your support request *TKT-000042*.\n\nOpen the request to read the reply."
+	if got := strings.TrimSpace(b.String()); got != want {
+		t.Fatalf("rendered %q", got)
 	}
 }
 

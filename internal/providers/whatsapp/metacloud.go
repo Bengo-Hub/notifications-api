@@ -114,9 +114,13 @@ func (p *MetaCloudProvider) SendWhatsApp(ctx context.Context, from string, to []
 			if err != nil {
 				if fallbackName, ok := metadata["template_fallback_name"].(string); ok && fallbackName != "" {
 					fallbackParams := stringSliceParam(metadata["template_fallback_params"])
-					var fallbackButtons []string
-					if b, _ := metadata["template_fallback_button_param"].(string); b != "" {
-						fallbackButtons = []string{b}
+					// One value per URL button of the fallback (template_fallback_button_params),
+					// or its single template_fallback_button_param.
+					fallbackButtons := stringSliceParam(metadata["template_fallback_button_params"])
+					if len(fallbackButtons) == 0 {
+						if b, _ := metadata["template_fallback_button_param"].(string); b != "" {
+							fallbackButtons = []string{b}
+						}
 					}
 					id, err = p.sendTemplate(ctx, recipient, fallbackName, language, fallbackParams, fallbackButtons)
 				}

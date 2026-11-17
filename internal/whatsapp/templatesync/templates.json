@@ -23,33 +23,33 @@
     ]
   },
   {
-    "name": "ordering_order_delivered_v3_btn",
+    "name": "ordering_order_delivered_v5_btn",
     "category": "UTILITY",
     "language": "en_US",
-    "source": "whatsapp/ordering/order_delivered.txt (link as a URL button)",
-    "body": "Hi {{1}},\n\nYour order *{{2}}* has been delivered! We hope you enjoy it.\n\nThank you for choosing us!",
+    "source": "whatsapp/ordering/order_delivered.txt (link as a URL button). Replaces ordering_order_delivered_v3_btn, whose \"We hope you enjoy it\" and \"Thank you for choosing us\" are words Meta reads as marketing (policy section 3); sends fall back to v3 until Meta approves this one (superseded.go)",
+    "body": "Hi {{1}},\n\nYour order *{{2}}* has been delivered and is now closed.\n\nThe order page shows its full details.",
     "example": ["Amina", "#ULC-2291"],
     "buttons": [
       {"type": "URL", "text": "Leave Feedback", "url": "https://ordering.codevertexafrica.com/{{1}}", "example": ["codevertex-demo/orders/guest/f2e6121d-bead-41ad-95ed-b74655a3d45c?rate=1"]}
     ]
   },
   {
-    "name": "ordering_order_completed_v1_btn",
+    "name": "ordering_order_completed_v3_btn",
     "category": "UTILITY",
     "language": "en_US",
-    "source": "whatsapp/ordering/order_completed.txt (link as a URL button)",
-    "body": "Hi {{1}},\n\nYour order *{{2}}* is complete. We hope you enjoy it!\n\nThank you for choosing us!",
+    "source": "whatsapp/ordering/order_completed.txt (link as a URL button). Replaces ordering_order_completed_v1_btn (\"We hope you enjoy it\", \"Thank you for choosing us\"); sends fall back to v1 until Meta approves this one (superseded.go)",
+    "body": "Hi {{1}},\n\nYour order *{{2}}* is now complete and has been closed.\n\nThe order page shows its full details.",
     "example": ["Amina", "#ULC-2291"],
     "buttons": [
       {"type": "URL", "text": "Leave Feedback", "url": "https://ordering.codevertexafrica.com/{{1}}", "example": ["codevertex-demo/orders/guest/f2e6121d-bead-41ad-95ed-b74655a3d45c?rate=1"]}
     ]
   },
   {
-    "name": "ordering_order_completed_v2_btn",
+    "name": "ordering_order_completed_v4_btn",
     "category": "UTILITY",
     "language": "en_US",
-    "source": "whatsapp/ordering/order_completed.txt (order link and Google review as URL buttons)",
-    "body": "Hi {{1}},\n\nYour order *{{2}}* is complete. We hope you enjoy it!\n\nThank you for choosing us!",
+    "source": "whatsapp/ordering/order_completed.txt (order link and Google review as URL buttons). Replaces ordering_order_completed_v2_btn (\"We hope you enjoy it\", \"Thank you for choosing us\"); sends fall back to v2 until Meta approves this one (superseded.go)",
+    "body": "Hi {{1}},\n\nYour order *{{2}}* is now complete and has been closed.\n\nThe order page shows its full details.",
     "example": ["Amina", "#ULC-2291"],
     "buttons": [
       {"type": "URL", "text": "Leave Feedback", "url": "https://ordering.codevertexafrica.com/{{1}}", "example": ["codevertex-demo/orders/guest/f2e6121d-bead-41ad-95ed-b74655a3d45c?rate=1"]},
@@ -64,11 +64,11 @@
     ]
   },
   {
-    "name": "ordering_order_delivered_v4_btn",
+    "name": "ordering_order_delivered_v6_btn",
     "category": "UTILITY",
     "language": "en_US",
-    "source": "whatsapp/ordering/order_delivered.txt (order link and Google review as URL buttons)",
-    "body": "Hi {{1}},\n\nYour order *{{2}}* has been delivered! We hope you enjoy it.\n\nThank you for choosing us!",
+    "source": "whatsapp/ordering/order_delivered.txt (order link and Google review as URL buttons). Replaces ordering_order_delivered_v4_btn (\"We hope you enjoy it\", \"Thank you for choosing us\"); sends fall back to v4 until Meta approves this one (superseded.go)",
+    "body": "Hi {{1}},\n\nYour order *{{2}}* has been delivered and is now closed.\n\nThe order page shows its full details.",
     "example": ["Amina", "#ULC-2291"],
     "buttons": [
       {"type": "URL", "text": "Leave Feedback", "url": "https://ordering.codevertexafrica.com/{{1}}", "example": ["codevertex-demo/orders/guest/f2e6121d-bead-41ad-95ed-b74655a3d45c?rate=1"]},
@@ -265,11 +265,11 @@
     ]
   },
   {
-    "name": "logistics_delivery_completed_btn",
+    "name": "logistics_delivery_completed_v3_btn",
     "category": "UTILITY",
     "language": "en_US",
-    "source": "whatsapp/logistics/delivery_completed.txt (feedback link as a button)",
-    "body": "Your order *{{1}}* has been delivered.\n\nThank you for choosing us!",
+    "source": "whatsapp/logistics/delivery_completed.txt (feedback link as a button). Replaces logistics_delivery_completed_btn (\"Thank you for choosing us\"; v2 was an earlier name). No code sends either yet",
+    "body": "Your order *{{1}}* has been delivered.\n\nThe order page shows its full details.",
     "example": ["TL-40217"],
     "buttons": [
       {"type": "URL", "text": "Leave Feedback", "url": "https://ordering.codevertexafrica.com/{{1}}", "example": ["codevertex-demo/orders/guest/f2e6121d-bead-41ad-95ed-b74655a3d45c?rate=1"]}
@@ -324,7 +324,7 @@
     "category": "UTILITY",
     "language": "en_US",
     "source": "whatsapp/ispbilling/expiry_reminder.txt. Replaces ispbilling_expiry_reminder, which Meta approved as MARKETING. Not sent yet: ISP notices go by SMS and email",
-    "body": "Hi {{1}}, your {{2}} subscription ends on {{3}} ({{4}} day(s) left). The payment for the next period goes to Paybill {{5}}, account number {{6}}, before that date.",
+    "body": "Hi {{1}}, your {{2}} internet subscription ends on {{3}}, which is {{4}} day(s) from today. The payment for the next period goes to Paybill {{5}}, account number {{6}}, before that date.",
     "example": ["Peter", "Home 20Mbps", "12 Sep", "2", "400200", "0712345678"]
   },
   {
@@ -459,11 +459,11 @@
     "example": ["Wanjiru", "KES 150", "an overdue return"]
   },
   {
-    "name": "hrm_leave_approved",
+    "name": "hrm_leave_approved_v2",
     "category": "UTILITY",
     "language": "en_US",
-    "source": "proposed: whatsapp/hrm/leave_approved.txt",
-    "body": "Hi {{1}}, your {{2}} leave request from {{3}} to {{4}} has been approved. Enjoy your time off!",
+    "source": "proposed: whatsapp/hrm/leave_approved.txt. Replaces hrm_leave_approved (\"Enjoy your time off\", and three words short of four per variable). No code sends either yet",
+    "body": "Hi {{1}},\n\nYour {{2}} leave request covering {{3}} to {{4}} has been approved.\n\nThe approved dates are now recorded on your leave balance.",
     "example": ["Brian", "Annual", "16 Sep", "20 Sep"]
   },
   {
@@ -1428,6 +1428,17 @@
     ]
   },
   {
+    "name": "projects_client_invited_v2_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/projects/client_invited.txt (params: name, organisation, project; button: the project in the client portal). Replaces v1, whose \"Sign in\" reads as a login message and \"has invited you\" as an invitation (policy section 3); v2 is a notice about access already given. Same parameters, so sends fall back to v1 until Meta approves this one (superseded.go)",
+    "body": "Hello {{1}},\n\n{{2}} has given you access to the project *{{3}}* in its client portal.\n\nOpen the portal with the email address they hold for you to see progress, approve milestones and message the team.",
+    "example": ["Joan", "Urban Loft Builders", "Westlands office fit-out"],
+    "buttons": [
+      {"type": "URL", "text": "Open Portal", "url": "https://projects.codevertexafrica.com/{{1}}", "example": ["urban-loft/portal/projects/0b6c2b8e"]}
+    ]
+  },
+  {
     "name": "projects_milestone_review_v1_btn",
     "category": "UTILITY",
     "language": "en_US",
@@ -1469,6 +1480,17 @@
     "example": ["Amina", "Joan Client", "Ceiling and lighting", "Westlands office fit-out", "Please move the pendant lights closer to the window."],
     "buttons": [
       {"type": "URL", "text": "Open Milestone", "url": "https://projects.codevertexafrica.com/{{1}}", "example": ["urban-loft/projects/0b6c2b8e/milestones?milestone=5a1c9e2f"]}
+    ]
+  },
+  {
+    "name": "ticketing_ticket_reply_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/ticketing/ticket_reply_notice.txt (params: requester name, business name, ticket number; button: the public ticket page support/track?org=<slug>&ticket=<number>). Sent for an agent reply on a WhatsApp ticket after the customer's 24-hour window, only with TICKETING_WHATSAPP_REPLIES on. The reply text is never a variable: a body that is mostly free text is marketing to Meta",
+    "body": "Hi {{1}},\n\nThe support team at {{2}} has posted a new reply on your support request *{{3}}*.\n\nOpen the request to read the reply.",
+    "example": ["Amina", "Urban Loft Cafe", "TKT-000042"],
+    "buttons": [
+      {"type": "URL", "text": "View reply", "url": "https://ticketing.codevertexafrica.com/{{1}}", "example": ["support/track?org=urban-loft&ticket=TKT-000042"]}
     ]
   }
 ]

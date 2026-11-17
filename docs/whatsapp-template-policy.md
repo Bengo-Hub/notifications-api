@@ -1,7 +1,10 @@
 # WhatsApp Template and Link Policy
 
 Rules for every WhatsApp message the platform sends, and for every template added to
-`internal/whatsapp/templatesync/templates.json`. Tests enforce them.
+`internal/whatsapp/templatesync/templates.json`. Tests enforce every rule that can be checked without
+Meta: `internal/whatsapp/templatesync/manifest_lint_test.go` (format, button domains, banned words,
+words per variable, free text bodies) and `cmd/worker/whatsapp_link_policy_test.go` (no link in a
+WhatsApp text body).
 
 ## 1. Links are buttons, never text
 
@@ -16,7 +19,9 @@ A WhatsApp message never shows a raw URL. A link always goes out as a tappable b
 Consequences:
 
 - Template bodies have no link variable. The button carries it.
-- WhatsApp text bodies under `templates/whatsapp/**/*.txt` never include a link.
+- WhatsApp text bodies under `templates/whatsapp/**/*.txt` never include a link: no link variable
+  (`{{ .action_link }}`, `..._url`), no `http(s)://` and no bare domain such as `www.x` or
+  `ordering.codevertexafrica.com/...`, at any folder depth.
 - No raw-link fallback template. If a button template cannot be sent (for example still in Meta
   review), WhatsApp is skipped for that message; email and SMS still go.
 
@@ -36,6 +41,14 @@ Meta fixes a button's domain when the template is approved; only the suffix vari
 | Logistics app (the business's dispatch console) | `https://logistics.codevertexafrica.com/{{1}}` | `<tenant-slug>/vehicles` |
 | Digitika and the company website (enrollment page, student and parent portal, certificate check, enquiry reply) | `https://codevertexafrica.com/{{1}}` | `digitika/success?reference=<ref>`, `student`, `digitika/parent`, `certificates/<token>`, `services` (website enquiry reply) |
 | Projects app (task mentions and assignments) | `https://projects.codevertexafrica.com/{{1}}` | the event's `action_path` without its leading slash, `<org-slug>/projects/<id>/tasks?task=<task id>` |
+| Credit balance and billing (the tenant's own credits) | `https://pricing.codevertexafrica.com/{{1}}` | `billing` |
+| Provider balance (platform owner only) | `https://marketflow.codevertexafrica.com/{{1}}` | `platform/providers` |
+| Public ticket page (a customer's own support request) | `https://ticketing.codevertexafrica.com/{{1}}` | `support/track?org=<tenant-slug>&ticket=<ticket number>`, built from the tenant's slug and the event's `ticket_number` (`ticketTrackSuffix`); ticketing-api's events carry no link or token for it |
+
+A button on any other domain fails the manifest lint: a new domain is a policy decision, so its row
+goes here first and into `buttonDomains` in `manifest_lint_test.go`. The pricing and MarketFlow rows
+were missing from this table until the lint was added on 17 November 2026; their templates
+(`credits_*_btn`, `provider_balance_low_v1_btn`) were already approved on those domains.
 
 ## 2b. One notice, several parties
 
@@ -60,12 +73,38 @@ once, and a send Meta accepts but later reports `failed` (webhook) is sent to th
 The shared apps serve every tenant under its slug, so a tenant on its own domain still gets a
 working button: the suffix is the path of its link (`buttonURLSuffix`, `posButtonSuffix`).
 
+## 2c. Ticket replies on WhatsApp
+
+An agent's reply on a WhatsApp ticket goes by email only, by the owner's decision of 17 November 2026:
+`TICKETING_WHATSAPP_REPLIES` is false. With it on (`cmd/worker/ticketing_whatsapp.go`), the reply also
+goes to the customer from the tenant's own number:
+
+- inside the customer's 24-hour window, the reply itself as free-form text (`ticketing/ticket_reply`);
+- after the window, the `ticketing_ticket_reply_v1_btn` template: a notice that the business's support
+  team posted a new reply on request *TKT-n*, with a "View reply" button to the public ticket page. The
+  reply text is never a variable, since a body that is mostly free text is marketing to Meta. Without the
+  tenant's slug or the ticket number there is no button, so nothing goes on WhatsApp. The template has no
+  fallback: until Meta approves it on the tenant's WABA the send fails and WhatsApp is skipped for that
+  reply, as for every `_btn` template; the email copy goes either way.
+
+| Template | Body | Example values | Button |
+|---|---|---|---|
+| `ticketing_ticket_reply_v1_btn` (UTILITY, en_US) | `Hi {{1}},\n\nThe support team at {{2}} has posted a new reply on your support request *{{3}}*.\n\nOpen the request to read the reply.` | `Amina`, `Urban Loft Cafe`, `TKT-000042` | "View reply", `https://ticketing.codevertexafrica.com/{{1}}`, example `support/track?org=urban-loft&ticket=TKT-000042` |
+
+The template reaches a tenant's WABA through the `ticketing` entry of
+`internal/whatsapp/tenanttemplates/selection.json`.
+
 ## 3. Template formatting (Meta review rules)
 
 - Body variables numbered `{{1}}`..`{{n}}` without gaps, one `example` value each.
 - A body never starts or ends with a variable; close with a short sentence.
 - Enough words around the variables: Meta rejects a body with too few as error 2388293 ("parameters words
-  ratio"). Three variables and six other words was refused. Aim for at least four words per variable.
+  ratio"). Three variables and six other words was refused. Write at least four words per variable; the
+  lint counts every word of the body that is not a variable and fails a new template below that. The 37
+  templates Meta approved before the lint (`shortRatioApproved` in `manifest_lint_test.go`) are held only
+  to more than two words per variable, Meta's own refusal level: rewriting a working template just for
+  the ratio would put it back into review for nothing. No name is ever added to that list, and a name
+  leaves it when its template is rewritten.
 - Emphasis with `*bold*` on the key value (order number); blank lines between sections.
 - `https` button URLs, at most one `{{1}}`, at the end, with one example; button text up to 25
   characters.
@@ -86,6 +125,8 @@ working button: the suffix is the path of its link (`buttonURLSuffix`, `posButto
   "pass number" instead, and send the real credential by email. A one-time code uses the
   `AUTHENTICATION` template, never UTILITY. An example value counts too: a bare six digit number beside
   "pass number" was refused, so give a reference an example like `VIS-482915` and word it as a confirmation.
+  The lint checks these words in every UTILITY body, example value and button text, in any case and with
+  any ending ("enjoyed", "logins"), and "sign-in" too.
 - Category `UTILITY` for transactional messages; `AUTHENTICATION` uses Meta's fixed format.
 
 ## 3b. Category: what Meta bills, not what we submit
@@ -117,7 +158,10 @@ Rules that follow:
 - A utility body states a fact about the reader's own account, order, payment or request, with its
   specific detail (number, amount, date, reference). No invitations to buy, renew, visit, share, review
   or "stay connected", no thanks for loyalty, and no button that sells.
-- A body that is mostly one free text variable is marketing to Meta whatever its wording.
+- A body that is mostly one free text variable is marketing to Meta whatever its wording. The lint fails
+  a template whose longest example has at least as many words as the rest of its body, unless it is
+  billed as MARKETING (`category` or `meta_category`). `broadcast_update_v1` (MARKETING) and
+  `broadcast_service_notice_v1` (`meta_category` MARKETING) pass that way, by design.
 - `category` in `templates.json` is what we submit. When Meta holds a template under another category,
   record it as `meta_category`: credits bill that (`TemplateDef.Billed`) and the audits stop flagging it.
 - Check Meta's verdict after every sync and once a month: `GET /api/v1/platform/whatsapp/templates/categories?recategorized=true`
@@ -126,6 +170,23 @@ Rules that follow:
 - A rewrite under a new name can ship before Meta approves it if `internal/providers/whatsapp/superseded.go`
   maps it to the approved template it replaces (with the parameter order of the old one): until approval
   every send falls back to the old template. Drop the entry once the rewrite shows APPROVED as UTILITY.
+  When the code also names a fallback that is itself a rewrite in review (the order review template
+  falls back to the one-button order template), the superseded entry wins, with every button value of
+  the send (`template_fallback_button_params`).
+
+The audit of 17 November 2026 ran the new lint rules over every template. Rewrites for the approved
+templates with a banned word, each kept to the same parameters and buttons:
+
+| Old template | Problem | Replacement | Code |
+|---|---|---|---|
+| `ordering_order_delivered_v3_btn`, `ordering_order_delivered_v4_btn` | "We hope you enjoy it", "Thank you for choosing us" | `ordering_order_delivered_v5_btn`, `ordering_order_delivered_v6_btn`: "Your order *X* has been delivered and is now closed. The order page shows its full details." | sent now, falling back to v3 and v4 (`superseded.go`) |
+| `ordering_order_completed_v1_btn`, `ordering_order_completed_v2_btn` | the same | `ordering_order_completed_v3_btn`, `ordering_order_completed_v4_btn` | sent now, falling back to v1 and v2 |
+| `projects_client_invited_v1_btn` | "Sign in", and "has invited you" (the wording Meta refused for Hadia's member invite) | `projects_client_invited_v2_btn`: "X has given you access to the project *Y* in its client portal" | `superseded.go` entry ready; `cmd/worker/projects_portal.go` still sends v1, which stays in the manifest until it switches (`bannedWordsWaitingForSwitch`) |
+| `logistics_delivery_completed_btn` | "Thank you for choosing us" | `logistics_delivery_completed_v3_btn` (v2 was an earlier name) | no code sends either |
+| `hrm_leave_approved` | "Enjoy your time off", and under four words per variable | `hrm_leave_approved_v2` | no code sends either |
+
+`ispbilling_expiry_reminder_v2` had three and a half words per variable. It has not been submitted yet
+(section 4), so its body was lengthened in place.
 
 ## 4. Publishing
 
@@ -144,6 +205,10 @@ Templates waiting for a Meta sync after their deploy:
 | Template | Sent for |
 |---|---|
 | `ispbilling_expiry_reminder_v2`, `ispbilling_subscription_expiring_v2` | not sent yet (ISP notices go by SMS and email) |
+| `ticketing_ticket_reply_v1_btn` | an agent reply after the customer's WhatsApp window, only with `TICKETING_WHATSAPP_REPLIES` on (section 2c); sync it to each ticketing tenant's WABA |
+| `ordering_order_delivered_v5_btn`, `ordering_order_delivered_v6_btn`, `ordering_order_completed_v3_btn`, `ordering_order_completed_v4_btn` | delivered and completed orders (sent now through the `superseded.go` fallback); platform WABA and each ordering tenant's WABA |
+| `projects_client_invited_v2_btn` | a client given access to a project's portal, once `projects_portal.go` sends it |
+| `logistics_delivery_completed_v3_btn`, `hrm_leave_approved_v2` | nothing yet (no code sends them) |
 
 Approved as UTILITY on 16 November 2026 within the hour, with their `superseded.go` fallbacks removed:
 `notifications_test_message_v2`, `credits_balance_low_v2_btn`, `hadia_registry_published_v2_btn`,
