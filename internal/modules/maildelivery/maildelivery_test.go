@@ -203,18 +203,21 @@ func TestRotate(t *testing.T) {
 }
 
 func TestProvisionerApplier(t *testing.T) {
-	var gotPath, gotMethod, gotBody string
+	var gotPath, gotMethod, gotBody, gotKey string
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		gotPath, gotMethod = r.URL.Path, r.Method
+		gotPath, gotMethod, gotKey = r.URL.Path, r.Method, r.Header.Get("X-API-Key")
 		buf := make([]byte, 512)
 		n, _ := r.Body.Read(buf)
 		gotBody = string(buf[:n])
 		w.WriteHeader(http.StatusNoContent)
 	}))
 	defer srv.Close()
-	apply := ProvisionerApplier(srv.URL+"/", "http://notifications-api/hook", nil)
+	apply := ProvisionerApplier(srv.URL+"/", "http://notifications-api/hook", "svc-key", nil)
 	if err := apply(context.Background(), "secret-key"); err != nil {
 		t.Fatal(err)
+	}
+	if gotKey != "svc-key" {
+		t.Fatalf("the provisioner's internal routes need the service key, got %q", gotKey)
 	}
 	if gotMethod != http.MethodPut || gotPath != "/internal/delivery-webhook" ||
 		gotBody != `{"key":"secret-key","url":"http://notifications-api/hook"}` {
@@ -225,7 +228,7 @@ func TestProvisionerApplier(t *testing.T) {
 		http.Error(w, "stalwart said no", http.StatusBadGateway)
 	}))
 	defer bad.Close()
-	if err := ProvisionerApplier(bad.URL, "u", nil)(context.Background(), "k"); err == nil {
+	if err := ProvisionerApplier(bad.URL, "u", "svc-key", nil)(context.Background(), "k"); err == nil {
 		t.Fatal("a non-2xx answer must be an error")
 	}
 }

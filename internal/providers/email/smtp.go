@@ -99,6 +99,19 @@ func generateMessageID(domain string) string {
 	return fmt.Sprintf("<%d.%s@%s>", time.Now().UnixNano(), hex.EncodeToString(buf[:]), domain)
 }
 
+// writeThreadHeaders adds In-Reply-To and References when the context carries a thread (see
+// WithThreadHeaders). References is folded one id per line so a long thread stays within the
+// line length limit. Every id was checked by cleanMessageID, so neither header can carry a CR or LF.
+func writeThreadHeaders(ctx context.Context, b *strings.Builder, messageID, domain string) {
+	inReplyTo, refs := threadHeaderValues(ctx, messageID, domain)
+	if inReplyTo != "" {
+		b.WriteString("In-Reply-To: " + inReplyTo + "\r\n")
+	}
+	if len(refs) > 0 {
+		b.WriteString("References: " + strings.Join(refs, "\r\n ") + "\r\n")
+	}
+}
+
 func (p *SMTPProvider) SendEmail(ctx context.Context, from string, to []string, cc []string, bcc []string, replyTo string, subject string, htmlBody string, textBody string, attachments []Attachment) error {
 	if from == "" {
 		from = p.cfg.From
@@ -152,6 +165,7 @@ func (p *SMTPProvider) SendEmail(ctx context.Context, from string, to []string, 
 		messageID = "<" + token + "@" + envelopeFromDomain + ">"
 	}
 	b.WriteString("Message-ID: " + messageID + "\r\n")
+	writeThreadHeaders(ctx, &b, messageID, envelopeFromDomain)
 	unsubTarget := replyTo
 	if unsubTarget == "" {
 		unsubTarget = envelopeFrom

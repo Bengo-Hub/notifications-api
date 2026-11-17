@@ -13,8 +13,9 @@ import (
 
 // ProvisionerApplier returns an Applier that asks email-provisioner, the only service holding the
 // mail server's admin login, to create or update Stalwart's delivery webhook with the given key.
-// baseURL is the provisioner's cluster address and webhookURL is where Stalwart should post.
-func ProvisionerApplier(baseURL, webhookURL string, client *http.Client) Applier {
+// baseURL is the provisioner's cluster address and webhookURL is where Stalwart should post. The
+// provisioner's internal routes require the shared INTERNAL_SERVICE_KEY as X-API-Key.
+func ProvisionerApplier(baseURL, webhookURL, serviceKey string, client *http.Client) Applier {
 	if client == nil {
 		client = &http.Client{Timeout: 20 * time.Second}
 	}
@@ -29,6 +30,7 @@ func ProvisionerApplier(baseURL, webhookURL string, client *http.Client) Applier
 			return err
 		}
 		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("X-API-Key", serviceKey)
 		resp, err := client.Do(req)
 		if err != nil {
 			return fmt.Errorf("email-provisioner unreachable: %w", err)

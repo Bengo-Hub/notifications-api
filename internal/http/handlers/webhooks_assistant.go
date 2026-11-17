@@ -78,6 +78,40 @@ func (h *WebhookHandler) publishAssistantInbound(ctx context.Context, tenantID, 
 		assistantInbound(phoneNumberID, m, text, contactName))
 }
 
+// SubjectWhatsAppTenantInbound carries each message sent to a tenant's own WhatsApp number, after
+// it is stored in the tenant's inbox, so other services can act on it (ticketing opens or threads a
+// support ticket when the tenant turned that on). The wa_message_id is the consumer's dedupe key;
+// Meta redelivers webhooks, so the same message can arrive twice.
+const SubjectWhatsAppTenantInbound = "notifications.whatsapp.tenant_inbound"
+
+// publishTenantInbound hands one tenant-number message on. A message with no text (media,
+// location) and a STOP reply are not published.
+func (h *WebhookHandler) publishTenantInbound(tenantID uuid.UUID, phoneNumberID string, m waInboundMessage, text, contactName string) {
+	if h.assistantNC == nil || tenantID == uuid.Nil || text == "" || suppression.IsStopReply(text) {
+		return
+	}
+	broadcasts.PublishEvent(h.assistantNC, h.log, SubjectWhatsAppTenantInbound, "whatsapp.tenant_inbound", &tenantID, uuid.New(),
+		tenantInbound(tenantID, phoneNumberID, m, text, contactName))
+}
+
+// tenantInbound is the SubjectWhatsAppTenantInbound event body.
+func tenantInbound(tenantID uuid.UUID, phoneNumberID string, m waInboundMessage, text, contactName string) map[string]any {
+	p := map[string]any{
+		"tenant_id":       tenantID.String(),
+		"phone_number_id": phoneNumberID,
+		"wa_message_id":   m.ID,
+		"from":            m.From,
+		"type":            m.Type,
+		"text":            text,
+		"contact_name":    contactName,
+		"received_at":     time.Now().UTC().Format(time.RFC3339),
+	}
+	if id := inboundReplyID(m); id != "" {
+		p["reply_id"] = id
+	}
+	return p
+}
+
 // SubjectWhatsAppReferral carries the click id of a message that came from a click-to-WhatsApp
 // ad (Sprint 18), so MarketFlow can attribute the lead to the ad and report the sale back to Meta.
 const SubjectWhatsAppReferral = "notifications.whatsapp.referral"

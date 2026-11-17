@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -77,11 +78,13 @@ func (p *BrevoProvider) SendEmail(ctx context.Context, from string, to []string,
 	if replyTo != "" {
 		payload.ReplyTo = &brevoRecipient{Email: replyTo}
 	}
+	payload.Headers = brevoThreadHeaders(ctx, senderEmail)
 	if oneClick := ListUnsubscribeURL(ctx); oneClick != "" {
-		payload.Headers = map[string]string{
-			"List-Unsubscribe":      "<" + oneClick + ">",
-			"List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+		if payload.Headers == nil {
+			payload.Headers = map[string]string{}
 		}
+		payload.Headers["List-Unsubscribe"] = "<" + oneClick + ">"
+		payload.Headers["List-Unsubscribe-Post"] = "List-Unsubscribe=One-Click"
 	}
 	if textBody != "" && htmlBody == "" {
 		payload.TextContent = textBody
@@ -121,6 +124,29 @@ func (p *BrevoProvider) SendEmail(ctx context.Context, from string, to []string,
 		return fmt.Errorf("brevo: status %d: %s", resp.StatusCode, string(respBody))
 	}
 	return nil
+}
+
+// brevoThreadHeaders is In-Reply-To and References for a Brevo send, the same values the SMTP
+// sender writes, or nil when the context carries no thread. Brevo sets its own Message-ID, so the
+// id skipped as the message's own is the one the SMTP sender would have used for the same token.
+func brevoThreadHeaders(ctx context.Context, senderEmail string) map[string]string {
+	domain := domainOf(senderEmail)
+	own := ""
+	if token := messageIDToken(ctx); token != "" && domain != "" {
+		own = "<" + token + "@" + domain + ">"
+	}
+	inReplyTo, refs := threadHeaderValues(ctx, own, domain)
+	if inReplyTo == "" && len(refs) == 0 {
+		return nil
+	}
+	h := map[string]string{}
+	if inReplyTo != "" {
+		h["In-Reply-To"] = inReplyTo
+	}
+	if len(refs) > 0 {
+		h["References"] = strings.Join(refs, " ")
+	}
+	return h
 }
 
 type brevoPayload struct {

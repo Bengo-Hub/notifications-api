@@ -35,6 +35,26 @@ func TestPublishAssistantInboundGuards(t *testing.T) {
 	}
 }
 
+// A tenant-number message names its tenant and carries the dedupe key; the guards skip a missing
+// connection, a missing tenant, empty text and STOP before any publish.
+func TestTenantInboundPayloadAndGuards(t *testing.T) {
+	tid := uuid.New()
+	m := waInboundMessage{From: "254712345678", ID: "wamid.3", Type: "text"}
+	p := tenantInbound(tid, "pn2", m, "My order has not arrived", "Achieng")
+	if p["tenant_id"] != tid.String() || p["wa_message_id"] != "wamid.3" || p["from"] != "254712345678" ||
+		p["text"] != "My order has not arrived" || p["contact_name"] != "Achieng" || p["phone_number_id"] != "pn2" || p["received_at"] == "" {
+		t.Fatalf("payload: %v", p)
+	}
+	if _, ok := p["reply_id"]; ok {
+		t.Fatal("a plain text message has no reply id")
+	}
+	h := &WebhookHandler{log: zap.NewNop()}
+	h.publishTenantInbound(tid, "pn2", m, "hello", "")
+	h.publishTenantInbound(uuid.Nil, "pn2", m, "hello", "")
+	h.publishTenantInbound(tid, "pn2", m, "", "")
+	h.publishTenantInbound(tid, "pn2", m, "STOP", "")
+}
+
 // Only an ad referral with a click id on a tenant number is handed over; the guards return before
 // any publish, so a nil connection is safe.
 func TestPublishAdReferralGuards(t *testing.T) {

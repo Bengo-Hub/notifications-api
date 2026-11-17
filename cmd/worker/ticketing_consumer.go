@@ -14,6 +14,7 @@ import (
 
 	"github.com/bengobox/notifications-api/internal/config"
 	"github.com/bengobox/notifications-api/internal/messaging"
+	"github.com/bengobox/notifications-api/internal/providers/email"
 )
 
 // ticketingEvent is the shared-events envelope from ticketing-api.
@@ -59,6 +60,9 @@ type ticketingNotificationMapping struct {
 	// SubjectBuilder, when set, writes a subject from the payload (it names the ticket); an empty
 	// result falls back to EmailSubject.
 	SubjectBuilder func(payload map[string]any) string
+	// ReplySubject, on requester mail, uses the event's email_reply_subject ("Re: <subject>
+	// [TKT-000042]") so the email reads as a reply in the customer's own thread.
+	ReplySubject bool
 	// Route, when set, replaces ticketRoute for an alert that may go to several people (a team's
 	// supervisors) or must not fall back to the tenant's support mailbox.
 	Route func(payload map[string]any, ti *tenantInfo) (to []string, target, replyTo string, ok bool)
@@ -155,6 +159,7 @@ var ticketingMappings = map[string]ticketingNotificationMapping{
 		TemplateID:   "ticketing/ticket_reply",
 		EmailSubject: "New reply on your support ticket",
 		Audience:     audienceRequester,
+		ReplySubject: true,
 		// ticketing-api publishes public agent replies only; anything else is dropped here too.
 		Skip: func(p map[string]any) bool {
 			at := ticketText(p, "author_type")
@@ -298,6 +303,105 @@ func ticketEmailSubject(m ticketingNotificationMapping, payload map[string]any) 
 	return m.EmailSubject
 }
 
+// Thread fields ticketing-api puts on ticket events, carried to the sender in msg.Metadata so a
+// customer's reply to a ticket email comes back to the same ticket.
+const (
+	metaEmailThreadToken = "email_thread_token" // the ticket id, the local part of the thread's root Message-ID
+	metaEmailInReplyTo   = "email_in_reply_to"  // "<id@domain>" of the customer's last message
+	metaEmailReferences  = "email_references"   // the thread's Message-IDs, oldest first
+)
+
+// ticketRequestID is the message's request id, which the worker also uses as the local part of
+// the email's Message-ID. ticketing-api names it on ticket.created (the ticket id) and on
+// ticket.comment_added (the comment id) so it can recognise a reply to its own mail; a bounce is
+// still matched through the same id. Other events get a fresh one.
+func ticketRequestID(p map[string]any) string {
+	if token := ticketText(p, "email_message_token"); email.IsMessageIDToken(token) {
+		return token
+	}
+	return uuid.New().String()
+}
+
+// ticketSubjectLine is the subject for a mapped event. Requester mail carries the ticket tag
+// ("[TKT-000042]") so a reply finds the ticket even when the client drops the thread headers, and
+// an agent reply uses ticketing's "Re: <subject> [TKT-000042]" so it reads as part of the
+// customer's own conversation. The subject is folded onto one line: it can hold the customer's
+// own words, which must never start a new header.
+func ticketSubjectLine(m ticketingNotificationMapping, p map[string]any) string {
+	s := ticketEmailSubject(m, p)
+	if m.Audience == audienceRequester {
+		if r := ticketText(p, "email_reply_subject"); m.ReplySubject && r != "" {
+			s = r
+		} else if tag := ticketText(p, "email_subject_tag"); tag != "" && !strings.Contains(s, tag) {
+			s += " " + tag
+		}
+	}
+	return strings.Join(strings.Fields(s), " ")
+}
+
+// ticketThreadMetadata copies the thread fields of a requester email into md. Staff alerts get
+// none: an agent answering an alert by email must not land on the ticket as the customer.
+func ticketThreadMetadata(md map[string]any, m ticketingNotificationMapping, p map[string]any) {
+	if m.Audience != audienceRequester {
+		return
+	}
+	if v := ticketText(p, metaEmailThreadToken); v != "" {
+		md[metaEmailThreadToken] = v
+	}
+	if v := ticketText(p, metaEmailInReplyTo); v != "" {
+		md[metaEmailInReplyTo] = v
+	}
+	if refs := metadataStrings(p[metaEmailReferences]); len(refs) > 0 {
+		md[metaEmailReferences] = refs
+	}
+}
+
+// metadataStrings reads a string list from an event or message field. Decoded JSON holds it as
+// []any; a message built in process holds []string.
+func metadataStrings(v any) []string {
+	switch list := v.(type) {
+	case []string:
+		return list
+	case []any:
+		out := make([]string, 0, len(list))
+		for _, item := range list {
+			if s, ok := item.(string); ok && strings.TrimSpace(s) != "" {
+				out = append(out, strings.TrimSpace(s))
+			}
+		}
+		return out
+	}
+	return nil
+}
+
+// withEmailThread puts a message's thread fields on the send context, for the In-Reply-To and
+// References headers. A message without them is sent with neither header.
+func withEmailThread(ctx context.Context, md map[string]any) context.Context {
+	token, _ := md[metaEmailThreadToken].(string)
+	inReplyTo, _ := md[metaEmailInReplyTo].(string)
+	return email.WithThreadHeaders(ctx, token, inReplyTo, metadataStrings(md[metaEmailReferences]))
+}
+
+// ticketMessage is the email for a mapped ticketing event.
+func ticketMessage(m ticketingNotificationMapping, evt ticketingEvent, to []string, target, replyTo string, links ticketLinks) messaging.Message {
+	md := map[string]any{"subject": ticketSubjectLine(m, evt.Payload)}
+	ticketThreadMetadata(md, m, evt.Payload)
+	return messaging.Message{
+		TenantID:       evt.TenantID,
+		Channel:        "email",
+		TemplateID:     m.TemplateID,
+		SenderScope:    messaging.SenderScopeTenant,
+		Target:         target,
+		To:             to,
+		ReplyTo:        replyTo,
+		Data:           m.DataBuilder(evt.Payload, links),
+		Metadata:       md,
+		RequestID:      ticketRequestID(evt.Payload),
+		IdempotencyKey: ticketIdempotencyKey(evt),
+		QueuedAt:       time.Now(),
+	}
+}
+
 // ticketIdempotencyKey is one per event: a ticket has many comments and status changes, so the
 // ticket id alone would swallow every one after the first.
 func ticketIdempotencyKey(evt ticketingEvent) string {
@@ -363,22 +467,7 @@ func startTicketingConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStrea
 			Console: ti.Website,
 			Support: ti.ServiceURL("ticketing", "NOTIFICATIONS_TICKETING_APP_URL", "https://ticketing.codevertexafrica.com") + "/support",
 		}
-		msg := messaging.Message{
-			TenantID:    tenantID,
-			Channel:     "email",
-			TemplateID:  mapping.TemplateID,
-			SenderScope: messaging.SenderScopeTenant,
-			Target:      target,
-			To:          to,
-			ReplyTo:     replyTo,
-			Data:        mapping.DataBuilder(evt.Payload, links),
-			Metadata: map[string]any{
-				"subject": ticketEmailSubject(mapping, evt.Payload),
-			},
-			RequestID:      uuid.New().String(),
-			IdempotencyKey: ticketIdempotencyKey(evt),
-			QueuedAt:       time.Now(),
-		}
+		msg := ticketMessage(mapping, evt, to, target, replyTo, links)
 
 		if _, err := messaging.Publish(ctx, nc, cfg.Events, msg); err != nil {
 			logg.Error("ticketing event: failed to dispatch notification", zap.String("type", evt.EventType), zap.Error(err))

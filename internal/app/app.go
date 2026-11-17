@@ -464,7 +464,7 @@ func New(ctx context.Context) (*App, error) {
 		maildelivery.NewService(maildelivery.NewEntStore(entClient), handlers.NewMailDeliverySuppressor(redisClient), log).
 			WithBounceHook(func(ctx context.Context, b maildelivery.Bounce) { engagementTracker.EmailBounced(ctx, b.Token) }),
 		maildelivery.NewKeys(platformkey.NewStore(entClient)),
-		maildelivery.ProvisionerApplier(cfg.Services.EmailProvisioner, cfg.Services.MailDeliveryWebhookURL, nil),
+		maildelivery.ProvisionerApplier(cfg.Services.EmailProvisioner, cfg.Services.MailDeliveryWebhookURL, cfg.Security.APIKey, nil),
 		redisClient, cfg.Services.MailDeliveryWebhookURL, log)
 
 	// Platform > WhatsApp costs: Meta's charges next to tenant credits (owner decision 2026-11-12).

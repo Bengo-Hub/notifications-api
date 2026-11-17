@@ -11,11 +11,10 @@ type messageIDKey struct{}
 // the mail server reports in delivery events can be matched back to the delivery log row that
 // holds the same token (the notification request id). Without it the provider generates a random one.
 func WithMessageID(ctx context.Context, token string) context.Context {
-	token = strings.TrimSpace(token)
-	if token == "" || strings.ContainsAny(token, "<>@ \r\n") {
+	if !IsMessageIDToken(token) {
 		return ctx
 	}
-	return context.WithValue(ctx, messageIDKey{}, token)
+	return context.WithValue(ctx, messageIDKey{}, strings.TrimSpace(token))
 }
 
 // messageIDToken returns the token set by WithMessageID, or "".

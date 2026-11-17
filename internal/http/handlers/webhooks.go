@@ -328,6 +328,8 @@ func (h *WebhookHandler) WhatsAppIncoming(w http.ResponseWriter, r *http.Request
 					if tid, err := uuid.Parse(tenantID); err == nil {
 						if err := h.inbox.RecordInbound(ctx, tid, phoneNumberID, msg.ID, msg.From, msg.Type, text, contactNames[msg.From]); err != nil {
 							h.log.Warn("failed to persist inbound whatsapp message", zap.Error(err), zap.String("message_id", msg.ID))
+						} else {
+							h.publishTenantInbound(tid, phoneNumberID, msg, text, contactNames[msg.From])
 						}
 					}
 				}
