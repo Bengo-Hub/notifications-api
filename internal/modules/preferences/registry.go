@@ -264,6 +264,18 @@ var Registry = []Type{
 	{Key: "projects/milestone_ready_for_review", Label: "Milestone ready for your review", Group: "Support & Projects", Class: ClassEssential},
 	{Key: "projects/milestone_approved", Label: "Client approved a milestone", Group: "Support & Projects", Class: ClassEssential},
 	{Key: "projects/milestone_changes_requested", Label: "Client asked for milestone changes", Group: "Support & Projects", Class: ClassEssential},
+	// Client thread and change request notices (projects-api, 2026-11-17). A message on the client
+	// thread is the conversation itself (like a ticket reply), a change request waits on its
+	// approvers, and a decision settles the requester's work, so all four default on.
+	{Key: "projects/client_thread_posted", Label: "Client wrote on the client thread", Group: "Support & Projects", Class: ClassEssential},
+	{Key: "projects/client_thread_replied", Label: "Reply on your project's client thread", Group: "Support & Projects", Class: ClassEssential},
+	{Key: "projects/change_request_review_requested", Label: "Change request waiting for your approval", Group: "Support & Projects", Class: ClassEssential},
+	{Key: "projects/change_request_decided", Label: "Your change request was approved or rejected", Group: "Support & Projects", Class: ClassEssential},
+	// A status automation's notify action. Essential, not optional: the people are named by
+	// whoever set up the rule, so it is a notice addressed to them like a mention or an
+	// assignment; optional here means a broadcast alert that defaults off (milestone reached,
+	// ticket status), and a default off would make a configured rule silently send nothing.
+	{Key: "projects/task_automation_notice", Label: "Task automation notice", Group: "Support & Projects", Class: ClassEssential},
 	// QA acceptance (projects-api project.qa.*): the invite is the only way in, and a blocking failure
 	// or a decision stops or settles the work, so all four default on.
 	{Key: "qa/invite", Label: "QA session invitation", Group: "Support & Projects", Class: ClassEssential},

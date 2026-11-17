@@ -10,7 +10,9 @@ import (
 //   - project.client.invited: the firm's client, by the email and phone projects-api read from
 //     the CRM (the person has no account yet). The button opens the project in the client portal,
 //     where they sign in.
-//   - project.milestone.ready_for_review: one signed-in client of the project.
+//   - project.milestone.ready_for_review: one client of the project. A signed-in client by
+//     recipient_user_id; a client still at the invite stage has an empty recipient_user_id and
+//     the email and phone projects-api read from the CRM at send time, used as for an invite.
 //   - project.milestone.approved and project.milestone.changes_requested: the project's owner and
 //     each owner or manager member, never the client.
 //

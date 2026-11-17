@@ -1,0 +1,14 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <h2>New message on {{ .project_name }}</h2>
+  <p>{{ .actor_name }} from {{ .organisation }} replied on the project thread of <strong>{{ .project_name }}</strong>.</p>
+  {{ if .comment_excerpt }}
+  <blockquote style="margin:16px 0;padding:12px 16px;border-left:4px solid #d1d5db;background:#f9fafb;color:#374151">{{ .comment_excerpt }}</blockquote>
+  {{ end }}
+  <p>You can read the whole conversation and answer in the client portal.</p>
+  {{ if .action_link }}
+  <p>
+    <a class="button" href="{{ .action_link }}">Open the messages</a>
+  </p>
+  {{ end }}
+{{ end }}
