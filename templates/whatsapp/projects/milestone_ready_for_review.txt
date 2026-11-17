@@ -1,0 +1,5 @@
+Hello {{ .name }},
+
+The milestone *{{ .milestone_name }}* of {{ .project_name }} is ready for your review.
+
+Open the portal to approve it or ask for changes.

@@ -1,0 +1,17 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <h2>A milestone is ready for your review</h2>
+  <p>The milestone <strong>{{ .milestone_name }}</strong> of {{ .project_name }} is ready for your review. Approve it or ask for changes in the client portal.</p>
+  <table role="presentation" style="width:100%;border-collapse:collapse;margin:16px 0">
+    <tbody>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Milestone</strong></td><td style="padding:6px 0">{{ .milestone_name }}</td></tr>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Project</strong></td><td style="padding:6px 0">{{ .project_name }}</td></tr>
+      {{ if .target_date }}<tr><td style="padding:6px 12px 6px 0"><strong>Target date</strong></td><td style="padding:6px 0">{{ .target_date }}</td></tr>{{ end }}
+    </tbody>
+  </table>
+  {{ if .action_link }}
+  <p>
+    <a class="button" href="{{ .action_link }}">Review the milestone</a>
+  </p>
+  {{ end }}
+{{ end }}

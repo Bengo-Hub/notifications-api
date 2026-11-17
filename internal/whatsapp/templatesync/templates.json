@@ -1415,5 +1415,60 @@
     "buttons": [
       {"type": "URL", "text": "Open Task", "url": "https://projects.codevertexafrica.com/{{1}}", "example": ["urban-loft/projects/0b6c2b8e/tasks?task=7d1f3a2c"]}
     ]
+  },
+  {
+    "name": "projects_client_invited_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/projects/client_invited.txt (params: name, organisation, project; button: the project in the client portal)",
+    "body": "Hello {{1}},\n\n{{2}} has invited you to follow the project *{{3}}* in its client portal.\n\nSign in with the email address they have for you to see progress, approve milestones and message the team.",
+    "example": ["Joan", "Urban Loft Builders", "Westlands office fit-out"],
+    "buttons": [
+      {"type": "URL", "text": "Open Portal", "url": "https://projects.codevertexafrica.com/{{1}}", "example": ["urban-loft/portal/projects/0b6c2b8e"]}
+    ]
+  },
+  {
+    "name": "projects_milestone_review_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/projects/milestone_ready_for_review.txt (params: name, milestone, project; button: the milestone in the client portal)",
+    "body": "Hello {{1}},\n\nThe milestone *{{2}}* of {{3}} is ready for your review.\n\nOpen the portal to approve it or ask for changes.",
+    "example": ["Joan", "Ceiling and lighting", "Westlands office fit-out"],
+    "buttons": [
+      {"type": "URL", "text": "Review Milestone", "url": "https://projects.codevertexafrica.com/{{1}}", "example": ["urban-loft/portal/projects/0b6c2b8e?milestone=5a1c9e2f"]}
+    ]
+  },
+  {
+    "name": "projects_milestone_approved_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/projects/milestone_approved.txt with the client's comment (params: name, client, milestone, project, comment; button: the milestone in Projects)",
+    "body": "Hello {{1}},\n\n{{2}} approved the milestone *{{3}}* in {{4}}:\n\n\"{{5}}\"\n\nOpen the milestone in Projects to plan the next step.",
+    "example": ["Amina", "Joan Client", "Ceiling and lighting", "Westlands office fit-out", "Looks great, please go ahead with the flooring."],
+    "buttons": [
+      {"type": "URL", "text": "Open Milestone", "url": "https://projects.codevertexafrica.com/{{1}}", "example": ["urban-loft/projects/0b6c2b8e/milestones?milestone=5a1c9e2f"]}
+    ]
+  },
+  {
+    "name": "projects_milestone_approved_short_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/projects/milestone_approved.txt without a comment (params: name, client, milestone, project; button: the milestone in Projects)",
+    "body": "Hello {{1}},\n\n{{2}} approved the milestone *{{3}}* in {{4}}.\n\nOpen the milestone in Projects to plan the next step.",
+    "example": ["Amina", "Joan Client", "Ceiling and lighting", "Westlands office fit-out"],
+    "buttons": [
+      {"type": "URL", "text": "Open Milestone", "url": "https://projects.codevertexafrica.com/{{1}}", "example": ["urban-loft/projects/0b6c2b8e/milestones?milestone=5a1c9e2f"]}
+    ]
+  },
+  {
+    "name": "projects_milestone_changes_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "whatsapp/projects/milestone_changes_requested.txt (params: name, client, milestone, project, comment; button: the milestone in Projects)",
+    "body": "Hello {{1}},\n\n{{2}} asked for changes to the milestone *{{3}}* in {{4}}:\n\n\"{{5}}\"\n\nOpen the milestone in Projects to see the request and reply.",
+    "example": ["Amina", "Joan Client", "Ceiling and lighting", "Westlands office fit-out", "Please move the pendant lights closer to the window."],
+    "buttons": [
+      {"type": "URL", "text": "Open Milestone", "url": "https://projects.codevertexafrica.com/{{1}}", "example": ["urban-loft/projects/0b6c2b8e/milestones?milestone=5a1c9e2f"]}
+    ]
   }
 ]

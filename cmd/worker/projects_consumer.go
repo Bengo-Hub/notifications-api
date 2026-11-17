@@ -230,7 +230,8 @@ func projectTaskRecipient(ctx context.Context, client *ent.Client, userID string
 }
 
 // startProjectsConsumer subscribes to project.> events and dispatches project notifications: the
-// milestone email to the tenant's contact, and task mentions and assignments to their recipient.
+// milestone email to the tenant's contact, task mentions and assignments to their recipient, and
+// the client portal notices (projects_portal.go) to theirs.
 func startProjectsConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStreamContext, cfg *config.Config, tr *tenantResolver,
 	client *ent.Client, gate *preferences.Gate, templateChannels map[string][]string, logg *zap.Logger) {
 	if nc == nil || js == nil {
@@ -249,7 +250,8 @@ func startProjectsConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStream
 		kind := strings.TrimPrefix(evt.EventType, "project.")
 		mapping, ok := projectsMappings[kind]
 		taskNotice, isTask := projectTaskNotices[kind]
-		if !ok && !isTask {
+		portalNotice, isPortal := projectPortalNotices[kind]
+		if !ok && !isTask && !isPortal {
 			// qa.* (QA acceptance) is sent by the events subscriber's own durable,
 			// notifications-projects-qa (internal/modules/events/project_qa.go), so it lands here.
 			logg.Debug("projects event: unhandled type, skipping", zap.String("type", evt.EventType))
@@ -286,6 +288,24 @@ func startProjectsConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStream
 			}
 			logg.Info("projects task notice dispatched", zap.String("type", evt.EventType), zap.String("template", taskNotice.TemplateID),
 				zap.Bool("whatsapp", phone != ""))
+			_ = m.Ack()
+			return
+		}
+
+		if isPortal {
+			userEmail, phone := projectTaskRecipient(ctx, client, mStr(evt.Payload, "recipient_user_id"))
+			notice, reachable := buildProjectPortalNotice(evt, kind, portalNotice, ti, userEmail, phone, gate, templateChannels)
+			if !reachable {
+				logg.Info("projects event: portal recipient has no email or phone, skipping", zap.String("type", evt.EventType))
+				_ = m.Ack()
+				return
+			}
+			if err := sendToParties(ctx, nc, cfg, notice); err != nil {
+				logg.Error("projects event: failed to dispatch portal notice", zap.String("type", evt.EventType), zap.Error(err))
+				_ = m.Nak()
+				return
+			}
+			logg.Info("projects portal notice dispatched", zap.String("type", evt.EventType), zap.String("template", portalNotice.TemplateID))
 			_ = m.Ack()
 			return
 		}

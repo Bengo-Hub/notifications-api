@@ -1,0 +1,7 @@
+Hello {{ .name }},
+
+{{ .actor_name }} asked for changes to the milestone *{{ .milestone_name }}* in {{ .project_name }}:
+
+"{{ .comment_excerpt }}"
+
+Open the milestone in Projects to see the request and reply.

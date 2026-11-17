@@ -1,0 +1,5 @@
+Hello {{ .name }},
+
+{{ .organisation }} has invited you to follow the project *{{ .project_name }}* in its client portal.
+
+Sign in with the email address they have for you to see progress, approve milestones and message the team.

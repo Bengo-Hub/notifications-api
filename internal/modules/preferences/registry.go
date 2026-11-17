@@ -257,6 +257,13 @@ var Registry = []Type{
 	// (as in other work tools); a tenant or the user can still turn it off.
 	{Key: "projects/task_mentioned", Label: "Mentioned in a task comment", Group: "Support & Projects", Class: ClassEssential},
 	{Key: "projects/task_assigned", Label: "Task assigned to you", Group: "Support & Projects", Class: ClassEssential},
+	// Client portal notices (projects-api sprint 14). The invite is the only way in for a firm's
+	// client, a review request waits on the client, and a decision unblocks or redirects the team,
+	// so all four default on like the task notices.
+	{Key: "projects/client_invited", Label: "Client portal invitation", Group: "Support & Projects", Class: ClassEssential},
+	{Key: "projects/milestone_ready_for_review", Label: "Milestone ready for your review", Group: "Support & Projects", Class: ClassEssential},
+	{Key: "projects/milestone_approved", Label: "Client approved a milestone", Group: "Support & Projects", Class: ClassEssential},
+	{Key: "projects/milestone_changes_requested", Label: "Client asked for milestone changes", Group: "Support & Projects", Class: ClassEssential},
 	// QA acceptance (projects-api project.qa.*): the invite is the only way in, and a blocking failure
 	// or a decision stops or settles the work, so all four default on.
 	{Key: "qa/invite", Label: "QA session invitation", Group: "Support & Projects", Class: ClassEssential},

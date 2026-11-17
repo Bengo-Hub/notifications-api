@@ -1,0 +1,7 @@
+Hello {{ .name }},
+
+{{ .actor_name }} approved the milestone *{{ .milestone_name }}* in {{ .project_name }}{{ if .comment_excerpt }}:
+
+"{{ .comment_excerpt }}"{{ else }}.{{ end }}
+
+Open the milestone in Projects to plan the next step.

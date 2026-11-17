@@ -1,0 +1,17 @@
+{{ define "content" }}
+  <p>Hello {{ .name }},</p>
+  <h2>You are invited to follow {{ .project_name }}</h2>
+  <p>{{ .organisation }} has invited you to its client portal for the project <strong>{{ .project_name }}</strong>. There you can follow progress, see shared tasks and files, approve milestones and message the team.</p>
+  <table role="presentation" style="width:100%;border-collapse:collapse;margin:16px 0">
+    <tbody>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Project</strong></td><td style="padding:6px 0">{{ .project_name }}</td></tr>
+      <tr><td style="padding:6px 12px 6px 0"><strong>Invited by</strong></td><td style="padding:6px 0">{{ .actor_name }}</td></tr>
+    </tbody>
+  </table>
+  <p>Sign in or create your account with this email address, {{ .email }}, so the portal can find your invitation.</p>
+  {{ if .action_link }}
+  <p>
+    <a class="button" href="{{ .action_link }}">Open the client portal</a>
+  </p>
+  {{ end }}
+{{ end }}

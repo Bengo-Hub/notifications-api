@@ -366,11 +366,33 @@ in the preferences registry (group Support & Projects): they are on by default, 
 mute either one or its WhatsApp channel in settings. Idempotency keys are
 `projects-<event type>-<event id>-<channel>`, so a redelivered event is not sent twice.
 
+**Client portal (sprint 14, 2026-11-17)**: the same durable sends the four portal notices through
+`sendToParties` (`cmd/worker/projects_portal.go`), one recipient per event:
+
+| Event | To | Email | WhatsApp |
+|---|---|---|---|
+| `client.invited` | the firm's client (target customer), by the payload's `recipient_email` and `recipient_phone` (read from the CRM by projects-api; the person has no account yet) | `projects/client_invited` | `projects_client_invited_v1_btn` (name, organisation, project) |
+| `milestone.ready_for_review` | one signed-in client (customer) | `projects/milestone_ready_for_review` | `projects_milestone_review_v1_btn` (name, milestone, project) |
+| `milestone.approved` | the project owner or an owner or manager member (staff) | `projects/milestone_approved` | `projects_milestone_approved_v1_btn` with the comment, `projects_milestone_approved_short_v1_btn` without |
+| `milestone.changes_requested` | as for approved | `projects/milestone_changes_requested` | `projects_milestone_changes_v1_btn` (with the comment) |
+
+The organisation is the tenant's name from auth-api. Email and phone fall back to the local user
+table by `recipient_user_id` as for the task notices. Buttons open `action_path` on the projects
+app: `/{org}/portal/projects/{id}` (invite), `?milestone={id}` added for a review, and
+`/{org}/projects/{id}/milestones?milestone={id}` for the team. All four are essential (Support &
+Projects). The five new WhatsApp templates wait for the Meta sync (Platform WhatsApp templates in
+notifications-ui, `POST /platform/whatsapp/templates/sync`); until Meta approves them only the
+emails go. The `projects_` prefix in `tenanttemplates/selection.json` already covers them.
+
 **Events Published**: None
 
 **Template Mapping**:
 - `task.mentioned` → `projects/task_mentioned` (email, WhatsApp)
 - `task.assigned` → `projects/task_assigned` (email, WhatsApp)
+- `client.invited` → `projects/client_invited` (email, WhatsApp)
+- `milestone.ready_for_review` → `projects/milestone_ready_for_review` (email, WhatsApp)
+- `milestone.approved` → `projects/milestone_approved` (email, WhatsApp)
+- `milestone.changes_requested` → `projects/milestone_changes_requested` (email, WhatsApp)
 - `task_due` → `deadline_reminder_push` template
 
 ### ERP Service
