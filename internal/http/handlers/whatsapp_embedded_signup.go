@@ -15,6 +15,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 
 	"github.com/bengobox/notifications-api/internal/ent"
@@ -88,6 +89,8 @@ type WhatsAppEmbeddedSignupHandler struct {
 	// verifyLimits counts verification code requests and checks per tenant (see verifyLimiter).
 	verifyLimitsMu sync.Mutex
 	verifyLimits   map[string][]time.Time
+	// verifyLimitRedis, when set, holds the limits for every pod (WithVerifyLimitStore).
+	verifyLimitRedis *redis.Client
 }
 
 // connectionKeys are the tenant rows a connection writes and Disconnect removes. Other settings

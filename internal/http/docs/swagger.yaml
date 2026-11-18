@@ -442,10 +442,20 @@ definitions:
     properties:
       category:
         type: string
+      meta_category:
+        description: |-
+          MetaCategory is the category Meta approved the template under, the one it bills. When it
+          differs from Category, Recategorized is true and Meta treats every send as that category
+          (a MARKETING one is held back by Meta's per person marketing limit, error 131049).
+        type: string
       name:
+        type: string
+      previous_category:
         type: string
       reason:
         type: string
+      recategorized:
+        type: boolean
       status:
         description: |-
           Status is Meta's review status (APPROVED, PENDING, REJECTED, PAUSED, DISABLED ...), or
@@ -455,6 +465,13 @@ definitions:
   internal_http_handlers.ActivityLogEntry:
     properties:
       channel:
+        type: string
+      errorCode:
+        description: |-
+          ErrorCode and ErrorDetail are the provider's reason for a send it accepted and later refused
+          (Meta 131049, 131026 ...), from its status webhook.
+        type: string
+      errorDetail:
         type: string
       id:
         type: string
@@ -708,6 +725,12 @@ definitions:
         items:
           type: string
         type: array
+      tenant_id:
+        description: |-
+          TenantID, when set, submits to the WhatsApp Business Account of that tenant's number instead
+          of the platform's: the way to put named templates on the shared portfolio WABA while the
+          platform number has no WABA of its own, whatever that tenant's usage selects.
+        type: string
     type: object
   internal_http_handlers.syncTemplatesResponse:
     properties:
@@ -721,6 +744,47 @@ definitions:
         additionalProperties:
           type: integer
         type: object
+      waba_id:
+        type: string
+    type: object
+  internal_http_handlers.templateCategoriesResponse:
+    properties:
+      wabas:
+        items:
+          $ref: '#/definitions/internal_http_handlers.templateCategoryWABA'
+        type: array
+    type: object
+  internal_http_handlers.templateCategoryRow:
+    properties:
+      declared_category:
+        type: string
+      meta_category:
+        type: string
+      name:
+        type: string
+      previous_category:
+        type: string
+      recategorized:
+        type: boolean
+      status:
+        type: string
+    type: object
+  internal_http_handlers.templateCategoryWABA:
+    properties:
+      error:
+        type: string
+      summary:
+        additionalProperties:
+          type: integer
+        type: object
+      templates:
+        items:
+          $ref: '#/definitions/internal_http_handlers.templateCategoryRow'
+        type: array
+      tenant_ids:
+        items:
+          type: string
+        type: array
       waba_id:
         type: string
     type: object
@@ -807,6 +871,20 @@ definitions:
         additionalProperties:
           type: string
         type: object
+    type: object
+  internal_http_handlers.verificationCheck:
+    properties:
+      code:
+        type: string
+    type: object
+  internal_http_handlers.verificationRequest:
+    properties:
+      code_method:
+        description: SMS or VOICE
+        type: string
+      language:
+        description: default en_US
+        type: string
     type: object
   pagination.Response-github_com_bengobox_notifications-api_internal_modules_templates_TemplateSummary:
     properties:
@@ -1125,7 +1203,8 @@ paths:
       - application/json
       description: Platform owners only. Checks the number belongs to the WhatsApp
         account, subscribes the webhook, registers the number when needed and saves
-        it for the tenant named in X-Tenant-ID.
+        it for the tenant named in X-Tenant-ID, or for the platform tenant when none
+        is named.
       parameters:
       - description: Phone number ID and WhatsApp account ID
         in: body
@@ -1153,6 +1232,10 @@ paths:
           description: Conflict
           schema:
             $ref: '#/definitions/internal_http_handlers.errorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
         "502":
           description: Bad Gateway
           schema:
@@ -1164,6 +1247,170 @@ paths:
       security:
       - bearerAuth: []
       summary: Link a number from the Codevertex portfolio to a tenant
+      tags:
+      - WhatsApp
+  /billing/whatsapp/registration:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - bearerAuth: []
+      summary: Live Cloud API registration state of the tenant's WhatsApp number
+      tags:
+      - WhatsApp
+  /billing/whatsapp/reregister:
+    post:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
+        "502":
+          description: Bad Gateway
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
+      security:
+      - bearerAuth: []
+      summary: Register a linked WhatsApp number on Cloud API again
+      tags:
+      - WhatsApp
+  /billing/whatsapp/verification/request:
+    post:
+      consumes:
+      - application/json
+      description: Platform owners only, for the tenant in X-Tenant-ID or the platform
+        tenant. Rate limited.
+      parameters:
+      - description: SMS or VOICE, and the language (default en_US)
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_http_handlers.verificationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
+        "502":
+          description: Bad Gateway
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
+      security:
+      - bearerAuth: []
+      summary: Send a verification code to the linked WhatsApp number
+      tags:
+      - WhatsApp
+  /billing/whatsapp/verification/verify:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: The code Meta sent
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_http_handlers.verificationCheck'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
+        "502":
+          description: Bad Gateway
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
+      security:
+      - bearerAuth: []
+      summary: Verify the linked WhatsApp number with its code and register it
       tags:
       - WhatsApp
   /broadcasts:
@@ -1815,6 +2062,33 @@ paths:
       security:
       - bearerAuth: []
       summary: Delete WhatsApp templates from Meta by name prefix
+      tags:
+      - Platform
+  /platform/whatsapp/templates/categories:
+    get:
+      description: Every template on each WhatsApp Business Account we send from,
+        with our declared category, Meta's approved category and previous_category.
+        recategorized marks templates Meta bills under another category than ours.
+        Add ?recategorized=true to list only those.
+      parameters:
+      - description: Only templates Meta moved to another category
+        in: query
+        name: recategorized
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_http_handlers.templateCategoriesResponse'
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/internal_http_handlers.errorResponse'
+      security:
+      - bearerAuth: []
+      summary: WhatsApp template categories on Meta, per WABA
       tags:
       - Platform
   /platform/whatsapp/templates/sync:

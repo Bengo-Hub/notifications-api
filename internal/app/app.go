@@ -468,7 +468,8 @@ func New(ctx context.Context) (*App, error) {
 	whatsappProfileHandler := handlers.NewWhatsAppProfileHandler(whatsappProfileService, log)
 	whatsappEmbeddedSignupHandler := handlers.NewWhatsAppEmbeddedSignupHandler(entClient, log, providerManager).
 		WithTemplateAutoSync(tenantTemplates.AutoSync).
-		WithProfileAutoSync(whatsappProfileService.AutoSync)
+		WithProfileAutoSync(whatsappProfileService.AutoSync).
+		WithVerifyLimitStore(redisClient)
 	whatsappTemplatesHandler := handlers.NewWhatsAppTemplates(providerManager, log, tenantTemplates).WithDeliveryLog(entClient)
 	mailDeliveryHandler := handlers.NewMailDeliveryHandler(
 		maildelivery.NewService(maildelivery.NewEntStore(entClient), handlers.NewMailDeliverySuppressor(redisClient), log).

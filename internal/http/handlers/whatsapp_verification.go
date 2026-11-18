@@ -9,6 +9,7 @@ import (
 	"time"
 
 	httpware "github.com/Bengo-Hub/httpware"
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 
 	pcfg "github.com/bengobox/notifications-api/internal/providers/config"
@@ -46,9 +47,48 @@ func (h *WhatsAppEmbeddedSignupHandler) clock() time.Time {
 	return time.Now()
 }
 
+// verifyLimitScript is the sliding window in Redis, so every pod shares one count. A sorted set
+// holds the attempt times in milliseconds. Returns {1, 0} when the attempt is recorded, or
+// {0, wait_ms} when it is refused.
+var verifyLimitScript = redis.NewScript(`
+local now, window, gap, max = tonumber(ARGV[1]), tonumber(ARGV[2]), tonumber(ARGV[3]), tonumber(ARGV[4])
+redis.call('ZREMRANGEBYSCORE', KEYS[1], '-inf', now - window)
+local last = redis.call('ZRANGE', KEYS[1], -1, -1, 'WITHSCORES')
+if gap > 0 and last[2] and now - tonumber(last[2]) < gap then
+  return {0, gap - (now - tonumber(last[2]))}
+end
+if redis.call('ZCARD', KEYS[1]) >= max then
+  local first = redis.call('ZRANGE', KEYS[1], 0, 0, 'WITHSCORES')
+  return {0, window - (now - tonumber(first[2]))}
+end
+redis.call('ZADD', KEYS[1], now, ARGV[5])
+redis.call('PEXPIRE', KEYS[1], window)
+return {1, 0}
+`)
+
+const verifyLimitKeyPrefix = "notifications:whatsapp:verify-limit:"
+
+// WithVerifyLimitStore keeps the verification rate limits in Redis so they hold across pods.
+// Without it (tests, local runs) they are kept in memory per process.
+func (h *WhatsAppEmbeddedSignupHandler) WithVerifyLimitStore(rdb *redis.Client) *WhatsAppEmbeddedSignupHandler {
+	h.verifyLimitRedis = rdb
+	return h
+}
+
 // allowAttempt records an attempt under key when it is within the limits: at most max in window,
 // and at least gap after the previous one. It returns how long to wait when it is not.
-func (h *WhatsAppEmbeddedSignupHandler) allowAttempt(key string, max int, window, gap time.Duration) (bool, time.Duration) {
+func (h *WhatsAppEmbeddedSignupHandler) allowAttempt(ctx context.Context, key string, max int, window, gap time.Duration) (bool, time.Duration) {
+	if h.verifyLimitRedis != nil {
+		now := h.clock()
+		res, err := verifyLimitScript.Run(ctx, h.verifyLimitRedis, []string{verifyLimitKeyPrefix + key},
+			now.UnixMilli(), window.Milliseconds(), gap.Milliseconds(), max,
+			strconv.FormatInt(now.UnixNano(), 10)).Int64Slice()
+		if err == nil && len(res) == 2 {
+			return res[0] == 1, time.Duration(res[1]) * time.Millisecond
+		}
+		// Redis unavailable: fall back to this pod's own count rather than refusing everyone.
+		h.log.Warn("whatsapp verification limit: redis unavailable, using the in-process count", zap.Error(err))
+	}
 	h.verifyLimitsMu.Lock()
 	defer h.verifyLimitsMu.Unlock()
 	if h.verifyLimits == nil {
@@ -145,7 +185,7 @@ func (h *WhatsAppEmbeddedSignupHandler) RequestVerificationCode(w http.ResponseW
 	if !ok {
 		return
 	}
-	if allowed, wait := h.allowAttempt("request:"+tenantID, codeRequestsPerHour, time.Hour, codeRequestGap); !allowed {
+	if allowed, wait := h.allowAttempt(ctx, "request:"+tenantID, codeRequestsPerHour, time.Hour, codeRequestGap); !allowed {
 		tooMany(w, wait, "a code was sent a moment ago")
 		return
 	}
@@ -196,7 +236,7 @@ func (h *WhatsAppEmbeddedSignupHandler) VerifyCode(w http.ResponseWriter, r *htt
 	if !ok {
 		return
 	}
-	if allowed, wait := h.allowAttempt("verify:"+tenantID, codeChecksPer15Min, 15*time.Minute, 0); !allowed {
+	if allowed, wait := h.allowAttempt(ctx, "verify:"+tenantID, codeChecksPer15Min, 15*time.Minute, 0); !allowed {
 		tooMany(w, wait, "too many code checks")
 		return
 	}

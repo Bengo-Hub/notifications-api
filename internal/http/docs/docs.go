@@ -406,7 +406,7 @@ const docTemplate = `{
                         "bearerAuth": []
                     }
                 ],
-                "description": "Platform owners only. Checks the number belongs to the WhatsApp account, subscribes the webhook, registers the number when needed and saves it for the tenant named in X-Tenant-ID.",
+                "description": "Platform owners only. Checks the number belongs to the WhatsApp account, subscribes the webhook, registers the number when needed and saves it for the tenant named in X-Tenant-ID, or for the platform tenant when none is named.",
                 "consumes": [
                     "application/json"
                 ],
@@ -450,6 +450,267 @@ const docTemplate = `{
                     },
                     "409": {
                         "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    },
+                    "502": {
+                        "description": "Bad Gateway",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/billing/whatsapp/registration": {
+            "get": {
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "WhatsApp"
+                ],
+                "summary": "Live Cloud API registration state of the tenant's WhatsApp number",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/billing/whatsapp/reregister": {
+            "post": {
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "WhatsApp"
+                ],
+                "summary": "Register a linked WhatsApp number on Cloud API again",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    },
+                    "502": {
+                        "description": "Bad Gateway",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/billing/whatsapp/verification/request": {
+            "post": {
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "description": "Platform owners only, for the tenant in X-Tenant-ID or the platform tenant. Rate limited.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "WhatsApp"
+                ],
+                "summary": "Send a verification code to the linked WhatsApp number",
+                "parameters": [
+                    {
+                        "description": "SMS or VOICE, and the language (default en_US)",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.verificationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    },
+                    "502": {
+                        "description": "Bad Gateway",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/billing/whatsapp/verification/verify": {
+            "post": {
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "WhatsApp"
+                ],
+                "summary": "Verify the linked WhatsApp number with its code and register it",
+                "parameters": [
+                    {
+                        "description": "The code Meta sent",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.verificationCheck"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/internal_http_handlers.errorResponse"
                         }
@@ -1455,6 +1716,45 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/platform/whatsapp/templates/categories": {
+            "get": {
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "description": "Every template on each WhatsApp Business Account we send from, with our declared category, Meta's approved category and previous_category. recategorized marks templates Meta bills under another category than ours. Add ?recategorized=true to list only those.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Platform"
+                ],
+                "summary": "WhatsApp template categories on Meta, per WABA",
+                "parameters": [
+                    {
+                        "type": "boolean",
+                        "description": "Only templates Meta moved to another category",
+                        "name": "recategorized",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_http_handlers.templateCategoriesResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable",
                         "schema": {
                             "$ref": "#/definitions/internal_http_handlers.errorResponse"
                         }
@@ -2923,11 +3223,21 @@ const docTemplate = `{
                 "category": {
                     "type": "string"
                 },
+                "meta_category": {
+                    "description": "MetaCategory is the category Meta approved the template under, the one it bills. When it\ndiffers from Category, Recategorized is true and Meta treats every send as that category\n(a MARKETING one is held back by Meta's per person marketing limit, error 131049).",
+                    "type": "string"
+                },
                 "name": {
+                    "type": "string"
+                },
+                "previous_category": {
                     "type": "string"
                 },
                 "reason": {
                     "type": "string"
+                },
+                "recategorized": {
+                    "type": "boolean"
                 },
                 "status": {
                     "description": "Status is Meta's review status (APPROVED, PENDING, REJECTED, PAUSED, DISABLED ...), or\nMISSING when the template has not been submitted to this WABA.",
@@ -2939,6 +3249,13 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "channel": {
+                    "type": "string"
+                },
+                "errorCode": {
+                    "description": "ErrorCode and ErrorDetail are the provider's reason for a send it accepted and later refused\n(Meta 131049, 131026 ...), from its status webhook.",
+                    "type": "string"
+                },
+                "errorDetail": {
                     "type": "string"
                 },
                 "id": {
@@ -3303,6 +3620,10 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
+                },
+                "tenant_id": {
+                    "description": "TenantID, when set, submits to the WhatsApp Business Account of that tenant's number instead\nof the platform's: the way to put named templates on the shared portfolio WABA while the\nplatform number has no WABA of its own, whatever that tenant's usage selects.",
+                    "type": "string"
                 }
             }
         },
@@ -3322,6 +3643,69 @@ const docTemplate = `{
                     "type": "object",
                     "additionalProperties": {
                         "type": "integer"
+                    }
+                },
+                "waba_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_http_handlers.templateCategoriesResponse": {
+            "type": "object",
+            "properties": {
+                "wabas": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_http_handlers.templateCategoryWABA"
+                    }
+                }
+            }
+        },
+        "internal_http_handlers.templateCategoryRow": {
+            "type": "object",
+            "properties": {
+                "declared_category": {
+                    "type": "string"
+                },
+                "meta_category": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "previous_category": {
+                    "type": "string"
+                },
+                "recategorized": {
+                    "type": "boolean"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_http_handlers.templateCategoryWABA": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                },
+                "summary": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer"
+                    }
+                },
+                "templates": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_http_handlers.templateCategoryRow"
+                    }
+                },
+                "tenant_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
                     }
                 },
                 "waba_id": {
@@ -3454,6 +3838,27 @@ const docTemplate = `{
                     "additionalProperties": {
                         "type": "string"
                     }
+                }
+            }
+        },
+        "internal_http_handlers.verificationCheck": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_http_handlers.verificationRequest": {
+            "type": "object",
+            "properties": {
+                "code_method": {
+                    "description": "SMS or VOICE",
+                    "type": "string"
+                },
+                "language": {
+                    "description": "default en_US",
+                    "type": "string"
                 }
             }
         },
