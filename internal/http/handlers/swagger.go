@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"crypto/subtle"
 	_ "embed"
 	"encoding/json"
 	"net/http"
@@ -29,8 +30,22 @@ var externalDocTags = map[string]bool{
 // host got hardcoded) -- the spec's own real `host` field is served as-is.
 type SwaggerHandler struct {
 	apiKeyValidator *authclient.APIKeyValidator
-	fullSpec        map[string]any
-	externalSpec    map[string]any
+	// internalKey is INTERNAL_SERVICE_KEY. A trusted backend (MarketFlow's endpoint discovery)
+	// presents it to read the full spec; it is never sent by a browser.
+	internalKey  string
+	fullSpec     map[string]any
+	externalSpec map[string]any
+}
+
+// WithInternalKey lets the shared service key read the full spec too.
+func (h *SwaggerHandler) WithInternalKey(key string) *SwaggerHandler {
+	h.internalKey = key
+	return h
+}
+
+func (h *SwaggerHandler) isInternalKey(r *http.Request) bool {
+	key := r.Header.Get("X-API-Key")
+	return h.internalKey != "" && key != "" && subtle.ConstantTimeCompare([]byte(key), []byte(h.internalKey)) == 1
 }
 
 // NewSwaggerHandler builds the handler from the embedded swagger.json. apiKeyValidator may be nil
@@ -97,10 +112,17 @@ func (h *SwaggerHandler) OpenAPIJSON(w http.ResponseWriter, r *http.Request) {
 	writeSwaggerCORSHeaders(w)
 	w.Header().Set("Content-Type", "application/json")
 
-	resolved := resolveAppSecretOptional(h.apiKeyValidator, r)
 	spec := h.externalSpec
 	docsView := "external"
 	environment := "none"
+	if h.isInternalKey(r) {
+		w.Header().Set("X-Docs-View", "internal")
+		w.Header().Set("X-Docs-Environment", environment)
+		w.WriteHeader(http.StatusOK)
+		_ = json.NewEncoder(w).Encode(h.fullSpec)
+		return
+	}
+	resolved := resolveAppSecretOptional(h.apiKeyValidator, r)
 	if resolved != nil {
 		environment = resolved.Environment
 		if isPrivilegedForInternalDocs(resolved) {

@@ -391,6 +391,8 @@ func New(ctx context.Context) (*App, error) {
 	if err != nil {
 		return nil, fmt.Errorf("build swagger handler: %w", err)
 	}
+	// MarketFlow's endpoint discovery reads the full spec with the shared service key.
+	swaggerHandler.WithInternalKey(cfg.Security.APIKey)
 
 	whatsappInboxHub := whatsappinbox.NewHub(log)
 	if natsConn != nil {
