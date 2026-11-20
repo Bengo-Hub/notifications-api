@@ -1610,5 +1610,60 @@
     "buttons": [
       {"type": "URL", "text": "View reply", "url": "https://ticketing.codevertexafrica.com/{{1}}", "example": ["support/track?org=urban-loft&ticket=TKT-000042"]}
     ]
+  },
+  {
+    "name": "mf_video_ready_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "MarketFlow (marketflow-api creative.TemplateVideoReady; params: business, video title; button: the Studio brief). docs/whatsapp-template-policy.md",
+    "body": "Hi {{1}},\n\nYour video ad *{{2}}* has finished rendering and is waiting for your review.\n\nOpen it to approve it, post it or change a scene.",
+    "example": ["Jua Kali Salon", "Weekend offer"],
+    "buttons": [
+      {"type": "URL", "text": "Review video", "url": "https://marketflow.codevertexafrica.com/{{1}}", "example": ["jua-kali-salon/studio/2f6c1a9e-7b3d-4c55-9a1e-0d4b6f2e8c71"]}
+    ]
+  },
+  {
+    "name": "mf_publish_result_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "MarketFlow (marketflow-api creative.TemplatePublishResult; params: business, video title, per-account result; button: posting calendar)",
+    "body": "Hi {{1}},\n\nYour video ad *{{2}}* was sent to your accounts: {{3}}.\n\nOpen your posting calendar for the details.",
+    "example": ["Jua Kali Salon", "Weekend offer", "Facebook posted, Instagram posted"],
+    "buttons": [
+      {"type": "URL", "text": "Open calendar", "url": "https://marketflow.codevertexafrica.com/{{1}}", "example": ["jua-kali-salon/publishing"]}
+    ]
+  },
+  {
+    "name": "mf_daily_brief_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "MarketFlow (marketflow-api creative.TemplateDailyBrief; params: business, date label; button: dashboard)",
+    "body": "Good morning {{1}},\n\nYour marketing brief for *{{2}}* is ready.\n\nOpen it for the full page and today's suggested actions.",
+    "example": ["Jua Kali Salon", "Monday 16 November"],
+    "buttons": [
+      {"type": "URL", "text": "Open brief", "url": "https://marketflow.codevertexafrica.com/{{1}}", "example": ["jua-kali-salon/dashboard"]}
+    ]
+  },
+  {
+    "name": "mf_weekly_summary_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "MarketFlow (marketflow-api creative.TemplateWeeklySummary; params: business, posts, leads, AI credits used; button: dashboard)",
+    "body": "Hi {{1}},\n\nYour marketing week: {{2}} posts went out, {{3}} leads came in and {{4}} AI credits were used.\n\nOpen the full summary in MarketFlow.",
+    "example": ["Jua Kali Salon", "6", "14", "42"],
+    "buttons": [
+      {"type": "URL", "text": "Open summary", "url": "https://marketflow.codevertexafrica.com/{{1}}", "example": ["jua-kali-salon/dashboard"]}
+    ]
+  },
+  {
+    "name": "mf_integration_reconnect_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "MarketFlow (marketflow-api creative.TemplateIntegrationReconnect from worker connected_token_health; params: business, accounts; button: integrations page)",
+    "body": "Hi {{1}},\n\nMarketFlow can no longer reach {{2}}, so posts and ads on it are paused.\n\nOpen your integrations page to connect it again.",
+    "example": ["Jua Kali Salon", "the Facebook Page Jua Kali Salon"],
+    "buttons": [
+      {"type": "URL", "text": "Reconnect", "url": "https://marketflow.codevertexafrica.com/{{1}}", "example": ["jua-kali-salon/settings/integrations"]}
+    ]
   }
 ]

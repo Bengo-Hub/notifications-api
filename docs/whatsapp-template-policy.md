@@ -262,13 +262,14 @@ with Meta's error code and reason (Monitoring no longer shows "sent" for a messa
 button waits up to six seconds and says what Meta did with its message, and a number Meta cannot deliver
 to (131026) is skipped on WhatsApp for that sender for a week, with its backup number used when there is one.
 
-## 5. MarketFlow assistant templates (Sprint 17, for the owner to submit)
+## 5. MarketFlow assistant templates (Sprint 17)
 
 MarketFlow's WhatsApp assistant writes to business owners from the platform number. Inside the
 24 hour window it sends free-form messages with reply buttons. Outside the window it needs the
-templates below. They are **not** in `templates.json` yet, so a sync cannot submit them by
-accident: the owner submits them in WhatsApp Manager on the platform WABA (Codevertex), and they
-move into the manifest once approved.
+templates below. On 2026-11-20 the Sync dialog showed all 150 manifest templates approved and none
+of these on the WABA, so the five that code sends are now in `templates.json`: Templates > Sync
+WhatsApp to Meta submits them on the platform WABA (Codevertex). `mf_new_lead_v1_btn` stays out
+until code sends it.
 
 MarketFlow asks `GET /api/v1/s2s/whatsapp/templates/status?tenant_id=<platform tenant>&names=...`
 (service key) before each use and sends a template only when Meta shows it `APPROVED`. Until then
@@ -287,6 +288,7 @@ Every template: category `UTILITY`, language `en_US` (English), one `URL` button
 | `mf_daily_brief_v1_btn` | `Good morning {{1}},\n\nYour marketing brief for *{{2}}* is ready.\n\nOpen it for the full page and today's suggested actions.` | `Jua Kali Salon`, `Monday 16 November` | `Open brief` | `jua-kali-salon/dashboard` |
 | `mf_new_lead_v1_btn` | `Hi {{1}},\n\nA new lead came in from {{2}}: *{{3}}*.\n\nOpen the lead to reply while it is fresh.` | `Jua Kali Salon`, `Facebook lead form`, `Brian O.` | `Open lead` | `jua-kali-salon/leads/5b0e2d7a-1c3f-4e8a-9b6d-2a7c4f1e0d93` |
 | `mf_weekly_summary_v1_btn` | `Hi {{1}},\n\nYour marketing week: {{2}} posts went out, {{3}} leads came in and {{4}} AI credits were used.\n\nOpen the full summary in MarketFlow.` | `Jua Kali Salon`, `6`, `14`, `42` | `Open summary` | `jua-kali-salon/dashboard` |
+| `mf_integration_reconnect_v1_btn` | `Hi {{1}},\n\nMarketFlow can no longer reach {{2}}, so posts and ads on it are paused.\n\nOpen your integrations page to connect it again.` | `Jua Kali Salon`, `the Facebook Page Jua Kali Salon` | `Reconnect` | `jua-kali-salon/settings/integrations` |
 
 Notes for the owner when submitting:
 
