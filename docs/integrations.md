@@ -686,6 +686,18 @@ Onboarding:
 
 **Status**: Planned for future implementation
 
+#### Which number a WhatsApp message goes from
+
+A tenant's own WhatsApp never goes from the Codevertex number. Only the tenants in `PROVIDERS_WHATSAPP_SHARED_NUMBER_TENANTS` (the demo tenant) may borrow it (owner, 9 and 20 November 2026). Sender scope and number are separate decisions:
+
+- Sender scope decides who pays and whether a plan can block the send. Sign-in codes (auth, Hadia, Maskani, Digitika) are platform scope, so a tenant's plan never blocks a login.
+- The number is the tenant's own for anything the tenant sends to its customers or staff, sign-in codes included (`cmd/worker/whatsapp_sender_number.go`). Only Codevertex's own notices to a tenant's admins (billing, plan expiry, credits) and to platform admins use the platform number.
+- A tenant with no number of its own gets no WhatsApp; the email copy still goes. On 20 November 2026 Hadia's codes had been leaving from the platform number although Hadia's number and `auth_otp` were approved on its own account.
+
+#### Notification settings cover every template
+
+`GET /api/v1/notification-preferences` lists every template on disk (`preferences.Catalog`), not only the ones classified in `preferences.Registry`; an unclassified template is essential (on by default). The registry is only for locking a type, defaulting it off, or giving it a better label. A type or channel switched off is dropped by the worker until it is switched back on; switching every channel off is stored as `none`. A WhatsApp wording sent under its own template id (`WATemplateID`) also stops when its notice is switched off (`messaging.MetaPreferenceKey`). Platform owners edit the defaults every tenant inherits with `?scope=platform` on the same routes (the "Platform defaults" switch in Settings > Notifications).
+
 #### Managed link (number in the Codevertex portfolio)
 
 A tenant's number can be connected two ways. Embedded Signup stays the normal path: the tenant connects its own number in its own business portfolio, and I store that business's token. The managed link is the second path, for a tenant whose WhatsApp account lives inside the verified Codevertex Africa Limited portfolio (owner decision 2026-11-13). Meta's Embedded Signup never offers the portfolio of the business that owns the app, by design, so such an account can only be set up by hand in WhatsApp Manager and then linked here. Hadia is the first.
