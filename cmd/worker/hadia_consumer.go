@@ -220,8 +220,8 @@ func hadiaPayoutFailure(template, subject, waTemplate string, sentFor func(reaso
 
 var hadiaMappings = map[string][]hadiaMessage{
 	// A one-time code for a guest (reserving with a phone) or an owner (payout number). The shared
-	// auth OTP templates from the platform number, as sign-in codes, so the tenant's own plan never
-	// blocks a code.
+	// auth OTP templates as platform scope, like sign-in codes, so Hadia's own plan never blocks a
+	// code. They still go from Hadia's own number (whatsAppNumberTenant), never Codevertex's.
 	"otp.requested": {{maskaniMapping: maskaniMapping{
 		TemplateID: "auth/otp_verification", WATemplateID: "auth/otp", PhoneKey: "phone", EmailKey: "email",
 		Subject: func(map[string]any) string { return "Your Hadia verification code" },
@@ -338,7 +338,7 @@ var hadiaMappings = map[string][]hadiaMessage{
 	// account or email yet. Until Meta approves the template and Hadia's number is live nothing goes,
 	// and hadia-ui lets the owner share the invitation themselves.
 	"registry.member_invited": {{PathKey: "sign_in_url", maskaniMapping: maskaniMapping{
-		TemplateID: "hadia/member_invited", PhoneKey: "invitee_phone",
+		TemplateID: "hadia/member_invited", PhoneKey: "invitee_phone", EmailKey: "invitee_email",
 		Subject: func(p map[string]any) string { return "You are invited to help run a gift registry" },
 		Data: func(p map[string]any, _ *tenantInfo) map[string]any {
 			return map[string]any{"inviter": waParam(p["inviter_name"], "A Hadia host"), "registry": mStr(p, "registry_title")}
@@ -443,7 +443,7 @@ var hadiaMappings = map[string][]hadiaMessage{
 	// never held.
 	"gift.received": {
 		{PathKey: "registry_url", maskaniMapping: maskaniMapping{
-			TemplateID: "hadia/gift_receipt", PhoneKey: "guest_phone",
+			TemplateID: "hadia/gift_receipt", PhoneKey: "guest_phone", EmailKey: "guest_email",
 			Subject: func(map[string]any) string { return "Your Hadia gift receipt" },
 			Data: func(p map[string]any, _ *tenantInfo) map[string]any {
 				return map[string]any{"name": waParam(p["guest_name"], "there"), "registry": mStr(p, "registry_title"),
@@ -545,7 +545,7 @@ var hadiaMappings = map[string][]hadiaMessage{
 	}}},
 	// Guests give no email, so a refund notice needs their phone. No link: the guest has nothing to do.
 	"refund.pending": {{maskaniMapping: maskaniMapping{
-		TemplateID: "hadia/refund_pending", PhoneKey: "guest_phone",
+		TemplateID: "hadia/refund_pending", PhoneKey: "guest_phone", EmailKey: "guest_email",
 		Subject: func(map[string]any) string { return "Your Hadia gift is being refunded" },
 		Data: func(p map[string]any, _ *tenantInfo) map[string]any {
 			return map[string]any{"name": waParam(p["guest_name"], "there"), "registry": mStr(p, "registry_title"),
@@ -556,7 +556,7 @@ var hadiaMappings = map[string][]hadiaMessage{
 		Skip:       func(p map[string]any) bool { return mStr(p, "guest_phone") == "" },
 	}}},
 	"refund.completed": {{maskaniMapping: maskaniMapping{
-		TemplateID: "hadia/refund_completed", PhoneKey: "guest_phone",
+		TemplateID: "hadia/refund_completed", PhoneKey: "guest_phone", EmailKey: "guest_email",
 		Subject: func(map[string]any) string { return "Your Hadia gift was refunded" },
 		Data: func(p map[string]any, _ *tenantInfo) map[string]any {
 			return map[string]any{"name": waParam(p["guest_name"], "there"), "registry": mStr(p, "registry_title"),

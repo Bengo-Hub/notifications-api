@@ -269,8 +269,9 @@ func buildAccessCode(p map[string]any) (digitikaNotice, bool) {
 		TemplateID:   "auth/otp_verification",
 		WATemplateID: "auth/otp",
 		Subject:      "Your Digitika parent portal code",
-		// A one-time code goes from the platform number, so a tenant's own WhatsApp plan and
-		// quota never block it (the same rule as sign-in codes in auth_consumer.go).
+		// A one-time code is platform scope, so a tenant's own WhatsApp plan and quota never block
+		// it (the same rule as sign-in codes in auth_consumer.go); it goes from the tenant's own
+		// number (whatsAppNumberTenant).
 		Scope:   messaging.SenderScopePlatform,
 		Ungated: true,
 		Data: map[string]any{

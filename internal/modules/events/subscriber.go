@@ -550,9 +550,14 @@ func (s *Subscriber) handleSaleNotification(msg *nats.Msg) {
 
 	// The cashier's "Send Notification": the channel pos-api resolved (email or WhatsApp; it refuses
 	// unpaid WhatsApp before publishing). receiptChannel repeats the rule for older events.
+	// A WhatsApp receipt also goes by email when the sale has an address, so a WhatsApp send that
+	// fails or is skipped (no number of the tenant's own, credits) still reaches the customer.
 	channel := receiptChannel(p.Channel, phone, email)
 	if channel == "whatsapp" {
 		s.publishWithMetadata(p.TenantID, "whatsapp", "pos/receipt_share", messaging.TargetCustomer, []string{phone}, data, waMeta)
+		if email != "" {
+			s.publish(p.TenantID, "email", "pos/receipt_share", messaging.TargetCustomer, []string{email}, data)
+		}
 	} else {
 		s.publish(p.TenantID, "email", "pos/receipt_share", messaging.TargetCustomer, []string{email}, data)
 	}

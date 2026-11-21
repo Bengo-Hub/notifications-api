@@ -58,8 +58,8 @@ type maskaniMapping struct {
 	// WAButton fills a button that is not a link, such as the copy-code button of Meta's
 	// AUTHENTICATION template.
 	WAButton func(d map[string]any) string
-	// Platform sends from the platform number, as sign-in codes do, so a tenant's own WhatsApp plan
-	// and quota never block a one-time code.
+	// Platform sends as platform scope, as sign-in codes do, so a tenant's own WhatsApp plan and
+	// quota never block a one-time code. The number is still the tenant's own (whatsAppNumberTenant).
 	Platform bool
 }
 
@@ -328,8 +328,8 @@ var maskaniMappings = map[string]maskaniMapping{
 		WAParams:   func(d map[string]any) []string { return mParams(d, "host_name", "visitor_name", "unit_code") },
 	},
 	// A resident or buyer proving they hold the phone or email on record (a privacy request at the
-	// office, accepting a new payment plan). The shared auth OTP templates (5 minute wording) from
-	// the platform number, as sign-in codes.
+	// office, accepting a new payment plan). The shared auth OTP templates (5 minute wording) as
+	// platform scope, as sign-in codes, from the tenant's own number.
 	"party.otp_requested": {
 		TemplateID: "auth/otp_verification", WATemplateID: "auth/otp", PhoneKey: "phone", EmailKey: "email",
 		Subject: func(p map[string]any) string {

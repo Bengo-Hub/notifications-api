@@ -319,8 +319,10 @@ func startAuthNotificationConsumer(ctx context.Context, nc *nats.Conn, cfg *conf
 		}
 
 		// Delivered on WhatsApp with Meta's AUTHENTICATION template (auth_otp: the code is the body
-		// parameter and the copy-code button parameter) from the platform number, so a tenant's own
-		// WhatsApp plan and quota never block a sign-in.
+		// parameter and the copy-code button parameter) as platform scope, so a tenant's own WhatsApp
+		// plan and quota never block a sign-in. It still goes from the tenant's own number
+		// (whatsAppNumberTenant); a tenant without one cannot send it on WhatsApp (the demo
+		// allowlist aside), so its members sign in with an email code.
 		if phone, _ := payload["phone"].(string); email == "" && phone != "" {
 			ttl := 5
 			if v, ok := payload["ttl_minutes"].(float64); ok && v > 0 {

@@ -45,6 +45,11 @@ type Attachment struct {
 	Content     []byte `json:"content"`
 }
 
+// MetaPreferenceKey names the notification type whose tenant settings also govern a message
+// sent under a different template id (a WhatsApp wording of an email notice). The worker's
+// preferences gate checks both ids.
+const MetaPreferenceKey = "preference_key"
+
 // EffectiveSenderScope returns the sender scope, defaulting to tenant if empty.
 func (m *Message) EffectiveSenderScope() string {
 	if m.SenderScope == "" {

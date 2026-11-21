@@ -193,8 +193,11 @@ func publishPartyMessages(ctx context.Context, nc *nats.Conn, cfg *config.Config
 		case "sms":
 			meta["default_dial_code"] = dial
 		case "whatsapp":
-			if waTemplateID != "" {
+			if waTemplateID != "" && waTemplateID != templateID {
 				tpl = waTemplateID
+				// The notice's own type, so switching it off in the tenant's settings also stops
+				// this WhatsApp wording (worker preferences gate).
+				meta[messaging.MetaPreferenceKey] = templateID
 			}
 			meta["template_name"] = p.WhatsApp.Name
 			meta["template_language"] = "en_US"

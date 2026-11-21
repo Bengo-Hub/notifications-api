@@ -309,7 +309,11 @@ func main() {
 				gateTenant = t.ID.String()
 			}
 		}
-		if !prefGate.Enabled(ctx, gateTenant, msg.TemplateID, msg.Channel) {
+		// A WhatsApp wording of another notice (MetaPreferenceKey) also stops when that notice is
+		// switched off; its own row governs its channel.
+		baseType, _ := msg.Metadata[messaging.MetaPreferenceKey].(string)
+		if !prefGate.Enabled(ctx, gateTenant, msg.TemplateID, msg.Channel) ||
+			(baseType != "" && baseType != msg.TemplateID && !prefGate.Enabled(ctx, gateTenant, baseType, "")) {
 			logg.Info("notification disabled by tenant preferences, dropping",
 				zap.String("template", msg.TemplateID),
 				zap.String("tenant_id", msg.TenantID),
@@ -996,7 +1000,10 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 		// The number is resolved first: a tenant with no WhatsApp number of its own never sends on
 		// the platform's (owner, 9 November 2026), and must not be charged for a message that
 		// cannot go out.
-		waProv, err := pm.GetWhatsAppProvider(ctx, providerTenantID, preferred)
+		// A tenant's own message (a sign-in code included) goes from its own number even when it
+		// is platform scope; see whatsAppNumberTenant.
+		waTenantID := whatsAppNumberTenant(msg, resolvedTenantID, pm.PlatformID)
+		waProv, err := pm.GetWhatsAppProvider(ctx, waTenantID, preferred)
 		if errors.Is(err, providers.ErrNoWhatsAppNumber) {
 			return skipped(err.Error())
 		}
@@ -1005,7 +1012,7 @@ func deliver(ctx context.Context, cfg *config.Config, pm *providers.Manager, eg 
 		}
 		// A number Meta reported it cannot deliver to (131026) is skipped for a week for this
 		// sender, before anything is charged; its backup number, when there is one, goes instead.
-		for len(msg.To) > 0 && whatsAppUnreachable(ctx, dbPool, providerTenantID, pm.PlatformID, msg.To[0], msg.Metadata) {
+		for len(msg.To) > 0 && whatsAppUnreachable(ctx, dbPool, waTenantID, pm.PlatformID, msg.To[0], msg.Metadata) {
 			next, ok := messaging.NextFallback(*msg)
 			if !ok {
 				return skipped("Meta reported this number cannot receive WhatsApp messages (no WhatsApp account, an old app, " +

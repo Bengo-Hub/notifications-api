@@ -9,9 +9,10 @@
 //     (engagement, informational alerts, status pings).
 //
 // Effective value resolution: locked → tenant ServiceConfig override → platform
-// ServiceConfig default → registry class default. Unregistered template ids FAIL OPEN
-// (delivered) so a newly added template is never silently dropped before it is
-// classified here — add new templates to this registry when introducing them.
+// ServiceConfig default → registry class default. Unregistered template ids are essential
+// (on by default) and still configurable: Catalog adds every template on disk to the
+// settings list. Register a template here only to lock it, default it off, or give it a
+// better label and group.
 package preferences
 
 // Class is the gating classification of a notification type.
@@ -53,6 +54,7 @@ var Registry = []Type{
 	{Key: "auth/welcome", Label: "Welcome / account created", Group: "Account & Security", Class: ClassLocked},
 	{Key: "auth/password_reset", Label: "Password reset", Group: "Account & Security", Class: ClassLocked},
 	{Key: "auth/otp_verification", Label: "One-time passcodes (OTP)", Group: "Account & Security", Class: ClassLocked},
+	{Key: "auth/otp", Label: "One-time passcodes on WhatsApp", Group: "Account & Security", Class: ClassLocked},
 
 	// ── Hospital (LOCKED — Joint Commission National Patient Safety Goal alert; a
 	//    critical lab value must always reach the ordering clinician) ────────────

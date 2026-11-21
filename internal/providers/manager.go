@@ -308,9 +308,10 @@ func (m *Manager) GetWhatsAppProvider(ctx context.Context, tenantID string, pref
 
 			// A tenant's own messages go out only from its own registered number (owner,
 			// 9 November 2026): a client's customers must never get the client's messages from
-			// Codevertex's number. Platform-scope sends already resolve to the platform tenant
-			// (worker providerTenantID). Only the allowlisted tenants (the demo tenant) may borrow
-			// the platform number.
+			// Codevertex's number. Only Codevertex's own notices to tenant admins and platform
+			// admins resolve to the platform tenant (worker whatsAppNumberTenant); a tenant's
+			// sign-in codes resolve here, to the tenant. Only the allowlisted tenants (the demo
+			// tenant) may borrow the platform number.
 			if (accessToken == "" || phoneNumberID == "") && tenantID != m.PlatformID && m.sharesPlatformNumber(tenantID) {
 				if fb, fbErr := pcfg.LoadTenantOnlyProviderSettings(ctx, m.dbCfg, m.PlatformID, m.env, "whatsapp", "meta_cloud", m.decryptionKey); fbErr == nil {
 					if accessToken == "" {
