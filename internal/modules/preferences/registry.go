@@ -63,6 +63,15 @@ var Registry = []Type{
 	// ── WhatsApp Inbox (push fan-out when a new customer message arrives) ────────
 	{Key: "whatsapp/new_message", Label: "New WhatsApp message (push)", Group: "WhatsApp Inbox", Class: ClassEssential},
 
+	// ── MarketFlow WhatsApp notices (sent from the platform number; marketflow-api tags each
+	//    with preference_key "marketflow/<kind>_whatsapp"). The weekly summary is a report, not
+	//    an action, so WhatsApp is off by default (owner 2026-11-24); email always goes out.
+	{Key: "marketflow/weekly_summary_whatsapp", Label: "MarketFlow weekly summary on WhatsApp", Group: "MarketFlow", Class: ClassOptional},
+	{Key: "marketflow/daily_brief_whatsapp", Label: "MarketFlow daily brief on WhatsApp", Group: "MarketFlow", Class: ClassEssential},
+	{Key: "marketflow/video_ready_whatsapp", Label: "MarketFlow video ready on WhatsApp", Group: "MarketFlow", Class: ClassEssential},
+	{Key: "marketflow/publish_result_whatsapp", Label: "MarketFlow post published on WhatsApp", Group: "MarketFlow", Class: ClassEssential},
+	{Key: "marketflow/integration_reconnect_whatsapp", Label: "MarketFlow reconnect an account on WhatsApp", Group: "MarketFlow", Class: ClassEssential},
+
 	// ── Billing & payments ───────────────────────────────────────────────────
 	{Key: "finance/payment_success", Label: "Payment successful", Group: "Billing & Payments", Class: ClassEssential},
 	{Key: "finance/payment_failed", Label: "Payment failed", Group: "Billing & Payments", Class: ClassEssential},
