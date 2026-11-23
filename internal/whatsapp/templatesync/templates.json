@@ -1676,5 +1676,16 @@
     "buttons": [
       {"type": "URL", "text": "Open job", "url": "https://riderapp.codevertexafrica.com/{{1}}", "example": ["urban-loft/active"]}
     ]
+  },
+  {
+    "name": "mf_weekly_summary_v2_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "MarketFlow (marketflow-api creative.TemplateWeeklySummary; same params as v1: business, posts, leads, AI credits used; button: dashboard). Replaces v1, which Meta approved as MARKETING (2026-11-21): worded as an account statement, no invitation",
+    "body": "Hi {{1}},\n\nAccount statement for this week: {{2}} posts were published, {{3}} new leads were recorded and {{4}} AI credits were used on your MarketFlow account.\n\nThe itemised statement is on your dashboard.",
+    "example": ["Jua Kali Salon", "6", "14", "42"],
+    "buttons": [
+      {"type": "URL", "text": "View statement", "url": "https://marketflow.codevertexafrica.com/{{1}}", "example": ["jua-kali-salon/dashboard"]}
+    ]
   }
 ]
