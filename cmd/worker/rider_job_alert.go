@@ -16,6 +16,20 @@ import (
 	"github.com/bengobox/notifications-api/internal/messaging"
 )
 
+// riderJobWhatsAppTemplate is the approved rider job alert (templates.json).
+const riderJobWhatsAppTemplate = "logistics_rider_job_assigned_v1_btn"
+
+// riderJobWhatsAppParams fills the template: name, order, pickup point, cash to collect. WhatsApp
+// parameters may not be empty, so absent values read as "-" or "None".
+func riderJobWhatsAppParams(d map[string]interface{}) []string {
+	return []string{
+		waParam(d["name"], "there"),
+		waParam(d["order_number"], "-"),
+		waParam(d["pickup_name"], "the outlet"),
+		waParam(d["cash_on_delivery"], "None"),
+	}
+}
+
 // riderJobData is what the rider sees about a job assigned to them.
 func riderJobData(payload map[string]interface{}, tenantSlug, riderAppURL string) map[string]interface{} {
 	orderNo, _ := payload["order_number"].(string)
@@ -54,6 +68,37 @@ func notifyRiderAssigned(ctx context.Context, nc *nats.Conn, cfg *config.Config,
 
 	pushToRider(ctx, nc, cfg, client, evt, "logistics/rider_job_assigned", "New delivery job",
 		fmt.Sprintf("rider-job-push-%s", taskID), data, logg)
+
+	// WhatsApp, like every notice: the approved button template, its "Open job" button fixed to the
+	// shared rider app, which serves every tenant under its slug.
+	if phone, _ := evt.Payload["rider_phone"].(string); strings.TrimSpace(phone) != "" {
+		meta := map[string]any{
+			"service_id":            "logistics",
+			"template_name":         riderJobWhatsAppTemplate,
+			"template_language":     "en_US",
+			"template_params":       riderJobWhatsAppParams(data),
+			"template_button_param": strings.TrimPrefix(fmt.Sprint(data["url"]), "/"),
+		}
+		if code := dialCodeForCountry(ti.Country); code != "" {
+			meta["default_dial_code"] = code
+		}
+		msg := messaging.Message{
+			TenantID:       evt.TenantID,
+			Channel:        "whatsapp",
+			TemplateID:     "logistics/rider_job_assigned",
+			SenderScope:    messaging.SenderScopeTenant,
+			Target:         messaging.TargetStaff,
+			To:             []string{phone},
+			Data:           data,
+			Metadata:       meta,
+			RequestID:      uuid.New().String(),
+			IdempotencyKey: fmt.Sprintf("rider-job-whatsapp-%s", taskID),
+			QueuedAt:       time.Now(),
+		}
+		if _, err := messaging.Publish(ctx, nc, cfg.Events, msg); err != nil {
+			logg.Warn("rider job whatsapp: publish failed", zap.String("task_id", taskID), zap.Error(err))
+		}
+	}
 
 	if email, _ := evt.Payload["rider_email"].(string); email != "" {
 		msg := messaging.Message{

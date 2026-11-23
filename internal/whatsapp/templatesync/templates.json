@@ -1665,5 +1665,16 @@
     "buttons": [
       {"type": "URL", "text": "Reconnect", "url": "https://marketflow.codevertexafrica.com/{{1}}", "example": ["jua-kali-salon/settings/integrations"]}
     ]
+  },
+  {
+    "name": "logistics_rider_job_assigned_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "cmd/worker/rider_job_alert.go (params: rider, order, pickup, cash to collect; button: the job in the shared rider app)",
+    "body": "Hi {{1}},\n\nYou have a new delivery job: order *{{2}}*.\n\nPick up at: {{3}}\nCash to collect: {{4}}\n\nOpen the job to accept it and start the trip.",
+    "example": ["Phelix", "000014", "Urban Loft Cafe Busia", "None"],
+    "buttons": [
+      {"type": "URL", "text": "Open job", "url": "https://riderapp.codevertexafrica.com/{{1}}", "example": ["urban-loft/active"]}
+    ]
   }
 ]

@@ -26,3 +26,25 @@ func TestRiderJobData(t *testing.T) {
 		t.Fatalf("fallbacks wrong: %#v", d)
 	}
 }
+
+// The WhatsApp job alert never sends an empty parameter (Meta rejects it) and its button opens the
+// job under the tenant's slug on the shared rider app.
+func TestRiderJobWhatsAppParams(t *testing.T) {
+	d := riderJobData(map[string]interface{}{"order_number": "000014", "rider_name": "Phelix", "pickup_name": "Urban Loft Cafe Busia"}, "urban-loft", "https://riderapp.codevertexafrica.com")
+	got := riderJobWhatsAppParams(d)
+	want := []string{"Phelix", "000014", "Urban Loft Cafe Busia", "None"}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("params = %v, want %v", got, want)
+		}
+	}
+	if d["url"] != "/urban-loft/active" {
+		t.Errorf("button path = %v, want /urban-loft/active", d["url"])
+	}
+	bare := riderJobWhatsAppParams(riderJobData(map[string]interface{}{}, "", "https://r.example.com"))
+	for i, p := range bare {
+		if p == "" {
+			t.Errorf("param %d is empty", i)
+		}
+	}
+}
