@@ -352,3 +352,24 @@ func TestDigitikaEmailsRenderForTheLearnerAndTheParent(t *testing.T) {
 		t.Error("the certificate email shows its number")
 	}
 }
+
+// A sales lead is acknowledged by MarketFlow too: the website keeps only WhatsApp and drops the team
+// alert, so the visitor never gets two thank-you emails (owner, 2026-11-24).
+func TestEnquiryChannelsAndTeamAlertFollowTheWebsite(t *testing.T) {
+	n, ok := buildContactReceived(enquiryPayload(map[string]any{"channels": []any{"whatsapp"}, "teamAlert": false}))
+	if !ok || len(n.Parties) != 1 || n.Parties[0].Email != "" || n.Parties[0].Phone == "" || n.AlertTemplateID != "" {
+		t.Fatalf("whatsapp only, no alert: ok=%v %+v alert=%q", ok, n.Parties, n.AlertTemplateID)
+	}
+	none, ok := buildContactReceived(enquiryPayload(map[string]any{"channels": []any{}, "teamAlert": false}))
+	if ok || len(none.Parties) != 0 {
+		t.Fatalf("nothing to send must be skipped: ok=%v %+v", ok, none.Parties)
+	}
+	alertOnly, ok := buildContactReceived(enquiryPayload(map[string]any{"channels": []any{}}))
+	if !ok || len(alertOnly.Parties) != 0 || alertOnly.AlertTemplateID == "" {
+		t.Fatalf("team alert alone still goes: ok=%v %+v", ok, alertOnly)
+	}
+	full, _ := buildContactReceived(enquiryPayload(nil))
+	if full.Parties[0].Email == "" || full.AlertTemplateID == "" {
+		t.Fatalf("an event without the fields keeps email and the alert: %+v", full)
+	}
+}

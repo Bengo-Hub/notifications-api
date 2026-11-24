@@ -310,13 +310,36 @@ func buildContactReceived(p map[string]any) (digitikaNotice, bool) {
 			"source": str(p, "source"), "admin_link": "https://codevertexafrica.com/admin/contacts",
 		},
 	}
-	n.Parties = []noticeParty{partyOf(messaging.TargetCustomer, email, phone, nil,
-		&partyWhatsApp{
-			Name:   "codevertex_enquiry_received_v2_btn",
-			Params: []string{waParam(name, "there"), waParam(service, "our services")},
-			Button: contactReplyButton,
-		})}
-	return n, email != "" || phone != ""
+	// A sales lead is also acknowledged by MarketFlow, which emails the visitor (with the booking
+	// link) and the team. The website then names the channels this notice keeps ("channels") and
+	// turns the team alert off ("teamAlert": false), so a lead never gets two thank-you emails
+	// (owner, 2026-11-24). Events without these fields keep both channels and the alert.
+	if chans, ok := p["channels"].([]any); ok {
+		keep := map[string]bool{}
+		for _, c := range chans {
+			if s, _ := c.(string); s != "" {
+				keep[strings.ToLower(s)] = true
+			}
+		}
+		if !keep["email"] {
+			email = ""
+		}
+		if !keep["whatsapp"] {
+			phone = ""
+		}
+	}
+	if alert, ok := p["teamAlert"].(bool); ok && !alert {
+		n.AlertTemplateID = ""
+	}
+	if email != "" || phone != "" {
+		n.Parties = []noticeParty{partyOf(messaging.TargetCustomer, email, phone, nil,
+			&partyWhatsApp{
+				Name:   "codevertex_enquiry_received_v2_btn",
+				Params: []string{waParam(name, "there"), waParam(service, "our services")},
+				Button: contactReplyButton,
+			})}
+	}
+	return n, len(n.Parties) > 0 || n.AlertTemplateID != ""
 }
 
 func buildCertificateIssued(p map[string]any) (digitikaNotice, bool) {
