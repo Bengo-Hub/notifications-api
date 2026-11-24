@@ -289,6 +289,13 @@ Every template: category `UTILITY`, language `en_US` (English), one `URL` button
 | `mf_new_lead_v1_btn` | `Hi {{1}},\n\nA new lead came in from {{2}}: *{{3}}*.\n\nOpen the lead to reply while it is fresh.` | `Jua Kali Salon`, `Facebook lead form`, `Brian O.` | `Open lead` | `jua-kali-salon/leads/5b0e2d7a-1c3f-4e8a-9b6d-2a7c4f1e0d93` |
 | `mf_weekly_summary_v1_btn` | `Hi {{1}},\n\nYour marketing week: {{2}} posts went out, {{3}} leads came in and {{4}} AI credits were used.\n\nOpen the full summary in MarketFlow.` | `Jua Kali Salon`, `6`, `14`, `42` | `Open summary` | `jua-kali-salon/dashboard` |
 | `mf_integration_reconnect_v1_btn` | `Hi {{1}},\n\nMarketFlow can no longer reach {{2}}, so posts and ads on it are paused.\n\nOpen your integrations page to connect it again.` | `Jua Kali Salon`, `the Facebook Page Jua Kali Salon` | `Reconnect` | `jua-kali-salon/settings/integrations` |
+| `mf_testimonial_received_v1_btn` | `Hi {{1}},\n\n{{2}} sent your business a new testimonial through your testimonial link. It is not shown anywhere until you approve it.\n\nOpen it to approve or decline.` | `Jua Kali Salon`, `Amina` | `Review testimonial` | `jua-kali-salon/settings/testimonials?review=3c1f8e2a-5b7d-4f0a-9e6c-1d2b3a4c5e6f` |
+
+`mf_testimonial_received_v1_btn` (2026-11-24) goes to the business's own WhatsApp number when a
+customer sends a testimonial through the business's public link. It reports a fact about the
+business's account (a testimonial waits for its review) and invites nothing, so it is UTILITY. The
+customer's words are never a variable; the business reads them in MarketFlow. Testimonials MarketFlow
+finds on the business's website are told by email only, once per weekly read.
 
 Notes for the owner when submitting:
 

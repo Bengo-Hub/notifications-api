@@ -1667,6 +1667,17 @@
     ]
   },
   {
+    "name": "mf_testimonial_received_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "MarketFlow (marketflow-api worker testimonial_received.go, on marketflow.testimonial.submitted from the public testimonial link; params: business, customer's first name; button: the testimonial in Settings, Testimonials)",
+    "body": "Hi {{1}},\n\n{{2}} sent your business a new testimonial through your testimonial link. It is not shown anywhere until you approve it.\n\nOpen it to approve or decline.",
+    "example": ["Jua Kali Salon", "Amina"],
+    "buttons": [
+      {"type": "URL", "text": "Review testimonial", "url": "https://marketflow.codevertexafrica.com/{{1}}", "example": ["jua-kali-salon/settings/testimonials?review=3c1f8e2a-5b7d-4f0a-9e6c-1d2b3a4c5e6f"]}
+    ]
+  },
+  {
     "name": "logistics_rider_job_assigned_v1_btn",
     "category": "UTILITY",
     "language": "en_US",
