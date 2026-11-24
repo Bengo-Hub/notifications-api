@@ -505,14 +505,14 @@
     ]
   },
   {
-    "name": "provider_balance_low_v2_btn",
+    "name": "provider_balance_low_v3_btn",
     "category": "UTILITY",
     "language": "en_US",
-    "source": "whatsapp/billing/provider_balance_low.txt (params: provider, level words, remaining; button: MarketFlow providers page). Replaces provider_balance_low_v1_btn, whose \"Top it up\" and \"Top up\" button read as a sale to Meta; sends fall back to v1 until Meta approves this one (superseded.go)",
-    "body": "The {{1}} balance {{2}}: {{3}} left.\n\nMarketFlow skips this provider for outputs that cost more than what is left. The providers page shows each provider's balance.",
+    "source": "whatsapp/billing/provider_balance_low.txt (params: provider, level words, remaining; button: api/provider-billing/<provider> on MarketFlow, which forwards to the provider's own billing page). Replaces provider_balance_low_v2_btn (never approved; its body pointed at the MarketFlow providers page) and v1 (\"Top up\" button read as a sale); sends fall back to the approved v1 until Meta approves this one (superseded.go)",
+    "body": "The {{1}} balance {{2}}: {{3}} left.\n\nMarketFlow skips this provider for outputs that cost more than what is left. The button opens the billing page of the provider, which shows its balance.",
     "example": ["Higgsfield", "is low", "about USD 4.20"],
     "buttons": [
-      {"type": "URL", "text": "View balance", "url": "https://marketflow.codevertexafrica.com/{{1}}", "example": ["platform/providers"]}
+      {"type": "URL", "text": "View billing", "url": "https://marketflow.codevertexafrica.com/{{1}}", "example": ["api/provider-billing/higgsfield"]}
     ]
   },
   {

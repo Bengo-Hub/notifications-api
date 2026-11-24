@@ -1,3 +1,3 @@
 The {{ .resource_label }} balance {{ if eq .level "empty" }}has run out{{ else }}is low{{ end }}: {{ .remaining }} left.
 
-MarketFlow skips this provider for outputs that cost more than what is left. The providers page shows each provider's balance.
+MarketFlow skips this provider for outputs that cost more than what is left. The button opens the billing page of the provider, which shows its balance.

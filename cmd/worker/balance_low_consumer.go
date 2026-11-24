@@ -27,7 +27,7 @@ import (
 //     a View balance button to the subscriptions billing page.
 //   - platform scope, from marketflow-ai: the platform owner's provider balances (fal,
 //     Higgsfield, ElevenLabs and later providers). The platform owner gets the same two
-//     channels with a View balance button to MarketFlow's providers page.
+//     channels with a button to that provider's own billing page (the platform pays it directly).
 //
 // The event carries the label, the numbers and the link, so a new credit service or provider
 // needs no change here.
@@ -35,8 +35,19 @@ import (
 const balanceLowConsumer = "notifications-billing-balance-low"
 
 // marketflowAppBase is the domain the provider_balance_low_v1_btn button was approved against
-// (and its rewrite provider_balance_low_v2_btn keeps).
+// (and its rewrite provider_balance_low_v3_btn keeps).
 const marketflowAppBase = "https://marketflow.codevertexafrica.com"
+
+// providerBillingSuffix is the WhatsApp button suffix for a provider's billing page: MarketFlow's
+// api/provider-billing/<provider> redirects to it. A name that is not a plain provider id gets
+// the providers page.
+func providerBillingSuffix(provider string) string {
+	p := strings.ToLower(strings.TrimSpace(provider))
+	if p == "" || len(p) > 40 || strings.Trim(p, "abcdefghijklmnopqrstuvwxyz0123456789_-") != "" {
+		return "platform/providers"
+	}
+	return "api/provider-billing/" + p
+}
 
 // platformOwnerSlug is the platform owner's tenant slug.
 const platformOwnerSlug = "codevertex"
@@ -133,9 +144,13 @@ func balanceLowNotice(evt balanceLowEvent, ti *tenantInfo, email string, phones 
 	}
 	party := noticeParty{Email: email, Phone: phone}
 	if a.Scope == balancealert.ScopePlatform {
+		// The platform pays the provider directly, so the link is the provider's own billing
+		// page (marketflow-ai sends the one set on the provider card, or its default), never a
+		// MarketFlow page. Meta fixes a template button's domain, so the WhatsApp button opens
+		// MarketFlow's api/provider-billing/<provider>, which forwards to that same page.
 		providersPage := marketflowAppBase + "/platform/providers"
 		topUp := a.BuyURL
-		if topUp == "" {
+		if !strings.HasPrefix(topUp, "https://") {
 			topUp = providersPage
 		}
 		data["action_link"] = topUp
@@ -144,9 +159,9 @@ func balanceLowNotice(evt balanceLowEvent, ti *tenantInfo, email string, phones 
 		n.Subject = headline
 		party.Target = messaging.TargetPlatformAdmin
 		party.WhatsApp = &partyWhatsApp{
-			Name:   "provider_balance_low_v2_btn",
+			Name:   "provider_balance_low_v3_btn",
 			Params: []string{label, levelWord, remaining},
-			Button: "platform/providers",
+			Button: providerBillingSuffix(a.Resource),
 		}
 	} else {
 		data["action_link"] = pricingAppBase + "/billing"

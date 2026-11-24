@@ -28,7 +28,7 @@ var superseded = map[string]supersededTemplate{
 	"ordering_order_completed_v5_btn":    {old: "ordering_order_completed_v1_btn"},
 	"ordering_order_completed_v6_btn":    {old: "ordering_order_completed_v2_btn"},
 	"codevertex_enquiry_received_v2_btn": {old: "codevertex_enquiry_received_v1_btn"},
-	"provider_balance_low_v2_btn":        {old: "provider_balance_low_v1_btn"},
+	"provider_balance_low_v3_btn":        {old: "provider_balance_low_v1_btn"},
 }
 
 // addSupersededFallback sets the fallback for a rewritten template. A fallback the caller set is

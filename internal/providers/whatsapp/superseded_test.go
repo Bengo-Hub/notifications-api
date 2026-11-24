@@ -119,7 +119,7 @@ func TestButtonRewritesFallBackToApprovedTemplates(t *testing.T) {
 		"ordering_order_completed_v5_btn":    "ordering_order_completed_v1_btn",
 		"ordering_order_completed_v6_btn":    "ordering_order_completed_v2_btn",
 		"codevertex_enquiry_received_v2_btn": "codevertex_enquiry_received_v1_btn",
-		"provider_balance_low_v2_btn":        "provider_balance_low_v1_btn",
+		"provider_balance_low_v3_btn":        "provider_balance_low_v1_btn",
 	} {
 		if got := superseded[rewrite]; got.old != approved || got.order != nil {
 			t.Errorf("%s: falls back to %+v, want %s with the same parameters", rewrite, got, approved)

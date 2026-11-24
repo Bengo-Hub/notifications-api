@@ -58,7 +58,7 @@ func TestBalanceLowPlatformNotice(t *testing.T) {
 		Level: "empty", Remaining: 0, Unit: "usd", Threshold: 5, Period: "2026-11-03", Estimate: true, BuyURL: "https://console.higgsfield.ai"})
 	n := balanceLowNotice(evt, &tenantInfo{ID: uuid.New(), Name: "Codevertex"}, "owner@codevertex.example", nil)
 	p := n.Parties[0]
-	if n.TemplateID != "billing/provider_balance_low" || p.Target != messaging.TargetPlatformAdmin || p.WhatsApp.Name != "provider_balance_low_v2_btn" {
+	if n.TemplateID != "billing/provider_balance_low" || p.Target != messaging.TargetPlatformAdmin || p.WhatsApp.Name != "provider_balance_low_v3_btn" || p.WhatsApp.Button != "api/provider-billing/higgsfield" {
 		t.Fatalf("notice = %+v", n)
 	}
 	if got := strings.Join(p.WhatsApp.Params, "|"); got != "Higgsfield|has run out|about USD 0.00" {
@@ -104,7 +104,7 @@ func TestBalanceLowTemplatesAreConsistent(t *testing.T) {
 		base   string
 	}{
 		"credits_balance_low_v2_btn":  {4, pricingAppBase},
-		"provider_balance_low_v2_btn": {3, marketflowAppBase},
+		"provider_balance_low_v3_btn": {3, marketflowAppBase},
 	}
 	for _, d := range defs {
 		w, ok := want[d.Name]
@@ -133,5 +133,26 @@ func TestBalanceLowTemplatesAreConsistent(t *testing.T) {
 	}
 	if s := formatCount(12345); s != "12,345" {
 		t.Fatalf("count = %s", s)
+	}
+}
+
+// A platform alert links the provider's own billing page: by email directly, by WhatsApp through
+// MarketFlow's redirect (the template's button domain is fixed). A missing or non-https link
+// falls back to the providers page; an odd provider name never reaches the button suffix.
+func TestBalanceLowPlatformLinksProviderBilling(t *testing.T) {
+	evt := balanceEvent(t, balancealert.Alert{Scope: "platform", Resource: "fal", ResourceLabel: "fal.ai",
+		Level: "low", Remaining: 3, Unit: "usd", Threshold: 5, Period: "2026-11-24", BuyURL: "https://fal.ai/dashboard/billing"})
+	n := balanceLowNotice(evt, &tenantInfo{ID: uuid.New(), Name: "Codevertex"}, "owner@codevertex.example", []string{"0712345678"})
+	if n.Data["action_link"] != "https://fal.ai/dashboard/billing" || n.Parties[0].WhatsApp.Button != "api/provider-billing/fal" {
+		t.Fatalf("links = %v button = %s", n.Data["action_link"], n.Parties[0].WhatsApp.Button)
+	}
+	evt.Payload.BuyURL = "javascript:alert(1)"
+	if n = balanceLowNotice(evt, &tenantInfo{ID: uuid.New()}, "o@c.example", nil); n.Data["action_link"] != marketflowAppBase+"/platform/providers" {
+		t.Fatalf("non-https link kept: %v", n.Data["action_link"])
+	}
+	for in, want := range map[string]string{"ElevenLabs": "api/provider-billing/elevenlabs", "../x": "platform/providers", "": "platform/providers", "a b": "platform/providers"} {
+		if got := providerBillingSuffix(in); got != want {
+			t.Errorf("providerBillingSuffix(%q) = %q, want %q", in, got, want)
+		}
 	}
 }

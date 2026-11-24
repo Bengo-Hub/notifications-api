@@ -42,14 +42,14 @@ Meta fixes a button's domain when the template is approved; only the suffix vari
 | Digitika and the company website (enrollment page, student and parent portal, certificate check, enquiry reply) | `https://codevertexafrica.com/{{1}}` | `digitika/success?reference=<ref>`, `student`, `digitika/parent`, `certificates/<token>`, `services` (website enquiry reply) |
 | Projects app (task mentions and assignments) | `https://projects.codevertexafrica.com/{{1}}` | the event's `action_path` without its leading slash, `<org-slug>/projects/<id>/tasks?task=<task id>` |
 | Credit balance and billing (the tenant's own credits) | `https://pricing.codevertexafrica.com/{{1}}` | `billing` |
-| Provider balance (platform owner only) | `https://marketflow.codevertexafrica.com/{{1}}` | `platform/providers` |
+| Provider balance (platform owner only) | `https://marketflow.codevertexafrica.com/{{1}}` | `api/provider-billing/<provider>`, which redirects to that provider's own billing page (the platform pays the provider directly; the page is `billing_url` on the provider card in MarketFlow, with a default per provider); `platform/providers` for a provider name that is not a plain id |
 | Public ticket page (a customer's own support request) | `https://ticketing.codevertexafrica.com/{{1}}` | `support/track?org=<tenant-slug>&ticket=<ticket number>`, built from the tenant's slug and the event's `ticket_number` (`ticketTrackSuffix`); ticketing-api's events carry no link or token for it |
 
 A button on any other domain fails the manifest lint: a new domain is a policy decision, so its row
 goes here first and into `buttonDomains` in `manifest_lint_test.go`. The pricing and MarketFlow rows
 were missing from this table until the lint was added on 17 November 2026; their templates
 (`credits_*_btn`, `provider_balance_low_v1_btn`) were already approved on those domains, and
-`provider_balance_low_v2_btn` keeps the MarketFlow one.
+`provider_balance_low_v3_btn` keeps the MarketFlow one. A tenant's own credit alert keeps its pricing button; only the platform owner's provider alert forwards to a provider's site, and only through that redirect, never as a link in the body.
 
 ## 2b. One notice, several parties
 
@@ -231,7 +231,7 @@ Templates waiting for a Meta sync after their deploy:
 | `ticketing_ticket_reply_v1_btn` | an agent reply after the customer's WhatsApp window, only with `TICKETING_WHATSAPP_REPLIES` on (section 2c); sync it to each ticketing tenant's WABA |
 | `ordering_order_delivered_v7_btn`, `ordering_order_delivered_v8_btn`, `ordering_order_completed_v5_btn`, `ordering_order_completed_v6_btn` | delivered and completed orders (sent now through the `superseded.go` fallback); platform WABA and each ordering tenant's WABA |
 | `codevertex_enquiry_received_v2_btn` | the reply to a website enquiry (sent now through the fallback to v1); platform WABA |
-| `provider_balance_low_v2_btn` | a MarketFlow provider balance alert to the platform owner (sent now through the fallback to v1); platform WABA |
+| `provider_balance_low_v3_btn` | a MarketFlow provider balance alert to the platform owner (sent now through the fallback to v1, whose button on the same domain takes the same redirect suffix); platform WABA. It replaces `provider_balance_low_v2_btn`, never approved, whose body pointed at the MarketFlow providers page; if v2 was submitted it can stay on the WABA unused |
 | `logistics_delivery_completed_v4_btn`, `hrm_leave_approved_v2` | nothing yet (no code sends them) |
 
 Approved as UTILITY on 16 November 2026 within the hour, with their `superseded.go` fallbacks removed:
