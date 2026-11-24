@@ -30,6 +30,8 @@ var testDefs = []templatesync.TemplateDef{
 	{Name: "provider_balance_low_v3_btn", Category: "UTILITY"},
 	{Name: "projects_task_assigned_v1_btn", Category: "UTILITY"},
 	{Name: "ticketing_ticket_reply_v1_btn", Category: "UTILITY"},
+	{Name: "mf_lead_hello_v1_btn", Category: "UTILITY"},
+	{Name: "mf_daily_brief_v1_btn", Category: "UTILITY"},
 }
 
 var shared = []string{"auth_otp", "broadcast_update_v1", "credits_balance_low_v2_btn", "occasion_new_year_v2", "subscription_invoice_ready_v1_btn"}
@@ -83,7 +85,10 @@ func TestSelectByService(t *testing.T) {
 		// The ticket reply template goes from the tenant's own number, so it must reach the tenant's WABA.
 		{name: "ticketing", services: []string{"ticketing"}, want: with("ticketing_ticket_reply_v1_btn"), matched: []string{"ticketing"}},
 		{name: "hadia from its delivery logs", services: []string{"hadia"}, want: with("hadia_registry_published_v2_btn"), matched: []string{"hadia"}},
-		{name: "unknown services ignored", services: []string{"marketflow", "platform", "codevertex"}, want: with(), matched: nil},
+		// MarketFlow's lead follow-up goes from the tenant's own number (2026-11-24); its platform
+		// notices to the owner (mf_daily_brief and the rest) stay off the tenant's WABA.
+		{name: "marketflow lead follow-up only", services: []string{"marketflow"}, want: with("mf_lead_hello_v1_btn"), matched: []string{"marketflow"}},
+		{name: "unknown services ignored", services: []string{"platform", "codevertex"}, want: with(), matched: nil},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

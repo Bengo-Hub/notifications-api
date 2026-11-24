@@ -17,6 +17,7 @@
     "digitika": ["digitika_"],
     "hadia": ["hadia_"],
     "projects": ["projects_"],
-    "ticketing": ["ticketing_"]
+    "ticketing": ["ticketing_"],
+    "marketflow": ["mf_lead_"]
   }
 }

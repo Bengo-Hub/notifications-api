@@ -1698,5 +1698,16 @@
     "buttons": [
       {"type": "URL", "text": "View statement", "url": "https://marketflow.codevertexafrica.com/{{1}}", "example": ["jua-kali-salon/dashboard"]}
     ]
+  },
+  {
+    "name": "mf_lead_hello_v1_btn",
+    "category": "UTILITY",
+    "language": "en_US",
+    "source": "MarketFlow (marketflow-api nurture step of each tenant's own 'Instant follow-up' copy; sent from the TENANT's own number to a lead who ticked WhatsApp consent; params: lead first name, business name; button: the business's booking page). docs/whatsapp-template-policy.md section 5b",
+    "body": "Hi {{1}},\n\nThank you for your enquiry to {{2}}. We have received it and a member of the team will contact you soon.\n\nYou can also pick a time for a call with the button below.",
+    "example": ["Esther", "Jua Kali Salon"],
+    "buttons": [
+      {"type": "URL", "text": "Book a call", "url": "https://marketflow.codevertexafrica.com/{{1}}", "example": ["book/jua-kali-salon"]}
+    ]
   }
 ]

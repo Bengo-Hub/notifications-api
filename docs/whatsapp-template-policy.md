@@ -309,3 +309,22 @@ Notes for the owner when submitting:
   exists; video ready and publish result are shown in the Studio and the posting calendar.
 - Sample values contain no real customer data. If Meta answers `INCORRECT_CATEGORY`, remove "ad"
   from the body first (for example "Your video *{{2}}*") and submit it as `_v2`.
+
+## 5b. MarketFlow lead follow-up (tenant's own number)
+
+Every MarketFlow tenant answers its new leads automatically (owner decision of 24 November 2026): an
+email at once, the WhatsApp message below when the lead ticked the WhatsApp consent box, and follow-up
+emails after a day and after three days unless the lead replies, books a call or the team contacts
+them. Unlike the `mf_` templates in section 5, this one goes from the **tenant's own number** to the
+tenant's own lead and names the tenant, never Codevertex. It reaches a tenant's WABA through the
+`marketflow` entry of `internal/whatsapp/tenanttemplates/selection.json` (prefix `mf_lead_`).
+
+| Template | Body | Example values | Button |
+|---|---|---|---|
+| `mf_lead_hello_v1_btn` (UTILITY, en_US) | `Hi {{1}},\n\nThank you for your enquiry to {{2}}. We have received it and a member of the team will contact you soon.\n\nYou can also pick a time for a call with the button below.` | `Esther`, `Jua Kali Salon` | "Book a call", `https://marketflow.codevertexafrica.com/{{1}}`, example `book/jua-kali-salon` |
+
+`{{1}}` is the lead's first name ("there" when the lead gave none), `{{2}}` the business name. The
+button opens the business's own booking page (`book/<tenant-slug>`), on the MarketFlow domain already
+in the button domain table. The message confirms the person's own enquiry and offers nothing, so it is
+submitted as UTILITY. Until Meta approves it on a tenant's WABA, or when the tenant has no WhatsApp
+number of its own, the send fails and MarketFlow skips the WhatsApp step; the email steps still go.
