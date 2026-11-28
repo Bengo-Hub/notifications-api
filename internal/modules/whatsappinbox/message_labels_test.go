@@ -7,12 +7,13 @@ import (
 
 func TestInboundPlaceholder(t *testing.T) {
 	cases := map[string]string{
-		"image":   "Photo",
-		"IMAGE ":  "Photo",
-		"audio":   "Voice note",
-		"sticker": "Sticker",
-		"unknown": "Message (open WhatsApp to view)",
-		"":        "Message (open WhatsApp to view)",
+		"image":       "Photo",
+		"IMAGE ":      "Photo",
+		"audio":       "Voice note",
+		"sticker":     "Sticker",
+		"unknown":     "Message (open WhatsApp to view)",
+		"unsupported": "A message WhatsApp does not share with the inbox (for example view-once media, a poll or an edit). Read it on the phone, or ask them to send it again as text.",
+		"":            "Message (open WhatsApp to view)",
 	}
 	for in, want := range cases {
 		if got := inboundPlaceholder(in); got != want {

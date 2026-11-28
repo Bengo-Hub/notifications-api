@@ -17,6 +17,9 @@ var mediaLabels = map[string]string{
 	"interactive": "Button reply",
 	"button":      "Button reply",
 	"order":       "Order",
+	// Meta sends type "unsupported" with no content for messages its business API cannot pass on
+	// (view-once media, polls, edits, newer message types). The text exists only on the phone.
+	"unsupported": "A message WhatsApp does not share with the inbox (for example view-once media, a poll or an edit). Read it on the phone, or ask them to send it again as text.",
 }
 
 // inboundPlaceholder is the stored body for an inbound message that carried no text.
