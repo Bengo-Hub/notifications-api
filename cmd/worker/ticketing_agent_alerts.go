@@ -30,10 +30,10 @@ func ticketAgentName(p map[string]any) string {
 	return "Agent"
 }
 
-// ticketConsoleLink is the ticket in the agent console, built the same way as the assignment and
-// SLA breach alerts.
+// ticketConsoleLink is the ticket in the agent console (<console>/<slug>/tickets/<id>), built the
+// same way as the assignment and SLA breach alerts.
 func ticketConsoleLink(links ticketLinks, p map[string]any) string {
-	return fmt.Sprintf("%s/tickets/%s", links.Console, ticketText(p, "ticket_id"))
+	return links.ticket(ticketText(p, "ticket_id"))
 }
 
 // ticketEmailList reads email addresses from the first of keys that holds any, as a single string

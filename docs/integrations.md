@@ -524,6 +524,30 @@ Onboarding:
   `notif-hadia-ops-health-weekly`: the platform health reports. The worker consumer acks those two
   as unmapped.
 
+**Vera support notices (marketflow-ai, added 28 November 2026).** When a visitor asks Vera on
+hadiafrica.com (or any business with the routing switched on) a question for the business's team
+and the business's plan has no ticketing, marketflow-ai (`internal/support/router.go`,
+`NotifyTenantStaff`) sends it to the team through the REST send, not through an event:
+
+- `POST /api/v1/{platform tenant id}/notifications/messages` with `X-API-Key`
+  (`INTERNAL_SERVICE_KEY`), `X-Tenant-ID` the platform tenant and an `Idempotency-Key`
+  (`vera-support:<request id>:email` or `...:wa:<phone>`), so its bounded retries never send twice.
+- The sending tenant is the platform tenant on purpose. That is the route I have for a Codevertex
+  notice to a tenant's admins: the platform number and address send it, the platform pays, and the
+  tenant's own WhatsApp number and credits are never needed (Hadia's number was off when this was
+  built). The REST body has no `senderScope` or `target`, so sending as the platform tenant is what
+  gives the platform number (`whatsAppNumberTenant`).
+- Email: `channel` `email`, `template` `broadcast/message`, `data.body` and `data.paragraphs` (the
+  visitor's name, email, phone, page and question), `metadata.subject`, `to` the tenant's support
+  email (auth-api metadata `support`, else the contact email).
+- WhatsApp: `channel` `whatsapp`, `template` `broadcast/message`, `data.body`, and
+  `metadata.template_name` `broadcast_service_notice_v1` (approved on the platform WABA, billed as
+  MARKETING) with `template_params` `[first name, "Vera on the <tenant> website", one line notice]`
+  and `default_dial_code`. `to` is one admin per message: owner and admin phones from auth-api's
+  `GET /api/v1/s2s/tenants/reach`, or numbers set in MarketFlow's `vera_support` setting.
+- Nothing changed in notifications-api for this. The template name is a MarketFlow setting, so a
+  dedicated UTILITY template can replace it later without a code change here.
+
 **Added 12 November 2026** (hadia-api 41ae1d7):
 - `hadia.payout.number_needed`: a registry closed at expiry with money still owed and no verified
   payout number. The owner gets `hadia/payout_number_needed` (email, essential) and

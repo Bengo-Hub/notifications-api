@@ -15,6 +15,7 @@ import (
 	"github.com/bengobox/notifications-api/internal/config"
 	"github.com/bengobox/notifications-api/internal/messaging"
 	"github.com/bengobox/notifications-api/internal/providers/email"
+	"github.com/bengobox/notifications-api/internal/ticketing"
 )
 
 // ticketingEvent is the shared-events envelope from ticketing-api.
@@ -45,8 +46,27 @@ const (
 // public support page for the requester (the requester's own ticket view needs a token the event
 // does not carry, so the requester is sent to the support page and can answer by replying).
 type ticketLinks struct {
-	Console string // ticket console base, e.g. https://ticketing.codevertexafrica.com/<org>
+	Console string // the tenant's ticketing console, e.g. https://ticketing.codevertexafrica.com
+	Slug    string // the tenant's slug, the first path segment of every console page
 	Support string // public support page
+}
+
+// ticket is the ticket's page in the console, <console>/<slug>/tickets/<id>, built the way the
+// WhatsApp inbox's Convert to ticket links it (ticketing.TicketURL). Empty without a console,
+// slug or ticket id.
+func (l ticketLinks) ticket(ticketID string) string {
+	return ticketing.TicketURL(l.Console, l.Slug, ticketID)
+}
+
+// ticketLinksFor builds the links from the tenant's ticketing service URL (its custom domain when
+// it has one), else NOTIFICATIONS_TICKETING_APP_URL, else consoleURL (TICKETING_CONSOLE_URL).
+func ticketLinksFor(ti *tenantInfo, consoleURL string) ticketLinks {
+	console := strings.TrimRight(ti.ServiceURL("ticketing", "NOTIFICATIONS_TICKETING_APP_URL", consoleURL), "/")
+	slug := ""
+	if ti != nil {
+		slug = ti.Slug
+	}
+	return ticketLinks{Console: console, Slug: slug, Support: console + "/support"}
 }
 
 type ticketingNotificationMapping struct {
@@ -211,7 +231,7 @@ var ticketingMappings = map[string]ticketingNotificationMapping{
 				"subject":       p["subject"],
 				"priority":      p["priority"],
 				"customer_name": customer,
-				"action_link":   fmt.Sprintf("%s/tickets/%s", links.Console, p["ticket_id"]),
+				"action_link":   links.ticket(ticketText(p, "ticket_id")),
 			}
 		},
 	},
@@ -246,7 +266,7 @@ func ticketSLABreachMapping(label string) ticketingNotificationMapping {
 				"ticket_id":    payload["ticket_number"],
 				"subject":      payload["subject"],
 				"priority":     payload["priority"],
-				"action_link":  fmt.Sprintf("%s/tickets/%s", links.Console, payload["ticket_id"]),
+				"action_link":  links.ticket(ticketText(payload, "ticket_id")),
 			}
 		},
 	}
@@ -477,11 +497,7 @@ func startTicketingConsumer(ctx context.Context, nc *nats.Conn, js nats.JetStrea
 			return
 		}
 
-		links := ticketLinks{
-			Console: ti.Website,
-			Support: ti.ServiceURL("ticketing", "NOTIFICATIONS_TICKETING_APP_URL", "https://ticketing.codevertexafrica.com") + "/support",
-		}
-		msg := ticketMessage(mapping, evt, to, target, replyTo, links)
+		msg := ticketMessage(mapping, evt, to, target, replyTo, ticketLinksFor(ti, cfg.Services.TicketingConsoleURL))
 
 		if _, err := messaging.Publish(ctx, nc, cfg.Events, msg); err != nil {
 			logg.Error("ticketing event: failed to dispatch notification", zap.String("type", evt.EventType), zap.Error(err))

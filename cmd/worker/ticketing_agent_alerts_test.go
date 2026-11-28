@@ -68,11 +68,11 @@ func TestTicketMentionedGoesToTheMentionedAgent(t *testing.T) {
 		t.Errorf("subject %q", got)
 	}
 	d := m.DataBuilder(evt.Payload, testTicketLinks)
-	if d["action_link"] != "https://support.example.com/tickets/t-9" || d["internal_note"] != true {
+	if d["action_link"] != "https://ticketing.example.com/acme/tickets/t-9" || d["internal_note"] != true {
 		t.Errorf("data %v", d)
 	}
 	out := renderEmail(t, m.TemplateID, d)
-	mustContain(t, "mention", out, "TKT-000042", "can you check the toner?", "internal note", "https://support.example.com/tickets/t-9")
+	mustContain(t, "mention", out, "TKT-000042", "can you check the toner?", "internal note", "https://ticketing.example.com/acme/tickets/t-9")
 }
 
 func TestTicketMentionedSkips(t *testing.T) {
@@ -188,7 +188,7 @@ func TestTicketBreachWarningContent(t *testing.T) {
 		t.Errorf("data %v", d)
 	}
 	out := renderEmail(t, m.TemplateID, d)
-	mustContain(t, "warning", out, "TKT-000099", "in 30 minutes", "17 Nov 2026", "https://support.example.com/tickets/t-3")
+	mustContain(t, "warning", out, "TKT-000099", "in 30 minutes", "17 Nov 2026", "https://ticketing.example.com/acme/tickets/t-3")
 	if leaks := requesterContactLeaks(d, out); len(leaks) > 0 {
 		t.Errorf("requester contact in an agent alert: %v", leaks)
 	}
