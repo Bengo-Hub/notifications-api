@@ -32,6 +32,7 @@ import (
 	"github.com/bengobox/notifications-api/internal/encryption"
 	"github.com/bengobox/notifications-api/internal/fxrate"
 	"github.com/bengobox/notifications-api/internal/ent"
+	"github.com/bengobox/notifications-api/internal/erpcalendar"
 	enttenant "github.com/bengobox/notifications-api/internal/ent/tenant"
 	handlers "github.com/bengobox/notifications-api/internal/http/handlers"
 	identityhandler "github.com/bengobox/notifications-api/internal/http/handlers/identity"
@@ -239,7 +240,8 @@ func New(ctx context.Context) (*App, error) {
 	}
 
 	// Broadcasts and occasions: the API manages drafts, approvals and opt-outs; the worker sends.
-	occasionSvc := occasions.NewService(entClient, log)
+	occasionSvc := occasions.NewService(entClient, log).
+		WithGazetted(erpcalendar.New(cfg.Services.ERPAPI, cfg.Security.APIKey, cfg.Services.ERPPlatformTenantID))
 	// One opt-out list for links, STOP replies and buttons; each opt-out is announced so MarketFlow
 	// clears the contact's consent flag.
 	suppressionSvc := suppression.NewService(entClient, keyProvider.Candidates(ctx)...).

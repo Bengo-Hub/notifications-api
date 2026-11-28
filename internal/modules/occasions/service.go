@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -79,8 +80,55 @@ type catalogEntry struct {
 
 // Service reads and writes occasions.
 type Service struct {
-	client *ent.Client
-	log    *zap.Logger
+	client   *ent.Client
+	log      *zap.Logger
+	gazetted GazettedDates
+}
+
+// GazettedDates gives the platform calendar's date (YYYY-MM-DD) per occasion key in a year: the
+// ERP's public holidays, where a day the Kenya Gazette declares is entered once.
+type GazettedDates interface {
+	Dates(ctx context.Context, year int) map[string]string
+}
+
+// WithGazetted lets explicit-date occasions take a year's missing date from the platform calendar.
+// A date confirmed on the occasion itself always wins.
+func (s *Service) WithGazetted(g GazettedDates) *Service {
+	s.gazetted = g
+	return s
+}
+
+// gazettedFill is the platform calendar's dates for this year and next, per key then year.
+func (s *Service) gazettedFill(ctx context.Context, now time.Time) map[string]map[string]string {
+	if s.gazetted == nil {
+		return nil
+	}
+	fill := map[string]map[string]string{}
+	for _, y := range []int{now.Year(), now.Year() + 1} {
+		for key, d := range s.gazetted.Dates(ctx, y) {
+			if fill[key] == nil {
+				fill[key] = map[string]string{}
+			}
+			fill[key][strconv.Itoa(y)] = d
+		}
+	}
+	return fill
+}
+
+// withGazetted adds the platform calendar's dates to an explicit rule for the years it has none.
+func withGazetted(v View, fill map[string]map[string]string) View {
+	if v.Rule.Type != RuleExplicit || len(fill[v.Key]) == 0 {
+		return v
+	}
+	dates := make(map[string]string, len(v.Rule.Dates)+len(fill[v.Key]))
+	for y, d := range fill[v.Key] {
+		dates[y] = d
+	}
+	for y, d := range v.Rule.Dates {
+		dates[y] = d
+	}
+	v.Rule.Dates = dates
+	return v
 }
 
 // NewService builds the service.
@@ -190,9 +238,10 @@ func (s *Service) List(ctx context.Context, tenantID *uuid.UUID, now time.Time, 
 	for _, o := range own {
 		byKey[o.Key] = o
 	}
+	fill := s.gazettedFill(ctx, now)
 	var out []View
 	for _, c := range catalog {
-		v := toView(c)
+		v := withGazetted(toView(c), fill)
 		v.CatalogRowID = c.ID
 		if tenantID != nil {
 			v.Settings.Enabled = false
@@ -207,7 +256,7 @@ func (s *Service) List(ctx context.Context, tenantID *uuid.UUID, now time.Time, 
 		out = append(out, withNextDate(v, now, loc))
 	}
 	for _, o := range byKey { // the tenant's own occasions
-		v := toView(o)
+		v := withGazetted(toView(o), fill)
 		v.Custom = true
 		v.TenantRowID = o.ID
 		out = append(out, withNextDate(v, now, loc))
@@ -355,11 +404,13 @@ func (s *Service) DueSoon(ctx context.Context, now time.Time, loc *time.Location
 		return nil, err
 	}
 	catalogByKey := map[string]*ent.Occasion{}
+	fill := s.gazettedFill(ctx, now)
 	var out []Due
 	add := func(v View, tenantID *uuid.UUID) {
 		if !v.Settings.Enabled {
 			return
 		}
+		v = withGazetted(v, fill)
 		start, err := v.Rule.NextOccurrence(now.AddDate(0, 0, -v.SendOffsetDays), loc)
 		if err != nil {
 			return

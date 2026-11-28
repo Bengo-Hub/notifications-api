@@ -64,6 +64,12 @@ type ServicesConfig struct {
 	TreasuryAPI string `envconfig:"TREASURY_API_URL" default:"https://booksapi.codevertexafrica.com"`
 	// FXPlatformTenantSlug is the tenant whose platform-level rates treasury converts with.
 	FXPlatformTenantSlug string `envconfig:"FX_PLATFORM_TENANT_SLUG" default:"codevertex"`
+	// ERPAPI is the platform's public holiday calendar (erp-api, S2S). Occasions with dates the
+	// Kenya Gazette declares each year (Idd-ul-Fitr, Idd-ul-Azha) take a year's missing date from
+	// it, so the platform owner enters a gazetted day once, in the ERP. Empty switches it off.
+	ERPAPI string `envconfig:"ERP_SERVICE_URL" default:"http://erp-api.erp.svc.cluster.local:80"`
+	// ERPPlatformTenantID is erp-api's system tenant, which owns the platform calendar.
+	ERPPlatformTenantID string `envconfig:"ERP_PLATFORM_TENANT_ID" default:"00000000-0000-0000-0000-0000000005ff"`
 }
 
 type AppConfig struct {

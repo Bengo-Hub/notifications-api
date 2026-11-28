@@ -29,6 +29,7 @@ import (
 
 	entdb "github.com/bengobox/notifications-api/internal/database"
 	"github.com/bengobox/notifications-api/internal/ent"
+	"github.com/bengobox/notifications-api/internal/erpcalendar"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
@@ -412,7 +413,8 @@ func main() {
 
 	// Broadcasts: occasion planner, audience materialiser and paced dispatcher. Every job is safe
 	// to run on every worker pod (Redis locks, unique indexes, SKIP LOCKED claims).
-	occasionSvc := occasions.NewService(client, logg)
+	occasionSvc := occasions.NewService(client, logg).
+		WithGazetted(erpcalendar.New(cfg.Services.ERPAPI, cfg.Security.APIKey, cfg.Services.ERPPlatformTenantID))
 	if err := occasionSvc.Seed(ctx); err != nil {
 		logg.Warn("occasion catalog seed failed", zap.Error(err))
 	}
